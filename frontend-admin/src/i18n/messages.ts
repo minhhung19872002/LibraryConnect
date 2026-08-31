@@ -72,6 +72,7 @@ export const messages = {
     bibImport: 'Nhập biểu ghi từ tệp',
     customIndexes: 'Danh mục tự tạo',
     catalogQueue: 'Hàng đợi biên mục',
+    cards: 'Mẫu phích và in phích',
     marc: 'Khổ mẫu MARC 21',
     marcFields: 'Định nghĩa trường MARC',
     marcTool: 'Công cụ biểu ghi MARC',

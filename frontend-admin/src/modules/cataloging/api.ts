@@ -3,6 +3,7 @@ import type { PagedResult } from '@/types/api';
 import type { MarcRecord } from '@/modules/marc/types';
 import type { BibImportOptions, BibImportPreview, DuplicateMatchBy, ImportJob } from './importTypes';
 import type { CustomIndex, CustomIndexValue, HarvestResult } from './customIndexTypes';
+import type { CardTemplate } from './cardTypes';
 import type {
   CatalogProductivity,
   CatalogQueueItem,
@@ -236,6 +237,38 @@ export const queueApi = {
     api.post<null>(`/cataloging/queue/${id}/status`, { status, reason }),
 
   remove: (id: string) => api.delete<null>(`/cataloging/queue/${id}`),
+};
+
+/** Mẫu phích và in phích (II.10). */
+export const cardApi = {
+  templates: (includeInactive = false) =>
+    api.get<CardTemplate[]>('/cataloging/card-templates', { params: { includeInactive } }),
+
+  saveTemplate: (id: string | null, payload: Record<string, unknown>) =>
+    id
+      ? api.put<string>(`/cataloging/card-templates/${id}`, payload)
+      : api.post<string>('/cataloging/card-templates', payload),
+
+  deleteTemplate: (id: string) => api.delete<null>(`/cataloging/card-templates/${id}`),
+
+  /** Kết xuất phích ra PDF; phản hồi là tệp nên đi qua client thô. */
+  async print(request: {
+    bibIds: string[];
+    filter?: BibListParams;
+    templateId?: string;
+    cardTypes: string[];
+    multiplePerPage: boolean;
+  }): Promise<{ blob: Blob; fileName: string }> {
+    const response = await http.post<Blob>('/cataloging/cards/print', request, { responseType: 'blob' });
+
+    const disposition = response.headers['content-disposition'] as string | undefined;
+    const match = disposition?.match(/filename\*?=(?:UTF-8'')?"?([^";]+)"?/i);
+
+    return {
+      blob: response.data,
+      fileName: match?.[1] ? decodeURIComponent(match[1]) : 'phich.pdf',
+    };
+  },
 };
 
 export const locationsApi = {

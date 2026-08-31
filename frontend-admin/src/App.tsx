@@ -25,6 +25,7 @@ import { BibDetailPage } from '@/modules/cataloging/BibDetailPage';
 import { BibImportPage } from '@/modules/cataloging/BibImportPage';
 import { CustomIndexPage } from '@/modules/cataloging/CustomIndexPage';
 import { CatalogQueuePage } from '@/modules/cataloging/CatalogQueuePage';
+import { CardTemplatePage } from '@/modules/cataloging/CardTemplatePage';
 import { RequirePermissionRoute } from '@/components/PermissionGate';
 import { PERMISSIONS } from '@/api/permissions';
 import { messages } from '@/i18n/messages';
@@ -142,6 +143,14 @@ function AppRoutes() {
           element={
             <RequirePermissionRoute permission={PERMISSIONS.cataloging.bibView}>
               <BibListPage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/bien-muc/phich"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.cataloging.cardPrint}>
+              <CardTemplatePage />
             </RequirePermissionRoute>
           }
         />

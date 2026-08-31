@@ -541,6 +541,66 @@ public class CatalogingController : ApiControllerBase
         return Ok(Success<object?>(null, "Đã bỏ việc khỏi hàng đợi."));
     }
 
+    // ---------------------------------------------------------------
+    // Mẫu phích và in phích (II.10)
+    // ---------------------------------------------------------------
+
+    /// <summary>Danh sách mẫu phích đã thiết kế.</summary>
+    [HttpGet("card-templates")]
+    [RequirePermission(PermissionCodes.CatalogCardPrint)]
+    [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<CardTemplateDto>>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<IReadOnlyList<CardTemplateDto>>>> GetCardTemplates(
+        [FromQuery] bool includeInactive, CancellationToken ct)
+    {
+        var result = await Mediator.Send(new GetCardTemplatesQuery(includeInactive), ct);
+        return Ok(Success(result));
+    }
+
+    [HttpPost("card-templates")]
+    [RequirePermission(PermissionCodes.CatalogCardTemplateManage)]
+    [ProducesResponseType(typeof(ApiResponse<Guid>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<Guid>>> CreateCardTemplate(
+        [FromBody] SaveCardTemplateCommand command, CancellationToken ct)
+    {
+        command.Id = null;
+        var result = await Mediator.Send(command, ct);
+        return Ok(Success(result, "Đã thêm mẫu phích."));
+    }
+
+    [HttpPut("card-templates/{id:guid}")]
+    [RequirePermission(PermissionCodes.CatalogCardTemplateManage)]
+    [ProducesResponseType(typeof(ApiResponse<Guid>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<Guid>>> UpdateCardTemplate(
+        Guid id, [FromBody] SaveCardTemplateCommand command, CancellationToken ct)
+    {
+        command.Id = id;
+        var result = await Mediator.Send(command, ct);
+        return Ok(Success(result, "Đã cập nhật mẫu phích."));
+    }
+
+    [HttpDelete("card-templates/{id:guid}")]
+    [RequirePermission(PermissionCodes.CatalogCardTemplateManage)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<object>>> DeleteCardTemplate(Guid id, CancellationToken ct)
+    {
+        await Mediator.Send(new DeleteCardTemplateCommand(id), ct);
+        return Ok(Success<object?>(null, "Đã xóa mẫu phích."));
+    }
+
+    /// <summary>
+    /// In phích ra PDF: chọn biểu ghi theo danh sách hoặc theo bộ lọc, chọn loại phích và mẫu.
+    /// </summary>
+    [HttpPost("cards/print")]
+    [RequirePermission(PermissionCodes.CatalogCardPrint)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> PrintCards([FromBody] PrintCardsRequestDto request, CancellationToken ct)
+    {
+        var file = await Mediator.Send(new PrintCardsCommand(request), ct);
+
+        return File(file.Content, file.ContentType, file.FileName);
+    }
+
     /// <summary>
     /// Tùy chọn nhập đi kèm tệp trong một biểu mẫu multipart nên phải tự đọc từ chuỗi JSON.
     /// Cấu hình phải khớp với cấu hình chung của API, nhất là việc đọc enum theo tên.

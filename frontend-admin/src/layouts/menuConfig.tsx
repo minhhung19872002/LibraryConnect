@@ -137,6 +137,7 @@ export const menuTree: MenuNode[] = [
       PERMISSIONS.cataloging.bibImport,
       PERMISSIONS.catalogList.customIndex,
       PERMISSIONS.cataloging.queueView,
+      PERMISSIONS.cataloging.cardPrint,
     ],
     children: [
       {
@@ -159,6 +160,13 @@ export const menuTree: MenuNode[] = [
         icon: <ImportOutlined />,
         path: '/bien-muc/nhap-tep',
         permissions: [PERMISSIONS.cataloging.bibImport],
+      },
+      {
+        key: 'cataloging-cards',
+        label: messages.menu.cards,
+        icon: <FileTextOutlined />,
+        path: '/bien-muc/phich',
+        permissions: [PERMISSIONS.cataloging.cardPrint],
       },
       {
         key: 'cataloging-custom-index',
