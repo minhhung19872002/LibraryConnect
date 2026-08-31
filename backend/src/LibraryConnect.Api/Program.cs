@@ -1,0 +1,333 @@
+using System.Text;
+using System.Text.Json.Serialization;
+using System.Threading.RateLimiting;
+using Hangfire;
+using HealthChecks.UI.Client;
+using LibraryConnect.Api.Middleware;
+using LibraryConnect.Api.Security;
+using LibraryConnect.Api.Swagger;
+using LibraryConnect.Application;
+using LibraryConnect.Application.Common.Interfaces;
+using LibraryConnect.Application.Common.Models;
+using LibraryConnect.Infrastructure;
+using LibraryConnect.Infrastructure.Configuration;
+using LibraryConnect.Infrastructure.Persistence;
+using LibraryConnect.Infrastructure.Persistence.Seeding;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.IdentityModel.Tokens;
+using Serilog;
+
+// The whole product speaks Vietnamese; without this the Windows console renders the log messages
+// as mojibake, which makes on-site troubleshooting needlessly hard.
+Console.OutputEncoding = System.Text.Encoding.UTF8;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// ---------------------------------------------------------------------------
+// Configuration: every setting is overridable by an LC_-prefixed environment
+// variable so a deployment needs no file edits (see .env.example).
+// ---------------------------------------------------------------------------
+builder.Configuration.AddEnvironmentVariables(prefix: "LC_");
+builder.Configuration["ConnectionStrings:Default"] = BuildConnectionString(builder.Configuration);
+
+builder.Host.UseSerilog((context, services, configuration) => configuration
+    .ReadFrom.Configuration(context.Configuration)
+    .ReadFrom.Services(services)
+    .Enrich.FromLogContext()
+    .Enrich.WithProperty("Application", "LibraryConnect.Api"));
+
+// ---------------------------------------------------------------------------
+// Services
+// ---------------------------------------------------------------------------
+builder.Services.AddApplication();
+builder.Services.AddInfrastructure(builder.Configuration);
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUser, CurrentUser>();
+
+builder.Services
+    .AddControllers(options =>
+    {
+        options.SuppressAsyncSuffixInActionNames = true;
+    })
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+    });
+
+// Model-binding failures must use the same envelope as everything else.
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var errors = context.ModelState
+            .Where(entry => entry.Value?.Errors.Count > 0)
+            .SelectMany(entry => entry.Value!.Errors.Select(error =>
+                new ApiError(entry.Key, string.IsNullOrWhiteSpace(error.ErrorMessage)
+                    ? "Giá trị không hợp lệ."
+                    : error.ErrorMessage)))
+            .ToList();
+
+        return new BadRequestObjectResult(ApiResponse.Fail("Dữ liệu không hợp lệ.", errors));
+    };
+});
+
+AddAuthentication(builder);
+AddCors(builder);
+AddRateLimiting(builder);
+AddHealthChecks(builder);
+builder.Services.AddSwaggerDocumentation();
+
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<BrotliCompressionProvider>();
+    options.Providers.Add<GzipCompressionProvider>();
+});
+
+var app = builder.Build();
+
+// ---------------------------------------------------------------------------
+// Pipeline
+// ---------------------------------------------------------------------------
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
+
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.UseMiddleware<SecurityHeadersMiddleware>();
+app.UseSerilogRequestLogging(options =>
+{
+    options.MessageTemplate = "{RequestMethod} {RequestPath} trả về {StatusCode} sau {Elapsed:0.0} ms";
+});
+
+app.UseResponseCompression();
+
+if (app.Environment.IsDevelopment() || builder.Configuration.GetValue("Swagger:Enabled", true))
+{
+    app.UseSwaggerDocumentation();
+}
+
+app.UseCors("LibraryConnect");
+app.UseRateLimiter();
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapControllers();
+
+app.UseHangfireDashboard("/hangfire", new DashboardOptions
+{
+    Authorization = new[] { new HangfireDashboardAuthorizationFilter() },
+    DashboardTitle = "LibraryConnect — Tác vụ nền",
+    IgnoreAntiforgeryToken = true
+});
+
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    Predicate = _ => false,
+    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+}).AllowAnonymous();
+
+app.MapHealthChecks("/health/ready", new HealthCheckOptions
+{
+    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+}).AllowAnonymous();
+
+await InitialiseDatabaseAsync(app);
+
+app.Run();
+
+// ---------------------------------------------------------------------------
+// Local functions
+// ---------------------------------------------------------------------------
+
+// Assembles the Npgsql connection string from the individual LC_DB_* variables, which is how the
+// docker-compose deployment is configured. An explicit ConnectionStrings:Default still wins.
+static string BuildConnectionString(IConfiguration configuration)
+{
+    var explicitValue = configuration.GetConnectionString("Default");
+    if (!string.IsNullOrWhiteSpace(explicitValue))
+    {
+        return explicitValue;
+    }
+
+    var host = configuration["DB_HOST"] ?? "localhost";
+    var port = configuration["DB_PORT"] ?? "5432";
+    var database = configuration["DB_NAME"] ?? "libraryconnect";
+    var user = configuration["DB_USER"] ?? "libraryconnect";
+    var password = configuration["DB_PASSWORD"] ?? "libraryconnect";
+
+    return $"Host={host};Port={port};Database={database};Username={user};Password={password};" +
+           "Include Error Detail=true;Timezone=Asia/Ho_Chi_Minh";
+}
+
+static void AddAuthentication(WebApplicationBuilder builder)
+{
+    var jwt = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
+
+    if (string.IsNullOrWhiteSpace(jwt.Secret) || jwt.Secret.Length < 32)
+    {
+        throw new InvalidOperationException(
+            "LC_JWT_SECRET chưa được cấu hình hoặc quá ngắn (yêu cầu tối thiểu 32 ký tự). " +
+            "Xem hướng dẫn trong .env.example.");
+    }
+
+    builder.Services
+        .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddJwtBearer(options =>
+        {
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = jwt.Issuer,
+                ValidAudience = jwt.Audience,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Secret)),
+                // Tokens are short lived; no slack is granted so a revoked session really expires.
+                ClockSkew = TimeSpan.Zero
+            };
+
+            options.Events = new JwtBearerEvents
+            {
+                OnMessageReceived = context =>
+                {
+                    // The Hangfire dashboard is a plain browser navigation and cannot set headers.
+                    if (string.IsNullOrEmpty(context.Token)
+                        && context.Request.Path.StartsWithSegments("/hangfire"))
+                    {
+                        context.Token = context.Request.Query["access_token"];
+                    }
+
+                    return Task.CompletedTask;
+                },
+                OnChallenge = async context =>
+                {
+                    context.HandleResponse();
+                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    context.Response.ContentType = "application/json; charset=utf-8";
+                    await context.Response.WriteAsJsonAsync(
+                        ApiResponse.Fail("Phiên đăng nhập không hợp lệ hoặc đã hết hạn."));
+                },
+                OnForbidden = async context =>
+                {
+                    context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                    context.Response.ContentType = "application/json; charset=utf-8";
+                    await context.Response.WriteAsJsonAsync(
+                        ApiResponse.Fail("Bạn không có quyền thực hiện chức năng này."));
+                }
+            };
+        });
+
+    builder.Services.AddAuthorization();
+}
+
+static void AddCors(WebApplicationBuilder builder)
+{
+    // Configurable so the mobile app and any extra front-end host can be allowed later without a
+    // code change (section 0.2).
+    var origins = (builder.Configuration["CORS_ORIGINS"] ?? "http://localhost:5173,http://localhost:5174")
+        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    builder.Services.AddCors(options => options.AddPolicy("LibraryConnect", policy =>
+    {
+        if (origins.Contains("*"))
+        {
+            policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+            return;
+        }
+
+        policy.WithOrigins(origins)
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials()
+            .WithExposedHeaders("Content-Disposition");
+    }));
+}
+
+static void AddRateLimiting(WebApplicationBuilder builder)
+{
+    builder.Services.AddRateLimiter(options =>
+    {
+        options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+        // Brute-force protection on the sign-in endpoints (section 6.4).
+        options.AddPolicy("login", context => RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
+
+        // Anonymous OPAC traffic gets a generous but bounded budget.
+        options.AddPolicy("public", context => RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 300,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
+
+        options.OnRejected = async (context, ct) =>
+        {
+            context.HttpContext.Response.ContentType = "application/json; charset=utf-8";
+            await context.HttpContext.Response.WriteAsJsonAsync(
+                ApiResponse.Fail("Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau ít phút."), ct);
+        };
+    });
+}
+
+static void AddHealthChecks(WebApplicationBuilder builder)
+{
+    var redis = builder.Configuration.GetSection(RedisOptions.SectionName)["ConnectionString"];
+
+    var checks = builder.Services.AddHealthChecks()
+        .AddNpgSql(
+            builder.Configuration.GetConnectionString("Default")!,
+            name: "postgresql",
+            tags: new[] { "ready" });
+
+    if (!string.IsNullOrWhiteSpace(redis))
+    {
+        checks.AddRedis(redis, name: "redis", tags: new[] { "ready" });
+    }
+}
+
+// Applies migrations and seeds the baseline data at start-up, so `docker compose up -d` is all an
+// operator has to run (section 7).
+static async Task InitialiseDatabaseAsync(WebApplication app)
+{
+    if (!app.Configuration.GetValue("Database:AutoMigrate", true))
+    {
+        return;
+    }
+
+    using var scope = app.Services.CreateScope();
+    var seeder = scope.ServiceProvider.GetRequiredService<DatabaseSeeder>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+    try
+    {
+        await seeder.MigrateAsync();
+        await seeder.SeedAsync();
+    }
+    catch (Exception ex)
+    {
+        logger.LogCritical(ex, "Không khởi tạo được cơ sở dữ liệu");
+        throw;
+    }
+}
+
+/// <summary>Exposed so the integration test project can spin the API up with WebApplicationFactory.</summary>
+public partial class Program { }

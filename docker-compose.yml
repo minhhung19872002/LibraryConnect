@@ -1,0 +1,156 @@
+# =============================================================================
+# LibraryConnect — môi trường phát triển / demo
+# Khởi động toàn bộ hệ thống:  docker compose up -d
+# Xem log API:                 docker compose logs -f api
+# =============================================================================
+
+name: libraryconnect
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: lc-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-libraryconnect}
+      POSTGRES_USER: ${POSTGRES_USER:-libraryconnect}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-libraryconnect}
+      # Tiếng Việt: UTF8 + collation ICU vi-VN để sắp xếp đúng thứ tự bảng chữ cái.
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale-provider=icu --icu-locale=vi-VN"
+      TZ: ${TZ:-Asia/Ho_Chi_Minh}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./deploy/postgres/init:/docker-entrypoint-initdb.d:ro
+      - backup-data:/var/lib/libraryconnect/backups
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-libraryconnect} -d ${POSTGRES_DB:-libraryconnect}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks: [libraryconnect]
+
+  redis:
+    image: redis:7-alpine
+    container_name: lc-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--save", "60", "1"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    networks: [libraryconnect]
+
+  minio:
+    image: minio/minio:RELEASE.2024-10-13T13-34-11Z
+    container_name: lc-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-libraryconnect}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-libraryconnect}
+    ports:
+      - "${MINIO_API_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks: [libraryconnect]
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: libraryconnect/api:latest
+    container_name: lc-api
+    restart: unless-stopped
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      minio: { condition: service_healthy }
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+      ASPNETCORE_URLS: http://+:8080
+      TZ: ${TZ:-Asia/Ho_Chi_Minh}
+      LC_DB_HOST: postgres
+      LC_DB_PORT: 5432
+      LC_DB_NAME: ${POSTGRES_DB:-libraryconnect}
+      LC_DB_USER: ${POSTGRES_USER:-libraryconnect}
+      LC_DB_PASSWORD: ${POSTGRES_PASSWORD:-libraryconnect}
+      LC_Redis__ConnectionString: redis:6379
+      LC_Minio__Endpoint: minio:9000
+      LC_Minio__AccessKey: ${MINIO_ROOT_USER:-libraryconnect}
+      LC_Minio__SecretKey: ${MINIO_ROOT_PASSWORD:-libraryconnect}
+      LC_Jwt__Secret: ${LC_Jwt__Secret:?Thiếu LC_Jwt__Secret - xem .env.example}
+      LC_CORS_ORIGINS: ${LC_CORS_ORIGINS:-http://localhost,http://localhost:5173,http://localhost:5174}
+      LC_Swagger__Enabled: ${LC_Swagger__Enabled:-true}
+    ports:
+      - "${API_PORT:-8080}:8080"
+    volumes:
+      - backup-data:/var/lib/libraryconnect/backups
+      - api-logs:/app/logs
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8080/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    networks: [libraryconnect]
+
+  admin:
+    build:
+      context: ./frontend-admin
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api}
+    image: libraryconnect/admin:latest
+    container_name: lc-admin
+    restart: unless-stopped
+    depends_on: [api]
+    networks: [libraryconnect]
+
+  opac:
+    build:
+      context: ./frontend-opac
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api}
+    image: libraryconnect/opac:latest
+    container_name: lc-opac
+    restart: unless-stopped
+    depends_on: [api]
+    networks: [libraryconnect]
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: lc-nginx
+    restart: unless-stopped
+    depends_on: [api, admin, opac]
+    ports:
+      - "${HTTP_PORT:-80}:80"
+    volumes:
+      - ./deploy/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks: [libraryconnect]
+
+volumes:
+  postgres-data:
+  redis-data:
+  minio-data:
+  backup-data:
+  api-logs:
+
+networks:
+  libraryconnect:
+    driver: bridge

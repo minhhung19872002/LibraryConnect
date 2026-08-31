@@ -1,0 +1,128 @@
+/**
+ * Every user-facing string of the admin SPA. Section 11 requires them to be centralised here rather
+ * than scattered through the components, so wording can be reviewed and adjusted in one place.
+ */
+export const messages = {
+  app: {
+    productName: 'LibraryConnect',
+    adminTitle: 'Quản trị thư viện',
+    poweredBy: 'Powered by LibraryConnect',
+  },
+
+  actions: {
+    create: 'Thêm mới',
+    edit: 'Sửa',
+    delete: 'Xóa',
+    save: 'Lưu',
+    saveAndNew: 'Lưu và thêm tiếp',
+    cancel: 'Hủy',
+    close: 'Đóng',
+    search: 'Tìm kiếm',
+    reset: 'Đặt lại',
+    refresh: 'Tải lại',
+    exportExcel: 'Xuất Excel',
+    exportPdf: 'Xuất PDF',
+    print: 'In',
+    import: 'Nhập dữ liệu',
+    approve: 'Duyệt',
+    reject: 'Từ chối',
+    view: 'Xem chi tiết',
+    back: 'Quay lại',
+    confirm: 'Xác nhận',
+    selectAll: 'Chọn tất cả',
+    deselectAll: 'Bỏ chọn',
+  },
+
+  auth: {
+    loginTitle: 'Đăng nhập hệ thống',
+    loginSubtitle: 'Dành cho cán bộ thư viện',
+    username: 'Tên đăng nhập',
+    usernamePlaceholder: 'Nhập tên đăng nhập',
+    usernameRequired: 'Vui lòng nhập tên đăng nhập',
+    password: 'Mật khẩu',
+    passwordPlaceholder: 'Nhập mật khẩu',
+    passwordRequired: 'Vui lòng nhập mật khẩu',
+    rememberMe: 'Ghi nhớ đăng nhập',
+    login: 'Đăng nhập',
+    logout: 'Đăng xuất',
+    loginSuccess: 'Đăng nhập thành công',
+    sessionExpired: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+    changePassword: 'Đổi mật khẩu',
+    currentPassword: 'Mật khẩu hiện tại',
+    newPassword: 'Mật khẩu mới',
+    confirmPassword: 'Xác nhận mật khẩu mới',
+    confirmMismatch: 'Xác nhận mật khẩu không khớp',
+    changePasswordSuccess: 'Đổi mật khẩu thành công. Vui lòng đăng nhập lại.',
+    mustChangePassword:
+      'Đây là lần đăng nhập đầu tiên. Vui lòng đổi mật khẩu trước khi sử dụng hệ thống.',
+    profile: 'Thông tin tài khoản',
+  },
+
+  menu: {
+    dashboard: 'Tổng quan',
+    system: 'Quản trị hệ thống',
+    userGroups: 'Nhóm người dùng',
+    users: 'Người dùng',
+    parameters: 'Tham số hệ thống',
+    auditLogs: 'Nhật ký hệ thống',
+    backups: 'Sao lưu cơ sở dữ liệu',
+    catalogs: 'Danh mục',
+    cataloging: 'Biên mục',
+    acquisition: 'Bổ sung',
+    serials: 'Ấn phẩm định kỳ',
+    digital: 'Tài liệu số',
+    readers: 'Bạn đọc',
+    circulation: 'Lưu thông',
+    cms: 'Quản trị nội dung',
+    courses: 'Tài liệu môn học',
+    interlibrary: 'Liên thư viện',
+    reports: 'Báo cáo thống kê',
+  },
+
+  table: {
+    total: (count: number) => `Tổng cộng ${count.toLocaleString('vi-VN')} bản ghi`,
+    empty: 'Không có dữ liệu',
+    selected: (count: number) => `Đã chọn ${count} dòng`,
+    rowsPerPage: 'Số dòng mỗi trang',
+    loading: 'Đang tải dữ liệu...',
+  },
+
+  confirm: {
+    deleteTitle: 'Xác nhận xóa',
+    deleteContent: 'Bạn có chắc chắn muốn xóa bản ghi này? Thao tác được ghi vào nhật ký hệ thống.',
+    deleteMany: (count: number) => `Bạn có chắc chắn muốn xóa ${count} bản ghi đã chọn?`,
+    yes: 'Đồng ý',
+    no: 'Không',
+  },
+
+  notify: {
+    createSuccess: 'Thêm mới thành công',
+    updateSuccess: 'Cập nhật thành công',
+    deleteSuccess: 'Xóa thành công',
+    saveSuccess: 'Lưu thành công',
+  },
+
+  errors: {
+    network: 'Không kết nối được máy chủ. Vui lòng kiểm tra đường truyền.',
+    unexpected: 'Đã xảy ra lỗi. Vui lòng thử lại hoặc liên hệ quản trị viên.',
+    forbidden: 'Bạn không có quyền thực hiện chức năng này.',
+    notFound: 'Không tìm thấy dữ liệu yêu cầu.',
+    pageNotFound: 'Trang bạn truy cập không tồn tại.',
+    forbiddenPageTitle: 'Không đủ quyền truy cập',
+    forbiddenPageContent:
+      'Tài khoản của bạn không được cấp quyền vào chức năng này. Vui lòng liên hệ quản trị viên.',
+    backToHome: 'Về trang chủ',
+  },
+
+  dashboard: {
+    welcome: (name: string) => `Xin chào, ${name}`,
+    subtitle: 'Tổng quan hoạt động của thư viện',
+    permissionCount: 'Số quyền được cấp',
+    groupCount: 'Nhóm người dùng',
+    scopeCount: 'Phạm vi dữ liệu',
+    yourGroups: 'Nhóm của bạn',
+    noScope: 'Không giới hạn phạm vi dữ liệu',
+    phaseNotice:
+      'Hệ thống đang trong quá trình bàn giao theo từng phân hệ. Các chức năng đã hoàn thiện hiển thị đầy đủ trong menu bên trái.',
+  },
+} as const;

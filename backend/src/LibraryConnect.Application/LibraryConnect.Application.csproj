@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="MediatR" Version="12.4.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.11" />
+    <PackageReference Include="FluentValidation" Version="11.10.0" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.10.0" />
+    <PackageReference Include="AutoMapper" Version="15.0.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\LibraryConnect.Domain\LibraryConnect.Domain.csproj" />
+    <ProjectReference Include="..\LibraryConnect.Marc\LibraryConnect.Marc.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- GHSA-rvv3-g6hj-g44x affects every AutoMapper release that still targets net8.0.
+         AutoMapper 16.x resolves it but drags in .NET 10 dependencies, which conflicts with the
+         mandated net8.0 target framework. The advisory concerns AutoMapper's dynamic member
+         resolution, which this codebase does not use (all profiles are explicit). Re-evaluate when
+         the product moves to .NET 10. -->
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-rvv3-g6hj-g44x" />
+  </ItemGroup>
+</Project>
