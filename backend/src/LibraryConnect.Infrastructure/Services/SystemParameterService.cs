@@ -181,6 +181,8 @@ public static class ParameterKeys
     public const string MarcDefaultLanguage = "CATALOG.DEFAULT_LANGUAGE";
     public const string MarcDefaultCountry = "CATALOG.DEFAULT_COUNTRY";
     public const string MarcControlNumberPrefix = "CATALOG.CONTROL_NUMBER_PREFIX";
+    /// <summary>Mẫu sinh ký hiệu xếp giá, xem CallNumberBuilder để biết các ô thay thế.</summary>
+    public const string CallNumberPattern = "CATALOG.CALL_NUMBER_PATTERN";
 
     public const string BarcodePrefix = "CODE.BARCODE_PREFIX";
     public const string BarcodeLength = "CODE.BARCODE_LENGTH";

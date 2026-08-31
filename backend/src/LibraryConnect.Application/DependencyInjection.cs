@@ -29,6 +29,8 @@ public static class DependencyInjection
         services.AddScoped<IPasswordPolicyProvider, PasswordPolicyProvider>();
         services.AddScoped<Features.Catalogs.ICatalogUsageService, Features.Catalogs.CatalogUsageService>();
         services.AddScoped<Features.Marc.IMarcRuleProvider, Features.Marc.MarcRuleProvider>();
+        services.AddScoped<Features.Cataloging.IBibAuthorityLinker, Features.Cataloging.BibAuthorityLinker>();
+        services.AddScoped<Features.Cataloging.IBibRecordWriter, Features.Cataloging.BibRecordWriter>();
 
         return services;
     }

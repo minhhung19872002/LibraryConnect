@@ -37,6 +37,9 @@ public partial class DatabaseSeeder
             "Mã MARC điền vào 008/15-17 và 044$a.", ParameterDataType.Text, "vm"),
         new(ParameterKeys.MarcControlNumberPrefix, "CATALOG", "Cấu hình biên mục", "Tiền tố số kiểm soát (001)",
             null, ParameterDataType.Text, "LC"),
+        new(ParameterKeys.CallNumberPattern, "CATALOG", "Cấu hình biên mục", "Quy tắc sinh ký hiệu xếp giá",
+            "Các ô thay thế: {DDC}, {DDC:3}, {AUTHOR:3}, {AUTHOR_LAST:3}, {TITLE:3}, {YEAR}, {COPY}. " +
+            "Ví dụ \"{DDC} {AUTHOR:3}\" cho ra 005.74 NGU.", ParameterDataType.Text, "{DDC} {AUTHOR:3}"),
 
         // ---- Quy tắc sinh mã ----
         new(ParameterKeys.BarcodePrefix, "CODE", "Quy tắc sinh mã", "Tiền tố mã vạch ĐKCB", null, ParameterDataType.Text, "LC"),

@@ -177,6 +177,14 @@ public class LibraryConnectDbContext : DbContext, IApplicationDbContext
 
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(LibraryConnectDbContext).Assembly);
 
+        // Lets a LINQ query call bib.vn_unaccent, so accent-insensitive searching runs in the
+        // database against the pg_trgm indexes rather than by loading rows into memory.
+        modelBuilder
+            .HasDbFunction(typeof(Application.Common.Extensions.DatabaseFunctions)
+                .GetMethod(nameof(Application.Common.Extensions.DatabaseFunctions.Unaccent), new[] { typeof(string) })!)
+            .HasName("vn_unaccent")
+            .HasSchema("bib");
+
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
             var clrType = entityType.ClrType;

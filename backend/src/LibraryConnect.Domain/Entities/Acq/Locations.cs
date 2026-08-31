@@ -26,7 +26,10 @@ public class Warehouse : CatalogEntity
     public WarehouseType Type { get; set; } = WarehouseType.OpenStack;
     public int? Capacity { get; set; }
     public string? Location { get; set; }
-    /// <summary>Call-number pattern, e.g. "{ddc}/{author3}-{copy}". Configurable per warehouse.</summary>
+    /// <summary>
+    /// Quy tắc ký hiệu xếp giá riêng của kho, ví dụ <c>{DDC} {AUTHOR:3}</c>. Bỏ trống thì dùng quy
+    /// tắc chung ở tham số CATALOG.CALL_NUMBER_PATTERN. Xem CallNumberBuilder để biết các ô thay thế.
+    /// </summary>
     public string? CallNumberRule { get; set; }
     /// <summary>Set while a stocktake is running: circulation is blocked for this warehouse.</summary>
     public bool IsClosedForInventory { get; set; }

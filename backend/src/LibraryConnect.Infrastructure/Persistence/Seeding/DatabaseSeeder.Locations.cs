@@ -73,8 +73,10 @@ public partial class DatabaseSeeder
         IsActive = true,
         // A new stack is open for circulation; a stocktake is what closes it later.
         IsClosedForInventory = false,
-        // Ký hiệu xếp giá mặc định: chỉ số DDC, ba chữ cái đầu của tên tác giả, số bản.
-        CallNumberRule = "{ddc}/{author3}-{copy}",
+        // No per-warehouse rule: the library-wide pattern in CATALOG.CALL_NUMBER_PATTERN governs.
+        // This field exists for the stack that needs an exception, and a seeded value here would
+        // quietly override the setting the librarian actually edits.
+        CallNumberRule = null,
         CreatedAt = _clock.Now
     };
 }

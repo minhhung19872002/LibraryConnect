@@ -50,6 +50,14 @@ public class BibRecord : BaseEntity
     public string? Abstract { get; set; }
     public string? CoverImageUrl { get; set; }
 
+    /// <summary>
+    /// Lý do xóa, bắt buộc nhập khi xóa biểu ghi (II.3).
+    ///
+    /// Soft deletion keeps the row forever, so the reason has to live beside it: a librarian looking
+    /// at a withdrawn record months later needs to know why it went, not just that it did.
+    /// </summary>
+    public string? DeleteReason { get; set; }
+
     /// <summary>Number of physical copies, denormalised for OPAC result lists.</summary>
     public int ItemCount { get; set; }
     public int AvailableItemCount { get; set; }
