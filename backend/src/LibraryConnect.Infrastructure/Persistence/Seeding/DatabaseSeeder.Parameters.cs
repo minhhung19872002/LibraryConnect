@@ -67,6 +67,12 @@ public partial class DatabaseSeeder
         new("CODE.INVENTORY_PREFIX", "CODE", "Quy tắc sinh mã", "Tiền tố mã kỳ kiểm kê", null, ParameterDataType.Text, "KK"),
         new("CODE.HANDOVER_PREFIX", "CODE", "Quy tắc sinh mã", "Tiền tố mã biên bản bàn giao", null, ParameterDataType.Text, "BB"),
         new("CODE.HANDOVER_LENGTH", "CODE", "Quy tắc sinh mã", "Độ dài mã biên bản bàn giao", null, ParameterDataType.Number, "5"),
+        new("CODE.TRANSFER_PREFIX", "CODE", "Quy tắc sinh mã", "Tiền tố số phiếu chuyển kho", null, ParameterDataType.Text, "PCK"),
+        new("CODE.TRANSFER_LENGTH", "CODE", "Quy tắc sinh mã", "Độ dài số phiếu chuyển kho", null, ParameterDataType.Number, "5"),
+        new("CODE.TRANSFER_RESET_YEARLY", "CODE", "Quy tắc sinh mã", "Đánh lại số phiếu chuyển kho theo năm", null, ParameterDataType.Boolean, "true"),
+        new("CODE.DISPOSAL_PREFIX", "CODE", "Quy tắc sinh mã", "Tiền tố số quyết định thanh lý", null, ParameterDataType.Text, "QĐTL"),
+        new("CODE.DISPOSAL_LENGTH", "CODE", "Quy tắc sinh mã", "Độ dài số quyết định thanh lý", null, ParameterDataType.Number, "4"),
+        new("CODE.DISPOSAL_RESET_YEARLY", "CODE", "Quy tắc sinh mã", "Đánh lại số quyết định thanh lý theo năm", null, ParameterDataType.Boolean, "true"),
         new("CODE.BINDING_PREFIX", "CODE", "Quy tắc sinh mã", "Tiền tố mã tập đóng", null, ParameterDataType.Text, "DT"),
         new("CODE.BINDING_LENGTH", "CODE", "Quy tắc sinh mã", "Độ dài mã tập đóng", null, ParameterDataType.Number, "5"),
         new("CODE.CLAIM_PREFIX", "CODE", "Quy tắc sinh mã", "Tiền tố mã khiếu nại", null, ParameterDataType.Text, "KN"),
@@ -83,6 +89,17 @@ public partial class DatabaseSeeder
         new(PasswordPolicyKeys.MaxFailedLogin, "SECURITY", "Chính sách mật khẩu", "Khóa tài khoản sau số lần đăng nhập sai",
             "Đặt 0 để không tự khóa.", ParameterDataType.Number, "5"),
         new(PasswordPolicyKeys.LockMinutes, "SECURITY", "Chính sách mật khẩu", "Thời gian khóa tài khoản (phút)", null, ParameterDataType.Number, "15"),
+
+        // ---- Bổ sung ----
+        new("ACQ.APPROVAL_LEVELS", "ACQ", "Cấu hình bổ sung", "Số cấp duyệt yêu cầu đặt mua",
+            "Yêu cầu phải đi qua đủ số cấp này mới thành Đã duyệt. Đặt 1 nếu chỉ một người duyệt.",
+            ParameterDataType.Number, "1"),
+        new("ACQ.DUPLICATE_WARNING", "ACQ", "Cấu hình bổ sung", "Cảnh báo khi tài liệu đã có trong thư viện",
+            "Khi bật, form đề nghị mua tự tra ISBN và nhan đề rồi báo nếu thư viện đã có.",
+            ParameterDataType.Boolean, "true"),
+        new("ACQ.ORDER_OVERDUE_DAYS", "ACQ", "Cấu hình bổ sung", "Số ngày quá hạn giao thì cảnh báo",
+            "Đơn đặt quá ngày dự kiến giao quá số ngày này sẽ hiện cảnh báo trên danh sách đơn.",
+            ParameterDataType.Number, "0"),
 
         // ---- Lưu thông ----
         new(ParameterKeys.CirculationDefaultLoanDays, "CIRCULATION", "Cấu hình lưu thông", "Số ngày mượn mặc định",

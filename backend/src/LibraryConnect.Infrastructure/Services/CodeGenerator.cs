@@ -116,6 +116,8 @@ public static class SequenceKeys
     public const string PurchaseRequest = "REQUEST";
     public const string PurchaseOrder = "ORDER";
     public const string Handover = "HANDOVER";
+    public const string Transfer = "TRANSFER";
+    public const string Disposal = "DISPOSAL";
     public const string Loan = "LOAN";
     public const string Fine = "FINE";
     public const string ControlNumber = "CONTROL";

@@ -32,6 +32,15 @@ public class ShelfConfiguration : CatalogEntityConfiguration<Shelf>
         base.Configure(builder);
         builder.HasOne(x => x.Warehouse).WithMany(w => w.Shelves)
             .HasForeignKey(x => x.WarehouseId).OnDelete(DeleteBehavior.Restrict);
+
+        // Mã giá chỉ duy nhất trong phạm vi một kho. Kho mở và kho đóng cùng có giá "A1" là cách
+        // đánh giá quen thuộc của thư viện, nên ràng buộc duy nhất toàn hệ thống mà lớp danh mục
+        // dựng sẵn phải được thay bằng ràng buộc theo kho.
+        builder.Metadata.RemoveIndex(new[] { builder.Metadata.FindProperty(nameof(Shelf.Code))! });
+
+        builder.HasIndex(x => new { x.WarehouseId, x.Code }).IsUnique()
+            .HasFilter("deleted_at IS NULL")
+            .HasDatabaseName("ux_shelf_warehouse_code");
     }
 }
 
@@ -159,7 +168,9 @@ public class ItemMovementConfiguration : IEntityTypeConfiguration<ItemMovement>
         builder.Property(x => x.Reason).HasMaxLength(500);
         builder.Property(x => x.DecisionNo).HasMaxLength(100);
         builder.HasOne(x => x.Item).WithMany().HasForeignKey(x => x.ItemId).OnDelete(DeleteBehavior.Cascade);
+        builder.Property(x => x.BatchCode).HasMaxLength(50);
         builder.HasIndex(x => new { x.ItemId, x.MovementDate }).HasDatabaseName("ix_item_movements_item");
+        builder.HasIndex(x => x.BatchCode).HasDatabaseName("ix_item_movements_batch");
     }
 }
 

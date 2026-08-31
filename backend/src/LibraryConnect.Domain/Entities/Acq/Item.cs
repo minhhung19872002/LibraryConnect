@@ -59,6 +59,11 @@ public class Item : BaseEntity
 /// <summary>Chuyển kho — full movement history of a copy (III.5).</summary>
 public class ItemMovement : BaseEntity
 {
+    /// <summary>
+    /// Số phiếu chuyển kho. Mọi dòng của cùng một lần chuyển hàng loạt mang cùng một số, nhờ đó in
+    /// lại được đúng phiếu đã ký chứ không phải ghép lại từ ngày giờ.
+    /// </summary>
+    public string BatchCode { get; set; } = string.Empty;
     public Guid ItemId { get; set; }
     public Item? Item { get; set; }
     public Guid? FromWarehouseId { get; set; }

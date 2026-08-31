@@ -13,5 +13,6 @@
     <ProjectReference Include="..\..\src\LibraryConnect.Marc\LibraryConnect.Marc.csproj" />
     <ProjectReference Include="..\..\src\LibraryConnect.Application\LibraryConnect.Application.csproj" />
     <ProjectReference Include="..\..\src\LibraryConnect.Infrastructure\LibraryConnect.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\LibraryConnect.Reporting\LibraryConnect.Reporting.csproj" />
   </ItemGroup>
 </Project>

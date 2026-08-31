@@ -16,6 +16,8 @@ public static class DependencyInjection
         services.AddSingleton<IExcelService, ExcelService>();
         services.AddSingleton<IPdfReportService, PdfReportService>();
         services.AddSingleton<ICardPrintService, CardPrintService>();
+        services.AddSingleton<ILabelPrintService, LabelPrintService>();
+        services.AddSingleton<IFormPrintService, FormPrintService>();
 
         return services;
     }

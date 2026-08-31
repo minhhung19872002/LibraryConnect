@@ -38,6 +38,42 @@ public class ParametersController : ApiControllerBase
             : $"Đã cập nhật {changed} tham số."));
     }
 
+    /// <summary>
+    /// Tải tệp lên cho một tham số kiểu Tệp, ví dụ logo thư viện in trên các biểu mẫu.
+    /// </summary>
+    [HttpPost("{key}/file")]
+    [RequirePermission(PermissionCodes.SystemParameterUpdate)]
+    [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+    [RequestSizeLimit(4 * 1024 * 1024)]
+    public async Task<ActionResult<ApiResponse<string>>> UploadFile(
+        string key, IFormFile file, CancellationToken ct)
+    {
+        if (file is null || file.Length == 0)
+        {
+            return BadRequest(ApiResponse.Fail("Chưa chọn tệp."));
+        }
+
+        using var buffer = new MemoryStream();
+        await file.CopyToAsync(buffer, ct);
+
+        var objectName = await Mediator.Send(
+            new UploadParameterFileCommand(key, file.FileName, file.ContentType, buffer.ToArray()), ct);
+
+        return Ok(Success(objectName, "Đã tải tệp lên."));
+    }
+
+    /// <summary>Tệp hiện tại của một tham số kiểu Tệp.</summary>
+    [HttpGet("{key}/file")]
+    [RequirePermission(PermissionCodes.SystemParameterView)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetFile(string key, CancellationToken ct)
+    {
+        var file = await Mediator.Send(new GetParameterFileQuery(key), ct);
+        return File(file.Content, file.ContentType);
+    }
+
     /// <summary>Lịch sử thay đổi tham số: ai đổi, từ giá trị nào sang giá trị nào, lúc nào.</summary>
     [HttpGet("history")]
     [RequirePermission(PermissionCodes.SystemParameterView)]
