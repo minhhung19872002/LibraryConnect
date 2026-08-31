@@ -448,6 +448,33 @@ public class DigitalTests
     // -----------------------------------------------------------------------------------------
 
     [Fact]
+    public async Task Ung_dung_khach_lay_danh_sach_tai_lieu_so_bang_mot_lenh_GET()
+    {
+        var client = await ClientAsync();
+        var marker = Unique();
+
+        var detail = await UploadAndWaitAsync(client, $"Bài giảng mở {marker}",
+            new Dictionary<string, string> { ["accessLevel"] = "Public" });
+
+        var (readerClient, _) = await NewReaderClientAsync(client);
+
+        // Ứng dụng di động dựng màn hình danh sách chỉ bằng địa chỉ, không gửi thân yêu cầu — đây là
+        // đúng hợp đồng ghi ở mục XI.4 của đặc tả.
+        var page = await ReadAsync<PagedResult<DigitalDocumentRowDto>>(
+            await readerClient.GetAsync($"/api/reader/digital?keyword={marker}&page=1&pageSize=10"));
+
+        page.Items.Should().ContainSingle(row => row.Id == detail.Document.Id);
+        page.Page.Should().Be(1);
+
+        // Bỏ trống trang và cỡ trang thì vẫn phải trả về trang đầu chứ không phải danh sách rỗng.
+        var withoutPaging = await ReadAsync<PagedResult<DigitalDocumentRowDto>>(
+            await readerClient.GetAsync($"/api/reader/digital?keyword={marker}"));
+
+        withoutPaging.Items.Should().NotBeEmpty();
+        withoutPaging.PageSize.Should().BeGreaterThan(0);
+    }
+
+    [Fact]
     public async Task Ban_doc_xin_doc_tai_lieu_han_che_va_can_bo_duyet()
     {
         var client = await ClientAsync();

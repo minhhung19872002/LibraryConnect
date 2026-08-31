@@ -17,6 +17,7 @@ import {
 import { DeleteOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import { opacApi } from '@/api/opac';
 import { SCOPE_OPTIONS } from '@/components/searchScopes';
+import { describeResultCount } from '@/labels';
 import { ResultList } from '@/components/ResultList';
 import type {
   Connector,
@@ -223,7 +224,7 @@ export function AdvancedSearchPage() {
       {search.data ? (
         <Card
           style={{ marginTop: 24 }}
-          title={`Tìm thấy ${search.data.totalCount.toLocaleString('vi-VN')} tài liệu`}
+          title={describeResultCount(search.data.totalCount, search.data.totalCountCapped)}
         >
           <ResultList items={search.data.items} loading={search.isPending} />
 

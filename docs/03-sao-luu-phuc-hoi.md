@@ -83,6 +83,34 @@ docker compose cp api:/var/lib/libraryconnect/backups ./backup-copy
 Khuyến nghị: đồng bộ thư mục này sang một máy chủ hoặc thiết bị lưu trữ khác mỗi ngày, và giữ ít
 nhất một bản ở vị trí vật lý khác với máy chủ chính.
 
+### 4.1. Script sao lưu ra ngoài
+
+Kèm theo mã nguồn có sẵn một script chạy từ máy chủ, dùng khi cần chủ động sao lưu ngoài giờ hoặc khi
+muốn đưa bản sao ra ổ cứng rời, ổ mạng:
+
+```bash
+./deploy/scripts/backup.sh                  # lưu vào ./backups
+./deploy/scripts/backup.sh /mnt/nas/thuvien # lưu vào thư mục chỉ định
+```
+
+Mỗi lần chạy sinh ra bốn tệp:
+
+| Tệp | Nội dung |
+|---|---|
+| `libraryconnect-db-<thời-điểm>.dump` | Cơ sở dữ liệu, định dạng `pg_restore` đọc được |
+| `libraryconnect-db-<thời-điểm>.dump.sha256` | Mã kiểm tra để đối chiếu khi phục hồi |
+| `libraryconnect-files-<thời-điểm>.tar.gz` | Kho tệp tài liệu số |
+| `libraryconnect-files-<thời-điểm>.tar.gz.sha256` | Mã kiểm tra tương ứng |
+
+Đặt vào `crontab` của máy chủ để chạy hằng đêm:
+
+```cron
+30 2 * * * cd /opt/libraryconnect && ./deploy/scripts/backup.sh /mnt/nas/thuvien >> /var/log/lc-backup.log 2>&1
+```
+
+Sao lưu bằng script và sao lưu bằng giao diện dùng chung định dạng, nên bản nào cũng phục hồi được
+bằng cả hai đường.
+
 ---
 
 ## 5. Phục hồi
@@ -135,6 +163,19 @@ docker compose start api
 
 Mã thoát `0` nghĩa là phục hồi thành công. Mã thoát khác `0` nghĩa là toàn bộ giao dịch đã được hoàn
 tác và cơ sở dữ liệu không thay đổi.
+
+### 6.1. Phục hồi từ bản sao lưu do script tạo ra
+
+```bash
+./deploy/scripts/restore.sh backups/libraryconnect-db-20260901-023000.dump
+```
+
+Script làm đủ các bước theo đúng thứ tự: đối chiếu mã kiểm tra của tệp, hỏi lại một lần bằng cách bắt
+gõ đúng chữ `PHUC-HOI`, dừng dịch vụ API, ngắt các kết nối còn sót, chạy `pg_restore`, phục hồi kho
+tệp tài liệu số nếu có, bật lại API rồi chờ tới khi hệ thống trả lời được.
+
+Tệp kho tệp đi kèm được tự tìm theo dấu thời gian trong tên; muốn chỉ định tay thì truyền thêm tham
+số thứ hai.
 
 ---
 

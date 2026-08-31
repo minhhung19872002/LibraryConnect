@@ -15,6 +15,16 @@ namespace LibraryConnect.Application.Features.Opac;
 public static class OpacQueryBuilder
 {
     /// <summary>
+    /// Trần cho phép đếm và cho bộ đếm bộ lọc của trang tra cứu.
+    ///
+    /// Vượt ngưỡng này thì giao diện ghi "hơn 10.000 kết quả" thay vì một con số chính xác. Đếm
+    /// chính xác buộc cơ sở dữ liệu đọc hết mọi dòng khớp điều kiện: trên kho 500.000 biểu ghi, một
+    /// câu hỏi rộng như "giáo trình" khớp hơn 60.000 dòng và riêng phép đếm ấy đã vượt một giây —
+    /// ngưỡng mà mục 6.3 đặt ra cho cả lượt tra cứu.
+    /// </summary>
+    public const int CountLimit = 10_000;
+
+    /// <summary>
     /// Chỉ biểu ghi đã xuất bản mới ra trang tra cứu.
     ///
     /// Biểu ghi nháp, biểu ghi đang nằm trong hàng đợi biên mục và biểu ghi mới thu hoạch về đều
@@ -44,9 +54,11 @@ public static class OpacQueryBuilder
                 || DatabaseFunctions.Unaccent(bib.Subtitle ?? string.Empty).Contains(keyword)
                 || DatabaseFunctions.Unaccent(bib.UniformTitle ?? string.Empty).Contains(keyword),
 
+            // Chỉ hỏi qua bảng liên kết chứ không kèm điều kiện trên cột tác giả chính: tác giả
+            // chính luôn được ghi vào bảng liên kết cùng lúc với biểu ghi, nên hai điều kiện cho
+            // cùng một kết quả — mà nối chúng bằng HOẶC thì PostgreSQL bỏ chỉ mục và quét cả kho.
             OpacSearchScope.Author => bib =>
-                DatabaseFunctions.Unaccent(bib.AuthorMain ?? string.Empty).Contains(keyword)
-                || bib.Authors.Any(link =>
+                bib.Authors.Any(link =>
                     DatabaseFunctions.Unaccent(link.Author!.Name).Contains(keyword)),
 
             OpacSearchScope.Subject => bib =>
@@ -75,21 +87,12 @@ public static class OpacQueryBuilder
                     || item.RegisterNumber.ToLower().Contains(keyword)
                     || item.Barcode.ToLower().Contains(keyword)),
 
-            _ => bib =>
-                DatabaseFunctions.Unaccent(bib.Title).Contains(keyword)
-                || DatabaseFunctions.Unaccent(bib.Subtitle ?? string.Empty).Contains(keyword)
-                || DatabaseFunctions.Unaccent(bib.AuthorMain ?? string.Empty).Contains(keyword)
-                || DatabaseFunctions.Unaccent(bib.PublisherName ?? string.Empty).Contains(keyword)
-                || DatabaseFunctions.Unaccent(bib.Abstract ?? string.Empty).Contains(keyword)
-                || (bib.Isbn ?? string.Empty).Contains(keyword)
-                || (bib.Issn ?? string.Empty).Contains(keyword)
-                || bib.ControlNumber.ToLower().Contains(keyword)
-                || bib.Authors.Any(link =>
-                    DatabaseFunctions.Unaccent(link.Author!.Name).Contains(keyword))
-                || bib.Subjects.Any(link =>
-                    DatabaseFunctions.Unaccent(link.Subject!.Name).Contains(keyword))
-                || bib.Keywords.Any(link =>
-                    DatabaseFunctions.Unaccent(link.Keyword!.Name).Contains(keyword))
+            // Phạm vi "tất cả" soi đúng những chỗ liệt kê ở chú thích của cột SearchAll: nhan đề,
+            // nhan đề khác, tác giả chính và tác giả bổ sung, chủ đề, từ khóa, nhà xuất bản, ISBN,
+            // ISSN, số kiểm soát và tóm tắt. Cơ sở dữ liệu đã gộp sẵn tất cả vào một cột có chỉ mục,
+            // nên ở đây chỉ còn một điều kiện — viết tách ra thành mười một điều kiện HOẶC thì mỗi
+            // lượt tra cứu phải quét cả kho.
+            _ => bib => bib.SearchAll.Contains(keyword)
         };
     }
 

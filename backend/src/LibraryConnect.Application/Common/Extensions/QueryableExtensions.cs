@@ -29,6 +29,30 @@ public static class QueryableExtensions
     }
 
     /// <summary>
+    /// Bản phân trang dừng đếm khi đã đủ <paramref name="countLimit"/> dòng.
+    ///
+    /// Dành cho trang tra cứu công khai, nơi một câu hỏi rộng có thể khớp hàng trăm nghìn biểu ghi.
+    /// Đếm chính xác buộc cơ sở dữ liệu đọc hết chỗ ấy — đo trên kho 500.000 biểu ghi là hơn một
+    /// giây cho riêng phép đếm — trong khi bạn đọc chỉ cần biết "rất nhiều, hãy thu hẹp lại". Màn
+    /// hình quản trị vẫn dùng bản đếm đầy đủ ở trên, vì cán bộ đối chiếu số liệu theo con số ấy.
+    /// </summary>
+    public static async Task<PagedResult<T>> ToPagedResultAsync<T>(
+        this IQueryable<T> query, PagedRequest request, int countLimit, CancellationToken ct = default)
+    {
+        // Lấy dư một dòng để phân biệt "đúng bằng ngưỡng" với "vượt ngưỡng".
+        var counted = await query.Take(countLimit + 1).CountAsync(ct);
+        var capped = counted > countLimit;
+
+        var items = await query
+            .Skip(request.Skip)
+            .Take(request.PageSize)
+            .ToListAsync(ct);
+
+        return new PagedResult<T>(
+            items, capped ? countLimit : counted, request.Page, request.PageSize, capped);
+    }
+
+    /// <summary>
     /// Applies <c>SortBy</c> only when it names one of the allowed columns. An unknown or missing
     /// value falls back to <paramref name="defaultSort"/>, which keeps paging deterministic and
     /// stops a caller from ordering by an unindexed column.

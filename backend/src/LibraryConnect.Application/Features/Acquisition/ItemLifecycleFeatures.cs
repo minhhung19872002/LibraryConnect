@@ -755,7 +755,7 @@ public class DisposeItemsCommandHandler : IRequestHandler<DisposeItemsCommand, B
 /// Hai số này hiện trên mọi danh sách kết quả và trên OPAC nên được đếm lại chứ không cộng trừ dần:
 /// một con số lệch còn tệ hơn một truy vấn thêm, và truy vấn chỉ chạy khi kho thay đổi.
 /// </summary>
-internal static class BibItemCounter
+public static class BibItemCounter
 {
     public static async Task RefreshAsync(
         IApplicationDbContext db, IReadOnlyCollection<Guid> bibIds, CancellationToken ct)

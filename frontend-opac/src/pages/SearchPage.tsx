@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { App, Button, Card, Checkbox, Col, Pagination, Row, Select, Space, Tag } from 'antd';
 import { SaveOutlined } from '@ant-design/icons';
 import { opacApi, readerApi, type SearchParams } from '@/api/opac';
+import { describeResultCount } from '@/labels';
 import { ResultList } from '@/components/ResultList';
 import { SearchBox } from '@/components/SearchBox';
 import { SCOPE_OPTIONS } from '@/components/searchScopes';
@@ -175,7 +176,7 @@ export function SearchPage() {
           <Card
             title={
               results.data
-                ? `Tìm thấy ${results.data.totalCount.toLocaleString('vi-VN')} tài liệu`
+                ? describeResultCount(results.data.totalCount, results.data.totalCountCapped)
                 : 'Đang tra cứu…'
             }
             extra={

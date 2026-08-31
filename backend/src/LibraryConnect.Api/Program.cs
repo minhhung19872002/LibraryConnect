@@ -164,7 +164,17 @@ static string BuildConnectionString(IConfiguration configuration)
     var user = configuration["DB_USER"] ?? "libraryconnect";
     var password = configuration["DB_PASSWORD"] ?? "libraryconnect";
 
+    // Trần số kết nối tới cơ sở dữ liệu.
+    //
+    // Mặc định của Npgsql là 100 kết nối cho mỗi chuỗi kết nối, mà máy chủ tác vụ nền cũng mở kho
+    // kết nối riêng của nó. Khi 200 bạn đọc cùng tra cứu, hai kho ấy đòi nhiều hơn số kết nối
+    // PostgreSQL cho phép và máy chủ trả về lỗi "sorry, too many clients already" — người dùng thấy
+    // lỗi hệ thống chứ không phải chờ lâu. Chặn ở mức thấp hơn hạn của PostgreSQL thì lượt gọi thứ
+    // 61 xếp hàng đợi tới lượt, chậm hơn nhưng vẫn ra kết quả.
+    var poolSize = configuration.GetValue("DB_MAX_POOL_SIZE", 60);
+
     return $"Host={host};Port={port};Database={database};Username={user};Password={password};" +
+           $"Maximum Pool Size={poolSize};Connection Idle Lifetime=60;" +
            "Include Error Detail=true;Timezone=Asia/Ho_Chi_Minh";
 }
 
@@ -272,7 +282,8 @@ static void AddRateLimiting(WebApplicationBuilder builder)
             {
                 PermitLimit = loginLimit,
                 Window = TimeSpan.FromMinutes(1),
-                QueueLimit = 0
+                QueueLimit = 0,
+                AutoReplenishment = true
             }));
 
         // Anonymous OPAC traffic gets a generous but bounded budget.
@@ -282,11 +293,21 @@ static void AddRateLimiting(WebApplicationBuilder builder)
             {
                 PermitLimit = publicLimit,
                 Window = TimeSpan.FromMinutes(1),
-                QueueLimit = 0
+                QueueLimit = 0,
+                AutoReplenishment = true
             }));
 
         options.OnRejected = async (context, ct) =>
         {
+            // Nói rõ phải chờ bao lâu thay vì để máy khách tự đoán: ứng dụng di động và trang tra
+            // cứu đều thử lại tự động, mà thử lại ngay chỉ làm cửa sổ chặn dài thêm.
+            if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+            {
+                context.HttpContext.Response.Headers.RetryAfter =
+                    ((int)Math.Ceiling(retryAfter.TotalSeconds))
+                    .ToString(System.Globalization.CultureInfo.InvariantCulture);
+            }
+
             context.HttpContext.Response.ContentType = "application/json; charset=utf-8";
             await context.HttpContext.Response.WriteAsJsonAsync(
                 ApiResponse.Fail("Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau ít phút."), ct);

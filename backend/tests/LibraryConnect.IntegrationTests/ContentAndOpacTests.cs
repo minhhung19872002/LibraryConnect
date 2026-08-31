@@ -369,6 +369,25 @@ public class ContentAndOpacTests
     }
 
     [Fact]
+    public async Task So_ket_qua_bao_ro_la_dem_du_hay_dem_toi_nguong()
+    {
+        var staff = await StaffAsync();
+        var marker = Unique();
+        await NewBibAsync(staff, $"Tài liệu đếm đủ {marker}");
+
+        var anonymous = _factory.CreateClient();
+
+        var result = await ReadAsync<PagedResult<OpacResultDto>>(
+            await anonymous.GetAsync($"/api/search?keyword={Uri.EscapeDataString(marker)}"));
+
+        // Kho kiểm thử nhỏ nên phép đếm chạy hết; cờ phải tắt và con số phải là số thật. Trên kho
+        // lớn, máy chủ dừng đếm ở ngưỡng và bật cờ này để giao diện ghi "hơn N kết quả" — hành vi ấy
+        // được đo trên bộ dữ liệu 500.000 biểu ghi, xem kịch bản HN.1–HN.4.
+        result.TotalCountCapped.Should().BeFalse();
+        result.TotalCount.Should().Be(result.Items.Count);
+    }
+
+    [Fact]
     public async Task Bo_dem_facet_dem_dung_tren_tap_ket_qua_hien_tai()
     {
         var staff = await StaffAsync();

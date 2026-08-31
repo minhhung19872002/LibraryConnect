@@ -486,6 +486,14 @@ public class CirculationDeskService : ICirculationDeskService
             item.Status = ItemStatus.OnLoan;
             item.LoanCount++;
 
+            // Đếm cả ở biểu ghi, không chỉ ở từng bản in: trang tra cứu xếp "sách được mượn nhiều"
+            // và tính độ liên quan theo con số của biểu ghi, nên chỉ tăng ở bản in thì khối ấy trống
+            // mãi dù thư viện cho mượn hàng nghìn lượt.
+            if (item.Bib is not null)
+            {
+                item.Bib.LoanCount++;
+            }
+
             reader.CurrentLoanCount++;
             reader.TotalLoanCount++;
             remaining--;

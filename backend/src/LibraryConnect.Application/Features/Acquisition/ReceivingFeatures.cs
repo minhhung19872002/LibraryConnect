@@ -437,9 +437,9 @@ public class CreateItemsFromOrderCommandHandler
 /// Dùng chung cho biên mục sơ lược, nhập kho theo đơn đặt và tạo bản từ màn hình biên mục, để số
 /// mã vạch, số ĐKCB và ký hiệu xếp giá luôn theo cùng một quy tắc dù đi vào bằng đường nào.
 /// </summary>
-internal static class ItemCreator
+public static class ItemCreator
 {
-    internal record Request(
+    public record Request(
         BibRecord Bib,
         int Quantity,
         Guid WarehouseId,

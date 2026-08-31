@@ -93,6 +93,11 @@ public class LibraryConnectFactory : WebApplicationFactory<Program>, IAsyncLifet
         // Every test in the suite signs in over the same loopback address, so the per-IP sign-in
         // budget has to be raised; the limiter itself is covered by RateLimitTests.
         Environment.SetEnvironmentVariable("LC_RateLimit__LoginPerMinute", "10000");
+
+        // Không nạp bộ dữ liệu minh họa vào cơ sở dữ liệu kiểm thử: mỗi bài kiểm thử tự dựng đúng
+        // dữ liệu nó cần rồi đếm lại, nên 200 biểu ghi và 500 ĐKCB nạp sẵn chỉ làm sai các phép đếm
+        // ấy. Bộ dữ liệu minh họa được kiểm chứng khi cài đặt thật, xem kịch bản CD.1–CD.6.
+        Environment.SetEnvironmentVariable("LC_SEED_DEMO", "false");
     }
 
     public new async Task DisposeAsync()

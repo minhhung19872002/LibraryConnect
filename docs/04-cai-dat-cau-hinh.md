@@ -223,6 +223,67 @@ chỉ IP thật của người dùng thay vì địa chỉ của reverse proxy.
 
 ---
 
+## 5.1. Triển khai cho máy chủ chạy thật
+
+Môi trường phát triển mở cổng của PostgreSQL, Redis, MinIO và API ra ngoài để tiện thao tác. Máy chủ
+chạy thật không được như vậy. Kèm theo mã nguồn có một lớp cấu hình riêng, dùng chồng lên tệp gốc:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+```
+
+Lớp này khác môi trường phát triển ở bốn điểm:
+
+1. **Chỉ Nginx mở cổng ra ngoài** (80 và 443). PostgreSQL, Redis, MinIO và cả API chỉ nghe trong mạng
+   nội bộ của Docker.
+2. **Bật HTTPS** với cấu hình Nginx riêng (`deploy/nginx/nginx.prod.conf`): chuyển hướng HTTP sang
+   HTTPS, HSTS, các đầu đề bảo mật, chặn tần suất ở tầng proxy, và giới hạn `/swagger` cùng
+   `/hangfire` cho dải mạng nội bộ.
+3. **Giới hạn tài nguyên** từng container và gom nhật ký theo dung lượng.
+4. **Tắt Swagger và tắt bộ dữ liệu minh họa** theo mặc định.
+
+Trước khi chạy, cần chuẩn bị:
+
+```bash
+# Chứng thư HTTPS — xem deploy/nginx/certs/README.md
+cp /etc/letsencrypt/live/<tên-miền>/fullchain.pem deploy/nginx/certs/
+cp /etc/letsencrypt/live/<tên-miền>/privkey.pem  deploy/nginx/certs/
+
+# Các biến bắt buộc trong .env
+POSTGRES_PASSWORD=<mật khẩu mạnh>
+REDIS_PASSWORD=<mật khẩu mạnh>
+LC_Jwt__Secret=<chuỗi ngẫu nhiên ≥ 32 ký tự>
+LC_CORS_ORIGINS=https://thuvien.tentruong.edu.vn
+LC_SEED_DEMO=false
+```
+
+Thiếu bất kỳ biến nào trong bốn biến đầu, Docker sẽ dừng lại và báo đúng tên biến còn thiếu thay vì
+khởi động một hệ thống hở.
+
+Sau khi lên, sửa dải IP trong hai khối `location /swagger` và `location /hangfire` của
+`deploy/nginx/nginx.prod.conf` cho khớp mạng nội bộ của nhà trường.
+
+---
+
+## 5.2. Chuẩn bị cho kho dữ liệu lớn
+
+Với thư viện có trên 100.000 biểu ghi, kiểm lại ba tham số sau — đây là những chỗ đã đo được là điểm
+nghẽn khi chạy thử trên kho 500.000 biểu ghi:
+
+| Tham số | Giá trị khuyến nghị | Vì sao |
+|---|---|---|
+| `shm_size` của container PostgreSQL | 1–2 GB | Docker chỉ cấp 64 MB; các tiến trình chạy song song một câu truy vấn cần vùng này, hết chỗ là câu lệnh hỏng giữa chừng |
+| `max_connections` của PostgreSQL | ≥ 200 | Kho kết nối của API cộng với kho của máy chủ tác vụ nền vượt mức mặc định 100 khi đông người dùng |
+| `LC_DB_MAX_POOL_SIZE` | 60 (mặc định) | Chặn dưới `max_connections`; lượt gọi vượt hạn sẽ xếp hàng chờ chứ không bị từ chối |
+
+Cả ba đã được đặt sẵn trong `docker-compose.yml` và `docker-compose.prod.yml`; mục này để đối chiếu
+khi triển khai bằng cách khác.
+
+Trên kho lớn, migration của lần nâng cấp đầu tiên có thể chạy vài phút (đo được 140 giây trên 500.000
+biểu ghi). Đó là hành vi bình thường; hệ thống chờ xong migration mới nhận yêu cầu.
+
+---
+
 ## 6. Nâng cấp phiên bản
 
 ```bash
@@ -249,3 +310,6 @@ khi nâng cấp** (Quản trị hệ thống → Sao lưu cơ sở dữ liệu �
 | Tải tài liệu số báo *Chưa cấu hình kho lưu trữ tệp MinIO* | Thiếu `LC_Minio__AccessKey` / `SecretKey` | Bổ sung vào `.env`, khởi động lại `api` |
 | Sao lưu báo *Không tìm thấy công cụ pg_dump* | Chạy API ngoài container mà máy chủ chưa cài PostgreSQL client | Cài `postgresql-client`, hoặc đặt `LC_Backup__PgDumpPath` trỏ tới đường dẫn đầy đủ |
 | Chữ tiếng Việt trong log bị lỗi phông trên Windows | Console chưa ở chế độ UTF-8 | Xem tệp log JSON trong `logs/` thay cho cửa sổ console |
+| Log ghi `could not resize shared memory segment` | Bộ nhớ chia sẻ của container PostgreSQL quá nhỏ | Đặt `shm_size: 1gb` cho dịch vụ `postgres` (đã có sẵn trong tệp compose kèm theo) |
+| Log ghi `sorry, too many clients already` | Số kết nối vượt `max_connections` | Nâng `max_connections` của PostgreSQL, hoặc hạ `LC_DB_MAX_POOL_SIZE` |
+| Kho có sẵn 200 đầu sách lạ sau khi cài | Bộ dữ liệu minh họa được nạp theo mặc định | Đặt `LC_SEED_DEMO=false` rồi cài lại; bộ minh họa chỉ nạp khi kho còn trống |

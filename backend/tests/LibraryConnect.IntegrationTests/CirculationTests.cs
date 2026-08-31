@@ -5,6 +5,7 @@ using LibraryConnect.Application.Common.Interfaces;
 using LibraryConnect.Application.Common.Models;
 using LibraryConnect.Application.Features.Acquisition;
 using LibraryConnect.Application.Features.Auth;
+using LibraryConnect.Application.Features.Cataloging;
 using LibraryConnect.Application.Features.Catalogs;
 using LibraryConnect.Application.Features.Circulation;
 using LibraryConnect.Application.Features.Locations;
@@ -334,6 +335,26 @@ public class CirculationTests
 
         desk.CurrentLoanCount.Should().Be(2);
         desk.RemainingQuota.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task Ghi_muon_lam_tang_so_luot_muon_cua_bieu_ghi()
+    {
+        var client = await ClientAsync();
+        var readerId = await NewReaderAsync(client, "Lê Thị Đếm Lượt");
+        var barcodes = await NewCirculatableItemsAsync(client, $"Sách đếm lượt mượn {Unique()}", 2);
+        var bibId = await BibIdOfAsync(client, barcodes[0]);
+
+        var before = await ReadAsync<BibDetailDto>(await client.GetAsync($"/api/cataloging/bibs/{bibId}"));
+
+        await ReadAsync<CheckoutResultDto>(await client.PostAsJsonAsync(
+            "/api/circulation/desk/checkout", new { readerId, barcodes = new[] { barcodes[0] } }));
+
+        var after = await ReadAsync<BibDetailDto>(await client.GetAsync($"/api/cataloging/bibs/{bibId}"));
+
+        // Trang tra cứu xếp "sách được mượn nhiều" và tính độ liên quan theo con số này. Chỉ đếm ở
+        // từng bản in thì khối ấy trống mãi dù thư viện cho mượn hàng nghìn lượt.
+        after.LoanCount.Should().Be(before.LoanCount + 1);
     }
 
     [Fact]

@@ -137,6 +137,9 @@ Cập nhật lần cuối: sau khi hoàn thành Phase 11.
 | C16 | Nút lệnh, bố cục màn hình danh sách thống nhất | **Có** | Component dùng chung `PageHeader`, `FilterBar`; bố cục lọc → bảng → phân trang | Kiểm tra trực quan các màn hình |
 | C17 | Thông báo lỗi tiếng Việt rõ nghĩa, hiển thị dưới đúng ô nhập | **Có** | Middleware xử lý lỗi tập trung trả lỗi theo từng trường; giao diện ánh xạ vào form | Kịch bản 2.3.15 |
 | C18 | Responsive: quản trị tối thiểu 1366×768 | **Có** | Bố cục tối thiểu 1024px, cột bảng ẩn dần theo bề rộng màn hình |  |
+| C19 | Tra cứu OPAC trả kết quả dưới 1 giây với 500.000 biểu ghi | **Có** | Mọi trường tra cứu được gộp sẵn vào một cột có chỉ mục ba ký tự; câu hỏi rộng dừng đếm ở 10.000 và ghi "hơn 10.000 kết quả" | Kịch bản HN.1–HN.5, đo được 0,5 s |
+| C20 | Hỗ trợ 200 người dùng đồng thời | **Có** | Kho kết nối chặn dưới hạn của PostgreSQL, bộ nhớ chia sẻ đủ cho truy vấn song song | Kịch bản HN.6, HN.7: 200 bạn đọc, 0 lỗi, trung vị 840 ms |
+| C21 | Nâng cấp phiên bản trên kho dữ liệu lớn | **Có** | Migration chạy với hạn thời gian riêng, dựng lại cột tra cứu bằng câu lệnh gộp | Kịch bản HN.9: 140 s trên 500.000 biểu ghi |
 
 ---
 

@@ -27,6 +27,20 @@ public class BibRecordConfiguration : IEntityTypeConfiguration<BibRecord>
         builder.Property(x => x.SeriesVolume).HasMaxLength(100);
         builder.Property(x => x.CoverImageUrl).HasMaxLength(1000);
 
+        // Cột gộp phục vụ tra cứu do trigger của cơ sở dữ liệu dựng và cập nhật. Khai là chỉ đọc để
+        // không đường ghi nào của ứng dụng lỡ tay đè lên — có đè cũng bị trigger ghi lại ngay, và
+        // khi đó hai bên tranh nhau một cột thì rất khó lần ra.
+        //
+        // Tên cột không khai ở đây: DbContext đặt tên cột cho mọi thuộc tính theo quy ước chữ thường
+        // gạch dưới sau khi các lớp cấu hình chạy xong, nên HasColumnName ở đây sẽ bị ghi đè. Tên
+        // thuộc tính SearchAll cho ra đúng cột search_all.
+        builder.Property(x => x.SearchAll)
+            .ValueGeneratedOnAddOrUpdate()
+            .Metadata.SetAfterSaveBehavior(Microsoft.EntityFrameworkCore.Metadata.PropertySaveBehavior.Ignore);
+
+        builder.Property(x => x.SearchAll)
+            .Metadata.SetBeforeSaveBehavior(Microsoft.EntityFrameworkCore.Metadata.PropertySaveBehavior.Ignore);
+
         builder.HasIndex(x => x.ControlNumber).IsUnique().HasFilter("deleted_at IS NULL")
             .HasDatabaseName("ux_bib_control_number");
         builder.HasIndex(x => x.Isbn).HasDatabaseName("ix_bib_isbn");

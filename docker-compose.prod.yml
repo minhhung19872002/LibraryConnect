@@ -1,0 +1,135 @@
+# =============================================================================
+# LibraryConnect — lớp cấu hình cho máy chủ chạy thật
+#
+# Dùng chồng lên docker-compose.yml, không thay thế nó:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# Khác với môi trường phát triển ở bốn điểm:
+#   1. Chỉ Nginx mở cổng ra ngoài. PostgreSQL, Redis, MinIO và cả API chỉ nghe trong mạng nội bộ
+#      của Docker — máy chủ cơ sở dữ liệu phơi ra Internet là lỗi bảo mật thường gặp nhất khi
+#      triển khai bằng Docker.
+#   2. Bật HTTPS ở Nginx với chứng thư đặt trong deploy/nginx/certs.
+#   3. Giới hạn tài nguyên và chính sách khởi động lại, để một tiến trình rò rỉ bộ nhớ không kéo
+#      sập cả máy chủ.
+#   4. Gom nhật ký theo dung lượng, tắt Swagger, tắt bộ dữ liệu minh họa.
+#
+# Trước khi chạy, xem docs/04-cai-dat-cau-hinh.md và đặt đủ biến trong .env.
+# =============================================================================
+
+services:
+  postgres:
+    # Bỏ ánh xạ cổng: chỉ các container trong cùng mạng mới nối tới được.
+    ports: !override []
+    # Bộ nhớ chia sẻ cho các tiến trình chạy song song một câu truy vấn; xem chú thích ở tệp gốc.
+    shm_size: 2gb
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Thiếu POSTGRES_PASSWORD}
+    command:
+      - postgres
+      - -c
+      - max_connections=200
+      - -c
+      - shared_buffers=512MB
+      - -c
+      - effective_cache_size=1536MB
+      - -c
+      - work_mem=8MB
+      - -c
+      - maintenance_work_mem=128MB
+      # Ghi lại câu lệnh chạy quá 2 giây để còn tìm ra chỗ chậm khi kho lớn dần.
+      - -c
+      - log_min_duration_statement=2000
+    deploy:
+      resources:
+        limits:
+          memory: 3G
+    logging:
+      driver: json-file
+      options: { max-size: "20m", max-file: "5" }
+
+  redis:
+    ports: !override []
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --save
+      - "60"
+      - "1"
+      - --maxmemory
+      - 512mb
+      # Redis ở đây là bộ nhớ đệm: đầy thì bỏ khóa lâu không dùng, không được từ chối ghi.
+      - --maxmemory-policy
+      - allkeys-lru
+      - --requirepass
+      - ${REDIS_PASSWORD:?Thiếu REDIS_PASSWORD}
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+  minio:
+    # Bảng điều khiển MinIO không mở ra ngoài; quản trị viên vào bằng đường hầm SSH khi cần.
+    ports: !override []
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+  api:
+    ports: !override []
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      LC_Redis__ConnectionString: redis:6379,password=${REDIS_PASSWORD:?Thiếu REDIS_PASSWORD}
+      # Tài liệu API không mở cho người ngoài trên máy chủ thật; bật lại khi cần bàn giao cho đối tác.
+      LC_Swagger__Enabled: ${LC_Swagger__Enabled:-false}
+      # Máy chủ thật là kho dữ liệu của thư viện, không phải nơi chứa 200 cuốn sách mẫu.
+      LC_SEED_DEMO: ${LC_SEED_DEMO:-false}
+      LC_CORS_ORIGINS: ${LC_CORS_ORIGINS:?Thiếu LC_CORS_ORIGINS - ghi đúng tên miền của thư viện}
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    logging:
+      driver: json-file
+      options: { max-size: "50m", max-file: "10" }
+
+  admin:
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+  opac:
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+  nginx:
+    ports: !override
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+    volumes: !override
+      - ./deploy/nginx/nginx.prod.conf:/etc/nginx/conf.d/default.conf:ro
+      # Đặt chứng thư và khóa riêng vào thư mục này trước khi khởi động.
+      - ./deploy/nginx/certs:/etc/nginx/certs:ro
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    logging:
+      driver: json-file
+      options: { max-size: "20m", max-file: "5" }

@@ -63,3 +63,14 @@ export function holdStatusColor(status: HoldRow['status']): string | undefined {
       return 'default';
   }
 }
+
+/**
+ * Câu "tìm thấy bao nhiêu tài liệu" ở đầu trang kết quả.
+ *
+ * Với câu hỏi rộng trên kho lớn, máy chủ dừng đếm ở một ngưỡng và báo lại bằng cờ capped: hiện con
+ * số ấy như thể chính xác là nói sai với bạn đọc, mà bỏ trống thì họ không biết nhiều hay ít.
+ */
+export function describeResultCount(total: number, capped?: boolean): string {
+  const number = total.toLocaleString('vi-VN');
+  return capped ? `Tìm thấy hơn ${number} tài liệu` : `Tìm thấy ${number} tài liệu`;
+}

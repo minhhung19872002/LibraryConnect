@@ -595,11 +595,45 @@ Ký hiệu bám theo **Mục 5 phần 2 của E-HSMT**.
 
 ---
 
+## Nhóm 2.5 — Chuyển đổi dữ liệu: bộ dữ liệu minh họa
+
+Kiểm trên hệ thống vừa cài xong bằng `docker compose up -d`, chưa nhập gì thêm.
+
+| Mã | Chức năng | Bước thực hiện | Kết quả mong đợi | Tự động | Kết quả thực tế | Đạt |
+|---|---|---|---|---|---|---|
+| CD.1 | Nạp dữ liệu minh họa | Đếm số bản ghi trong psql sau lần khởi động đầu | 200 biểu ghi, 500 ĐKCB, 50 bạn đọc, 100 lượt mượn trả, 52 liên kết tài liệu môn học | | | |
+| CD.2 | Quan hệ giữa các bảng | Mở một biểu ghi bất kỳ, xem thẻ Ấn phẩm | Mỗi đầu có 2–3 bản, mỗi bản có số ĐKCB, mã vạch và ký hiệu xếp giá theo đúng quy tắc đang khai | | | |
+| CD.3 | Dữ liệu lưu thông có đủ trạng thái | Vào Lưu thông → Báo cáo, lọc toàn bộ thời gian | 80 lượt đã trả, 15 lượt đang mượn, 5 lượt quá hạn; 20 khoản phạt trong đó một nửa đã thu | | | |
+| CD.4 | Bạn đọc đăng nhập được | Đăng nhập trang tra cứu bằng một số thẻ bất kỳ trong danh sách, mật khẩu `BanDoc@2025` | Vào được trang cá nhân, có lịch sử mượn trả | | | |
+| CD.5 | Dữ liệu minh họa không đè lên dữ liệu thật | Nhập một biểu ghi rồi khởi động lại hệ thống | Không nạp thêm gì; bộ minh họa chỉ chạy khi kho còn trống | | | |
+| CD.6 | Tắt hẳn dữ liệu minh họa | Đặt `LC_SEED_DEMO=false` trong `.env`, cài mới | Kho trống hoàn toàn, nhật ký ghi "Bỏ qua dữ liệu minh họa theo cấu hình SEED_DEMO" | | | |
+
+---
+
+## Nhóm 2.2 — Hiệu năng và tải (yêu cầu 6.3)
+
+Đo trên bộ dữ liệu 500.000 biểu ghi (nhân bản từ bộ minh họa), máy chạy Docker Desktop, 2 nhân CPU.
+Số liệu ghi trong cột kết quả là số đo lần bàn giao; hội đồng đo lại trên máy chủ thật sẽ tốt hơn.
+
+| Mã | Chức năng | Bước thực hiện | Kết quả mong đợi | Tự động | Kết quả thực tế | Đạt |
+|---|---|---|---|---|---|---|
+| HN.1 | Tra cứu trên kho 500.000 biểu ghi | Gõ một từ khóa thường gặp vào ô tra cứu | Kết quả trả về dưới 1 giây | | 0,5 s | |
+| HN.2 | Bộ đếm bộ lọc | Mở trang kết quả, xem cột lọc bên trái | Các con số hiện ra dưới 1 giây | | 0,55 s | |
+| HN.3 | Gợi ý tự động | Gõ ba ký tự vào ô tra cứu | Gợi ý hiện dưới 0,5 giây | | 0,37 s | |
+| HN.4 | Câu hỏi rộng | Tra một từ khớp hơn 60.000 biểu ghi | Hiện "Tìm thấy hơn 10.000 tài liệu" và vẫn trả về dưới 1 giây | Integration — `ContentAndOpacTests` | 0,9 s | |
+| HN.5 | Trang chủ | Mở trang tra cứu | Sách mới và sách được mượn nhiều hiện dưới 1 giây | | 0,06 s | |
+| HN.6 | 200 bạn đọc cùng lúc | Chạy kịch bản 200 người, mỗi người tra cứu một lần mỗi 10 giây trong 40 giây | Không có lỗi nào; trung vị dưới 1 giây | | 0 lỗi / 840 ms | |
+| HN.7 | Dồn 200 lượt gọi cùng một khoảnh khắc | Bắn 600 lượt từ 200 luồng song song | Không lượt nào lỗi; các lượt xếp hàng chờ chứ không bị từ chối | | 0 lỗi | |
+| HN.8 | Chặn tần suất | Gọi liên tục quá ngưỡng từ một địa chỉ IP | Trả 429 kèm đầu đề `Retry-After` và thông báo tiếng Việt | Integration — `RateLimitTests` | | |
+| HN.9 | Nâng cấp trên kho lớn | Chạy migration trên cơ sở dữ liệu 500.000 biểu ghi | Migration chạy xong, không đứt vì hết thời gian chờ | | 140 s | |
+
+---
+
 ## Cách chạy bộ kiểm thử tự động
 
 ```bash
 cd backend
-dotnet test                 # 415 unit test + 319 integration test
+dotnet test                 # 415 unit test + 323 integration test
 ```
 
 Integration test tự khởi tạo một container PostgreSQL 16 và một container MinIO riêng, chạy
@@ -611,7 +645,7 @@ cd frontend-admin
 npm test                    # 123 test giao diện
 
 cd frontend-opac
-npm test                    # 19 test giao diện trang tra cứu
+npm test                    # 22 test giao diện trang tra cứu
 ```
 
 ---

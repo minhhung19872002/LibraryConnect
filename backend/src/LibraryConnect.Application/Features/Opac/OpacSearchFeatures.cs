@@ -47,7 +47,7 @@ public class OpacSearchQueryHandler : IRequestHandler<OpacSearchQuery, PagedResu
 
         var result = await records
             .Select(OpacQueryBuilder.ToResult())
-            .ToPagedResultAsync(request, ct);
+            .ToPagedResultAsync(request, OpacQueryBuilder.CountLimit, ct);
 
         stopwatch.Stop();
 
@@ -111,7 +111,7 @@ public class OpacAdvancedSearchQueryHandler
 
         var result = await records
             .Select(OpacQueryBuilder.ToResult())
-            .ToPagedResultAsync(request, ct);
+            .ToPagedResultAsync(request, OpacQueryBuilder.CountLimit, ct);
 
         stopwatch.Stop();
 
@@ -230,6 +230,12 @@ public class OpacFacetsQueryHandler
         }
 
         records = OpacQueryBuilder.ApplyFilter(records, request.Filter);
+
+        // Bộ đếm tính trên tối đa CountLimit biểu ghi đầu tiên khớp điều kiện, cùng ngưỡng với con
+        // số tổng ở danh sách kết quả. Trên kho lớn, một câu hỏi rộng khớp hàng trăm nghìn biểu ghi
+        // và việc gom nhóm hết chỗ ấy mất vài giây — trong khi bảy con số hiện ở cột lọc chỉ để
+        // người tra cứu chọn hướng thu hẹp, chứ không ai đối chiếu sổ sách bằng chúng.
+        records = records.Take(OpacQueryBuilder.CountLimit);
 
         // Đếm theo mã rồi mới lấy tên ở một truy vấn khác.
         //

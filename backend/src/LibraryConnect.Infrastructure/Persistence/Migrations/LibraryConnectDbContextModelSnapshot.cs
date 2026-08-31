@@ -2200,6 +2200,12 @@ namespace LibraryConnect.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(500)")
                         .HasColumnName("publisher_name");
 
+                    b.Property<string>("SearchAll")
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("text")
+                        .HasColumnName("search_all");
+
                     b.Property<Guid?>("SeriesId")
                         .HasColumnType("uuid")
                         .HasColumnName("series_id");

@@ -21,6 +21,8 @@ export interface ApiResponse<T = unknown> {
 export interface PagedResult<T> {
   items: T[];
   totalCount: number;
+  /** Đúng khi totalCount là chặn trên: kết quả nhiều hơn con số đó, máy chủ dừng đếm cho nhanh. */
+  totalCountCapped?: boolean;
   page: number;
   pageSize: number;
   totalPages: number;

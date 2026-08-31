@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { describeFineType, describeHoldStatus, describeLoanStatus } from '@/labels';
+import {
+  describeFineType,
+  describeHoldStatus,
+  describeLoanStatus,
+  describeResultCount,
+} from '@/labels';
 
 /**
  * Không để tên hằng số tiếng Anh của máy chủ lọt ra màn hình bạn đọc.
@@ -41,5 +46,19 @@ describe('Chữ hiển thị cho trạng thái nghiệp vụ', () => {
     });
 
     expect(describeFineType('Lost')).toBe('Làm mất');
+  });
+});
+
+describe('Số kết quả tra cứu', () => {
+  it('nói rõ là "hơn" khi máy chủ dừng đếm giữa chừng', () => {
+    expect(describeResultCount(10000, true)).toBe('Tìm thấy hơn 10.000 tài liệu');
+  });
+
+  it('nói con số chính xác khi đếm hết', () => {
+    expect(describeResultCount(1234)).toBe('Tìm thấy 1.234 tài liệu');
+  });
+
+  it('không có kết quả nào thì vẫn là một câu đọc được', () => {
+    expect(describeResultCount(0)).toBe('Tìm thấy 0 tài liệu');
   });
 });

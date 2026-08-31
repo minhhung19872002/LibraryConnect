@@ -154,7 +154,36 @@ public class ReaderPortalController : ApiControllerBase
     // Tài liệu số (Phân hệ V, nhóm /api/reader/digital/*)
     // ---------------------------------------------------------------
 
-    /// <summary>Danh sách tài liệu số bạn đọc xem được.</summary>
+    /// <summary>
+    /// Danh sách tài liệu số bạn đọc xem được — dạng gọi đơn giản bằng tham số trên địa chỉ.
+    ///
+    /// Đây là lối vào mà ứng dụng khách dùng để dựng màn hình danh sách: chỉ cần từ khóa, bộ sưu tập
+    /// và trang. Cần lọc sâu hơn (theo định dạng, theo khoảng ngày, tìm trong toàn văn) thì gọi
+    /// <c>POST /api/reader/digital/search</c> với cùng bộ lọc như giao diện quản trị.
+    /// </summary>
+    [HttpGet("digital")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(ApiResponse<PagedResult<DigitalDocumentRowDto>>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<PagedResult<DigitalDocumentRowDto>>>> DigitalDocumentList(
+        [FromQuery] string? keyword,
+        [FromQuery] Guid? collectionId,
+        [FromQuery] int page,
+        [FromQuery] int pageSize,
+        CancellationToken ct)
+    {
+        var request = new DigitalDocumentQueryRequest
+        {
+            Keyword = keyword,
+            Page = page <= 0 ? 1 : page,
+            PageSize = pageSize <= 0 ? 20 : pageSize,
+            Filter = new DigitalDocumentFilter { CollectionId = collectionId }
+        };
+
+        var result = await Mediator.Send(new GetMyDigitalDocumentsQuery(request), ct);
+        return Ok(Success(result));
+    }
+
+    /// <summary>Danh sách tài liệu số bạn đọc xem được, kèm bộ lọc đầy đủ.</summary>
     [HttpPost("digital/search")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(ApiResponse<PagedResult<DigitalDocumentRowDto>>), StatusCodes.Status200OK)]

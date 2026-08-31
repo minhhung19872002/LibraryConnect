@@ -48,6 +48,18 @@ public class BibRecord : BaseEntity
     public Series? Series { get; set; }
     public string? SeriesVolume { get; set; }
     public string? Abstract { get; set; }
+
+    /// <summary>
+    /// Bản gộp mọi trường tra cứu được của biểu ghi, đã bỏ dấu và viết thường — do cơ sở dữ liệu tự
+    /// dựng, ứng dụng không bao giờ ghi vào cột này.
+    ///
+    /// Tra cứu ở phạm vi "tất cả" phải soi mười một chỗ: nhan đề, nhan đề khác, tác giả chính, tác
+    /// giả bổ sung, chủ đề, từ khóa, nhà xuất bản, ISBN, ISSN, số kiểm soát, tóm tắt. Viết thành
+    /// mười một điều kiện nối bằng HOẶC thì PostgreSQL không dùng được chỉ mục nào và phải quét cả
+    /// kho: đo trên 500.000 biểu ghi mất khoảng 11 giây, trong khi yêu cầu là dưới 1 giây. Gộp sẵn
+    /// vào một cột có chỉ mục ba ký tự thì cùng câu hỏi ấy trả lời trong khoảng 0,3 giây.
+    /// </summary>
+    public string SearchAll { get; set; } = string.Empty;
     public string? CoverImageUrl { get; set; }
 
     /// <summary>

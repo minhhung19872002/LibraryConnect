@@ -109,9 +109,9 @@ Không sửa migration đã commit — luôn tạo migration mới.
 ### Kiểm thử
 
 ```bash
-cd backend && dotnet test          # 415 unit test + 319 integration test
+cd backend && dotnet test          # 415 unit test + 323 integration test
 cd frontend-admin && npm test      # 123 test giao diện quản trị
-cd frontend-opac && npm test       # 19 test giao diện tra cứu
+cd frontend-opac && npm test       # 22 test giao diện tra cứu
 ```
 
 Integration test tự khởi tạo một container PostgreSQL 16 riêng, chạy migration, nạp dữ liệu nền rồi

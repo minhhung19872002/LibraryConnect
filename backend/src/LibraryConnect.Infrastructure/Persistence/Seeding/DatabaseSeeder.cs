@@ -1,4 +1,7 @@
 using LibraryConnect.Application.Common.Interfaces;
+using LibraryConnect.Application.Features.Cataloging;
+using LibraryConnect.Application.Features.Circulation;
+using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -16,16 +19,37 @@ public partial class DatabaseSeeder
     private readonly IDateTimeProvider _clock;
     private readonly ILogger<DatabaseSeeder> _logger;
 
+    // Chỉ bộ dữ liệu minh họa cần tới: biểu ghi, ĐKCB và lượt mượn phải sinh ra bằng đúng những
+    // quy tắc mà cán bộ thư viện gặp khi làm thật, chứ không phải bằng một đường tắt riêng.
+    private readonly IBibRecordWriter _bibWriter;
+    private readonly ICodeGenerator _codes;
+    private readonly ISystemParameterService _parameters;
+    private readonly ICirculationPolicyResolver _policies;
+    private readonly ICirculationCalendarProvider _calendars;
+    private readonly IConfiguration _configuration;
+
     public DatabaseSeeder(
         LibraryConnectDbContext db,
         IPasswordHasher hasher,
         IDateTimeProvider clock,
-        ILogger<DatabaseSeeder> logger)
+        ILogger<DatabaseSeeder> logger,
+        IBibRecordWriter bibWriter,
+        ICodeGenerator codes,
+        ISystemParameterService parameters,
+        ICirculationPolicyResolver policies,
+        ICirculationCalendarProvider calendars,
+        IConfiguration configuration)
     {
         _db = db;
         _hasher = hasher;
         _clock = clock;
         _logger = logger;
+        _bibWriter = bibWriter;
+        _codes = codes;
+        _parameters = parameters;
+        _policies = policies;
+        _calendars = calendars;
+        _configuration = configuration;
     }
 
     public async Task SeedAsync(CancellationToken ct = default)
@@ -47,6 +71,7 @@ public partial class DatabaseSeeder
         await SeedInterLibraryTargetsAsync(ct);
         await SeedContentAsync(ct);
         await SeedCoursesAsync(ct);
+        await SeedDemoDataAsync(ct);
 
         _logger.LogInformation("Khởi tạo dữ liệu nền hoàn tất");
     }
@@ -91,6 +116,20 @@ public partial class DatabaseSeeder
         }
 
         _logger.LogInformation("Đang áp dụng {Count} migration: {Names}", pending.Count, string.Join(", ", pending));
-        await _db.Database.MigrateAsync(ct);
+
+        // Migration đụng tới dữ liệu — dựng lại một cột cho toàn bộ kho, tạo chỉ mục trên bảng lớn —
+        // chạy lâu hơn hẳn một câu lệnh nghiệp vụ. Giữ nguyên hạn 30 giây mặc định thì thư viện nào
+        // có nửa triệu biểu ghi sẽ không nâng cấp nổi: migration đứt giữa chừng và máy chủ không lên.
+        var previousTimeout = _db.Database.GetCommandTimeout();
+        _db.Database.SetCommandTimeout((int)TimeSpan.FromHours(1).TotalSeconds);
+
+        try
+        {
+            await _db.Database.MigrateAsync(ct);
+        }
+        finally
+        {
+            _db.Database.SetCommandTimeout(previousTimeout);
+        }
     }
 }

@@ -11,18 +11,29 @@ public class PagedResult<T>
     public int Page { get; set; } = 1;
     public int PageSize { get; set; } = 20;
 
+    /// <summary>
+    /// Đúng khi số tổng ở trên là con số chặn trên chứ không phải số đếm đầy đủ.
+    ///
+    /// Đếm chính xác nghĩa là đọc hết mọi dòng khớp điều kiện. Với một câu tra cứu rộng trên kho nửa
+    /// triệu biểu ghi, riêng phép đếm ấy đã mất hơn một giây, trong khi con số chính xác chẳng giúp
+    /// gì cho người đang tìm sách. Khi cờ này bật, giao diện hiện "hơn N kết quả".
+    /// </summary>
+    public bool TotalCountCapped { get; set; }
+
     public int TotalPages => PageSize <= 0 ? 0 : (int)Math.Ceiling(TotalCount / (double)PageSize);
     public bool HasPrevious => Page > 1;
     public bool HasNext => Page < TotalPages;
 
     public PagedResult() { }
 
-    public PagedResult(IReadOnlyList<T> items, int totalCount, int page, int pageSize)
+    public PagedResult(
+        IReadOnlyList<T> items, int totalCount, int page, int pageSize, bool totalCountCapped = false)
     {
         Items = items;
         TotalCount = totalCount;
         Page = page;
         PageSize = pageSize;
+        TotalCountCapped = totalCountCapped;
     }
 
     public static PagedResult<T> Empty(int page = 1, int pageSize = 20) =>

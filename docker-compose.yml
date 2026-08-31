@@ -18,6 +18,17 @@ services:
       # Tiếng Việt: UTF8 + collation ICU vi-VN để sắp xếp đúng thứ tự bảng chữ cái.
       POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale-provider=icu --icu-locale=vi-VN"
       TZ: ${TZ:-Asia/Ho_Chi_Minh}
+    # Docker chỉ cấp 64 MB bộ nhớ chia sẻ cho mỗi container. PostgreSQL dùng vùng ấy cho các tiến
+    # trình chạy song song một câu truy vấn; khi nhiều bạn đọc cùng tra cứu trên kho lớn, vùng 64 MB
+    # hết chỗ và câu lệnh hỏng với lỗi "could not resize shared memory segment" — bạn đọc thấy lỗi hệ
+    # thống giữa lúc đông người nhất.
+    shm_size: 1gb
+    # 200 bạn đọc cùng lúc (yêu cầu 6.3) cần nhiều kết nối hơn mức mặc định 100 của ảnh PostgreSQL:
+    # kho kết nối của API và của máy chủ tác vụ nền cộng lại đã chạm trần đó.
+    command:
+      - postgres
+      - -c
+      - max_connections=200
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
@@ -96,6 +107,14 @@ services:
       LC_Jwt__Secret: ${LC_Jwt__Secret:?Thiếu LC_Jwt__Secret - xem .env.example}
       LC_CORS_ORIGINS: ${LC_CORS_ORIGINS:-http://localhost,http://localhost:5173,http://localhost:5174}
       LC_Swagger__Enabled: ${LC_Swagger__Enabled:-true}
+      # Bộ dữ liệu minh họa (200 biểu ghi, 500 ĐKCB, 50 bạn đọc, 100 lượt mượn trả). Đặt false trong
+      # .env khi cài cho thư viện dùng thật.
+      LC_SEED_DEMO: ${LC_SEED_DEMO:-true}
+      # Ngưỡng chặn tần suất. Khai ở đây thì giá trị đặt trong .env mới tới được máy chủ — biến môi
+      # trường của máy chạy docker không tự chảy vào container.
+      LC_RateLimit__LoginPerMinute: ${LC_RateLimit__LoginPerMinute:-20}
+      LC_RateLimit__PublicPerMinute: ${LC_RateLimit__PublicPerMinute:-300}
+      LC_DB_MAX_POOL_SIZE: ${LC_DB_MAX_POOL_SIZE:-60}
     ports:
       - "${API_PORT:-8080}:8080"
     volumes:
