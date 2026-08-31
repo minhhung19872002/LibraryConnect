@@ -28,7 +28,6 @@ public class CardPrintService : ICardPrintService
 
     static CardPrintService()
     {
-        QuestPDF.Settings.License = LicenseType.Community;
     }
 
     public byte[] Render(CardTemplateDto template, IReadOnlyList<CardToPrint> cards, bool multiplePerPage)

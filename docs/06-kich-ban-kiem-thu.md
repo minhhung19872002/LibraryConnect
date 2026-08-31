@@ -601,7 +601,10 @@ Kiểm trên hệ thống vừa cài xong bằng `docker compose up -d`, chưa n
 
 | Mã | Chức năng | Bước thực hiện | Kết quả mong đợi | Tự động | Kết quả thực tế | Đạt |
 |---|---|---|---|---|---|---|
-| CD.1 | Nạp dữ liệu minh họa | Đếm số bản ghi trong psql sau lần khởi động đầu | 200 biểu ghi, 500 ĐKCB, 50 bạn đọc, 100 lượt mượn trả, 52 liên kết tài liệu môn học | | | |
+| CD.1 | Nạp dữ liệu minh họa | Đếm số bản ghi trong psql sau lần khởi động đầu | 200 biểu ghi tài liệu, 500 ĐKCB, 50 bạn đọc, 100 lượt mượn trả, 52 liên kết tài liệu môn học | | | |
+| CD.1b | Ấn phẩm định kỳ có dữ liệu | Vào Ấn phẩm định kỳ → Báo, tạp chí | 5 đầu báo với bốn kỳ hạn khác nhau, 113 số gồm cả số đã nhận, số thiếu và số dự kiến; 4 phiếu khiếu nại | | | |
+| CD.1c | Tài liệu số có dữ liệu | Vào Tài liệu số → Kho tài liệu số | 6 tài liệu PDF thật, đủ ba mức truy cập công khai / nội bộ / hạn chế | | | |
+| CD.1d | Trình đọc mở được tài liệu minh họa | Trên trang tra cứu, mở một tài liệu công khai và bấm Đọc trực tuyến | Trang tài liệu hiện dưới dạng ảnh có chữ chìm, lật trang được, tiếng Việt hiển thị đúng dấu | | | |
 | CD.2 | Quan hệ giữa các bảng | Mở một biểu ghi bất kỳ, xem thẻ Ấn phẩm | Mỗi đầu có 2–3 bản, mỗi bản có số ĐKCB, mã vạch và ký hiệu xếp giá theo đúng quy tắc đang khai | | | |
 | CD.3 | Dữ liệu lưu thông có đủ trạng thái | Vào Lưu thông → Báo cáo, lọc toàn bộ thời gian | 80 lượt đã trả, 15 lượt đang mượn, 5 lượt quá hạn; 20 khoản phạt trong đó một nửa đã thu | | | |
 | CD.4 | Bạn đọc đăng nhập được | Đăng nhập trang tra cứu bằng một số thẻ bất kỳ trong danh sách, mật khẩu `BanDoc@2025` | Vào được trang cá nhân, có lịch sử mượn trả | | | |

@@ -28,7 +28,6 @@ public class ReaderCardPrintService : IReaderCardPrintService
 
     static ReaderCardPrintService()
     {
-        QuestPDF.Settings.License = LicenseType.Community;
     }
 
     public byte[] Render(

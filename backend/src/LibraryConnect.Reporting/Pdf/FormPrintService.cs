@@ -23,7 +23,6 @@ public class FormPrintService : IFormPrintService
 
     static FormPrintService()
     {
-        QuestPDF.Settings.License = LicenseType.Community;
     }
 
     public byte[] Render(FormTemplateDto template, FormDataDto data, byte[]? logo = null)

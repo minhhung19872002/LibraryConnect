@@ -26,6 +26,7 @@ public partial class DatabaseSeeder
     private readonly ISystemParameterService _parameters;
     private readonly ICirculationPolicyResolver _policies;
     private readonly ICirculationCalendarProvider _calendars;
+    private readonly IFileStorage _storage;
     private readonly IConfiguration _configuration;
 
     public DatabaseSeeder(
@@ -38,6 +39,7 @@ public partial class DatabaseSeeder
         ISystemParameterService parameters,
         ICirculationPolicyResolver policies,
         ICirculationCalendarProvider calendars,
+        IFileStorage storage,
         IConfiguration configuration)
     {
         _db = db;
@@ -49,6 +51,7 @@ public partial class DatabaseSeeder
         _parameters = parameters;
         _policies = policies;
         _calendars = calendars;
+        _storage = storage;
         _configuration = configuration;
     }
 

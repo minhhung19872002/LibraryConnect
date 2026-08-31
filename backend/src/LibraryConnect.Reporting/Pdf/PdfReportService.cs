@@ -21,7 +21,6 @@ public class PdfReportService : IPdfReportService
     static PdfReportService()
     {
         // QuestPDF is used here under its Community licence.
-        QuestPDF.Settings.License = LicenseType.Community;
     }
 
     public byte[] RenderTable<T>(PdfReportHeader header, IReadOnlyList<PdfColumn<T>> columns, IReadOnlyList<T> rows)

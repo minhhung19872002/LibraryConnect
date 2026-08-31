@@ -21,7 +21,6 @@ public class LabelPrintService : ILabelPrintService
 
     static LabelPrintService()
     {
-        QuestPDF.Settings.License = LicenseType.Community;
     }
 
     public byte[] RenderBarcodes(BarcodeTemplateDto template, IReadOnlyList<LabelDataDto> items)
