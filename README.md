@@ -109,8 +109,8 @@ Không sửa migration đã commit — luôn tạo migration mới.
 ### Kiểm thử
 
 ```bash
-cd backend && dotnet test          # 57 unit test + 20 integration test
-cd frontend-admin && npm test      # 13 test giao diện
+cd backend && dotnet test          # 85 unit test + 33 integration test
+cd frontend-admin && npm test      # 20 test giao diện
 ```
 
 Integration test tự khởi tạo một container PostgreSQL 16 riêng, chạy migration, nạp dữ liệu nền rồi
@@ -156,8 +156,8 @@ vào mà không phải sửa lại — xem `mobile/README.md`.
 |---|---|---|
 | 1 | Nền móng: Clean Architecture, EF Core, JWT, RBAC, nhật ký tự động, health check, Docker | ✅ Hoàn thành |
 | 2 | Phân hệ I — Quản trị hệ thống (nhóm quyền, người dùng, tham số, nhật ký, sao lưu/phục hồi) | ✅ Hoàn thành |
-| 3 | Danh mục | 🔄 Đang thực hiện |
-| 4 | MARC Core (ISO 2709, MARCXML) | ⏳ |
+| 3 | Danh mục nghiệp vụ (20 danh mục dùng chung một màn hình, nhập/xuất Excel, gộp trùng) | ✅ Hoàn thành |
+| 4 | MARC Core (ISO 2709, MARCXML) | 🔄 Đang thực hiện |
 | 5 | Phân hệ II — Biên mục | ⏳ |
 | 6 | Phân hệ III — Bổ sung & Kho | ⏳ |
 | 7 | Phân hệ IV — Ấn phẩm định kỳ | ⏳ |

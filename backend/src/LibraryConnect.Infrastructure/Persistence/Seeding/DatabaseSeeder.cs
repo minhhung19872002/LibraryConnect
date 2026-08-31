@@ -35,6 +35,8 @@ public partial class DatabaseSeeder
         await SeedAdministratorAsync(ct);
         await SeedSystemParametersAsync(ct);
         await SeedAuditSettingsAsync(ct);
+        await SeedCatalogsAsync(ct);
+        await SeedLocationsAsync(ct);
 
         _logger.LogInformation("Khởi tạo dữ liệu nền hoàn tất");
     }

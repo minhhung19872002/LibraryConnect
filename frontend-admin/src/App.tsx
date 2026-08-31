@@ -15,6 +15,8 @@ import { BackupsPage } from '@/modules/system/BackupsPage';
 import { ParametersPage } from '@/modules/system/ParametersPage';
 import { UserGroupsPage } from '@/modules/system/UserGroupsPage';
 import { UsersPage } from '@/modules/system/UsersPage';
+import { CatalogIndexPage } from '@/modules/catalogs/CatalogIndexPage';
+import { CatalogPage } from '@/modules/catalogs/CatalogPage';
 import { RequirePermissionRoute } from '@/components/PermissionGate';
 import { PERMISSIONS } from '@/api/permissions';
 import { messages } from '@/i18n/messages';
@@ -95,6 +97,24 @@ function AppRoutes() {
           element={
             <RequirePermissionRoute permission={PERMISSIONS.system.backupView}>
               <BackupsPage />
+            </RequirePermissionRoute>
+          }
+        />
+
+        {/* Danh mục — một màn hình dùng chung cho mọi bảng danh mục nghiệp vụ. */}
+        <Route
+          path="/danh-muc"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.catalogList.view}>
+              <CatalogIndexPage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/danh-muc/:catalog"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.catalogList.view}>
+              <CatalogPage />
             </RequirePermissionRoute>
           }
         />

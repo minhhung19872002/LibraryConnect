@@ -151,6 +151,12 @@ public interface IApplicationDbContext
 
     Task<int> SaveChangesAsync(CancellationToken ct = default);
 
+    /// <summary>
+    /// Resolves a set by entity type. Used by the generic catalogue screens, which are driven by the
+    /// registry rather than by one property per lookup table.
+    /// </summary>
+    DbSet<TEntity> Set<TEntity>() where TEntity : class;
+
     /// <summary>Escape hatch for the few places that need raw SQL (full-text search, statistics).</summary>
     Microsoft.EntityFrameworkCore.Infrastructure.DatabaseFacade Database { get; }
 }

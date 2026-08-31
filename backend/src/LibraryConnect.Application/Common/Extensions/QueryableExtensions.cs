@@ -75,3 +75,15 @@ public static class QueryableExtensions
             .Select(p => char.ToLowerInvariant(p.Name[0]) + p.Name[1..])
             .ToList();
 }
+
+/// <summary>
+/// Cache key prefixes shared between the code that fills the cache and the code that invalidates it,
+/// so an invalidation can never miss because of a typo.
+/// </summary>
+public static class CacheKeyPrefixes
+{
+    public const string Catalogs = "catalog:";
+    public const string Parameters = "params:";
+    public const string Permissions = "perms:";
+    public const string Search = "search:";
+}

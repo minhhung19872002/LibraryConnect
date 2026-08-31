@@ -103,7 +103,6 @@ export const menuTree: MenuNode[] = [
     icon: <DatabaseOutlined />,
     path: '/danh-muc',
     permissions: [PERMISSIONS.catalogList.view],
-    comingSoon: true,
   },
   {
     key: 'cataloging',

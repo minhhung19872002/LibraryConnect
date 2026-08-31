@@ -7,7 +7,7 @@ Cột **Đáp ứng** chỉ được đánh **Có** khi chức năng đã chạy
 được bằng thao tác demo hoặc bằng bộ kiểm thử tự động. Những hạng mục thuộc phân hệ chưa bàn giao
 được ghi rõ là **Đang thực hiện** kèm phase dự kiến, không đánh dấu đáp ứng.
 
-Cập nhật lần cuối: sau khi hoàn thành Phase 2.
+Cập nhật lần cuối: sau khi hoàn thành Phase 3.
 
 ---
 
@@ -23,7 +23,7 @@ Cập nhật lần cuối: sau khi hoàn thành Phase 2.
 | A6 | Dữ liệu lưu trữ vĩnh viễn, không tự động xóa cứng | **Có** | Xóa mềm (`deleted_at`) trên toàn bộ 113 bảng nghiệp vụ; nhật ký mặc định giữ vĩnh viễn | `docs/02-tai-lieu-quan-tri.md` mục 1.3, 3.3; kịch bản 2.3.13 |
 | A7 | Phân quyền chi tiết đến từng chức năng và từng phạm vi dữ liệu | **Có** (chức năng) / **Có** (khung phạm vi dữ liệu) | 161 mã quyền `MODULE.ĐỐI_TƯỢNG.HÀNH_ĐỘNG`; bảng `sys.user_data_scopes` theo thư viện/kho/dạng tài liệu | Kịch bản 2.3.2 → 2.3.6. Việc gán phạm vi dữ liệu cụ thể mở khi có dữ liệu kho (Phase 6) |
 | A8 | Báo cáo có 3 dạng đầu ra: bảng, đồ họa, xuất tệp PDF/Excel | **Một phần** | Hạ tầng dùng chung đã xong: `ExcelService` (ClosedXML), `PdfReportService` (QuestPDF); áp dụng đầu tiên cho xuất nhật ký | Kịch bản 2.3.14. Các báo cáo nghiệp vụ theo từng phân hệ |
-| A9 | Không hardcode danh mục nghiệp vụ, cấu hình được từ giao diện | **Có** | Toàn bộ giá trị cấu hình nằm trong `sys.system_parameters`, sửa tại màn hình I.3 | Kịch bản I.3.2, I.3.6 |
+| A9 | Không hardcode danh mục nghiệp vụ, cấu hình được từ giao diện | **Có** | 20 danh mục nghiệp vụ đều thêm/sửa/xóa/nhập/xuất được tại màn hình Danh mục; toàn bộ giá trị cấu hình nằm trong `sys.system_parameters`, sửa tại màn hình I.3 | Kịch bản I.3.2, I.3.6, DM.1 → DM.12 |
 
 ---
 
@@ -57,6 +57,22 @@ Cập nhật lần cuối: sau khi hoàn thành Phase 2.
 | I.5.d | Phục hồi có cảnh báo 2 bước, yêu cầu nhập lại mật khẩu, ghi log | **Có** | Sao lưu → Phục hồi | Kịch bản 2.6.3, 2.6.4, 2.6.6 |
 | I.5.e | Gọi `pg_dump` / `pg_restore` thật qua process | **Có** | `PostgresBackupService`; PostgreSQL client đóng gói sẵn trong ảnh API | `docs/03-sao-luu-phuc-hoi.md` mục 1 |
 | I.5.f | Sao lưu kèm tệp MinIO | **Có** | Tùy chọn *Sao lưu kèm tệp tài liệu số* | Kịch bản 2.6.1 |
+
+---
+
+## B2. Danh mục nghiệp vụ (mục 4.2 và II.9)
+
+| # | Yêu cầu | Đáp ứng | Chức năng tương ứng | Chứng minh |
+|---|---|---|---|---|
+| DM.1 | Đầy đủ các bảng danh mục theo mục 4.2 | **Có** | 20 danh mục: dạng tài liệu, vật mang tin, ngôn ngữ, nước xuất bản, nhà xuất bản, tác giả, đề mục chủ đề, từ khóa, khung phân loại, tùng thư, bộ sưu tập, loại bạn đọc, khoa, ngành, môn học, loại vi phạm, nhà cung cấp, nguồn kinh phí, bộ sưu tập số, chuyên mục tin | Kịch bản DM.1 |
+| DM.2 | CRUD cho mọi danh mục | **Có** | Danh mục → chọn danh mục → Thêm mới / Sửa / Xóa | Kịch bản DM.2 → DM.5 |
+| DM.3 | Danh mục phân cấp (đề mục, phân loại, bộ sưu tập) | **Có** | Chọn cấp trên bằng cây; chặn chuyển một giá trị vào bên dưới cấp con của chính nó | Kịch bản DM.6, DM.7 |
+| DM.4 | Import danh mục từ Excel | **Có** | Tệp mẫu có sheet hướng dẫn; bước kiểm tra trước không ghi dữ liệu; dòng trùng mã sẽ cập nhật thay vì tạo mới | Kịch bản DM.8 → DM.10 |
+| DM.5 | Export danh mục ra Excel | **Có** | Tệp xuất dùng đúng tiêu đề cột của tệp mẫu nên sửa xong nhập lại được | Kịch bản DM.11 |
+| DM.6 | Gộp trùng, cập nhật toàn bộ biểu ghi liên quan | **Có** | Tìm trùng theo tên đã bỏ dấu; hiển thị số bản ghi đang dùng của từng giá trị; gộp chuyển hết tham chiếu rồi mới xóa | Kịch bản DM.12 |
+| DM.7 | Chặn xóa giá trị đang được sử dụng | **Có** | Thông báo nêu rõ số bản ghi đang dùng, hoặc số giá trị con còn lại | Kịch bản DM.5 |
+| DM.8 | Nạp sẵn danh mục chuẩn quốc tế | **Có** | 21 ngôn ngữ (ISO 639-2), 24 mã nước (MARC), 14 dạng tài liệu, 8 vật mang tin, bảng tóm tắt DDC (10 lớp + 89 phân lớp), 6 loại bạn đọc, 2 thư viện, 4 kho | Kịch bản 2.1.11 |
+| DM.9 | Danh mục tự tạo từ trường MARC 21 | **Đang thực hiện** | Phase 5 — cần biểu ghi MARC để rút trích giá trị. Bảng `cat.custom_indexes` đã sẵn sàng |
 
 ---
 

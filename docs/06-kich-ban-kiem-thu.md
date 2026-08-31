@@ -25,6 +25,7 @@ Ký hiệu bám theo **Mục 5 phần 2 của E-HSMT**.
 | 2.1.8 | Tài khoản quản trị mặc định | Đăng nhập `admin` / `LibraryConnect@2025` | Đăng nhập được và **bị bắt buộc đổi mật khẩu ngay** | Integration — `InstallationTests` | | |
 | 2.1.9 | Mã hóa tiếng Việt | Nhập tên thư viện có dấu, lưu, tải lại trang | Hiển thị đúng dấu tiếng Việt; CSDL dùng UTF-8, collation ICU `vi-VN` | | | |
 | 2.1.10 | Tra cứu tiếng Việt không dấu | Chạy `SELECT bib.vn_unaccent('Giáo trình Cơ sở dữ liệu');` | Trả `giao trinh co so du lieu` | | | |
+| 2.1.11 | Danh mục chuẩn được nạp sẵn | Vào Danh mục → Ngôn ngữ / Nước xuất bản / Khung phân loại | 21 ngôn ngữ ISO 639-2, 24 mã nước MARC, DDC 10 lớp chính và 89 phân lớp, 14 dạng tài liệu, 6 loại bạn đọc, 2 thư viện và 4 kho | Integration — `CatalogTests` | | |
 
 ---
 
@@ -100,11 +101,30 @@ Ký hiệu bám theo **Mục 5 phần 2 của E-HSMT**.
 
 ---
 
+## Nhóm chức năng — Danh mục nghiệp vụ
+
+| Mã | Chức năng | Bước thực hiện | Kết quả mong đợi | Tự động | Kết quả thực tế | Đạt |
+|---|---|---|---|---|---|---|
+| DM.1 | Danh sách danh mục | Vào menu Danh mục | Hiển thị đủ 20 danh mục, nhóm theo nghiệp vụ, đánh dấu danh mục phân cấp và danh mục hỗ trợ gộp trùng | Integration — `CatalogTests` | | |
+| DM.2 | Thêm giá trị | Thêm một nhà xuất bản kèm địa chỉ và điện thoại | Tạo thành công; các trường riêng của danh mục hiển thị đúng trên lưới | Integration — `CatalogTests` | | |
+| DM.3 | Tự sinh mã | Thêm một từ khóa "Cơ sở dữ liệu" và để trống ô mã | Hệ thống sinh mã `CO_SO_DU_LIEU` | Integration — `CatalogTests`; Unit — `CatalogCodeGeneratorTests` | | |
+| DM.4 | Trùng mã | Thêm hai giá trị cùng mã | Lần thứ hai bị từ chối, thông báo nêu rõ mã bị trùng | Integration — `CatalogTests` | | |
+| DM.5 | Chặn xóa | Xóa một giá trị đang được biểu ghi sử dụng, và xóa một giá trị còn cấp con | Cả hai bị từ chối; thông báo nêu rõ số bản ghi đang dùng hoặc số giá trị con | Integration — `CatalogTests` | | |
+| DM.6 | Danh mục phân cấp | Mở Khung phân loại | Cây DDC hai cấp; ô lọc và ô chọn cấp trên đều dạng cây | Integration — `CatalogTests` | | |
+| DM.7 | Chặn vòng lặp cây | Sửa một giá trị và chọn chính cấp con của nó làm cấp trên | Bị từ chối kèm thông báo rõ nghĩa; ô chọn cũng đã ẩn nhánh đó | Frontend — `treeUtils.test.ts` | | |
+| DM.8 | Tệp mẫu nhập | Bấm Nhập dữ liệu → Tải tệp mẫu | Tệp có sheet dữ liệu và sheet Hướng dẫn mô tả từng cột, kể cả các trường riêng của danh mục | Integration — `CatalogTests` | | |
+| DM.9 | Kiểm tra tệp trước khi nhập | Chọn tệp có dòng thiếu tên, bấm Kiểm tra tệp | Liệt kê lỗi theo dòng và cột; không ghi bản ghi nào | | | |
+| DM.10 | Nhập cập nhật theo mã | Nhập tệp có mã đã tồn tại | Các dòng đó cập nhật giá trị hiện có thay vì tạo bản ghi trùng | Integration — `CatalogTests` | | |
+| DM.11 | Vòng xuất – nhập | Xuất một danh mục ra Excel rồi nhập lại chính tệp đó | Toàn bộ dòng được ghi nhận là cập nhật, không dòng nào lỗi, không tạo bản ghi mới | Integration — `CatalogTests` | | |
+| DM.12 | Gộp trùng | Tạo ba cách viết của cùng một tên tác giả, mở Gộp trùng | Ba giá trị vào cùng một nhóm; sau khi gộp chỉ còn một, mọi biểu ghi tham chiếu được chuyển sang giá trị giữ lại | Integration — `CatalogTests`; Unit — `DuplicateDetectionTests` | | |
+
+---
+
 ## Cách chạy bộ kiểm thử tự động
 
 ```bash
 cd backend
-dotnet test                 # 57 unit test + 20 integration test
+dotnet test                 # 85 unit test + 33 integration test
 ```
 
 Integration test tự khởi tạo một container PostgreSQL 16 riêng, chạy migration, nạp dữ liệu nền và
@@ -112,7 +132,7 @@ gọi API qua đúng giao diện HTTP mà trình duyệt dùng — không có th
 
 ```bash
 cd frontend-admin
-npm test                    # 13 test giao diện
+npm test                    # 20 test giao diện
 ```
 
 ---

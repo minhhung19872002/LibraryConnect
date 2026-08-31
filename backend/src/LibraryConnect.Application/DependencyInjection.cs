@@ -27,6 +27,7 @@ public static class DependencyInjection
         services.AddAutoMapper(cfg => cfg.AddMaps(assembly));
 
         services.AddScoped<IPasswordPolicyProvider, PasswordPolicyProvider>();
+        services.AddScoped<Features.Catalogs.ICatalogUsageService, Features.Catalogs.CatalogUsageService>();
 
         return services;
     }
