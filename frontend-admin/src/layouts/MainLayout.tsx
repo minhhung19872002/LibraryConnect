@@ -89,6 +89,7 @@ export function MainLayout() {
           {!collapsed && <span className="lc-brand-name">{messages.app.productName}</span>}
         </div>
         <Menu
+          className="lc-sider-menu"
           mode="inline"
           items={antdItems}
           selectedKeys={selectedKeys}

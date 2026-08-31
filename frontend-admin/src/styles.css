@@ -36,9 +36,54 @@ body {
   min-height: 100vh;
 }
 
+/*
+ * Menu bên trái đứng yên, chỉ phần danh sách chức năng tự cuộn.
+ *
+ * Menu có mười bốn nhóm, mở vài nhóm ra là dài hơn màn hình 1366×768. Nếu để cả trang cuộn thì cán
+ * bộ phải cuộn xuống cuối trang mới bấm được mục cuối, và lúc ấy phần nội dung bên phải cũng trôi
+ * theo — mất chỗ đang làm việc.
+ */
 .lc-sider {
+  position: sticky;
+  top: 0;
+  height: 100vh;
   border-right: 1px solid var(--lc-border);
-  overflow: auto;
+  overflow: hidden;
+}
+
+/* Khối con của AntD nằm giữa Sider và nội dung, phải cho nó xếp dọc thì phần menu mới giãn được. */
+.lc-sider .ant-layout-sider-children {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.lc-sider-menu {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  /* Cuộn hết menu thì dừng ở đó, không đẩy tiếp cả trang phía sau. */
+  overscroll-behavior: contain;
+  border-inline-end: 0;
+}
+
+/* Thanh cuộn mảnh để không chiếm chỗ của nhãn chức năng. */
+.lc-sider-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.lc-sider-menu::-webkit-scrollbar-thumb {
+  background: #d0d5dd;
+  border-radius: 3px;
+}
+
+.lc-sider-menu::-webkit-scrollbar-thumb:hover {
+  background: #b4bcc8;
+}
+
+.lc-sider-menu {
+  scrollbar-width: thin;
+  scrollbar-color: #d0d5dd transparent;
 }
 
 .lc-brand {
