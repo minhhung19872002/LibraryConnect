@@ -13,7 +13,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Minio;
 using StackExchange.Redis;
 
 namespace LibraryConnect.Infrastructure;
@@ -34,7 +33,7 @@ public static class DependencyInjection
 
         AddPersistence(services, connectionString);
         AddCaching(services, configuration);
-        AddObjectStorage(services, configuration);
+        AddObjectStorage(services);
         AddBackgroundJobs(services, connectionString, configuration);
 
         services.AddScoped<IDateTimeProvider, DateTimeProvider>();
@@ -155,28 +154,11 @@ public static class DependencyInjection
         services.AddScoped<ICacheService, RedisCacheService>();
     }
 
-    private static void AddObjectStorage(IServiceCollection services, IConfiguration configuration)
+    private static void AddObjectStorage(IServiceCollection services)
     {
-        var section = configuration.GetSection(MinioOptions.SectionName);
-        var endpoint = section["Endpoint"] ?? "localhost:9000";
-        var accessKey = section["AccessKey"] ?? string.Empty;
-        var secretKey = section["SecretKey"] ?? string.Empty;
-        var useSsl = section.GetValue("UseSsl", false);
-
-        services.AddSingleton<IMinioClient>(_ =>
-        {
-            var builder = new MinioClient()
-                .WithEndpoint(endpoint)
-                .WithCredentials(accessKey, secretKey);
-
-            if (useSsl)
-            {
-                builder = builder.WithSSL();
-            }
-
-            return builder.Build();
-        });
-
+        // The provider decides whether a usable client can be built; nothing else in the graph needs
+        // to know, and a missing configuration no longer breaks unrelated screens.
+        services.AddSingleton<MinioClientProvider>();
         services.AddScoped<IFileStorage, MinioFileStorage>();
     }
 }

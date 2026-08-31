@@ -1,0 +1,251 @@
+# Hướng dẫn cài đặt và cấu hình — LibraryConnect
+
+Tài liệu dành cho quản trị viên hệ thống triển khai Phần mềm Thư viện số LibraryConnect.
+
+---
+
+## 1. Yêu cầu hạ tầng
+
+### 1.1. Máy chủ
+
+Hệ thống chạy được trên máy chủ vật lý lẫn máy ảo, trên Linux hoặc Windows Server 2019 trở lên.
+
+| Quy mô | CPU | RAM | Ổ đĩa | Ghi chú |
+|---|---|---|---|---|
+| Tối thiểu (≤ 50.000 biểu ghi) | 4 nhân | 8 GB | 100 GB SSD | Đủ cho một cơ sở |
+| Khuyến nghị (≤ 500.000 biểu ghi, 200 người dùng đồng thời) | 8 nhân | 16 GB | 500 GB SSD | Đáp ứng yêu cầu hiệu năng mục 6.3 |
+| Có nhiều tài liệu số | 8 nhân | 16 GB | 500 GB + dung lượng tài liệu số | Tài liệu số lưu trong MinIO |
+
+Dung lượng ổ đĩa cần tính thêm phần cho bản sao lưu: mỗi bản sao lưu toàn bộ chiếm khoảng 15–25%
+kích thước cơ sở dữ liệu, và hệ thống giữ mặc định 30 bản gần nhất.
+
+### 1.2. Phần mềm
+
+- **Docker Engine 24+** và **Docker Compose v2** (cách triển khai khuyến nghị), hoặc
+- **.NET 8 Runtime**, **PostgreSQL 16**, **Redis 7**, **MinIO** cài trực tiếp trên máy chủ.
+
+### 1.3. Trình duyệt phía người dùng
+
+Chrome, Edge, Firefox, Safari — hai phiên bản gần nhất. Giao diện quản trị thiết kế cho độ phân giải
+tối thiểu 1366×768; trang tra cứu OPAC hỗ trợ cả điện thoại.
+
+---
+
+## 2. Triển khai bằng Docker (khuyến nghị)
+
+### 2.1. Chuẩn bị
+
+```bash
+git clone https://github.com/minhhung19872002/LibraryConnect.git
+cd LibraryConnect
+cp .env.example .env
+```
+
+### 2.2. Sửa tệp `.env`
+
+Ba giá trị **bắt buộc phải đổi** trước khi chạy thật:
+
+| Biến | Ý nghĩa | Cách sinh giá trị |
+|---|---|---|
+| `POSTGRES_PASSWORD` | Mật khẩu tài khoản cơ sở dữ liệu | Chuỗi ngẫu nhiên ≥ 16 ký tự |
+| `MINIO_ROOT_PASSWORD` | Mật khẩu kho lưu trữ tệp | Chuỗi ngẫu nhiên ≥ 16 ký tự |
+| `LC_Jwt__Secret` | Khóa ký JWT | `openssl rand -base64 48` |
+
+> Nếu `LC_Jwt__Secret` để trống hoặc ngắn hơn 32 ký tự, dịch vụ API sẽ dừng ngay khi khởi động kèm
+> thông báo hướng dẫn — đây là chủ ý, để một hệ thống thiếu cấu hình bảo mật không bao giờ chạy lên.
+
+Các biến khác cần chú ý:
+
+| Biến | Mặc định | Khi nào cần đổi |
+|---|---|---|
+| `POSTGRES_PORT`, `REDIS_PORT`, `MINIO_API_PORT`, `API_PORT`, `HTTP_PORT` | 5432 / 6379 / 9000 / 8080 / 80 | Khi cổng đã bị dịch vụ khác chiếm trên máy chủ |
+| `LC_CORS_ORIGINS` | localhost | Khi truy cập qua tên miền thật; thêm origin của ứng dụng di động ở đợt sau |
+| `LC_RateLimit__LoginPerMinute` | 20 | Khi cả thư viện đi ra Internet qua **một** địa chỉ NAT: tăng theo số cán bộ đăng nhập cùng lúc |
+| `LC_Backup__ScheduleCron` | `0 2 * * *` | Đổi giờ chạy sao lưu tự động |
+| `TZ` | `Asia/Ho_Chi_Minh` | Không cần đổi khi triển khai trong nước |
+
+### 2.3. Khởi động
+
+```bash
+docker compose up -d
+docker compose ps          # tất cả phải ở trạng thái healthy
+docker compose logs -f api # theo dõi quá trình migration và seed
+```
+
+Lần khởi động đầu tiên, dịch vụ API tự động:
+
+1. Tạo toàn bộ cấu trúc cơ sở dữ liệu (chạy migration).
+2. Tạo hàm tra cứu tiếng Việt không dấu và các chỉ mục tìm kiếm.
+3. Nạp 161 mã quyền, 5 nhóm người dùng nghiệp vụ và tài khoản quản trị.
+4. Nạp bộ tham số hệ thống mặc định.
+
+Quá trình mất khoảng 30–60 giây. Khi `docker compose ps` báo `lc-api` là `healthy` là hệ thống đã sẵn sàng.
+
+### 2.4. Địa chỉ truy cập
+
+| Địa chỉ | Nội dung |
+|---|---|
+| `http://<máy-chủ>/admin` | Giao diện quản trị |
+| `http://<máy-chủ>/swagger` | Tài liệu API |
+| `http://<máy-chủ>/health` | Kiểm tra dịch vụ còn sống |
+| `http://<máy-chủ>/health/ready` | Kiểm tra kết nối PostgreSQL và Redis |
+| `http://<máy-chủ>:9001` | MinIO Console (quản lý tệp tài liệu số) |
+
+### 2.5. Đăng nhập lần đầu
+
+```
+Tên đăng nhập: admin
+Mật khẩu:      LibraryConnect@2025
+```
+
+Hệ thống **bắt buộc đổi mật khẩu ngay** trước khi cho vào bất kỳ chức năng nào. Sau khi đổi, mọi
+phiên đăng nhập cũ bị thu hồi và cần đăng nhập lại bằng mật khẩu mới.
+
+---
+
+## 3. Cấu hình sau khi cài đặt
+
+Thứ tự khuyến nghị cho một hệ thống mới:
+
+1. **Đổi mật khẩu quản trị** (bắt buộc, hệ thống tự yêu cầu).
+2. **Tham số hệ thống → Thông tin thư viện**: nhập tên thư viện, địa chỉ, điện thoại, email, logo.
+   Tên này hiển thị trên đầu trang quản trị, trên OPAC và trên mọi biểu mẫu in.
+3. **Tham số hệ thống → Cấu hình biên mục**: đặt *Nguồn biên mục (MARC 040$a)* theo tên thư viện.
+4. **Tham số hệ thống → Quy tắc sinh mã**: đặt tiền tố và độ dài cho mã vạch ĐKCB, số đăng ký cá
+   biệt, số thẻ bạn đọc theo quy ước sẵn có của thư viện.
+5. **Tham số hệ thống → Chính sách mật khẩu**: siết theo quy định của đơn vị nếu cần.
+6. **Tham số hệ thống → Cấu hình email**: khai báo SMTP để hệ thống gửi được thông báo nhắc hạn trả
+   và cảnh báo sao lưu lỗi.
+7. **Nhóm người dùng**: rà lại quyền của 5 nhóm mẫu, tạo thêm nhóm nếu cơ cấu tổ chức khác.
+8. **Người dùng**: tạo tài khoản cho cán bộ, hoặc nhập hàng loạt từ Excel.
+9. **Sao lưu**: kiểm tra sao lưu thủ công chạy được, sau đó bật lịch sao lưu tự động.
+
+Toàn bộ giá trị ở bước 2–6 nằm trong bảng `sys.system_parameters` và sửa được từ giao diện. **Không
+có thông tin nào của thư viện được viết cứng trong mã nguồn**, nên cùng một bản cài đặt triển khai
+lại được cho đơn vị khác chỉ bằng cách đổi tham số.
+
+---
+
+## 4. Danh mục biến môi trường
+
+Mọi biến của backend mang tiền tố `LC_`. Dấu `__` (hai gạch dưới) tương ứng với một cấp lồng nhau
+trong cấu hình, ví dụ `LC_Jwt__Secret` chính là `Jwt:Secret`.
+
+### 4.1. Cơ sở dữ liệu
+
+| Biến | Mặc định | Ý nghĩa |
+|---|---|---|
+| `LC_DB_HOST` | `localhost` | Máy chủ PostgreSQL |
+| `LC_DB_PORT` | `5432` | Cổng |
+| `LC_DB_NAME` | `libraryconnect` | Tên cơ sở dữ liệu |
+| `LC_DB_USER` | `libraryconnect` | Tài khoản |
+| `LC_DB_PASSWORD` | — | Mật khẩu |
+| `LC_ConnectionStrings__Default` | — | Chuỗi kết nối đầy đủ; nếu đặt thì các biến trên bị bỏ qua |
+| `LC_Database__AutoMigrate` | `true` | Tự chạy migration khi khởi động |
+
+### 4.2. Bảo mật
+
+| Biến | Mặc định | Ý nghĩa |
+|---|---|---|
+| `LC_Jwt__Secret` | — | Khóa ký JWT, tối thiểu 32 ký tự |
+| `LC_Jwt__AccessTokenMinutes` | `60` | Thời gian sống của access token |
+| `LC_Jwt__RefreshTokenDays` | `30` | Thời gian sống của refresh token |
+| `LC_CORS_ORIGINS` | localhost | Danh sách origin được phép, ngăn cách bằng dấu phẩy |
+| `LC_RateLimit__LoginPerMinute` | `20` | Số lần đăng nhập tối đa mỗi phút theo IP |
+| `LC_RateLimit__PublicPerMinute` | `300` | Số yêu cầu công khai tối đa mỗi phút theo IP |
+
+### 4.3. Cache, lưu trữ tệp, tác vụ nền
+
+| Biến | Mặc định | Ý nghĩa |
+|---|---|---|
+| `LC_Redis__ConnectionString` | `localhost:6379` | Kết nối Redis |
+| `LC_Redis__Enabled` | `true` | Tắt để chạy không cần Redis (dùng cache nội bộ) |
+| `LC_Minio__Endpoint` | `localhost:9000` | Địa chỉ MinIO |
+| `LC_Minio__AccessKey` / `LC_Minio__SecretKey` | — | Thông tin đăng nhập MinIO |
+| `LC_Minio__UseSsl` | `false` | Bật khi MinIO chạy HTTPS |
+| `LC_Hangfire__ServerEnabled` | `true` | Tắt trên các instance API không chạy tác vụ nền |
+
+> Nếu chưa khai báo `LC_Minio__AccessKey` / `LC_Minio__SecretKey`, hệ thống vẫn khởi động và mọi chức
+> năng không liên quan đến tệp vẫn dùng được; chỉ các thao tác tải lên/tải xuống tài liệu số báo lỗi
+> kèm hướng dẫn cấu hình.
+
+### 4.4. Sao lưu
+
+| Biến | Mặc định | Ý nghĩa |
+|---|---|---|
+| `LC_Backup__Directory` | `/var/lib/libraryconnect/backups` | Thư mục chứa bản sao lưu |
+| `LC_Backup__KeepCount` | `30` | Số bản sao lưu giữ lại |
+| `LC_Backup__ScheduleCron` | `0 2 * * *` | Lịch sao lưu tự động |
+| `LC_Backup__AutoEnabled` | `true` | Bật/tắt sao lưu tự động |
+
+---
+
+## 5. Cấu hình HTTPS
+
+Bản `docker-compose.yml` mặc định phục vụ HTTP để tiện cài đặt và kiểm thử. Khi đưa vào vận hành
+thật, đặt LibraryConnect sau một reverse proxy có chứng thư số.
+
+Ví dụ với Nginx trên máy chủ:
+
+```nginx
+server {
+    listen 443 ssl http2;
+    server_name thuvien.example.edu.vn;
+
+    ssl_certificate     /etc/letsencrypt/live/thuvien.example.edu.vn/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/thuvien.example.edu.vn/privkey.pem;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
+    client_max_body_size 512m;
+
+    location / {
+        proxy_pass http://127.0.0.1:80;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+server {
+    listen 80;
+    server_name thuvien.example.edu.vn;
+    return 301 https://$host$request_uri;
+}
+```
+
+Sau khi bật HTTPS, cập nhật `LC_CORS_ORIGINS` thành địa chỉ `https://` tương ứng.
+
+Backend đã tự nhận diện `X-Forwarded-For` và `X-Forwarded-Proto`, nên nhật ký hệ thống ghi đúng địa
+chỉ IP thật của người dùng thay vì địa chỉ của reverse proxy.
+
+---
+
+## 6. Nâng cấp phiên bản
+
+```bash
+cd LibraryConnect
+docker compose exec api sh -c 'echo kiểm tra dịch vụ còn sống'   # tùy chọn
+git pull
+docker compose build
+docker compose up -d
+```
+
+Migration mới được áp dụng tự động khi dịch vụ API khởi động lại. **Luôn tạo một bản sao lưu trước
+khi nâng cấp** (Quản trị hệ thống → Sao lưu cơ sở dữ liệu → *Sao lưu ngay*).
+
+---
+
+## 7. Xử lý sự cố khi cài đặt
+
+| Hiện tượng | Nguyên nhân thường gặp | Cách xử lý |
+|---|---|---|
+| `docker compose up` báo *port is already allocated* | Cổng đã bị dịch vụ khác chiếm | Đổi biến cổng tương ứng trong `.env` rồi chạy lại |
+| API dừng ngay, log ghi *LC_JWT_SECRET chưa được cấu hình* | Chưa đặt khóa ký JWT | Đặt `LC_Jwt__Secret` ≥ 32 ký tự |
+| Log ghi `28P01: password authentication failed` | Máy chủ đang có sẵn một PostgreSQL khác chiếm cổng 5432 | Đổi `POSTGRES_PORT` sang cổng khác |
+| `/health/ready` báo `Unhealthy` | PostgreSQL hoặc Redis chưa sẵn sàng | `docker compose ps`, xem log của container tương ứng |
+| Tải tài liệu số báo *Chưa cấu hình kho lưu trữ tệp MinIO* | Thiếu `LC_Minio__AccessKey` / `SecretKey` | Bổ sung vào `.env`, khởi động lại `api` |
+| Sao lưu báo *Không tìm thấy công cụ pg_dump* | Chạy API ngoài container mà máy chủ chưa cài PostgreSQL client | Cài `postgresql-client`, hoặc đặt `LC_Backup__PgDumpPath` trỏ tới đường dẫn đầy đủ |
+| Chữ tiếng Việt trong log bị lỗi phông trên Windows | Console chưa ở chế độ UTF-8 | Xem tệp log JSON trong `logs/` thay cho cửa sổ console |

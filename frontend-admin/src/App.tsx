@@ -10,6 +10,13 @@ import { MainLayout } from '@/layouts/MainLayout';
 import { LoginPage } from '@/modules/auth/LoginPage';
 import { ChangePasswordPage } from '@/modules/auth/ChangePasswordPage';
 import { DashboardPage } from '@/modules/dashboard/DashboardPage';
+import { AuditLogsPage } from '@/modules/system/AuditLogsPage';
+import { BackupsPage } from '@/modules/system/BackupsPage';
+import { ParametersPage } from '@/modules/system/ParametersPage';
+import { UserGroupsPage } from '@/modules/system/UserGroupsPage';
+import { UsersPage } from '@/modules/system/UsersPage';
+import { RequirePermissionRoute } from '@/components/PermissionGate';
+import { PERMISSIONS } from '@/api/permissions';
 import { messages } from '@/i18n/messages';
 import { theme } from '@/theme';
 
@@ -49,6 +56,48 @@ function AppRoutes() {
       <Route element={<MainLayout />}>
         <Route index element={<DashboardPage />} />
         <Route path="/doi-mat-khau" element={<ChangePasswordPage />} />
+
+        {/* Phân hệ I — Quản trị hệ thống. Each screen is also guarded server-side by the same codes. */}
+        <Route
+          path="/he-thong/nhom-nguoi-dung"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.system.groupView}>
+              <UserGroupsPage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/he-thong/nguoi-dung"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.system.userView}>
+              <UsersPage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/he-thong/tham-so"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.system.parameterView}>
+              <ParametersPage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/he-thong/nhat-ky"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.system.auditView}>
+              <AuditLogsPage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/he-thong/sao-luu"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.system.backupView}>
+              <BackupsPage />
+            </RequirePermissionRoute>
+          }
+        />
       </Route>
 
       <Route path="/khong-du-quyen" element={<ForbiddenPage />} />

@@ -255,16 +255,22 @@ static void AddCors(WebApplicationBuilder builder)
 
 static void AddRateLimiting(WebApplicationBuilder builder)
 {
+    // Configurable because a campus library typically reaches the server through a single NAT
+    // address: a limit tuned for one person would then throttle the whole staff at shift change.
+    var loginLimit = builder.Configuration.GetValue("RateLimit:LoginPerMinute", 20);
+    var publicLimit = builder.Configuration.GetValue("RateLimit:PublicPerMinute", 300);
+
     builder.Services.AddRateLimiter(options =>
     {
         options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 
-        // Brute-force protection on the sign-in endpoints (section 6.4).
+        // Brute-force protection on the sign-in endpoints (section 6.4). Repeated failures on a
+        // single account are additionally handled by the account lock-out in the login handler.
         options.AddPolicy("login", context => RateLimitPartition.GetFixedWindowLimiter(
             context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
             _ => new FixedWindowRateLimiterOptions
             {
-                PermitLimit = 10,
+                PermitLimit = loginLimit,
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
             }));
@@ -274,7 +280,7 @@ static void AddRateLimiting(WebApplicationBuilder builder)
             context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
             _ => new FixedWindowRateLimiterOptions
             {
-                PermitLimit = 300,
+                PermitLimit = publicLimit,
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
             }));
@@ -321,6 +327,7 @@ static async Task InitialiseDatabaseAsync(WebApplication app)
     {
         await seeder.MigrateAsync();
         await seeder.SeedAsync();
+        await seeder.RecoverInterruptedJobsAsync();
     }
     catch (Exception ex)
     {

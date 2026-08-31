@@ -39,6 +39,35 @@ public partial class DatabaseSeeder
         _logger.LogInformation("Khởi tạo dữ liệu nền hoàn tất");
     }
 
+    /// <summary>
+    /// Closes off backup jobs left in the running state.
+    ///
+    /// A job is only ever "running" while the process that started it is alive, so any such row found
+    /// at start-up belongs to a run that was interrupted — by a restart, a crash, or a restore that
+    /// rolled the database back to a moment when the job was still in flight.
+    /// </summary>
+    public async Task RecoverInterruptedJobsAsync(CancellationToken ct = default)
+    {
+        var interrupted = await _db.BackupJobs
+            .Where(job => job.Status == Domain.Enums.BackupStatus.Running)
+            .ToListAsync(ct);
+
+        if (interrupted.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var job in interrupted)
+        {
+            job.Status = Domain.Enums.BackupStatus.Failed;
+            job.FinishedAt = _clock.Now;
+            job.Message = "Tiến trình bị gián đoạn do máy chủ khởi động lại hoặc do phục hồi cơ sở dữ liệu.";
+        }
+
+        await _db.SaveChangesAsync(ct);
+        _logger.LogWarning("Đã đánh dấu {Count} tác vụ sao lưu bị gián đoạn là thất bại", interrupted.Count);
+    }
+
     /// <summary>Applies pending migrations. Called at startup so a container start is enough to deploy.</summary>
     public async Task MigrateAsync(CancellationToken ct = default)
     {

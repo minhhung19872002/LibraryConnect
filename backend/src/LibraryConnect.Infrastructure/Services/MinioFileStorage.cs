@@ -13,24 +13,27 @@ namespace LibraryConnect.Infrastructure.Services;
 /// </summary>
 public class MinioFileStorage : IFileStorage
 {
-    private readonly IMinioClient _client;
+    private readonly MinioClientProvider _provider;
     private readonly ILogger<MinioFileStorage> _logger;
 
-    public MinioFileStorage(IMinioClient client, IOptions<MinioOptions> options, ILogger<MinioFileStorage> logger)
+    public MinioFileStorage(MinioClientProvider provider, IOptions<MinioOptions> options, ILogger<MinioFileStorage> logger)
     {
-        _client = client;
+        _provider = provider;
         _logger = logger;
         Options = options.Value;
     }
 
     public MinioOptions Options { get; }
 
+    /// <summary>Resolved per call so an unconfigured store fails only where files are really needed.</summary>
+    private IMinioClient Client => _provider.Require();
+
     public async Task EnsureBucketAsync(string bucket, CancellationToken ct = default)
     {
-        var exists = await _client.BucketExistsAsync(new BucketExistsArgs().WithBucket(bucket), ct);
+        var exists = await Client.BucketExistsAsync(new BucketExistsArgs().WithBucket(bucket), ct);
         if (!exists)
         {
-            await _client.MakeBucketAsync(new MakeBucketArgs().WithBucket(bucket), ct);
+            await Client.MakeBucketAsync(new MakeBucketArgs().WithBucket(bucket), ct);
             _logger.LogInformation("Created object storage bucket {Bucket}", bucket);
         }
     }
@@ -52,7 +55,7 @@ public class MinioFileStorage : IFileStorage
             content.Position = 0;
         }
 
-        await _client.PutObjectAsync(new PutObjectArgs()
+        await Client.PutObjectAsync(new PutObjectArgs()
             .WithBucket(bucket)
             .WithObject(objectName)
             .WithStreamData(content)
@@ -66,7 +69,7 @@ public class MinioFileStorage : IFileStorage
     {
         var buffer = new MemoryStream();
 
-        await _client.GetObjectAsync(new GetObjectArgs()
+        await Client.GetObjectAsync(new GetObjectArgs()
             .WithBucket(bucket)
             .WithObject(objectName)
             .WithCallbackStream(stream => stream.CopyTo(buffer)), ct);
@@ -79,7 +82,7 @@ public class MinioFileStorage : IFileStorage
     {
         try
         {
-            await _client.StatObjectAsync(new StatObjectArgs().WithBucket(bucket).WithObject(objectName), ct);
+            await Client.StatObjectAsync(new StatObjectArgs().WithBucket(bucket).WithObject(objectName), ct);
             return true;
         }
         catch (Minio.Exceptions.ObjectNotFoundException)
@@ -93,17 +96,24 @@ public class MinioFileStorage : IFileStorage
     }
 
     public Task DeleteAsync(string bucket, string objectName, CancellationToken ct = default) =>
-        _client.RemoveObjectAsync(new RemoveObjectArgs().WithBucket(bucket).WithObject(objectName), ct);
+        Client.RemoveObjectAsync(new RemoveObjectArgs().WithBucket(bucket).WithObject(objectName), ct);
 
     public Task<string> GetPresignedUrlAsync(string bucket, string objectName, TimeSpan expiry, CancellationToken ct = default) =>
-        _client.PresignedGetObjectAsync(new PresignedGetObjectArgs()
+        Client.PresignedGetObjectAsync(new PresignedGetObjectArgs()
             .WithBucket(bucket)
             .WithObject(objectName)
             .WithExpiry((int)expiry.TotalSeconds));
 
     public async Task<long> GetBucketSizeAsync(string bucket, CancellationToken ct = default)
     {
-        var exists = await _client.BucketExistsAsync(new BucketExistsArgs().WithBucket(bucket), ct);
+        // Reporting the size of a store that was never configured is not an error worth failing a
+        // dashboard over; zero is the honest answer.
+        if (!_provider.IsConfigured)
+        {
+            return 0;
+        }
+
+        var exists = await Client.BucketExistsAsync(new BucketExistsArgs().WithBucket(bucket), ct);
         if (!exists)
         {
             return 0;
@@ -112,7 +122,7 @@ public class MinioFileStorage : IFileStorage
         long total = 0;
         var args = new ListObjectsArgs().WithBucket(bucket).WithRecursive(true);
 
-        await foreach (var item in _client.ListObjectsEnumAsync(args, ct))
+        await foreach (var item in Client.ListObjectsEnumAsync(args, ct))
         {
             total += (long)item.Size;
         }

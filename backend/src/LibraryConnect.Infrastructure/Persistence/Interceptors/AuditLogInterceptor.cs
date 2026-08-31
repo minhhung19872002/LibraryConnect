@@ -48,6 +48,8 @@ public class AuditLogInterceptor : SaveChangesInterceptor
         nameof(AuditLog),
         nameof(LoginHistory),
         nameof(RefreshToken),
+        nameof(SystemParameterHistory),
+        nameof(Domain.Entities.Bib.BibRecordVersion),
         nameof(Domain.Entities.Web.OpacSearchLog),
         nameof(Domain.Entities.Dig.DigitalAccessLog),
         nameof(Domain.Entities.Ill.Z3950SearchLog)

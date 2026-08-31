@@ -109,9 +109,13 @@ Không sửa migration đã commit — luôn tạo migration mới.
 ### Kiểm thử
 
 ```bash
-cd backend && dotnet test          # xUnit + FluentAssertions + Testcontainers
-cd frontend-admin && npm test      # Vitest
+cd backend && dotnet test          # 57 unit test + 20 integration test
+cd frontend-admin && npm test      # 13 test giao diện
 ```
+
+Integration test tự khởi tạo một container PostgreSQL 16 riêng, chạy migration, nạp dữ liệu nền rồi
+gọi API qua đúng giao diện HTTP mà trình duyệt dùng — không thành phần nào bị giả lập. Vì vậy cần
+Docker đang chạy khi thực hiện `dotnet test`.
 
 ---
 
@@ -151,8 +155,8 @@ vào mà không phải sửa lại — xem `mobile/README.md`.
 | Phase | Nội dung | Trạng thái |
 |---|---|---|
 | 1 | Nền móng: Clean Architecture, EF Core, JWT, RBAC, nhật ký tự động, health check, Docker | ✅ Hoàn thành |
-| 2 | Phân hệ I — Quản trị hệ thống | 🔄 Đang thực hiện |
-| 3 | Danh mục | ⏳ |
+| 2 | Phân hệ I — Quản trị hệ thống (nhóm quyền, người dùng, tham số, nhật ký, sao lưu/phục hồi) | ✅ Hoàn thành |
+| 3 | Danh mục | 🔄 Đang thực hiện |
 | 4 | MARC Core (ISO 2709, MARCXML) | ⏳ |
 | 5 | Phân hệ II — Biên mục | ⏳ |
 | 6 | Phân hệ III — Bổ sung & Kho | ⏳ |
