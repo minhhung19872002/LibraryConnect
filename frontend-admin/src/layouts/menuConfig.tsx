@@ -136,6 +136,7 @@ export const menuTree: MenuNode[] = [
       PERMISSIONS.cataloging.bibView,
       PERMISSIONS.cataloging.bibImport,
       PERMISSIONS.catalogList.customIndex,
+      PERMISSIONS.cataloging.queueView,
     ],
     children: [
       {
@@ -144,6 +145,13 @@ export const menuTree: MenuNode[] = [
         icon: <BookOutlined />,
         path: '/bien-muc',
         permissions: [PERMISSIONS.cataloging.bibView],
+      },
+      {
+        key: 'cataloging-queue',
+        label: messages.menu.catalogQueue,
+        icon: <ContainerOutlined />,
+        path: '/bien-muc/hang-doi',
+        permissions: [PERMISSIONS.cataloging.queueView],
       },
       {
         key: 'cataloging-import',

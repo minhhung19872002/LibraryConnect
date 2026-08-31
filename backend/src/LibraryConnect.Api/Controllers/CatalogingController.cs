@@ -455,6 +455,92 @@ public class CatalogingController : ApiControllerBase
         return Ok(Success(result, $"Đã gộp {result} giá trị."));
     }
 
+    // ---------------------------------------------------------------
+    // Hàng đợi biên mục chi tiết (II.4)
+    // ---------------------------------------------------------------
+
+    /// <summary>Danh sách việc trong hàng đợi, lọc theo cột của bảng công việc.</summary>
+    [HttpGet("queue")]
+    [RequirePermission(PermissionCodes.CatalogQueueView)]
+    [ProducesResponseType(typeof(ApiResponse<PagedResult<CatalogQueueItemDto>>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<PagedResult<CatalogQueueItemDto>>>> GetQueue(
+        [FromQuery] CatalogQueueRequest request, CancellationToken ct)
+    {
+        var result = await Mediator.Send(new GetCatalogQueueQuery(request), ct);
+        return Ok(Success(result));
+    }
+
+    /// <summary>Số việc trong từng cột của bảng công việc.</summary>
+    [HttpGet("queue/summary")]
+    [RequirePermission(PermissionCodes.CatalogQueueView)]
+    [ProducesResponseType(typeof(ApiResponse<CatalogQueueSummaryDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<CatalogQueueSummaryDto>>> GetQueueSummary(CancellationToken ct)
+    {
+        var result = await Mediator.Send(new GetCatalogQueueSummaryQuery(), ct);
+        return Ok(Success(result));
+    }
+
+    /// <summary>Thống kê năng suất biên mục theo cán bộ.</summary>
+    [HttpGet("queue/productivity")]
+    [RequirePermission(PermissionCodes.CatalogQueueView)]
+    [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<CatalogProductivityDto>>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<IReadOnlyList<CatalogProductivityDto>>>> GetQueueProductivity(
+        [FromQuery] DateOnly? from, [FromQuery] DateOnly? to, CancellationToken ct)
+    {
+        var result = await Mediator.Send(new GetCatalogProductivityQuery(from, to), ct);
+        return Ok(Success(result));
+    }
+
+    /// <summary>Đưa một biểu ghi vào hàng đợi biên mục chi tiết.</summary>
+    [HttpPost("queue")]
+    [RequirePermission(PermissionCodes.CatalogQueueAssign)]
+    [ProducesResponseType(typeof(ApiResponse<Guid>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<ApiResponse<Guid>>> Enqueue(
+        [FromBody] EnqueueForCatalogingCommand command, CancellationToken ct)
+    {
+        var result = await Mediator.Send(command, ct);
+        return Ok(Success(result, "Đã đưa biểu ghi vào hàng đợi biên mục."));
+    }
+
+    /// <summary>Phân công việc cho cán bộ, kèm độ ưu tiên và hạn xử lý.</summary>
+    [HttpPost("queue/assign")]
+    [RequirePermission(PermissionCodes.CatalogQueueAssign)]
+    [ProducesResponseType(typeof(ApiResponse<int>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<int>>> AssignQueue(
+        [FromBody] AssignCatalogQueueCommand command, CancellationToken ct)
+    {
+        var result = await Mediator.Send(command, ct);
+
+        return Ok(Success(result, command.AssignedTo is null
+            ? $"Đã bỏ phân công {result} việc."
+            : $"Đã phân công {result} việc."));
+    }
+
+    /// <summary>Chuyển trạng thái một việc: nhận việc, gửi duyệt, duyệt xong hoặc trả lại.</summary>
+    [HttpPost("queue/{id:guid}/status")]
+    [RequirePermission(PermissionCodes.CatalogQueueProcess)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<ApiResponse<object>>> ChangeQueueStatus(
+        Guid id, [FromBody] ChangeCatalogQueueStatusCommand command, CancellationToken ct)
+    {
+        command.Id = id;
+        await Mediator.Send(command, ct);
+
+        return Ok(Success<object?>(null, "Đã cập nhật trạng thái công việc."));
+    }
+
+    /// <summary>Bỏ một việc khỏi hàng đợi; biểu ghi không bị ảnh hưởng.</summary>
+    [HttpDelete("queue/{id:guid}")]
+    [RequirePermission(PermissionCodes.CatalogQueueAssign)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<object>>> RemoveFromQueue(Guid id, CancellationToken ct)
+    {
+        await Mediator.Send(new RemoveFromCatalogQueueCommand(id), ct);
+        return Ok(Success<object?>(null, "Đã bỏ việc khỏi hàng đợi."));
+    }
+
     /// <summary>
     /// Tùy chọn nhập đi kèm tệp trong một biểu mẫu multipart nên phải tự đọc từ chuỗi JSON.
     /// Cấu hình phải khớp với cấu hình chung của API, nhất là việc đọc enum theo tên.

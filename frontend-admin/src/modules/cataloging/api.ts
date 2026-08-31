@@ -4,6 +4,12 @@ import type { MarcRecord } from '@/modules/marc/types';
 import type { BibImportOptions, BibImportPreview, DuplicateMatchBy, ImportJob } from './importTypes';
 import type { CustomIndex, CustomIndexValue, HarvestResult } from './customIndexTypes';
 import type {
+  CatalogProductivity,
+  CatalogQueueItem,
+  CatalogQueueStatus,
+  CatalogQueueSummary,
+} from './queueTypes';
+import type {
   BibDetail,
   BibListItem,
   BibVersion,
@@ -196,6 +202,40 @@ export const importApi = {
       fileName: match?.[1] ? decodeURIComponent(match[1]) : `bieu-ghi.${format === 'marcxml' ? 'xml' : 'mrc'}`,
     };
   },
+};
+
+/** Hàng đợi biên mục chi tiết (II.4). */
+export const queueApi = {
+  list: (params: {
+    status?: CatalogQueueStatus;
+    keyword?: string;
+    assignedTo?: string;
+    unassigned?: boolean;
+    overdueOnly?: boolean;
+    page?: number;
+    pageSize?: number;
+  }) => api.get<PagedResult<CatalogQueueItem>>('/cataloging/queue', { params }),
+
+  summary: () => api.get<CatalogQueueSummary>('/cataloging/queue/summary'),
+
+  productivity: (from?: string, to?: string) =>
+    api.get<CatalogProductivity[]>('/cataloging/queue/productivity', { params: { from, to } }),
+
+  enqueue: (bibId: string, payload: { priority?: number; assignedTo?: string; deadline?: string; note?: string }) =>
+    api.post<string>('/cataloging/queue', { bibId, ...payload }),
+
+  assign: (payload: {
+    ids: string[];
+    assignedTo?: string | null;
+    priority?: number;
+    deadline?: string;
+    note?: string;
+  }) => api.post<number>('/cataloging/queue/assign', payload),
+
+  changeStatus: (id: string, status: CatalogQueueStatus, reason?: string) =>
+    api.post<null>(`/cataloging/queue/${id}/status`, { status, reason }),
+
+  remove: (id: string) => api.delete<null>(`/cataloging/queue/${id}`),
 };
 
 export const locationsApi = {
