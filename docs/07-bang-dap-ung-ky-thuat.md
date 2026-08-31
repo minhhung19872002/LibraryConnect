@@ -72,7 +72,7 @@ Cập nhật lần cuối: sau khi hoàn thành Phase 4.
 | DM.6 | Gộp trùng, cập nhật toàn bộ biểu ghi liên quan | **Có** | Tìm trùng theo tên đã bỏ dấu; hiển thị số bản ghi đang dùng của từng giá trị; gộp chuyển hết tham chiếu rồi mới xóa | Kịch bản DM.12 |
 | DM.7 | Chặn xóa giá trị đang được sử dụng | **Có** | Thông báo nêu rõ số bản ghi đang dùng, hoặc số giá trị con còn lại | Kịch bản DM.5 |
 | DM.8 | Nạp sẵn danh mục chuẩn quốc tế | **Có** | 21 ngôn ngữ (ISO 639-2), 24 mã nước (MARC), 14 dạng tài liệu, 8 vật mang tin, bảng tóm tắt DDC (10 lớp + 89 phân lớp), 6 loại bạn đọc, 2 thư viện, 4 kho | Kịch bản 2.1.11 |
-| DM.9 | Danh mục tự tạo từ trường MARC 21 | **Đang thực hiện** | Phase 5 — cần biểu ghi thật trong cơ sở dữ liệu để rút trích giá trị. Bảng `cat.custom_indexes` và bộ đọc MARC ở mục B3 đã sẵn sàng |
+| DM.9 | Danh mục tự tạo từ trường MARC 21 | **Có** | Khai báo danh mục bằng tag và trường con nguồn (ví dụ 260$a cho nơi xuất bản); quét toàn bộ biểu ghi bằng chính PostgreSQL để rút giá trị duy nhất, gộp các cách viết trùng (kết quả gộp sống sót qua lần quét sau), rồi dùng làm bộ lọc tra cứu | Kịch bản DM.13 → DM.17 |
 
 ---
 

@@ -371,6 +371,90 @@ public class CatalogingController : ApiControllerBase
         return File(file.Content, file.ContentType, file.FileName);
     }
 
+    // ---------------------------------------------------------------
+    // Danh mục tự tạo từ trường MARC (II.9)
+    // ---------------------------------------------------------------
+
+    /// <summary>Danh sách các danh mục tự tạo đã khai báo.</summary>
+    [HttpGet("custom-indexes")]
+    [RequirePermission(PermissionCodes.CatalogCustomIndexManage)]
+    [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<CustomIndexDto>>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<IReadOnlyList<CustomIndexDto>>>> GetCustomIndexes(
+        [FromQuery] bool includeInactive, CancellationToken ct)
+    {
+        var result = await Mediator.Send(new GetCustomIndexesQuery(includeInactive), ct);
+        return Ok(Success(result));
+    }
+
+    /// <summary>Các giá trị đã rút được của một danh mục tự tạo.</summary>
+    [HttpGet("custom-indexes/{id:guid}/values")]
+    [RequirePermission(PermissionCodes.CatalogCustomIndexManage)]
+    [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<CustomIndexValueDto>>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<IReadOnlyList<CustomIndexValueDto>>>> GetCustomIndexValues(
+        Guid id, [FromQuery] string? keyword, CancellationToken ct)
+    {
+        var result = await Mediator.Send(new GetCustomIndexValuesQuery(id, keyword), ct);
+        return Ok(Success(result));
+    }
+
+    /// <summary>Khai báo một danh mục mới bằng cách chỉ định trường và trường con MARC nguồn.</summary>
+    [HttpPost("custom-indexes")]
+    [RequirePermission(PermissionCodes.CatalogCustomIndexManage)]
+    [ProducesResponseType(typeof(ApiResponse<Guid>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<Guid>>> CreateCustomIndex(
+        [FromBody] SaveCustomIndexCommand command, CancellationToken ct)
+    {
+        command.Id = null;
+        var result = await Mediator.Send(command, ct);
+        return Ok(Success(result, "Đã khai báo danh mục tự tạo. Bấm Quét để rút giá trị từ biểu ghi."));
+    }
+
+    [HttpPut("custom-indexes/{id:guid}")]
+    [RequirePermission(PermissionCodes.CatalogCustomIndexManage)]
+    [ProducesResponseType(typeof(ApiResponse<Guid>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<Guid>>> UpdateCustomIndex(
+        Guid id, [FromBody] SaveCustomIndexCommand command, CancellationToken ct)
+    {
+        command.Id = id;
+        var result = await Mediator.Send(command, ct);
+        return Ok(Success(result, "Đã cập nhật danh mục tự tạo."));
+    }
+
+    [HttpDelete("custom-indexes/{id:guid}")]
+    [RequirePermission(PermissionCodes.CatalogCustomIndexManage)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<object>>> DeleteCustomIndex(Guid id, CancellationToken ct)
+    {
+        await Mediator.Send(new DeleteCustomIndexCommand(id), ct);
+        return Ok(Success<object?>(null, "Đã xóa danh mục tự tạo."));
+    }
+
+    /// <summary>Quét toàn bộ biểu ghi để rút giá trị và dựng lại liên kết dùng cho bộ lọc tra cứu.</summary>
+    [HttpPost("custom-indexes/{id:guid}/harvest")]
+    [RequirePermission(PermissionCodes.CatalogCustomIndexManage)]
+    [ProducesResponseType(typeof(ApiResponse<HarvestResultDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<HarvestResultDto>>> HarvestCustomIndex(
+        Guid id, CancellationToken ct)
+    {
+        var result = await Mediator.Send(new HarvestCustomIndexCommand(id), ct);
+
+        return Ok(Success(result,
+            $"Quét xong: {result.DistinctValues} giá trị, trong đó {result.NewValues} giá trị mới."));
+    }
+
+    /// <summary>Gộp nhiều cách viết của cùng một giá trị về một giá trị duy nhất.</summary>
+    [HttpPost("custom-indexes/{id:guid}/merge")]
+    [RequirePermission(PermissionCodes.CatalogCustomIndexManage)]
+    [ProducesResponseType(typeof(ApiResponse<int>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<int>>> MergeCustomIndexValues(
+        Guid id, [FromBody] MergeCustomIndexRequest request, CancellationToken ct)
+    {
+        var result = await Mediator.Send(
+            new MergeCustomIndexValuesCommand(id, request.KeepId, request.MergeIds), ct);
+
+        return Ok(Success(result, $"Đã gộp {result} giá trị."));
+    }
+
     /// <summary>
     /// Tùy chọn nhập đi kèm tệp trong một biểu mẫu multipart nên phải tự đọc từ chuỗi JSON.
     /// Cấu hình phải khớp với cấu hình chung của API, nhất là việc đọc enum theo tên.
@@ -404,6 +488,16 @@ public class ExportBibsRequest
 
     /// <summary>iso2709 hoặc marcxml.</summary>
     public string Format { get; set; } = "iso2709";
+}
+
+/// <summary>Yêu cầu gộp giá trị của danh mục tự tạo.</summary>
+public class MergeCustomIndexRequest
+{
+    /// <summary>Giá trị được giữ lại.</summary>
+    public Guid KeepId { get; set; }
+
+    /// <summary>Các giá trị bị gộp vào giá trị giữ lại.</summary>
+    public List<Guid> MergeIds { get; set; } = new();
 }
 
 /// <summary>Lý do xóa, bắt buộc nhập khi xóa biểu ghi hoặc đăng ký cá biệt.</summary>

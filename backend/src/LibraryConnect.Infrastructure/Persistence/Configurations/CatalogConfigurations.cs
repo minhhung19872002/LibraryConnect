@@ -137,12 +137,42 @@ public class CustomIndexValueConfiguration : IEntityTypeConfiguration<CustomInde
     {
         builder.Property(x => x.Code).HasMaxLength(300).IsRequired();
         builder.Property(x => x.Name).HasMaxLength(500).IsRequired();
+        // An empty JSON array, not an empty string: the column is jsonb and "" is not valid JSON.
+        builder.Property(x => x.Aliases).HasColumnType("jsonb").IsRequired().HasDefaultValue("[]");
 
         builder.HasOne(x => x.CustomIndex).WithMany(c => c.Values)
             .HasForeignKey(x => x.CustomIndexId).OnDelete(DeleteBehavior.Cascade);
 
         builder.HasIndex(x => new { x.CustomIndexId, x.Code }).IsUnique().HasFilter("deleted_at IS NULL")
             .HasDatabaseName("ux_custom_index_values");
+    }
+}
+
+/// <summary>
+/// Bảng liên kết giá trị danh mục tự tạo với biểu ghi.
+///
+/// A pure join table with no audit columns: it is derived data, rebuilt whole on every harvest, and
+/// carrying created/updated stamps on tens of thousands of rows that nobody edits would cost storage
+/// and tell nothing.
+/// </summary>
+public class CustomIndexLinkConfiguration : IEntityTypeConfiguration<CustomIndexLink>
+{
+    public void Configure(EntityTypeBuilder<CustomIndexLink> builder)
+    {
+        builder.ToTable("custom_index_links", "cat");
+        builder.HasKey(x => new { x.CustomIndexValueId, x.BibId });
+
+        builder.HasOne(x => x.CustomIndexValue).WithMany(v => v.Links)
+            .HasForeignKey(x => x.CustomIndexValueId).OnDelete(DeleteBehavior.Cascade);
+
+        // The record side is declared explicitly so the join uses bib_id rather than a shadow key,
+        // and so deleting a record takes its links with it.
+        builder.HasOne<Domain.Entities.Bib.BibRecord>()
+            .WithMany(bib => bib.CustomIndexLinks)
+            .HasForeignKey(x => x.BibId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasIndex(x => x.BibId).HasDatabaseName("ix_custom_index_links_bib");
     }
 }
 

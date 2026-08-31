@@ -105,6 +105,8 @@ public class GetBibRecordsQueryHandler : IRequestHandler<GetBibRecordsQuery, Pag
                 bib => bib.Classifications.Any(link => link.ClassificationId == request.ClassificationId))
             .WhereIf(request.CollectionId is not null,
                 bib => bib.Collections.Any(link => link.CollectionId == request.CollectionId))
+            .WhereIf(request.CustomIndexValueId is not null,
+                bib => bib.CustomIndexLinks.Any(link => link.CustomIndexValueId == request.CustomIndexValueId))
             .WhereIf(request.WithoutItems == true, bib => bib.ItemCount == 0)
             .WhereIf(request.AvailableOnly == true, bib => bib.AvailableItemCount > 0);
     }

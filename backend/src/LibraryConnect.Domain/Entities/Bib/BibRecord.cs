@@ -72,6 +72,10 @@ public class BibRecord : BaseEntity
     public ICollection<BibCollection> Collections { get; set; } = new List<BibCollection>();
     public ICollection<BibCourse> Courses { get; set; } = new List<BibCourse>();
     public ICollection<BibRecordVersion> Versions { get; set; } = new List<BibRecordVersion>();
+
+    /// <summary>Các giá trị danh mục tự tạo mà biểu ghi này mang, dựng lại sau mỗi lần quét (II.9).</summary>
+    public ICollection<Domain.Entities.Cat.CustomIndexLink> CustomIndexLinks { get; set; } =
+        new List<Domain.Entities.Cat.CustomIndexLink>();
 }
 
 public class BibAuthor : BaseEntity

@@ -2,6 +2,7 @@ import { api, http } from '@/api/client';
 import type { PagedResult } from '@/types/api';
 import type { MarcRecord } from '@/modules/marc/types';
 import type { BibImportOptions, BibImportPreview, DuplicateMatchBy, ImportJob } from './importTypes';
+import type { CustomIndex, CustomIndexValue, HarvestResult } from './customIndexTypes';
 import type {
   BibDetail,
   BibListItem,
@@ -123,6 +124,25 @@ export const catalogingApi = {
       : api.post<string>('/cataloging/templates', payload),
 
   deleteTemplate: (id: string) => api.delete<null>(`/cataloging/templates/${id}`),
+
+  customIndexes: (includeInactive = false) =>
+    api.get<CustomIndex[]>('/cataloging/custom-indexes', { params: { includeInactive } }),
+
+  customIndexValues: (id: string, keyword?: string) =>
+    api.get<CustomIndexValue[]>(`/cataloging/custom-indexes/${id}/values`, { params: { keyword } }),
+
+  saveCustomIndex: (id: string | null, payload: Record<string, unknown>) =>
+    id
+      ? api.put<string>(`/cataloging/custom-indexes/${id}`, payload)
+      : api.post<string>('/cataloging/custom-indexes', payload),
+
+  deleteCustomIndex: (id: string) => api.delete<null>(`/cataloging/custom-indexes/${id}`),
+
+  harvestCustomIndex: (id: string) =>
+    api.post<HarvestResult>(`/cataloging/custom-indexes/${id}/harvest`),
+
+  mergeCustomIndexValues: (indexId: string, keepId: string, mergeIds: string[]) =>
+    api.post<number>(`/cataloging/custom-indexes/${indexId}/merge`, { keepId, mergeIds }),
 };
 
 /** Nhập và xuất biểu ghi hàng loạt (II.6). */

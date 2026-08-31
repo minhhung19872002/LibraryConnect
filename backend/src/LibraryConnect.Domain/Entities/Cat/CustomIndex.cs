@@ -33,4 +33,30 @@ public class CustomIndexValue : BaseEntity
     public int RecordCount { get; set; }
     public int SortOrder { get; set; }
     public bool IsActive { get; set; } = true;
+
+    /// <summary>
+    /// Các cách viết khác đã được gộp về giá trị này, dạng mảng JSON.
+    ///
+    /// Without this a merge would not survive: the next harvest reads the records again, sees the
+    /// spelling that was merged away, and recreates it as a new value — quietly undoing the
+    /// librarian's work. Remembering the spelling means the harvest maps it back here instead.
+    /// </summary>
+    public string Aliases { get; set; } = "[]";
+
+    public ICollection<CustomIndexLink> Links { get; set; } = new List<CustomIndexLink>();
+}
+
+/// <summary>
+/// Biểu ghi nào mang giá trị nào của danh mục tự tạo.
+///
+/// The harvest could stop at counting, but the specification asks for the harvested values to work
+/// as a search filter afterwards, and a filter needs to know which records to return. The links are
+/// rebuilt whole on every harvest, so they always describe the catalogue as it is now rather than as
+/// it was when the value was first seen.
+/// </summary>
+public class CustomIndexLink
+{
+    public Guid CustomIndexValueId { get; set; }
+    public CustomIndexValue? CustomIndexValue { get; set; }
+    public Guid BibId { get; set; }
 }

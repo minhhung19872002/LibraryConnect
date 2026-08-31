@@ -57,6 +57,7 @@ public interface IApplicationDbContext
     DbSet<ViolationType> ViolationTypes { get; }
     DbSet<CustomIndex> CustomIndexes { get; }
     DbSet<CustomIndexValue> CustomIndexValues { get; }
+    DbSet<CustomIndexLink> CustomIndexLinks { get; }
     DbSet<Holiday> Holidays { get; }
 
     // ---- bib ----

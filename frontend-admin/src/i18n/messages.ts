@@ -70,6 +70,7 @@ export const messages = {
     cataloging: 'Biên mục',
     bibRecords: 'Biểu ghi thư mục',
     bibImport: 'Nhập biểu ghi từ tệp',
+    customIndexes: 'Danh mục tự tạo',
     marc: 'Khổ mẫu MARC 21',
     marcFields: 'Định nghĩa trường MARC',
     marcTool: 'Công cụ biểu ghi MARC',

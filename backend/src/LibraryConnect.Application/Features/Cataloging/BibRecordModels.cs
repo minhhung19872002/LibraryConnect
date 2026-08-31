@@ -113,6 +113,8 @@ public class BibListRequest : PagedRequest
     public Guid? SubjectId { get; set; }
     public Guid? ClassificationId { get; set; }
     public Guid? CollectionId { get; set; }
+    /// <summary>Lọc theo một giá trị của danh mục tự tạo (II.9).</summary>
+    public Guid? CustomIndexValueId { get; set; }
     public Guid? PublisherId { get; set; }
     public RecordStatus? Status { get; set; }
     public BibSource? Source { get; set; }

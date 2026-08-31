@@ -132,7 +132,11 @@ export const menuTree: MenuNode[] = [
     key: 'cataloging',
     label: messages.menu.cataloging,
     icon: <BookOutlined />,
-    permissions: [PERMISSIONS.cataloging.bibView, PERMISSIONS.cataloging.bibImport],
+    permissions: [
+      PERMISSIONS.cataloging.bibView,
+      PERMISSIONS.cataloging.bibImport,
+      PERMISSIONS.catalogList.customIndex,
+    ],
     children: [
       {
         key: 'cataloging-bibs',
@@ -147,6 +151,13 @@ export const menuTree: MenuNode[] = [
         icon: <ImportOutlined />,
         path: '/bien-muc/nhap-tep',
         permissions: [PERMISSIONS.cataloging.bibImport],
+      },
+      {
+        key: 'cataloging-custom-index',
+        label: messages.menu.customIndexes,
+        icon: <DatabaseOutlined />,
+        path: '/bien-muc/danh-muc-tu-tao',
+        permissions: [PERMISSIONS.catalogList.customIndex],
       },
     ],
   },

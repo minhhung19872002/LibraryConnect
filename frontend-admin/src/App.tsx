@@ -23,6 +23,7 @@ import { BibListPage } from '@/modules/cataloging/BibListPage';
 import { BibEditorPage } from '@/modules/cataloging/BibEditorPage';
 import { BibDetailPage } from '@/modules/cataloging/BibDetailPage';
 import { BibImportPage } from '@/modules/cataloging/BibImportPage';
+import { CustomIndexPage } from '@/modules/cataloging/CustomIndexPage';
 import { RequirePermissionRoute } from '@/components/PermissionGate';
 import { PERMISSIONS } from '@/api/permissions';
 import { messages } from '@/i18n/messages';
@@ -140,6 +141,14 @@ function AppRoutes() {
           element={
             <RequirePermissionRoute permission={PERMISSIONS.cataloging.bibView}>
               <BibListPage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/bien-muc/danh-muc-tu-tao"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.catalogList.customIndex}>
+              <CustomIndexPage />
             </RequirePermissionRoute>
           }
         />

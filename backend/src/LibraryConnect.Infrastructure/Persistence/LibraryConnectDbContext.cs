@@ -74,6 +74,7 @@ public class LibraryConnectDbContext : DbContext, IApplicationDbContext
     public DbSet<ViolationType> ViolationTypes => Set<ViolationType>();
     public DbSet<CustomIndex> CustomIndexes => Set<CustomIndex>();
     public DbSet<CustomIndexValue> CustomIndexValues => Set<CustomIndexValue>();
+    public DbSet<CustomIndexLink> CustomIndexLinks => Set<CustomIndexLink>();
     public DbSet<Holiday> Holidays => Set<Holiday>();
 
     // ---- bib ----
