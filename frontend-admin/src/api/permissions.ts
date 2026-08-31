@@ -105,7 +105,13 @@ export const PERMISSIONS = {
   },
   serial: {
     view: 'SERIAL.TITLE.VIEW',
+    create: 'SERIAL.TITLE.CREATE',
+    update: 'SERIAL.TITLE.UPDATE',
+    delete: 'SERIAL.TITLE.DELETE',
+    predict: 'SERIAL.ISSUE.PREDICT',
     receive: 'SERIAL.ISSUE.RECEIVE',
+    claim: 'SERIAL.ISSUE.CLAIM',
+    bind: 'SERIAL.ISSUE.BIND',
     article: 'SERIAL.ARTICLE.MANAGE',
     reportView: 'SERIAL.REPORT.VIEW',
   },

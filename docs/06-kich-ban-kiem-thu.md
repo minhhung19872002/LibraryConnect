@@ -265,11 +265,59 @@ Ký hiệu bám theo **Mục 5 phần 2 của E-HSMT**.
 | BS.59 | Xuất danh sách ĐKCB | Ấn phẩm trong kho → Xuất Excel | Tệp Excel đúng bằng danh sách đang lọc |
 | BS.60 | Phân quyền | Đăng nhập tài khoản không có quyền Bổ sung | Menu Bổ sung không hiện; gọi thẳng API trả 403 |
 
+## Nhóm chức năng — Phân hệ IV: Ấn phẩm định kỳ
+
+| Mã | Kịch bản | Các bước | Kết quả mong đợi |
+|---|---|---|---|
+| DK.1 | Khai đầu báo mới | Ấn phẩm định kỳ → Báo, tạp chí → Thêm đầu báo | Đầu báo xuất hiện; hệ thống sinh kèm biểu ghi MARC 21 có leader vị trí 07 = 's', trường 022 ISSN và 310 kỳ hạn |
+| DK.2 | Hiển thị ISSN | Xem danh sách sau khi lưu ISSN không dấu gạch | Màn hình hiện lại đúng cách viết chuẩn, ví dụ 1859-1450 |
+| DK.3 | Khai kỳ hạn theo tháng | Chọn kỳ hạn Tháng, ngày phát hành 15 | Form hiện ô "Ngày phát hành trong tháng" |
+| DK.4 | Khai kỳ hạn theo tuần | Chọn kỳ hạn Tuần | Ô ngày trong tháng đổi thành ô chọn thứ phát hành |
+| DK.5 | Kỳ hạn không định kỳ | Chọn Không định kỳ, bỏ trống số kỳ/năm rồi lưu | Bị chặn — kỳ hạn này bắt buộc khai số kỳ để dựng khung số |
+| DK.6 | Xem trước số dự kiến | Mở bàn làm việc → Sinh số dự kiến → Xem trước | Danh sách số hiện ra; kiểm tra lại danh sách số trong cơ sở dữ liệu vẫn trống |
+| DK.7 | Ngày phát hành đúng thứ | Xem trước một tuần báo ra thứ Sáu | Mọi số đều rơi vào thứ Sáu |
+| DK.8 | Ngày không tồn tại | Khai ngày phát hành 31, xem trước tháng Hai | Số tháng Hai rơi vào ngày cuối tháng chứ không bị bỏ |
+| DK.9 | Kỳ nghỉ không xuất bản | Khai nghỉ tháng 7 và 8, xem trước cả năm | Không có số nào trong hai tháng đó; số vẫn chạy liền mạch qua kỳ nghỉ |
+| DK.10 | Đánh lại số theo năm | Sinh số cho khoảng vắt qua năm mới | Số về lại 1 khi sang năm mới |
+| DK.11 | Số liên tục | Chọn cách đánh số liên tục, số bắt đầu 250 | Số chạy 250, 251, 252... không đặt lại theo năm |
+| DK.12 | Tập và số | Chọn có tập và số, tập bắt đầu 12 | Nhãn số hiện "Tập 12, Số 1 (2026)"; sang năm sau tập tăng lên 13 |
+| DK.13 | Sửa tay trước khi chốt | Sửa số, tập và ngày của một dòng ở bước xem trước rồi chốt | Danh sách lưu xuống đúng như đã sửa |
+| DK.14 | Chốt danh sách số | Bấm Chốt danh sách | Số dự kiến xuất hiện trên lưới nhận số |
+| DK.15 | Sinh lại lần hai | Sinh lại đúng khoảng vừa sinh | Bị chặn kèm thông báo các số đã được sinh trước đó |
+| DK.16 | Mở rộng khoảng sinh | Sinh cho khoảng rộng hơn | Chỉ sinh phần còn thiếu, số cũ được bỏ qua |
+| DK.17 | Sinh số hàng loạt | Chọn nhiều đầu báo trên danh sách → Sinh số hàng loạt | Mỗi đầu báo sinh theo kỳ hạn của chính nó |
+| DK.18 | Ghi nhận số đến | Bàn làm việc → Ghi nhận số → chọn số → Ghi nhận đã nhận | Số chuyển sang Đã nhận, ghi ngày nhận và người nhận |
+| DK.19 | Sinh ĐKCB khi ghi nhận | Bật "Sinh ĐKCB", nhận 2 bản | Tạo 2 ấn phẩm có mã vạch riêng trong kho, trạng thái Trong kho và không khóa |
+| DK.20 | Ghi nhận lại số đã nhận | Ghi nhận lại chính số đó | Bị chặn kèm lý do đã ghi nhận trước đó |
+| DK.21 | Lưới nhận số | Xem tab Lưới nhận số | Các số nhóm theo năm, tô màu theo trạng thái; số quá hạn tô đỏ |
+| DK.22 | Đánh dấu số thiếu | Chọn số quá hạn → Đánh dấu thiếu | Số chuyển sang trạng thái Thiếu |
+| DK.23 | Lập khiếu nại | Chọn số thiếu → Lập khiếu nại | Sinh số phiếu; nội dung soạn sẵn có tên số và ngày phát hành dự kiến |
+| DK.24 | Khiếu nại trùng | Lập khiếu nại lần hai cho số đang có phiếu mở | Bị chặn |
+| DK.25 | Ghi phản hồi nhà cung cấp | Tab Khiếu nại → Ghi phản hồi → Đã giải quyết | Phiếu đổi trạng thái, ghi ngày phản hồi |
+| DK.26 | Hủy khiếu nại | Ghi phản hồi với trạng thái Đã hủy | Số quay lại trạng thái Thiếu để vẫn nằm trong danh sách theo dõi |
+| DK.27 | Nhập mục lục bài trích | Tab Mục lục bài trích → chọn số → Thêm bài → Lưu | Danh sách bài lưu lại, cột số bài trên ô chọn số tăng lên |
+| DK.28 | Nhập mục lục từ Excel | Tải tệp mẫu, điền, nhập lại | Số bài nhập được báo đúng; dòng thiếu nhan đề và dòng trang ngược báo theo số dòng |
+| DK.29 | Sinh biểu ghi bài trích | Bấm Sinh biểu ghi bài trích | Mỗi bài có một biểu ghi MARC riêng, leader vị trí 07 = 'a', trường 773 mang $t tên tạp chí, $g số và trang, $x ISSN |
+| DK.30 | Tra cứu bài trích | Biên mục → tra tên bài, gõ không dấu | Bài trích tìm được như một biểu ghi bình thường |
+| DK.31 | Sinh biểu ghi lần hai | Bấm sinh lại | Bị chặn — mọi bài đã có biểu ghi |
+| DK.32 | Xóa bài đã có biểu ghi | Bỏ bài khỏi mục lục rồi lưu | Bị chặn kèm hướng dẫn xóa biểu ghi ở phân hệ Biên mục trước |
+| DK.33 | Đóng tập khi chưa nhận số | Tab Đóng tập → Đóng tập cho năm chưa nhận số nào | Bị chặn — không đóng tập rỗng ruột |
+| DK.34 | Đóng tập | Nhận đủ các số rồi Đóng tập cả năm | Sinh mã tập, một ĐKCB mới có mã vạch và ký hiệu xếp giá riêng |
+| DK.35 | Số lẻ sau khi đóng tập | Xem lại lưới nhận số | Các số chuyển sang "Đã đóng tập" nhưng vẫn còn trong sổ để đối chiếu khi kiểm kê |
+| DK.36 | Tập đóng nằm trong kho | Bổ sung → Ấn phẩm trong kho → tra mã vạch của tập | Tập hiện ra như một ấn phẩm bình thường, có giá và ký hiệu xếp giá |
+| DK.37 | Bảng tổng hợp theo năm | Tab Lưới nhận số, phần Tổng hợp theo năm | Số kỳ dự kiến, đã nhận, thiếu, đã đóng tập, tỷ lệ nhận và giá trị |
+| DK.38 | Xóa đầu báo đã nhận số | Xóa một đầu báo đã nhận số | Bị chặn kèm số kỳ đã nhận |
+| DK.39 | Xóa đầu báo chưa nhận số | Xóa đầu báo mới chỉ có số dự kiến | Xóa được, các số dự kiến bị xóa cùng |
+| DK.40 | Báo cáo bốn chiều | Báo cáo ấn phẩm định kỳ → đổi chiều thống kê | Tổng hợp, môn loại, mức định kỳ và ngôn ngữ đều ra số liệu; tổng cộng khớp |
+| DK.41 | Gộp môn loại | Xem chiều Môn loại với các đầu báo có DDC 020.5 và 070.1 | Cùng gộp vào lớp "000 — Tin học, thông tin và tác phẩm tổng quát" |
+| DK.42 | Xuất báo cáo | Bấm Excel và PDF | Tệp xuất ra đúng bằng bộ lọc đang xem |
+| DK.43 | Phân quyền | Đăng nhập tài khoản không có quyền Ấn phẩm định kỳ | Menu không hiện; gọi thẳng API trả 403 |
+
 ## Cách chạy bộ kiểm thử tự động
 
 ```bash
 cd backend
-dotnet test                 # 194 unit test + 116 integration test
+dotnet test                 # 215 unit test + 131 integration test
 ```
 
 Integration test tự khởi tạo một container PostgreSQL 16 và một container MinIO riêng, chạy
@@ -278,7 +326,7 @@ duyệt dùng — không có thành phần nào bị giả lập.
 
 ```bash
 cd frontend-admin
-npm test                    # 52 test giao diện
+npm test                    # 65 test giao diện
 ```
 
 ---

@@ -268,9 +268,23 @@ export const menuTree: MenuNode[] = [
     key: 'serials',
     label: messages.menu.serials,
     icon: <ContainerOutlined />,
-    path: '/an-pham-dinh-ky',
-    permissions: [PERMISSIONS.serial.view],
-    comingSoon: true,
+    permissions: [PERMISSIONS.serial.view, PERMISSIONS.serial.reportView],
+    children: [
+      {
+        key: 'serial-titles',
+        label: messages.menu.serialTitles,
+        icon: <ContainerOutlined />,
+        path: '/an-pham-dinh-ky/dau-bao',
+        permissions: [PERMISSIONS.serial.view],
+      },
+      {
+        key: 'serial-reports',
+        label: messages.menu.serialReports,
+        icon: <BarChartOutlined />,
+        path: '/an-pham-dinh-ky/bao-cao',
+        permissions: [PERMISSIONS.serial.reportView],
+      },
+    ],
   },
   {
     key: 'digital',

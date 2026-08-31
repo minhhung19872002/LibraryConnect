@@ -180,6 +180,35 @@ Cập nhật lần cuối: sau khi hoàn thành Phase 5.
 
 ---
 
+## B6. Phân hệ IV — Ấn phẩm định kỳ
+
+| # | Yêu cầu của E-HSMT | Đáp ứng | Thực hiện |
+|---|---|---|---|
+| IV.1 | Tìm báo, tạp chí theo tên, ISSN, NXB, kỳ hạn, ngôn ngữ, kho, trạng thái đặt | **Có** | Tìm theo tên bỏ dấu vẫn ra; cột tình trạng nhận số ngay trên danh sách |
+| IV.1 | Xem nhanh tình trạng nhận số dạng lưới theo năm, tô màu | **Có** | Lưới các số theo năm, tô theo trạng thái: dự kiến, đã nhận, thiếu, đang khiếu nại, đã đóng tập |
+| IV.2 | Nhập mục lục bài trích: nhan đề, tác giả, trang từ–đến, tóm tắt, từ khóa | **Có** | Bảng nhập trực tiếp trên bàn làm việc của từng số |
+| IV.2 | Sinh biểu ghi MARC riêng cho bài trích, liên kết ấn phẩm mẹ qua trường 773 | **Có** | Leader vị trí 07 = 'a', trường 773 mang $t tên tạp chí, $g định vị số và trang, $x ISSN; bài tra được trên OPAC bằng chính tên bài |
+| IV.2 | Import mục lục từ Excel | **Có** | Tệp mẫu có sheet hướng dẫn; dòng lỗi báo theo đúng số dòng trong tệp |
+| IV.3 | Sinh số: chọn nhiều đầu báo, chọn khoảng thời gian | **Có** | Mỗi đầu báo sinh theo kỳ hạn của chính nó; số đã có được bỏ qua nên chạy lại không nhân đôi |
+| IV.3 | Ghi nhận: bảng các số đến hạn, tick nhận hàng loạt | **Có** | Nhận nhiều số một lần, nhập số lượng thực nhận và ngày nhận cho từng số |
+| IV.3 | Kiểm tra: đối chiếu dự kiến với đã nhận, liệt kê số thiếu | **Có** | Bộ lọc "quá hạn" và "đến hạn"; đánh dấu thiếu hàng loạt |
+| IV.3 | Tạo phiếu khiếu nại gửi nhà cung cấp | **Có** | Sinh số phiếu tự động, nội dung soạn sẵn kèm tên số và ngày phát hành dự kiến; ghi nhận phản hồi, hủy khiếu nại thì số quay lại danh sách thiếu |
+| IV.4 | Phân kho: chọn kho, giá, ký hiệu xếp giá cho đầu báo | **Có** | Khai ngay trên form đầu báo; số nhận về lấy mặc định từ đây |
+| IV.4 | Định kỳ: dạng chu kỳ, số kỳ/năm, ngày phát hành, quy tắc đánh số, năm và số bắt đầu, kỳ nghỉ | **Có** | Mười kỳ hạn; ngày phát hành theo thứ trong tuần hoặc ngày trong tháng; ba cách đánh số; khai được các tháng không xuất bản |
+| IV.4 | Sinh số theo cấu hình, cho sửa tay từng số trước khi chốt | **Có** | Bước xem trước không ghi gì vào cơ sở dữ liệu; sửa được số, tập và ngày của từng dòng rồi mới chốt |
+| IV.4 | Ghi nhận từng số: ngày nhận, số lượng, sinh barcode, ghi vào kho | **Có** | Mỗi bản nhận về thành một ĐKCB thật có mã vạch, vào kho ở trạng thái cho mượn ngay |
+| IV.4 | Kiểm tra: lưới tình trạng, đánh dấu số thiếu, tạo khiếu nại | **Có** | Cùng bàn làm việc, không phải chuyển màn hình |
+| IV.4 | Đóng tập: chọn khoảng số, sinh ĐKCB mới, số lẻ chuyển "đã đóng tập" | **Có** | Tập đóng là một ấn phẩm mới có mã vạch và ký hiệu xếp giá riêng; số lẻ giữ nguyên trong sổ nhận số để đối chiếu khi kiểm kê |
+| IV.4 | In nhãn gáy tập | **Có** | Qua màn hình in nhãn gáy của Phân hệ III, lọc theo mã vạch của tập |
+| IV.4 | Tổng hợp tình hình nhận số theo năm | **Có** | Bảng số kỳ dự kiến, đã nhận, thiếu, đã đóng tập, tỷ lệ nhận và giá trị |
+| IV.5 | Báo cáo tổng hợp (số đầu báo, số kỳ đã nhận, giá trị) | **Có** | Chiều "Tổng hợp" |
+| IV.5 | Báo cáo theo môn loại (DDC) | **Có** | Gộp theo lớp trăm của DDC, kèm tên lớp bằng tiếng Việt |
+| IV.5 | Báo cáo theo mức định kỳ | **Có** | Chiều "Mức định kỳ" |
+| IV.5 | Báo cáo theo ngôn ngữ | **Có** | Chiều "Ngôn ngữ"; thêm hai chiều nhà cung cấp và kho để quyết toán tiền đặt báo |
+| IV.5 | Báo cáo có bảng, đồ họa và xuất PDF/Excel | **Có** | Bảng kèm thanh tỷ trọng; xuất Excel và PDF từ đúng bộ lọc đang xem |
+
+---
+
 ## D. Trao đổi dữ liệu và các phân hệ còn lại
 
 | # | Yêu cầu | Đáp ứng | Ghi chú |
@@ -189,7 +218,7 @@ Cập nhật lần cuối: sau khi hoàn thành Phase 5.
 | D3 | OAI-PMH provider và harvester | **Đang thực hiện** | Phase 11. Bảng `ill.oai_repositories` và tuyến `/oai` đã có |
 | D4 | Phân hệ II — Biên mục | **Có** | Chi tiết ở mục B4. Riêng II.7 (nhập từ Z39.50) thuộc Phase 11 |
 | D5 | Phân hệ III — Bổ sung và Kho | **Có** | Chi tiết ở mục B5 |
-| D6 | Phân hệ IV — Ấn phẩm định kỳ | **Đang thực hiện** | Phase 7 |
+| D6 | Phân hệ IV — Ấn phẩm định kỳ | **Có** | Chi tiết ở mục B6 |
 | D7 | Phân hệ V — Tài liệu số | **Đang thực hiện** | Phase 10 |
 | D8 | Phân hệ VI — Bạn đọc | **Đang thực hiện** | Phase 8 |
 | D9 | Phân hệ VII — Lưu thông | **Đang thực hiện** | Phase 9 |

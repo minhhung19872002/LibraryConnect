@@ -32,6 +32,8 @@ import { InventoryPage } from '@/modules/acquisition/InventoryPage';
 import { LabelTemplatePage } from '@/modules/acquisition/LabelTemplatePage';
 import { FormTemplatePage } from '@/modules/acquisition/FormTemplatePage';
 import { AcquisitionReportsPage } from '@/modules/acquisition/AcquisitionReportsPage';
+import { SerialsPage } from '@/modules/serials/SerialsPage';
+import { SerialReportsPage } from '@/modules/serials/SerialReportsPage';
 import { CustomIndexPage } from '@/modules/cataloging/CustomIndexPage';
 import { CatalogQueuePage } from '@/modules/cataloging/CatalogQueuePage';
 import { CardTemplatePage } from '@/modules/cataloging/CardTemplatePage';
@@ -187,6 +189,22 @@ function AppRoutes() {
           element={
             <RequirePermissionRoute permission={PERMISSIONS.catalogList.customIndex}>
               <CustomIndexPage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/an-pham-dinh-ky/dau-bao"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.serial.view}>
+              <SerialsPage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/an-pham-dinh-ky/bao-cao"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.serial.reportView}>
+              <SerialReportsPage />
             </RequirePermissionRoute>
           }
         />

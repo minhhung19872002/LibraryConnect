@@ -79,6 +79,8 @@ export const messages = {
     inventory: 'Kiểm kê kho',
     formTemplates: 'Mẫu biểu in',
     acquisitionReports: 'Báo cáo bổ sung',
+    serialTitles: 'Báo, tạp chí',
+    serialReports: 'Báo cáo ấn phẩm định kỳ',
     customIndexes: 'Danh mục tự tạo',
     catalogQueue: 'Hàng đợi biên mục',
     cards: 'Mẫu phích và in phích',
