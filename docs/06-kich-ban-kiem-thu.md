@@ -439,11 +439,49 @@ Ký hiệu bám theo **Mục 5 phần 2 của E-HSMT**.
 | TLS.31 | Nhật ký hệ thống ghi việc xuất dữ liệu | Sau khi xuất gói, vào Nhật ký hệ thống lọc đối tượng `DigitalDocument` | Có dòng hành động Xuất |
 | TLS.32 | Phân quyền | Đăng nhập tài khoản bạn đọc rồi gọi `POST /api/digital/requests/search` | Trả 403 kèm tên mã quyền còn thiếu |
 
+## Nhóm chức năng — Liên thư viện (mục 2.4)
+
+| Mã | Kịch bản | Các bước | Kết quả mong đợi |
+|---|---|---|---|
+| LTV.1 | Ba máy chủ nạp sẵn | Liên thư viện → Máy chủ thư viện bạn | Có Thư viện Quốc hội Mỹ theo cả hai lối Z39.50 và SRU, cùng một máy chủ của Đại học Yale |
+| LTV.2 | Kiểm tra kết nối thật | Bấm Kiểm tra ở dòng Thư viện Quốc hội Mỹ (SRU) | Báo kết nối tốt kèm số kết quả tra thử và thời gian trả lời |
+| LTV.3 | Kiểm tra máy chủ hỏng | Khai một máy chủ với địa chỉ không có thật rồi bấm Kiểm tra | Báo hỏng kèm lý do cụ thể, và trạng thái được ghi lại trên danh sách |
+| LTV.4 | Khai báo thiếu thông tin | Thêm máy chủ mà bỏ trống địa chỉ | Bị chặn kèm thông báo rõ trường nào còn thiếu |
+| LTV.5 | Sửa máy chủ, bỏ trống mật khẩu | Sửa một máy chủ đang có mật khẩu, để trống ô mật khẩu rồi lưu | Mật khẩu cũ được giữ nguyên |
+| LTV.6 | Tra cứu Z39.50 thật | Tra cứu liên thư viện, nhan đề "library science", lấy 10 biểu ghi | Máy chủ Thư viện Quốc hội Mỹ trả về số kết quả và biểu ghi đọc được, tiếng Anh có dấu phụ hiển thị đúng |
+| LTV.7 | Một máy chủ hỏng không làm hỏng cả lượt | Tra cứu khi trong danh sách có máy chủ hỏng | Máy chủ hỏng báo lỗi riêng, các máy chủ còn lại vẫn trả kết quả |
+| LTV.8 | Đối chiếu với kho của mình | Tra cứu một nhan đề mà thư viện đã có | Dòng đó mang nhãn "Thư viện mình đã có" |
+| LTV.9 | Nhập biểu ghi về | Bấm Nhập vào ở một dòng kết quả | Mở trình soạn MARC với biểu ghi đã bỏ số kiểm soát của thư viện bạn và có trường 035 ghi nguồn; kho chưa có gì cho tới khi bấm lưu |
+| LTV.10 | SRU trả bản tự khai | Mở `/sru` không kèm tham số | Trả về `explainResponse` liệt kê các chỉ mục tra được và lược đồ biểu ghi hỗ trợ |
+| LTV.11 | SRU tra cứu trả MARCXML | Mở `/sru?operation=searchRetrieve&version=1.2&query=dc.title="…"&recordSchema=marcxml` | Trả biểu ghi trong không gian tên `http://www.loc.gov/MARC21/slim`, đọc lại được bằng chính chức năng nhập MARCXML của sản phẩm |
+| LTV.12 | SRU tra cứu gõ không dấu | Tra cùng nhan đề tiếng Việt nhưng gõ không dấu | Vẫn ra đúng biểu ghi |
+| LTV.13 | SRU trả Dublin Core | Thêm `&recordSchema=dc` | Trả biểu ghi Dublin Core đúng không gian tên |
+| LTV.14 | SRU phân trang | Thêm `&startRecord=3&maximumRecords=2` | Trả đúng phần biểu ghi tương ứng; hết biểu ghi thì không còn `nextRecordPosition` |
+| LTV.15 | SRU truy vấn sai cú pháp | Gửi truy vấn thiếu dấu nháy kép đóng | Trả phần chẩn đoán đúng chuẩn, không phải lỗi máy chủ |
+| LTV.16 | OAI-PMH Identify | Mở `/oai?verb=Identify` | Tên kho lấy từ tham số hệ thống, phiên bản giao thức 2.0 |
+| LTV.17 | OAI-PMH ListMetadataFormats | Mở `/oai?verb=ListMetadataFormats` | Có cả `oai_dc` và `marc21` |
+| LTV.18 | OAI-PMH ListSets | Mở `/oai?verb=ListSets` | Liệt kê bộ theo dạng tài liệu, mã dạng `doctype:MÃ` |
+| LTV.19 | OAI-PMH ListRecords | Mở `/oai?verb=ListRecords&metadataPrefix=oai_dc` | Trả biểu ghi Dublin Core; kho nhiều hơn một trang thì có thẻ đọc tiếp và thẻ đó dùng lại được |
+| LTV.20 | OAI-PMH ListIdentifiers | Mở `/oai?verb=ListIdentifiers&metadataPrefix=oai_dc` | Chỉ có phần đầu biểu ghi, không kèm nội dung |
+| LTV.21 | OAI-PMH GetRecord | Mở `/oai?verb=GetRecord&metadataPrefix=marc21&identifier=oai:…` | Trả đúng một biểu ghi dạng MARCXML |
+| LTV.22 | OAI-PMH lọc theo thời gian | Thêm `&from=…&until=…` vào một khoảng quá khứ không có dữ liệu | Trả mã `noRecordsMatch` |
+| LTV.23 | OAI-PMH tham số sai | Gọi thiếu verb, verb lạ, thiếu identifier, định dạng lạ, thẻ đọc tiếp giả mạo | Lần lượt trả `badVerb`, `badVerb`, `badArgument`, `cannotDisseminateFormat`, `badResumptionToken` |
+| LTV.24 | OAI-PMH nhận POST | Gửi POST dạng biểu mẫu với `verb=Identify` | Trả về đúng như gọi bằng GET |
+| LTV.25 | Khai kho OAI-PMH và hỏi thử | Liên thư viện → Kho OAI-PMH → Thêm kho, nhập địa chỉ rồi bấm Hỏi thử | Hiện tên kho, phiên bản giao thức, các định dạng và các bộ kho đó có |
+| LTV.26 | Địa chỉ kho sai | Nhập một chuỗi không phải địa chỉ HTTP | Bị chặn kèm lý do |
+| LTV.27 | Kho không kết nối được | Khai một địa chỉ HTTP không tồn tại rồi bấm Hỏi thử | Báo không kết nối được kèm địa chỉ, không phải lỗi hệ thống chung chung |
+| LTV.28 | Thu hoạch thật | Bấm Thu hoạch ở một kho đã khai | Nhật ký ghi số biểu ghi lấy về, nhập được và bỏ qua |
+| LTV.29 | Thu hoạch lại không tạo bản trùng | Bấm Nạp lại ở cùng kho đó | Số biểu ghi nhập được bằng 0, toàn bộ chuyển sang bỏ qua |
+| LTV.30 | Biểu ghi thu về chờ biên mục | Tìm biểu ghi vừa thu về trong Biên mục | Ở trạng thái chờ biên mục, có trường 035 ghi định danh kho nguồn và 040 ghi tên kho |
+| LTV.31 | Máy chủ Z39.50 của mình | Bật `ILL.Z3950_SERVER_ENABLED`, khởi động lại, rồi tra vào cổng đã khai bằng một máy khách Z39.50 bất kỳ | Bắt tay được, tra ra biểu ghi và lấy về dạng ISO 2709 |
+| LTV.32 | Giới hạn IP tra vào | Khai `ILL.Z3950_ALLOWED_IPS` một dải không chứa máy của mình rồi tra lại | Kết nối bị từ chối |
+| LTV.33 | Phân quyền | Đăng nhập tài khoản không có quyền rồi mở phần khai báo máy chủ | Trả 403 kèm tên mã quyền còn thiếu |
+
 ## Cách chạy bộ kiểm thử tự động
 
 ```bash
 cd backend
-dotnet test                 # 304 unit test + 247 integration test
+dotnet test                 # 370 unit test + 278 integration test
 ```
 
 Integration test tự khởi tạo một container PostgreSQL 16 và một container MinIO riêng, chạy
@@ -452,15 +490,15 @@ duyệt dùng — không có thành phần nào bị giả lập.
 
 ```bash
 cd frontend-admin
-npm test                    # 97 test giao diện
+npm test                    # 107 test giao diện
 ```
 
 ---
 
 ## Ghi chú
 
-Nhóm kiểm thử 2.4 (trao đổi dữ liệu) đã có phần ISO 2709 và MARCXML ở nhóm kịch bản MARC bên
-trên; phần Z39.50 và OAI-PMH sẽ bổ sung khi bàn giao Phase 11.
+Nhóm kiểm thử 2.4 (trao đổi dữ liệu) gồm phần ISO 2709 và MARCXML ở nhóm kịch bản MARC, cùng
+phần Z39.50, SRU và OAI-PMH ở nhóm kịch bản Liên thư viện.
 
 Nhóm kiểm thử 2.5 (chuyển đổi dữ liệu) đã có phần nhập ISO 2709 và nhập Excel ở nhóm kịch bản
 Biên mục; phần đối chiếu số lượng bạn đọc và giao dịch sẽ bổ sung khi bàn giao các phân hệ tương ứng.

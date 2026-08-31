@@ -201,6 +201,26 @@ public partial class DatabaseSeeder
             "Để 0 nghĩa là không giới hạn số lần xem.",
             ParameterDataType.Number, "0"),
 
+        // ---- Liên thư viện (mục 3.3 và 3.4) ----
+        new("ILL.Z3950_SERVER_ENABLED", "ILL", "Cấu hình liên thư viện", "Bật máy chủ Z39.50",
+            "Cho phép thư viện khác tra cứu vào kho của mình qua giao thức Z39.50.",
+            ParameterDataType.Boolean, "false"),
+        new("ILL.Z3950_SERVER_PORT", "ILL", "Cấu hình liên thư viện", "Cổng máy chủ Z39.50",
+            "Chuẩn quy định cổng 210, nhưng cổng dưới 1024 cần quyền đặc biệt trên Linux nên có thể đổi.",
+            ParameterDataType.Number, "2100"),
+        new("ILL.Z3950_DATABASE_NAME", "ILL", "Cấu hình liên thư viện", "Tên cơ sở dữ liệu công bố",
+            "Tên mà thư viện khác khai vào phần mềm của họ khi tra sang.",
+            ParameterDataType.Text, "LibraryConnect"),
+        new("ILL.Z3950_ALLOWED_IPS", "ILL", "Cấu hình liên thư viện", "Dải địa chỉ được phép tra Z39.50",
+            "Danh sách địa chỉ hoặc tiền tố, ngăn nhau bằng dấu phẩy. Để trống là mở cho mọi nơi.",
+            ParameterDataType.Text, ""),
+        new("ILL.OAI_ENABLED", "ILL", "Cấu hình liên thư viện", "Mở kho OAI-PMH của mình",
+            "Cho phép nơi khác thu hoạch metadata thư mục qua địa chỉ /oai.",
+            ParameterDataType.Boolean, "true"),
+        new("ILL.HARVEST_CRON", "ILL", "Cấu hình liên thư viện", "Lịch thu hoạch OAI-PMH",
+            "Biểu thức cron của tác vụ nền chạy thu hoạch mọi kho đang bật.",
+            ParameterDataType.Text, "0 2 * * *"),
+
         // ---- Email ----
         new("SMTP.ENABLED", "SMTP", "Cấu hình email", "Bật gửi email", null, ParameterDataType.Boolean, "false"),
         new("SMTP.HOST", "SMTP", "Cấu hình email", "Máy chủ SMTP", null, ParameterDataType.Text, ""),

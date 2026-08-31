@@ -115,6 +115,12 @@ export const PERMISSIONS = {
     article: 'SERIAL.ARTICLE.MANAGE',
     reportView: 'SERIAL.REPORT.VIEW',
   },
+  interlibrary: {
+    search: 'CATALOG.Z3950.SEARCH',
+    targetManage: 'CATALOG.Z3950.TARGET_MANAGE',
+    oaiManage: 'CATALOG.OAI.MANAGE',
+    oaiHarvest: 'CATALOG.OAI.HARVEST',
+  },
   digital: {
     view: 'DIGITAL.DOCUMENT.VIEW',
     upload: 'DIGITAL.DOCUMENT.UPLOAD',

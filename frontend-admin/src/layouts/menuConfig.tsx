@@ -442,9 +442,34 @@ export const menuTree: MenuNode[] = [
     key: 'interlibrary',
     label: messages.menu.interlibrary,
     icon: <BankOutlined />,
-    path: '/lien-thu-vien',
-    permissions: [PERMISSIONS.cataloging.z3950Search, PERMISSIONS.cataloging.oaiManage],
-    comingSoon: true,
+    permissions: [
+      PERMISSIONS.interlibrary.search,
+      PERMISSIONS.interlibrary.targetManage,
+      PERMISSIONS.interlibrary.oaiManage,
+    ],
+    children: [
+      {
+        key: 'ill-search',
+        label: messages.menu.interlibrarySearch,
+        icon: <BankOutlined />,
+        path: '/lien-thu-vien/tra-cuu',
+        permissions: [PERMISSIONS.interlibrary.search],
+      },
+      {
+        key: 'ill-targets',
+        label: messages.menu.interlibraryTargets,
+        icon: <SettingOutlined />,
+        path: '/lien-thu-vien/may-chu',
+        permissions: [PERMISSIONS.interlibrary.targetManage],
+      },
+      {
+        key: 'ill-oai',
+        label: messages.menu.interlibraryOai,
+        icon: <ContainerOutlined />,
+        path: '/lien-thu-vien/oai',
+        permissions: [PERMISSIONS.interlibrary.oaiManage],
+      },
+    ],
   },
   {
     key: 'reports',

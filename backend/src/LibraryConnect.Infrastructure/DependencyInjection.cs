@@ -34,6 +34,7 @@ public static class DependencyInjection
         AddPersistence(services, connectionString);
         AddCaching(services, configuration);
         AddObjectStorage(services);
+        AddInterLibrary(services);
         AddBackgroundJobs(services, connectionString, configuration);
 
         services.AddScoped<IDateTimeProvider, DateTimeProvider>();
@@ -164,5 +165,25 @@ public static class DependencyInjection
 
         // Xử lý tệp tài liệu số: đếm trang, rút chữ, kết xuất trang thành ảnh, nhận dạng ký tự.
         services.AddScoped<IDocumentProcessor, DocumentProcessor>();
+    }
+
+    /// <summary>
+    /// Liên thư viện: tra cứu sang thư viện bạn, thu hoạch OAI-PMH và máy chủ Z39.50 của mình.
+    ///
+    /// Một bộ gọi HTTP riêng cho phần này vì máy chủ ngoài hay chậm và hay hỏng: đặt thời gian chờ
+    /// rộng tay ở đây không được kéo theo phần còn lại của hệ thống.
+    /// </summary>
+    private static void AddInterLibrary(IServiceCollection services)
+    {
+        services.AddHttpClient("interlibrary", client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(60);
+        });
+
+        services.AddScoped<Application.Features.InterLibrary.IRemoteCatalogSearcher,
+            RemoteCatalogSearcher>();
+        services.AddScoped<Application.Features.InterLibrary.IOaiHarvester, OaiHarvester>();
+
+        services.AddHostedService<Z3950ServerHost>();
     }
 }

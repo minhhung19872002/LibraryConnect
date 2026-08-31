@@ -519,7 +519,8 @@ public class OaiHarvestLogConfiguration : IEntityTypeConfiguration<OaiHarvestLog
 {
     public void Configure(EntityTypeBuilder<OaiHarvestLog> builder)
     {
-        builder.Property(x => x.Errors).HasColumnType("jsonb");
+        // Danh sách lỗi ở đây là văn bản cho cán bộ đọc, mỗi dòng một lỗi, chứ không phải dữ liệu
+        // có cấu trúc. Khai jsonb thì PostgreSQL từ chối ngay lần thu hoạch đầu tiên gặp lỗi.
         builder.HasOne(x => x.Repository).WithMany().HasForeignKey(x => x.RepositoryId)
             .OnDelete(DeleteBehavior.Cascade);
     }

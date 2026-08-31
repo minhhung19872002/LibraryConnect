@@ -47,6 +47,9 @@ import { DigitalDocumentsPage } from '@/modules/digital/DigitalDocumentsPage';
 import { DigitalRequestsPage } from '@/modules/digital/DigitalRequestsPage';
 import { DigitalImportExportPage } from '@/modules/digital/DigitalImportExportPage';
 import { DigitalReportsPage } from '@/modules/digital/DigitalReportsPage';
+import { RemoteSearchPage } from '@/modules/interlibrary/RemoteSearchPage';
+import { Z3950TargetsPage } from '@/modules/interlibrary/Z3950TargetsPage';
+import { OaiRepositoriesPage } from '@/modules/interlibrary/OaiRepositoriesPage';
 import { SerialReportsPage } from '@/modules/serials/SerialReportsPage';
 import { CustomIndexPage } from '@/modules/cataloging/CustomIndexPage';
 import { CatalogQueuePage } from '@/modules/cataloging/CatalogQueuePage';
@@ -331,6 +334,30 @@ function AppRoutes() {
           element={
             <RequirePermissionRoute permission={PERMISSIONS.digital.reportView}>
               <DigitalReportsPage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/lien-thu-vien/tra-cuu"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.interlibrary.search}>
+              <RemoteSearchPage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/lien-thu-vien/may-chu"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.interlibrary.targetManage}>
+              <Z3950TargetsPage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/lien-thu-vien/oai"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.interlibrary.oaiManage}>
+              <OaiRepositoriesPage />
             </RequirePermissionRoute>
           }
         />

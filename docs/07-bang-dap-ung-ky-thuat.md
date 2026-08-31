@@ -7,7 +7,7 @@ Cột **Đáp ứng** chỉ được đánh **Có** khi chức năng đã chạy
 được bằng thao tác demo hoặc bằng bộ kiểm thử tự động. Những hạng mục thuộc phân hệ chưa bàn giao
 được ghi rõ là **Đang thực hiện** kèm phase dự kiến, không đánh dấu đáp ứng.
 
-Cập nhật lần cuối: sau khi hoàn thành Phase 10.
+Cập nhật lần cuối: sau khi hoàn thành Phase 11.
 
 ---
 
@@ -321,14 +321,49 @@ Cập nhật lần cuối: sau khi hoàn thành Phase 10.
 
 ---
 
+## B10. Liên thư viện — Z39.50, SRU và OAI-PMH
+
+| # | Yêu cầu của E-HSMT | Đáp ứng | Thực hiện |
+|---|---|---|---|
+| 3.3a | Z39.50 Client: kết nối TCP tới host:port của server đích | **Có** | Đã tra cứu thật tới máy chủ của Thư viện Quốc hội Mỹ (`lx2.loc.gov:210/LCDB`) và lấy biểu ghi về |
+| 3.3a | Encode/decode BER của ASN.1 | **Có** | Bộ mã hóa BER tự viết trong `LibraryConnect.Marc/Z3950`, có kiểm thử vòng tròn cho số nguyên, chuỗi tiếng Việt, định danh đối tượng, phần tử lồng nhau, độ dài dạng ngắn, dạng dài và dạng không xác định |
+| 3.3a | Các PDU Init / Search / Present / Close | **Có** | Đủ bốn, đúng thẻ lớp ngữ cảnh mà đặc tả quy định; mỗi con số trên đường truyền đều có một kiểm thử riêng để không tái phạm |
+| 3.3a | Query Type-1 (RPN) với bộ thuộc tính Bib-1 | **Có** | Đủ sáu loại thuộc tính trên mỗi mệnh đề, nối được bằng AND / OR / AND-NOT |
+| 3.3a | Use attribute 1, 4, 7, 8, 21, 1016 | **Có** | Tác giả 1, nhan đề 4, ISBN 7, ISSN 8, chủ đề 21, bất kỳ 1016 — đúng danh sách đặc tả nêu, thêm nhà xuất bản 1018 |
+| 3.3a | Record syntax USMARC / MARC21 | **Có** | Chọn được USMARC, UNIMARC hoặc MARCXML cho từng máy chủ; biểu ghi MARC-8 tự chuyển sang Unicode |
+| 3.3a | Cấu hình danh sách server đích trong giao diện | **Có** | Tên, địa chỉ, cổng, cơ sở dữ liệu, tài khoản, bảng mã, cú pháp biểu ghi, thời gian chờ, bật tắt, thứ tự hiển thị |
+| 3.3a | Server mẫu Library of Congress để test | **Có** | Nạp sẵn khi cài đặt, cùng một lối SRU dự phòng và một máy chủ của Đại học Yale |
+| 3.3a | Nút kiểm tra kết nối | **Có** | Bắt tay đầy đủ rồi tra thử một từ khóa, vì máy chủ mở cổng mà từ chối phiên là chuyện thường; kết quả lưu lại để nhìn danh sách là biết nơi nào hỏng |
+| 3.3b | Z39.50 Server: lắng nghe TCP, xử lý Init/Search/Present | **Có** | Chạy như một dịch vụ nền trong chính máy chủ API, tra thẳng vào kho thư mục, trả biểu ghi ISO 2709 |
+| 3.3b | Cấu hình bật/tắt, giới hạn IP | **Có** | `ILL.Z3950_SERVER_ENABLED`, `ILL.Z3950_SERVER_PORT`, `ILL.Z3950_ALLOWED_IPS`; mặc định tắt vì đây là cổng mở ra ngoài không có mật khẩu |
+| 3.3 | SRU/SRW song song làm giải pháp tương đương | **Có** | `/sru?operation=searchRetrieve&version=1.2&query=…&recordSchema=marcxml` đúng như đặc tả ghi; gọi trần trụi thì trả về bản tự khai liệt kê các chỉ mục tra được |
+| 3.3 | SRU trả MARCXML | **Có** | Trả được cả MARCXML lẫn Dublin Core; truy vấn CQL sai cú pháp trả về phần chẩn đoán đúng chuẩn chứ không phải lỗi máy chủ |
+| 3.3 | Tra cứu được bằng tiếng Việt | **Có** | Thư viện bạn gõ không dấu vẫn ra sách tiếng Việt, dùng chung cơ chế tra cứu không dấu của cả sản phẩm |
+| 3.4 | OAI-PMH provider, 6 verb | **Có** | `/oai` hỗ trợ Identify, ListMetadataFormats, ListSets, ListIdentifiers, ListRecords, GetRecord; nhận cả GET lẫn POST như chuẩn đòi |
+| 3.4 | Metadata prefix oai_dc và marc21 | **Có** | Cả hai, đúng không gian tên chuẩn |
+| 3.4 | resumptionToken phân trang | **Có** | Thẻ mang theo cả điều kiện lọc và có chữ ký, nên lượt sau không phải gửi lại tham số và thẻ bị sửa tay thì bị từ chối |
+| 3.4 | Lọc theo from / until | **Có** | Nhận cả dạng ngày lẫn dạng có giờ; không có biểu ghi nào khớp thì trả đúng mã `noRecordsMatch` chứ không phải danh sách rỗng |
+| 3.4 | Bộ (set) để lấy riêng từng phần kho | **Có** | Chia theo dạng tài liệu, mã bộ dạng `doctype:MÃ` |
+| 3.4 | Harvester: cấu hình nguồn, lịch chạy định kỳ | **Có** | Khai nguồn trên giao diện, có nút hỏi thử xem kho tự khai những gì; tác vụ nền chạy hằng đêm theo `ILL.HARVEST_CRON` |
+| 3.4 | Map Dublin Core sang MARC 21 | **Có** | Dựng biểu ghi MARC tối thiểu nhưng hợp lệ, đánh dấu mức mô tả chưa đầy đủ và đưa vào hàng đợi biên mục để cán bộ hiệu đính |
+| 3.4 | Chạy lại không tạo bản trùng | **Có** | Nhận ra biểu ghi đã thu về bằng mã định danh của kho gốc; chạy lại thì bỏ qua |
+| 3.5 | MARCXML dùng cho SRU và OAI-PMH | **Có** | Cùng một bộ đọc/ghi MARCXML của Phase 4, nên biểu ghi phát ra đọc lại được bằng chính sản phẩm |
+| II.7 | Màn hình tra cứu nhiều server đích, tra song song | **Có** | Chọn một hoặc nhiều máy chủ; song song giữa các nơi khác nhau nhưng tuần tự trong cùng một nơi, vì mở hai phiên cùng lúc thì máy chủ bỏ tập kết quả của phiên sau |
+| II.7 | Kết quả hiển thị theo từng server | **Có** | Mỗi máy chủ một khối riêng kèm số kết quả và thời gian trả lời; nơi nào hỏng thì báo riêng chỗ đó, các nơi còn lại vẫn có kết quả |
+| II.7 | So sánh với biểu ghi đã có trong hệ thống | **Có** | Đối chiếu theo ISBN rồi tới nhan đề, biểu ghi đã có được đánh dấu ngay trên danh sách để khỏi nhập trùng |
+| II.7 | Nhập vào hệ thống rồi mở trình soạn MARC để hiệu đính | **Có** | Bỏ số kiểm soát của thư viện bạn, ghi nguồn vào trường 035, rồi mở trình soạn MARC — chưa lưu gì vào kho cho tới khi cán bộ bấm lưu |
+| IX.5 | Bạn đọc tra sang thư viện khác từ trang tra cứu | **Có** | Máy chủ khai được cờ "cho bạn đọc tra sang"; trang OPAC dùng cờ này ở Phase 12 |
+
+---
+
 ## D. Trao đổi dữ liệu và các phân hệ còn lại
 
 | # | Yêu cầu | Đáp ứng | Ghi chú |
 |---|---|---|---|
 | D1 | MARC 21, ISO 2709, MARCXML | **Có** | Chi tiết ở mục B3 |
-| D2 | Z39.50 client và server, SRU/SRW | **Đang thực hiện** | Phase 11. Bảng `ill.z3950_targets` và tuyến `/sru` đã có trong cấu hình Nginx |
-| D3 | OAI-PMH provider và harvester | **Đang thực hiện** | Phase 11. Bảng `ill.oai_repositories` và tuyến `/oai` đã có |
-| D4 | Phân hệ II — Biên mục | **Có** | Chi tiết ở mục B4. Riêng II.7 (nhập từ Z39.50) thuộc Phase 11 |
+| D2 | Z39.50 client và server, SRU/SRW | **Có** | Chi tiết ở mục B10. Đã tra cứu thật tới Thư viện Quốc hội Mỹ |
+| D3 | OAI-PMH provider và harvester | **Có** | Chi tiết ở mục B10 |
+| D4 | Phân hệ II — Biên mục | **Có** | Chi tiết ở mục B4, riêng II.7 ở mục B10 |
 | D5 | Phân hệ III — Bổ sung và Kho | **Có** | Chi tiết ở mục B5 |
 | D6 | Phân hệ IV — Ấn phẩm định kỳ | **Có** | Chi tiết ở mục B6 |
 | D7 | Phân hệ V — Tài liệu số | **Có** | Chi tiết ở mục B9 |

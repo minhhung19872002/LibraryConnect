@@ -1,6 +1,7 @@
 using LibraryConnect.Application.Common.Interfaces;
 using LibraryConnect.Application.Features.Circulation;
 using LibraryConnect.Application.Features.Digital;
+using LibraryConnect.Application.Features.InterLibrary;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -24,6 +25,7 @@ public class RecurringJobRegistrar : IHostedService
     public const string HoldExpiryJobId = "libraryconnect:circulation-hold-expiry";
     public const string DigitalExpiryJobId = "libraryconnect:digital-access-expiry";
     public const string DigitalUploadCleanupJobId = "libraryconnect:digital-upload-cleanup";
+    public const string OaiHarvestJobId = "libraryconnect:oai-harvest";
 
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<RecurringJobRegistrar> _logger;
@@ -83,6 +85,12 @@ public class RecurringJobRegistrar : IHostedService
                 DigitalUploadCleanupJobId,
                 job => job.CleanUploadSessionsAsync(CancellationToken.None),
                 "45 3 * * *");
+
+            // Thu hoạch OAI-PMH chạy đêm: kéo dữ liệu từ nơi khác về là việc nặng và không gấp.
+            var harvestCron = await parameters.GetAsync("ILL.HARVEST_CRON", "0 2 * * *", cancellationToken);
+
+            jobs.AddOrUpdateRecurring<IOaiHarvester>(
+                OaiHarvestJobId, job => job.HarvestDueAsync(CancellationToken.None), harvestCron);
         }
         catch (Exception ex)
         {

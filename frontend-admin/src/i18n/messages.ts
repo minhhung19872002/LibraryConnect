@@ -95,6 +95,10 @@ export const messages = {
     digitalRequests: 'Yêu cầu đọc tài liệu',
     digitalImport: 'Nhập xuất tài liệu số',
     digitalReports: 'Báo cáo tài liệu số',
+    interlibrary: 'Liên thư viện',
+    interlibrarySearch: 'Tra cứu liên thư viện',
+    interlibraryTargets: 'Máy chủ thư viện bạn',
+    interlibraryOai: 'Kho OAI-PMH',
     readers: 'Bạn đọc',
     readerProfiles: 'Hồ sơ bạn đọc',
     readerCardTemplates: 'Mẫu thẻ bạn đọc',
@@ -109,7 +113,6 @@ export const messages = {
     circulationReports: 'Báo cáo lưu thông',
     cms: 'Quản trị nội dung',
     courses: 'Tài liệu môn học',
-    interlibrary: 'Liên thư viện',
     reports: 'Báo cáo thống kê',
   },
 

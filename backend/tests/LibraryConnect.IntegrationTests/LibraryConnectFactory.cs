@@ -5,6 +5,8 @@ using System.Text.Json.Serialization;
 using LibraryConnect.Application.Common.Models;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Testcontainers.Minio;
 using Testcontainers.PostgreSql;
@@ -105,8 +107,19 @@ public class LibraryConnectFactory : WebApplicationFactory<Program>, IAsyncLifet
         }
     }
 
-    protected override void ConfigureWebHost(IWebHostBuilder builder) =>
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    {
         builder.UseEnvironment(Environments.Development);
+
+        // Phần liên thư viện gọi ra ngoài bằng HTTP. Trong bộ kiểm thử, máy chủ chỉ sống trong bộ
+        // nhớ nên không có cổng thật nào để gọi tới; đấu bộ gọi của nó vào chính máy chủ đang chạy
+        // là cách duy nhất thử được vòng khép kín "phát ra rồi thu về" mà không cần Internet.
+        builder.ConfigureTestServices(services =>
+        {
+            services.AddHttpClient("interlibrary")
+                .ConfigurePrimaryHttpMessageHandler(() => Server.CreateHandler());
+        });
+    }
 
     /// <summary>Signs in and returns a client whose requests carry the resulting bearer token.</summary>
     public async Task<HttpClient> CreateAuthenticatedClientAsync(string username, string password)
