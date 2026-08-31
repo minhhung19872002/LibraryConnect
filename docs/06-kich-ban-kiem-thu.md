@@ -595,6 +595,8 @@ Ký hiệu bám theo **Mục 5 phần 2 của E-HSMT**.
 
 ---
 
+| 2.3.16 | Tài khoản còn mật khẩu tạm | Tạo một tài khoản cán bộ mới, đăng nhập bằng mật khẩu tạm rồi gọi thẳng một API nghiệp vụ (ví dụ bằng Postman) | Trả 403 kèm câu "Tài khoản phải đổi mật khẩu trước khi sử dụng hệ thống"; sau khi đổi mật khẩu thì gọi được bình thường | Integration — `PermissionAndAuditTests` | | |
+
 ## Nhóm 2.5 — Chuyển đổi dữ liệu: bộ dữ liệu minh họa
 
 Kiểm trên hệ thống vừa cài xong bằng `docker compose up -d`, chưa nhập gì thêm.
@@ -636,7 +638,7 @@ Số liệu ghi trong cột kết quả là số đo lần bàn giao; hội đ�
 
 ```bash
 cd backend
-dotnet test                 # 415 unit test + 323 integration test
+dotnet test                 # 415 unit test + 324 integration test
 ```
 
 Integration test tự khởi tạo một container PostgreSQL 16 và một container MinIO riêng, chạy

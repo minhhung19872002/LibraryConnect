@@ -120,6 +120,9 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Sau xác thực để đọc được thông tin tài khoản, trước khi vào bất kỳ endpoint nghiệp vụ nào.
+app.UseMiddleware<PasswordChangeRequiredMiddleware>();
+
 app.MapControllers();
 
 app.UseHangfireDashboard("/hangfire", new DashboardOptions

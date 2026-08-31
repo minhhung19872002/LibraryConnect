@@ -19,11 +19,20 @@ public class JwtTokenService : IJwtTokenService
     /// <summary>Marks a token issued to a reader rather than to a staff user.</summary>
     public const string ReaderClaimType = "is_reader";
 
+    /// <summary>Tài khoản chưa đổi mật khẩu tạm; mọi lượt gọi khác bị chặn cho tới khi đổi xong.</summary>
+    public const string MustChangePasswordClaimType = "must_change_password";
+
     private readonly JwtOptions _options;
 
     public JwtTokenService(IOptions<JwtOptions> options) => _options = options.Value;
 
-    public TokenPair CreateTokens(Guid subjectId, string username, string fullName, bool isReader, IEnumerable<string> permissions)
+    public TokenPair CreateTokens(
+        Guid subjectId,
+        string username,
+        string fullName,
+        bool isReader,
+        IEnumerable<string> permissions,
+        bool mustChangePassword = false)
     {
         var now = DateTimeOffset.UtcNow;
         var accessExpires = now.AddMinutes(_options.AccessTokenMinutes);
@@ -37,6 +46,11 @@ public class JwtTokenService : IJwtTokenService
             new(ClaimTypes.Name, fullName),
             new(ReaderClaimType, isReader ? "1" : "0")
         };
+
+        if (mustChangePassword)
+        {
+            claims.Add(new Claim(MustChangePasswordClaimType, "1"));
+        }
 
         // Permission codes travel in the token so authorisation needs no database round trip; the
         // permission cache is invalidated and tokens are short lived, so a revoked right takes at

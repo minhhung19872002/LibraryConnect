@@ -140,6 +140,7 @@ Cập nhật lần cuối: sau khi hoàn thành Phase 11.
 | C19 | Tra cứu OPAC trả kết quả dưới 1 giây với 500.000 biểu ghi | **Có** | Mọi trường tra cứu được gộp sẵn vào một cột có chỉ mục ba ký tự; câu hỏi rộng dừng đếm ở 10.000 và ghi "hơn 10.000 kết quả" | Kịch bản HN.1–HN.5, đo được 0,5 s |
 | C20 | Hỗ trợ 200 người dùng đồng thời | **Có** | Kho kết nối chặn dưới hạn của PostgreSQL, bộ nhớ chia sẻ đủ cho truy vấn song song | Kịch bản HN.6, HN.7: 200 bạn đọc, 0 lỗi, trung vị 840 ms |
 | C21 | Nâng cấp phiên bản trên kho dữ liệu lớn | **Có** | Migration chạy với hạn thời gian riêng, dựng lại cột tra cứu bằng câu lệnh gộp | Kịch bản HN.9: 140 s trên 500.000 biểu ghi |
+| C22 | Buộc đổi mật khẩu ở lần đăng nhập đầu | **Có** | Máy chủ chặn mọi lượt gọi của tài khoản còn mật khẩu tạm, không chỉ giao diện ẩn màn hình | Integration — `PermissionAndAuditTests`, kịch bản 2.3.16 |
 
 ---
 

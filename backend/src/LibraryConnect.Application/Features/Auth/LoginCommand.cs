@@ -107,7 +107,9 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResultDto>
                 .SetProperty(u => u.LastLoginAt, _clock.Now), ct);
 
         var permissions = await _permissions.GetUserPermissionsAsync(user.Id, ct);
-        var pair = _tokens.CreateTokens(user.Id, user.Username, user.FullName, isReader: false, permissions);
+        var pair = _tokens.CreateTokens(
+            user.Id, user.Username, user.FullName, isReader: false, permissions,
+            user.MustChangePassword);
 
         _db.RefreshTokens.Add(new RefreshToken
         {

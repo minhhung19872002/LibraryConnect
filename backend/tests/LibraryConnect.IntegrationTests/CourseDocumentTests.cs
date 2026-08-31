@@ -499,14 +499,7 @@ public class CourseDocumentTests
                 $"/api/readers/{readerId}/reset-password", new { newPassword = password }))
             .IsSuccessStatusCode.Should().BeTrue();
 
-        var client = _factory.CreateClient();
-
-        var login = await ReadAsync<Application.Features.Auth.AuthResultDto>(
-            await client.PostAsJsonAsync(
-                "/api/reader/auth/login", new { cardNumber = reader.CardNumber, password }));
-
-        client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", login.AccessToken);
+        var client = await _factory.CreateReaderClientAsync(reader.CardNumber, password);
 
         (await client.GetAsync("/api/courses")).StatusCode.Should().Be(HttpStatusCode.Forbidden);
         (await client.GetAsync("/api/courses/reports")).StatusCode.Should().Be(HttpStatusCode.Forbidden);

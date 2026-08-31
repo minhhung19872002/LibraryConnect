@@ -53,8 +53,76 @@ public class PermissionAndAuditTests
         var payload = await created.Content.ReadFromJsonAsync<ApiResponse<CreateUserResult>>(
             LibraryConnectFactory.JsonOptions);
 
+        // Tài khoản mới luôn bị buộc đổi mật khẩu tạm và máy chủ chặn mọi lượt gọi khác cho tới khi
+        // đổi xong; bộ dựng máy chủ kiểm thử tự đi qua bước ấy đúng như người dùng thật.
         var client = await _factory.CreateAuthenticatedClientAsync(username, payload!.Data!.TemporaryPassword);
         return (client, username);
+    }
+
+    /// <summary>Mật khẩu tài khoản dùng trong bài kiểm thử buộc đổi mật khẩu.</summary>
+    private const string StaffPassword = "CanBoKiemThu@2026";
+
+    [Fact]
+    public async Task Tai_khoan_chua_doi_mat_khau_tam_thi_khong_goi_duoc_chuc_nang_nao()
+    {
+        var admin = await AdminClientAsync();
+
+        var groups = await admin.GetFromJsonAsync<ApiResponse<PagedResult<UserGroupListItemDto>>>(
+            "/api/admin/user-groups?pageSize=50", LibraryConnectFactory.JsonOptions);
+
+        var group = groups!.Data!.Items.Single(item => item.Code == "SYS_ADMIN");
+        var username = $"tam{Guid.NewGuid():N}"[..16];
+
+        var created = await admin.PostAsJsonAsync("/api/admin/users", new
+        {
+            username,
+            profile = new
+            {
+                fullName = "Cán bộ mới nhận việc",
+                isActive = true,
+                groupIds = new[] { group.Id },
+                dataScopes = Array.Empty<object>()
+            }
+        });
+
+        var payload = await created.Content.ReadFromJsonAsync<ApiResponse<CreateUserResult>>(
+            LibraryConnectFactory.JsonOptions);
+
+        var temporary = payload!.Data!.TemporaryPassword;
+
+        // Đăng nhập thẳng chứ không qua bộ dựng client dùng chung: bộ ấy tự đổi mật khẩu tạm giúp,
+        // mà bài kiểm thử này cần đúng trạng thái "vừa đăng nhập, chưa đổi".
+        var client = _factory.CreateClient();
+
+        var login = await client.PostAsJsonAsync("/api/auth/login", new { username, password = temporary });
+
+        var session = await login.Content.ReadFromJsonAsync<ApiResponse<LibraryConnectFactory.LoginPayload>>(
+            LibraryConnectFactory.JsonOptions);
+
+        session!.Data!.MustChangePassword.Should().BeTrue();
+
+        client.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", session.Data.AccessToken);
+
+        // Giao diện đã đẩy người dùng sang màn hình đổi mật khẩu, nhưng mã thông hành cấp lúc đăng
+        // nhập vẫn gọi thẳng API được — mà mật khẩu tạm thì người cấp tài khoản cũng biết. Máy chủ
+        // phải tự chặn, dù tài khoản này có đủ quyền quản trị.
+        var blocked = await client.GetAsync("/api/admin/users?pageSize=1");
+        blocked.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+
+        var message = await blocked.Content.ReadAsStringAsync();
+        message.Should().Contain("đổi mật khẩu");
+
+        // Đường đổi mật khẩu phải để mở, nếu không người dùng mắc kẹt không lối ra.
+        (await client.PostAsJsonAsync("/api/auth/change-password", new
+        {
+            currentPassword = temporary,
+            newPassword = StaffPassword,
+            confirmPassword = StaffPassword
+        })).IsSuccessStatusCode.Should().BeTrue();
+
+        var after = await _factory.CreateAuthenticatedClientAsync(username, StaffPassword);
+        (await after.GetAsync("/api/admin/users?pageSize=1")).IsSuccessStatusCode.Should().BeTrue();
     }
 
     [Fact]

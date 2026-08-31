@@ -1135,13 +1135,7 @@ public class CirculationTests
         var password = await ReadAsync<string>(await staff.PostAsJsonAsync(
             $"/api/readers/{readerId}/reset-password", new { }));
 
-        var client = _factory.CreateClient();
-
-        var login = await ReadAsync<AuthResultDto>(await client.PostAsJsonAsync(
-            "/api/reader/auth/login", new { cardNumber = reader.CardNumber, password }));
-
-        client.DefaultRequestHeaders.Authorization =
-            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", login.AccessToken);
+        var client = await _factory.CreateReaderClientAsync(reader.CardNumber, password);
 
         return (client, readerId, reader.CardNumber);
     }

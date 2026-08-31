@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -53,6 +54,14 @@ public class LibraryConnectFactory : WebApplicationFactory<Program>, IAsyncLifet
 
     private string? _backupDirectory;
 
+    /// <summary>
+    /// Lần đăng nhập đầu tiên của tài khoản quản trị nạp sẵn có bị buộc đổi mật khẩu hay không.
+    ///
+    /// Ghi lại ngay lúc dựng máy chủ, vì ngay sau đó chính bộ dựng này đổi mật khẩu tạm để các bài
+    /// kiểm thử khác gọi được API — không quan sát ở đây thì không còn cơ hội quan sát nữa.
+    /// </summary>
+    public bool SeededAdminForcedPasswordChange { get; private set; }
+
     public async Task InitializeAsync()
     {
         await Task.WhenAll(_postgres.StartAsync(), _minio.StartAsync());
@@ -98,6 +107,23 @@ public class LibraryConnectFactory : WebApplicationFactory<Program>, IAsyncLifet
         // dữ liệu nó cần rồi đếm lại, nên 200 biểu ghi và 500 ĐKCB nạp sẵn chỉ làm sai các phép đếm
         // ấy. Bộ dữ liệu minh họa được kiểm chứng khi cài đặt thật, xem kịch bản CD.1–CD.6.
         Environment.SetEnvironmentVariable("LC_SEED_DEMO", "false");
+
+        // Quan sát trạng thái ban đầu của tài khoản quản trị nạp sẵn trước khi bất kỳ bài kiểm thử
+        // nào đụng vào: ngay lượt đăng nhập đầu tiên, bộ dựng client sẽ đổi mật khẩu tạm để các bài
+        // kiểm thử khác gọi được API, và sau đó không còn cách nào quan sát lại lần đầu ấy.
+        await ObserveSeededAdminAsync();
+    }
+
+    /// <summary>Đăng nhập lần đầu bằng tài khoản nạp sẵn để ghi nhận trạng thái ban đầu.</summary>
+    private async Task ObserveSeededAdminAsync()
+    {
+        using var client = CreateClient();
+
+        var response = await LoginAsync(client, AdminUsername, AdminPassword);
+        response.EnsureSuccessStatusCode();
+
+        var payload = await response.Content.ReadFromJsonAsync<ApiResponse<LoginPayload>>(JsonOptions);
+        SeededAdminForcedPasswordChange = payload?.Data?.MustChangePassword ?? false;
     }
 
     public new async Task DisposeAsync()
@@ -136,14 +162,122 @@ public class LibraryConnectFactory : WebApplicationFactory<Program>, IAsyncLifet
         return client;
     }
 
+    /// <summary>
+    /// Mật khẩu hiện hành của từng tài khoản sau khi đã đổi mật khẩu tạm.
+    ///
+    /// Máy chủ chặn mọi lượt gọi của tài khoản chưa đổi mật khẩu tạm, nên bài kiểm thử phải đi đúng
+    /// đường mà người dùng thật đi: đăng nhập bằng mật khẩu tạm, đổi mật khẩu, rồi mới làm việc. Đổi
+    /// xong thì mật khẩu tạm không dùng lại được, vì vậy phải nhớ mật khẩu mới cho lần sau.
+    /// </summary>
+    private readonly ConcurrentDictionary<string, string> _currentPasswords = new();
+
     public async Task<string> SignInAsync(HttpClient client, string username, string password)
     {
-        var response = await client.PostAsJsonAsync("/api/auth/login", new { username, password });
+        var effective = _currentPasswords.GetValueOrDefault(username, password);
+        var response = await LoginAsync(client, username, effective);
+
+        if (!response.IsSuccessStatusCode && !string.Equals(effective, password, StringComparison.Ordinal))
+        {
+            response = await LoginAsync(client, username, password);
+            effective = password;
+        }
+
         response.EnsureSuccessStatusCode();
 
         var payload = await response.Content.ReadFromJsonAsync<ApiResponse<LoginPayload>>(JsonOptions);
-        return payload?.Data?.AccessToken
+        var token = payload?.Data?.AccessToken
             ?? throw new InvalidOperationException("Đăng nhập không trả về access token.");
+
+        if (payload!.Data!.MustChangePassword)
+        {
+            var rotated = $"{effective}Doi1";
+
+            using var authenticated = CreateClient();
+            authenticated.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var changed = await authenticated.PostAsJsonAsync("/api/auth/change-password", new
+            {
+                currentPassword = effective,
+                newPassword = rotated,
+                confirmPassword = rotated
+            });
+
+            await EnsureAsync(changed, $"đổi mật khẩu tạm của tài khoản {username}");
+            _currentPasswords[username] = rotated;
+
+            var again = await LoginAsync(client, username, rotated);
+            again.EnsureSuccessStatusCode();
+
+            var next = await again.Content.ReadFromJsonAsync<ApiResponse<LoginPayload>>(JsonOptions);
+            token = next?.Data?.AccessToken
+                ?? throw new InvalidOperationException("Đăng nhập lại sau khi đổi mật khẩu thất bại.");
+        }
+
+        return token;
+    }
+
+    private static Task<HttpResponseMessage> LoginAsync(HttpClient client, string username, string password) =>
+        client.PostAsJsonAsync("/api/auth/login", new { username, password });
+
+    /// <summary>Ném lỗi kèm nội dung máy chủ trả về, để bài kiểm thử hỏng nói được lý do.</summary>
+    private static async Task EnsureAsync(HttpResponseMessage response, string what)
+    {
+        if (response.IsSuccessStatusCode)
+        {
+            return;
+        }
+
+        var body = await response.Content.ReadAsStringAsync();
+        throw new InvalidOperationException($"Không {what}: {(int)response.StatusCode} {body}");
+    }
+
+    /// <summary>
+    /// Đăng nhập bằng thẻ bạn đọc và trả về client đã mang mã thông hành.
+    ///
+    /// Cán bộ đặt lại mật khẩu cho bạn đọc thì mật khẩu ấy là tạm, và máy chủ chặn mọi lượt gọi khác
+    /// cho tới khi bạn đọc tự đổi — nên bước đổi mật khẩu nằm luôn ở đây, đúng như bạn đọc thật phải
+    /// làm ở lần đăng nhập đầu.
+    /// </summary>
+    public async Task<HttpClient> CreateReaderClientAsync(string cardNumber, string password)
+    {
+        var client = CreateClient();
+
+        var response = await client.PostAsJsonAsync(
+            "/api/reader/auth/login", new { cardNumber, password });
+
+        response.EnsureSuccessStatusCode();
+
+        var payload = await response.Content.ReadFromJsonAsync<ApiResponse<LoginPayload>>(JsonOptions);
+        var token = payload?.Data?.AccessToken
+            ?? throw new InvalidOperationException("Đăng nhập bạn đọc không trả về access token.");
+
+        if (payload!.Data!.MustChangePassword)
+        {
+            var rotated = $"{password}Doi1";
+
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var changed = await client.PostAsJsonAsync("/api/reader/auth/change-password", new
+            {
+                currentPassword = password,
+                newPassword = rotated,
+                confirmPassword = rotated
+            });
+
+            await EnsureAsync(changed, "đổi mật khẩu tạm của bạn đọc");
+
+            var again = await client.PostAsJsonAsync(
+                "/api/reader/auth/login", new { cardNumber, password = rotated });
+
+            again.EnsureSuccessStatusCode();
+
+            var next = await again.Content.ReadFromJsonAsync<ApiResponse<LoginPayload>>(JsonOptions);
+            token = next?.Data?.AccessToken
+                ?? throw new InvalidOperationException("Đăng nhập lại sau khi đổi mật khẩu thất bại.");
+        }
+
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        return client;
     }
 
     public sealed class LoginPayload

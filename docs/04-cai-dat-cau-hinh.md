@@ -101,6 +101,13 @@ Mật khẩu:      LibraryConnect@2025
 Hệ thống **bắt buộc đổi mật khẩu ngay** trước khi cho vào bất kỳ chức năng nào. Sau khi đổi, mọi
 phiên đăng nhập cũ bị thu hồi và cần đăng nhập lại bằng mật khẩu mới.
 
+Ràng buộc này do máy chủ giữ chứ không chỉ do giao diện: tài khoản chưa đổi mật khẩu tạm gọi thẳng
+API cũng bị từ chối, chỉ còn đúng đường đăng nhập, đổi mật khẩu và đăng xuất là mở. Mật khẩu mặc định
+in trong tài liệu này nên nó chỉ được sống tới lần đăng nhập đầu tiên.
+
+Quy tắc áp cho mọi tài khoản có mật khẩu tạm, kể cả tài khoản cán bộ do quản trị viên tạo và tài
+khoản bạn đọc vừa được đặt lại mật khẩu.
+
 ---
 
 ## 3. Cấu hình sau khi cài đặt

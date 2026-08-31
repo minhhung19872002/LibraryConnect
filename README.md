@@ -109,7 +109,7 @@ Không sửa migration đã commit — luôn tạo migration mới.
 ### Kiểm thử
 
 ```bash
-cd backend && dotnet test          # 415 unit test + 323 integration test
+cd backend && dotnet test          # 415 unit test + 324 integration test
 cd frontend-admin && npm test      # 123 test giao diện quản trị
 cd frontend-opac && npm test       # 22 test giao diện tra cứu
 ```

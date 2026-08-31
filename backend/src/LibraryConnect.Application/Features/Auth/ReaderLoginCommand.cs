@@ -120,7 +120,8 @@ public class ReaderLoginCommandHandler : IRequestHandler<ReaderLoginCommand, Aut
         reader.LastLoginAt = _clock.Now;
 
         var pair = _tokens.CreateTokens(
-            reader.Id, reader.CardNumber, reader.FullName, isReader: true, Array.Empty<string>());
+            reader.Id, reader.CardNumber, reader.FullName, isReader: true, Array.Empty<string>(),
+            reader.MustChangePassword);
 
         _db.RefreshTokens.Add(new RefreshToken
         {

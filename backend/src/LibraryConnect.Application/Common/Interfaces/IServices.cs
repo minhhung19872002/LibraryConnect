@@ -30,7 +30,17 @@ public record TokenPair(
 
 public interface IJwtTokenService
 {
-    TokenPair CreateTokens(Guid subjectId, string username, string fullName, bool isReader, IEnumerable<string> permissions);
+    /// <param name="mustChangePassword">
+    /// Tài khoản đang bị buộc đổi mật khẩu. Cờ đi theo mã thông hành để máy chủ chặn được mọi lượt
+    /// gọi khác mà không phải hỏi lại cơ sở dữ liệu ở từng yêu cầu.
+    /// </param>
+    TokenPair CreateTokens(
+        Guid subjectId,
+        string username,
+        string fullName,
+        bool isReader,
+        IEnumerable<string> permissions,
+        bool mustChangePassword = false);
     string HashRefreshToken(string token);
 }
 

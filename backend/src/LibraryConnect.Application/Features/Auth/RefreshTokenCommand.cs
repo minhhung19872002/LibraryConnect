@@ -78,7 +78,9 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, A
         }
 
         var permissions = await _permissions.GetUserPermissionsAsync(user.Id, ct);
-        var pair = _tokens.CreateTokens(user.Id, user.Username, user.FullName, isReader: false, permissions);
+        var pair = _tokens.CreateTokens(
+            user.Id, user.Username, user.FullName, isReader: false, permissions,
+            user.MustChangePassword);
 
         return await PersistAsync(pair, stored.UserId, null, user.Username, user.FullName, user.Email,
             user.AvatarUrl, user.MustChangePassword, false, permissions, ct);
@@ -89,7 +91,9 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, A
         var reader = await _db.Readers.FirstOrDefaultAsync(r => r.Id == stored.ReaderId && r.DeletedAt == null, ct)
             ?? throw new UnauthorizedException("Tài khoản bạn đọc không còn tồn tại.");
 
-        var pair = _tokens.CreateTokens(reader.Id, reader.CardNumber, reader.FullName, isReader: true, Array.Empty<string>());
+        var pair = _tokens.CreateTokens(
+            reader.Id, reader.CardNumber, reader.FullName, isReader: true, Array.Empty<string>(),
+            reader.MustChangePassword);
 
         return await PersistAsync(pair, null, reader.Id, reader.CardNumber, reader.FullName, reader.Email,
             reader.AvatarUrl, reader.MustChangePassword, true, Array.Empty<string>(), ct);

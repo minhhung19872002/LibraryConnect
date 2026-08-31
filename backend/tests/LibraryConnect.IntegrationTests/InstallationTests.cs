@@ -46,20 +46,24 @@ public class InstallationTests
     [Fact]
     public async Task The_seeded_administrator_can_sign_in_and_is_forced_to_change_the_password()
     {
+        // Trạng thái này chỉ tồn tại đúng một lần trên mỗi bản cài, nên nó được ghi lại lúc dựng máy
+        // chủ kiểm thử — trước khi bất kỳ bài kiểm thử nào đăng nhập và đổi mật khẩu tạm.
+        _factory.SeededAdminForcedPasswordChange.Should().BeTrue(
+            "tài khoản quản trị mặc định phải đổi mật khẩu ở lần đăng nhập đầu tiên");
+
         var client = _factory.CreateClient();
 
+        // Mật khẩu mặc định nằm công khai trong tài liệu cài đặt, nên sau khi đã đổi thì nó phải
+        // hết tác dụng ngay.
         var response = await client.PostAsJsonAsync("/api/auth/login",
             new { username = LibraryConnectFactory.AdminUsername, password = LibraryConnectFactory.AdminPassword });
 
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
 
-        var payload = await response.Content.ReadFromJsonAsync<ApiResponse<LibraryConnectFactory.LoginPayload>>(
-            LibraryConnectFactory.JsonOptions);
+        var working = await _factory.CreateAuthenticatedClientAsync(
+            LibraryConnectFactory.AdminUsername, LibraryConnectFactory.AdminPassword);
 
-        payload!.Success.Should().BeTrue();
-        payload.Data!.AccessToken.Should().NotBeNullOrEmpty();
-        payload.Data.MustChangePassword.Should().BeTrue(
-            "tài khoản quản trị mặc định phải đổi mật khẩu ở lần đăng nhập đầu tiên");
+        (await working.GetAsync("/api/auth/me")).IsSuccessStatusCode.Should().BeTrue();
     }
 
     [Fact]
