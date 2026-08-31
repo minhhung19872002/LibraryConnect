@@ -115,20 +115,9 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api}
+        VITE_BASE_PATH: /admin/
     image: libraryconnect/admin:latest
     container_name: lc-admin
-    restart: unless-stopped
-    depends_on: [api]
-    networks: [libraryconnect]
-
-  opac:
-    build:
-      context: ./frontend-opac
-      dockerfile: Dockerfile
-      args:
-        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api}
-    image: libraryconnect/opac:latest
-    container_name: lc-opac
     restart: unless-stopped
     depends_on: [api]
     networks: [libraryconnect]
@@ -137,7 +126,7 @@ services:
     image: nginx:1.27-alpine
     container_name: lc-nginx
     restart: unless-stopped
-    depends_on: [api, admin, opac]
+    depends_on: [api, admin]
     ports:
       - "${HTTP_PORT:-80}:80"
     volumes:

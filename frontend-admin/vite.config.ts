@@ -5,6 +5,9 @@ import path from 'node:path';
 // Cấu hình build cho SPA quản trị. Trong môi trường phát triển, mọi lời gọi /api
 // được proxy sang backend .NET để tránh phải bật CORS khi chạy trên máy cá nhân.
 export default defineConfig({
+  // Nginx phục vụ giao diện quản trị dưới đường dẫn /admin/, còn khi chạy dev thì ở gốc.
+  // Giá trị này quyết định tiền tố của tài nguyên tĩnh và basename của React Router.
+  base: process.env.VITE_BASE_PATH ?? '/',
   plugins: [react()],
   resolve: {
     alias: { '@': path.resolve(__dirname, './src') },
@@ -31,9 +34,5 @@ export default defineConfig({
         },
       },
     },
-  },
-  test: {
-    globals: true,
-    environment: 'jsdom',
   },
 });

@@ -1,0 +1,215 @@
+/*
+ * Layout shell of the admin application. Component styling comes from Ant Design; this file only
+ * covers the frame (sidebar, header, page padding) and the login screen, and keeps every business
+ * screen on the same grid: filter bar on top, table in the middle, pagination below.
+ */
+
+:root {
+  --lc-border: #e8e8e8;
+  --lc-page-bg: #f5f6f8;
+  --lc-brand: #1668dc;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family:
+    'Be Vietnam Pro', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  background: var(--lc-page-bg);
+  /* The admin UI is designed for at least 1366x768 (section 6.6). */
+  min-width: 1024px;
+}
+
+/* ---------------- Shell ---------------- */
+
+.lc-layout {
+  min-height: 100vh;
+}
+
+.lc-sider {
+  border-right: 1px solid var(--lc-border);
+  overflow: auto;
+}
+
+.lc-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 56px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--lc-border);
+}
+
+.lc-brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  background: var(--lc-brand);
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.lc-brand-mark--large {
+  width: 48px;
+  height: 48px;
+  font-size: 18px;
+  border-radius: 12px;
+}
+
+.lc-brand-name {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.lc-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--lc-border);
+}
+
+.lc-collapse-button,
+.lc-account-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  padding: 6px 8px;
+  border-radius: 6px;
+}
+
+.lc-collapse-button:hover,
+.lc-account-button:hover,
+.lc-collapse-button:focus-visible,
+.lc-account-button:focus-visible {
+  background: #f0f0f0;
+}
+
+.lc-library-name {
+  flex: 1;
+  margin: 0 !important;
+  font-size: 16px !important;
+  line-height: 1.4 !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lc-account-name {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lc-content {
+  padding: 16px 20px;
+}
+
+.lc-breadcrumb {
+  margin-bottom: 12px;
+}
+
+.lc-footer {
+  text-align: center;
+  padding: 12px 24px;
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 13px;
+}
+
+/* ---------------- Pages ---------------- */
+
+.lc-page-alert,
+.lc-page-card {
+  margin-bottom: 16px;
+}
+
+.lc-page-card {
+  margin-top: 16px;
+}
+
+.lc-scope-note {
+  margin-top: 12px !important;
+  margin-bottom: 0 !important;
+}
+
+.lc-centered-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+/* ---------------- Login ---------------- */
+
+.lc-login-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+  background: linear-gradient(160deg, #eef3fb 0%, #f7f9fc 60%, #ffffff 100%);
+}
+
+.lc-login-card {
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 8px 32px rgba(15, 34, 66, 0.1);
+}
+
+.lc-login-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.lc-login-logo {
+  max-height: 56px;
+  max-width: 200px;
+  object-fit: contain;
+}
+
+.lc-login-title {
+  margin: 8px 0 0 !important;
+}
+
+.lc-login-alert {
+  margin-bottom: 16px;
+}
+
+.lc-login-footer {
+  margin: 20px 0 0 !important;
+  text-align: center;
+  font-size: 12px;
+}
+
+/* The login screen is the one page a librarian may open on a phone. */
+@media (max-width: 640px) {
+  body {
+    min-width: 0;
+  }
+}

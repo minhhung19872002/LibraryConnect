@@ -50,11 +50,11 @@ Sau khi các container báo `healthy`:
 
 | Địa chỉ | Nội dung |
 |---|---|
-| http://localhost | Trang tra cứu OPAC |
 | http://localhost/admin | Giao diện quản trị |
-| http://localhost:8080/swagger | Tài liệu API (Swagger UI) |
-| http://localhost:8080/health | Health check (liveness) |
-| http://localhost:8080/health/ready | Health check (readiness: PostgreSQL, Redis) |
+| http://localhost | Trang tra cứu OPAC — bàn giao ở Phase 12; hiện chuyển hướng sang `/admin` |
+| http://localhost/swagger | Tài liệu API (Swagger UI) |
+| http://localhost/health | Health check (liveness) |
+| http://localhost/health/ready | Health check (readiness: PostgreSQL, Redis) |
 | http://localhost:9001 | MinIO Console |
 
 Tài khoản quản trị được tạo tự động ở lần khởi động đầu tiên:
