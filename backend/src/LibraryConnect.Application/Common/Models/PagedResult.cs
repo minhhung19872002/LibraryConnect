@@ -64,3 +64,9 @@ public abstract class PagedRequest
 
     public int Skip => (Page - 1) * PageSize;
 }
+
+/// <summary>
+/// Concrete <see cref="PagedRequest"/> for endpoints whose only parameters are the shared paging,
+/// sorting and keyword fields.
+/// </summary>
+public class PagedRequestDefault : PagedRequest;

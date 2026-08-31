@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using LibraryConnect.Application.Common.Interfaces;
+using LibraryConnect.Application.Features.Admin.AuditLogs;
 using LibraryConnect.Domain.Entities.Sys;
 using LibraryConnect.Domain.Enums;
 using LibraryConnect.Infrastructure.Persistence;
@@ -65,7 +66,7 @@ public class AuditService : IAuditService
 /// Holds sys.audit_settings in memory for a short window. The interceptor consults it for every
 /// changed entity, so a per-call database query would dominate the cost of a bulk import.
 /// </summary>
-public class AuditSettingsCache : IAuditSettingsCache
+public class AuditSettingsCache : IAuditSettingsCache, IAuditSettingsInvalidator
 {
     private static readonly TimeSpan Ttl = TimeSpan.FromMinutes(5);
     private static readonly SemaphoreSlim Gate = new(1, 1);

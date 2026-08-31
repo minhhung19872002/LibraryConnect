@@ -79,21 +79,32 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResultDto>
             var maxAttempts = await _parameters.GetAsync("SECURITY.MAX_FAILED_LOGIN", 5, ct);
             var lockMinutes = await _parameters.GetAsync("SECURITY.LOCK_MINUTES", 15, ct);
 
-            user.FailedLoginCount++;
-            if (maxAttempts > 0 && user.FailedLoginCount >= maxAttempts)
-            {
-                user.LockedUntil = _clock.Now.AddMinutes(lockMinutes);
-                user.FailedLoginCount = 0;
-            }
+            var attempts = user.FailedLoginCount + 1;
+            var shouldLock = maxAttempts > 0 && attempts >= maxAttempts;
 
-            await _db.SaveChangesAsync(ct);
+            // The counter restarts once the lock kicks in, so the next lock needs another full run
+            // of failures rather than a single attempt.
+            var lockUntil = shouldLock ? _clock.Now.AddMinutes(lockMinutes) : (DateTimeOffset?)null;
+            var nextCount = shouldLock ? 0 : attempts;
+
+            await _db.Users
+                .Where(u => u.Id == user.Id)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(u => u.FailedLoginCount, nextCount)
+                    .SetProperty(u => u.LockedUntil, lockUntil), ct);
             await RecordFailureAsync(user.Id, user.Username, "Sai mật khẩu", ct);
             throw new UnauthorizedException("Tên đăng nhập hoặc mật khẩu không đúng.");
         }
 
-        user.FailedLoginCount = 0;
-        user.LockedUntil = null;
-        user.LastLoginAt = _clock.Now;
+        // Written straight to the database rather than through the change tracker: bumping the
+        // sign-in bookkeeping is not a business change, and auditing it here would produce a row with
+        // no user attached, since the request is still anonymous. The sign-in itself is audited below.
+        await _db.Users
+            .Where(u => u.Id == user.Id)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(u => u.FailedLoginCount, 0)
+                .SetProperty(u => u.LockedUntil, (DateTimeOffset?)null)
+                .SetProperty(u => u.LastLoginAt, _clock.Now), ct);
 
         var permissions = await _permissions.GetUserPermissionsAsync(user.Id, ct);
         var pair = _tokens.CreateTokens(user.Id, user.Username, user.FullName, isReader: false, permissions);

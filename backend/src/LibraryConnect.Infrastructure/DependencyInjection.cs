@@ -1,11 +1,14 @@
 using Hangfire;
 using Hangfire.PostgreSql;
 using LibraryConnect.Application.Common.Interfaces;
+using LibraryConnect.Application.Features.Admin.AuditLogs;
 using LibraryConnect.Infrastructure.Configuration;
+using LibraryConnect.Infrastructure.Jobs;
 using LibraryConnect.Infrastructure.Persistence;
 using LibraryConnect.Infrastructure.Persistence.Interceptors;
 using LibraryConnect.Infrastructure.Persistence.Seeding;
 using LibraryConnect.Infrastructure.Services;
+using LibraryConnect.Reporting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -44,8 +47,15 @@ public static class DependencyInjection
         services.AddScoped<IEmailSender, SmtpEmailSender>();
         services.AddScoped<INotificationSender, EmailNotificationSender>();
         services.AddScoped<IBackgroundJobService, HangfireBackgroundJobService>();
+        services.AddScoped<IBackupService, PostgresBackupService>();
 
-        services.AddSingleton<IAuditSettingsCache, AuditSettingsCache>();
+        services.AddReporting();
+
+        // One instance serves both roles: the interceptor reads through IAuditSettingsCache and the
+        // settings screen drops the cache through IAuditSettingsInvalidator.
+        services.AddSingleton<AuditSettingsCache>();
+        services.AddSingleton<IAuditSettingsCache>(p => p.GetRequiredService<AuditSettingsCache>());
+        services.AddSingleton<IAuditSettingsInvalidator>(p => p.GetRequiredService<AuditSettingsCache>());
         services.AddScoped<DatabaseSeeder>();
 
         return services;
@@ -96,6 +106,8 @@ public static class DependencyInjection
                     QueuePollInterval = TimeSpan.FromSeconds(15)
                 }));
 
+        services.AddScoped<SystemMaintenanceJobs>();
+
         if (serverEnabled)
         {
             services.AddHangfireServer(options =>
@@ -103,6 +115,9 @@ public static class DependencyInjection
                 options.ServerName = $"libraryconnect-{Environment.MachineName}";
                 options.WorkerCount = Math.Min(Environment.ProcessorCount * 2, 8);
             });
+
+            // Only the instance that actually processes jobs registers the schedules.
+            services.AddHostedService<RecurringJobRegistrar>();
         }
     }
 
