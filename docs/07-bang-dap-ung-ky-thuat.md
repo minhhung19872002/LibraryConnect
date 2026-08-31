@@ -7,7 +7,7 @@ Cột **Đáp ứng** chỉ được đánh **Có** khi chức năng đã chạy
 được bằng thao tác demo hoặc bằng bộ kiểm thử tự động. Những hạng mục thuộc phân hệ chưa bàn giao
 được ghi rõ là **Đang thực hiện** kèm phase dự kiến, không đánh dấu đáp ứng.
 
-Cập nhật lần cuối: sau khi hoàn thành Phase 3.
+Cập nhật lần cuối: sau khi hoàn thành Phase 4.
 
 ---
 
@@ -72,7 +72,27 @@ Cập nhật lần cuối: sau khi hoàn thành Phase 3.
 | DM.6 | Gộp trùng, cập nhật toàn bộ biểu ghi liên quan | **Có** | Tìm trùng theo tên đã bỏ dấu; hiển thị số bản ghi đang dùng của từng giá trị; gộp chuyển hết tham chiếu rồi mới xóa | Kịch bản DM.12 |
 | DM.7 | Chặn xóa giá trị đang được sử dụng | **Có** | Thông báo nêu rõ số bản ghi đang dùng, hoặc số giá trị con còn lại | Kịch bản DM.5 |
 | DM.8 | Nạp sẵn danh mục chuẩn quốc tế | **Có** | 21 ngôn ngữ (ISO 639-2), 24 mã nước (MARC), 14 dạng tài liệu, 8 vật mang tin, bảng tóm tắt DDC (10 lớp + 89 phân lớp), 6 loại bạn đọc, 2 thư viện, 4 kho | Kịch bản 2.1.11 |
-| DM.9 | Danh mục tự tạo từ trường MARC 21 | **Đang thực hiện** | Phase 5 — cần biểu ghi MARC để rút trích giá trị. Bảng `cat.custom_indexes` đã sẵn sàng |
+| DM.9 | Danh mục tự tạo từ trường MARC 21 | **Đang thực hiện** | Phase 5 — cần biểu ghi thật trong cơ sở dữ liệu để rút trích giá trị. Bảng `cat.custom_indexes` và bộ đọc MARC ở mục B3 đã sẵn sàng |
+
+---
+
+## B3. Khổ mẫu MARC 21 và định dạng trao đổi (mục 3.1, 3.2, 3.5 và II.5)
+
+| # | Yêu cầu | Đáp ứng | Chức năng tương ứng | Chứng minh |
+|---|---|---|---|---|
+| MC.1 | Lưu biểu ghi đúng cấu trúc MARC 21, không phẳng hóa thành cột | **Có** | Đầu biểu 24 ký tự, trường điều khiển 001–009, trường dữ liệu 010–999 với hai chỉ thị và trường con lặp lại được; lưu dạng `jsonb` ở cột `bib.bib_records.marc_json` | Kịch bản MARC.4; Unit — `MarcJsonTests` |
+| MC.2 | Hỗ trợ đầy đủ danh sách trường tối thiểu của mục 3.1 | **Có** | Bộ định nghĩa 220 trường, tên tiếng Việt, kèm ý nghĩa từng giá trị chỉ thị và từng trường con | Kịch bản MARC.1; Integration — `MarcTests` |
+| MC.3 | Parser và serializer ISO 2709 tự viết, không dùng thư viện ngoài | **Có** | Dự án `LibraryConnect.Marc` không phụ thuộc gói ngoài nào; đọc và ghi đầy đủ đầu biểu, danh mục, vùng dữ liệu và ba ký tự phân cách | Kịch bản MARC.12 → MARC.14 |
+| MC.4 | **Độ dài tính theo byte UTF-8, không theo ký tự** | **Có** | Mọi độ dài trong danh mục và trong đầu biểu đều đếm byte của chuỗi UTF-8; có kiểm thử riêng đối chiếu số byte với số ký tự của chuỗi tiếng Việt | Kịch bản MARC.14; Unit — `Iso2709Tests` |
+| MC.5 | Round-trip ISO 2709 với dữ liệu tiếng Việt có dấu | **Có** | Xuất rồi đọc lại cho ra biểu ghi giống hệt: đầu biểu, thứ tự trường, chỉ thị và mọi dấu tiếng Việt | Kịch bản MARC.13; Unit — `Iso2709Tests`; Integration — `MarcTests` |
+| MC.6 | Chịu được tệp do phần mềm khác xuất sai | **Có** | Chấp nhận dấu xuống dòng giữa các biểu ghi, dấu BOM, độ dài sai trong đầu biểu; khôi phục được biểu ghi có vị trí sai trong danh mục; báo riêng từng biểu ghi hỏng kèm số thứ tự và vị trí byte | Kịch bản MARC.18, MARC.19 |
+| MC.7 | Đọc biểu ghi MARC-8 từ máy chủ nước ngoài | **Có** | Giải mã bộ Basic Latin và Extended Latin (ANSEL) — đủ cho tiếng Việt và mọi ngôn ngữ chữ Latinh — đưa dấu phụ về sau chữ cái rồi chuẩn hóa NFC. Các bộ chữ Hy Lạp, Kirin, Ả Rập, Hán–Nhật–Hàn bị từ chối kèm hướng dẫn yêu cầu máy chủ nguồn trả UTF-8, thay vì đọc sai thành ký tự vô nghĩa | Kịch bản MARC.20 |
+| MC.8 | Nhận đúng bảng mã kể cả khi biểu ghi khai sai | **Có** | Kiểm tra lại chính dữ liệu thay vì tin đầu biểu vị trí 09: tệp giải mã được theo UTF-8 nghiêm ngặt thì hiểu là UTF-8 | Kịch bản MARC.21 |
+| MC.9 | Nhập và xuất MARCXML theo lược đồ MARC21slim | **Có** | Không gian tên `http://www.loc.gov/MARC21/slim`; đọc được cả biểu ghi lồng trong phản hồi SRU hoặc OAI-PMH | Kịch bản MARC.15, MARC.16 |
+| MC.10 | Trình soạn MARC trên giao diện | **Có** | Soạn đầu biểu theo từng vị trí có ý nghĩa; gợi ý trường và trường con theo bộ định nghĩa; chọn chỉ thị theo ý nghĩa; tách chuỗi trường con dán từ hệ thống khác | Kịch bản MARC.4 → MARC.7 |
+| MC.11 | Kiểm tra biểu ghi theo bộ định nghĩa (II.5) | **Có** | Phân biệt lỗi chặn lưu với cảnh báo; mỗi thông báo chỉ đúng trường, đúng lần xuất hiện và đúng trường con để giao diện tô sáng | Kịch bản MARC.8 → MARC.11 |
+| MC.12 | Cho phép thư viện khai báo trường dùng riêng | **Có** | Thêm, sửa, tắt trường trong bộ định nghĩa; trường bắt buộc không xóa được; trường 001–009 buộc phải là trường điều khiển | Kịch bản MARC.23 → MARC.25 |
+| MC.13 | Phát hiện sớm biểu ghi không xuất được | **Có** | Kiểm tra ngay lúc biên mục các giới hạn của ISO 2709: một trường tối đa 9.999 byte, một biểu ghi tối đa 99.999 byte | Kịch bản MARC.22 |
 
 ---
 
@@ -105,7 +125,7 @@ Cập nhật lần cuối: sau khi hoàn thành Phase 3.
 
 | # | Yêu cầu | Đáp ứng | Ghi chú |
 |---|---|---|---|
-| D1 | MARC 21, ISO 2709, MARCXML | **Đang thực hiện** | Phase 4 — MARC Core. Mô hình dữ liệu `bib.bib_records` lưu MARC dạng jsonb đã sẵn sàng |
+| D1 | MARC 21, ISO 2709, MARCXML | **Có** | Chi tiết ở mục B3 |
 | D2 | Z39.50 client và server, SRU/SRW | **Đang thực hiện** | Phase 11. Bảng `ill.z3950_targets` và tuyến `/sru` đã có trong cấu hình Nginx |
 | D3 | OAI-PMH provider và harvester | **Đang thực hiện** | Phase 11. Bảng `ill.oai_repositories` và tuyến `/oai` đã có |
 | D4 | Phân hệ II — Biên mục | **Đang thực hiện** | Phase 5 |

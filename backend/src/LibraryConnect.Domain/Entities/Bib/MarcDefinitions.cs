@@ -16,7 +16,10 @@ public class MarcFieldDefinition : BaseEntity
     public string? Description { get; set; }
     public bool IsControl { get; set; }
     public bool IsRepeatable { get; set; }
+    /// <summary>Thiếu trường này là lỗi: không lưu được biểu ghi.</summary>
     public bool IsRequired { get; set; }
+    /// <summary>Thiếu trường này chỉ sinh cảnh báo; biểu ghi vẫn lưu được.</summary>
+    public bool IsRecommended { get; set; }
     /// <summary>JSON array: [{"position":1,"values":[{"code":"0","label":"Không tạo tiêu đề bổ sung"}]}]</summary>
     public string? Indicators { get; set; }
     /// <summary>JSON array: [{"code":"a","name":"Nhan đề","repeatable":false,"required":true}]</summary>

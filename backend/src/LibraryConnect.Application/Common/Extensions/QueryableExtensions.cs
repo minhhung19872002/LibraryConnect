@@ -86,4 +86,6 @@ public static class CacheKeyPrefixes
     public const string Parameters = "params:";
     public const string Permissions = "perms:";
     public const string Search = "search:";
+    /// <summary>Bộ định nghĩa trường MARC 21, dùng cho kiểm tra biểu ghi.</summary>
+    public const string MarcRules = "marc:";
 }

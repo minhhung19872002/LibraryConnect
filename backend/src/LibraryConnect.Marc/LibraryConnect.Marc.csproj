@@ -1,5 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <ItemGroup>
-    <ProjectReference Include="..\LibraryConnect.Domain\LibraryConnect.Domain.csproj" />
-  </ItemGroup>
+
+  <!--
+    The MARC library stands on its own: no dependency on the domain, the database or the web stack.
+    That keeps the format code testable in isolation and makes it reusable by the Z39.50 and OAI-PMH
+    endpoints without dragging the rest of the system along.
+  -->
+
 </Project>

@@ -28,6 +28,7 @@ public static class DependencyInjection
 
         services.AddScoped<IPasswordPolicyProvider, PasswordPolicyProvider>();
         services.AddScoped<Features.Catalogs.ICatalogUsageService, Features.Catalogs.CatalogUsageService>();
+        services.AddScoped<Features.Marc.IMarcRuleProvider, Features.Marc.MarcRuleProvider>();
 
         return services;
     }

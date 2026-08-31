@@ -23,6 +23,14 @@
     <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.2.1" />
   </ItemGroup>
   <ItemGroup>
+    <!--
+      The MARC 21 field definitions ship with the build rather than sitting in a C# file: the list is
+      pure data, a library may replace it with its own, and the same JSON is what the import screen
+      accepts.
+    -->
+    <EmbeddedResource Include="Persistence\Seeding\Data\*.json" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\LibraryConnect.Application\LibraryConnect.Application.csproj" />
     <ProjectReference Include="..\LibraryConnect.Reporting\LibraryConnect.Reporting.csproj" />
   </ItemGroup>

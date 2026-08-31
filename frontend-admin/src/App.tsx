@@ -17,6 +17,8 @@ import { UserGroupsPage } from '@/modules/system/UserGroupsPage';
 import { UsersPage } from '@/modules/system/UsersPage';
 import { CatalogIndexPage } from '@/modules/catalogs/CatalogIndexPage';
 import { CatalogPage } from '@/modules/catalogs/CatalogPage';
+import { MarcFieldsPage } from '@/modules/marc/MarcFieldsPage';
+import { MarcToolPage } from '@/modules/marc/MarcToolPage';
 import { RequirePermissionRoute } from '@/components/PermissionGate';
 import { PERMISSIONS } from '@/api/permissions';
 import { messages } from '@/i18n/messages';
@@ -115,6 +117,24 @@ function AppRoutes() {
           element={
             <RequirePermissionRoute permission={PERMISSIONS.catalogList.view}>
               <CatalogPage />
+            </RequirePermissionRoute>
+          }
+        />
+
+        {/* Khổ mẫu MARC 21 — bộ định nghĩa trường và công cụ đọc/kiểm tra/xuất biểu ghi. */}
+        <Route
+          path="/marc/dinh-nghia-truong"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.cataloging.marcDefinitionView}>
+              <MarcFieldsPage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/marc/cong-cu"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.cataloging.bibView}>
+              <MarcToolPage />
             </RequirePermissionRoute>
           }
         />

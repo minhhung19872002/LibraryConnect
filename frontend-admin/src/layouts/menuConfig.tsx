@@ -12,6 +12,7 @@ import {
   FileTextOutlined,
   GlobalOutlined,
   IdcardOutlined,
+  ProfileOutlined,
   ReadOutlined,
   SettingOutlined,
   ShoppingCartOutlined,
@@ -103,6 +104,28 @@ export const menuTree: MenuNode[] = [
     icon: <DatabaseOutlined />,
     path: '/danh-muc',
     permissions: [PERMISSIONS.catalogList.view],
+  },
+  {
+    key: 'marc',
+    label: messages.menu.marc,
+    icon: <ProfileOutlined />,
+    permissions: [PERMISSIONS.cataloging.marcDefinitionView, PERMISSIONS.cataloging.bibView],
+    children: [
+      {
+        key: 'marc-fields',
+        label: messages.menu.marcFields,
+        icon: <ProfileOutlined />,
+        path: '/marc/dinh-nghia-truong',
+        permissions: [PERMISSIONS.cataloging.marcDefinitionView],
+      },
+      {
+        key: 'marc-tool',
+        label: messages.menu.marcTool,
+        icon: <SwapOutlined />,
+        path: '/marc/cong-cu',
+        permissions: [PERMISSIONS.cataloging.bibView],
+      },
+    ],
   },
   {
     key: 'cataloging',

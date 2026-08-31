@@ -124,7 +124,7 @@ Ký hiệu bám theo **Mục 5 phần 2 của E-HSMT**.
 
 ```bash
 cd backend
-dotnet test                 # 85 unit test + 33 integration test
+dotnet test                 # 132 unit test + 45 integration test
 ```
 
 Integration test tự khởi tạo một container PostgreSQL 16 riêng, chạy migration, nạp dữ liệu nền và
@@ -132,14 +132,49 @@ gọi API qua đúng giao diện HTTP mà trình duyệt dùng — không có th
 
 ```bash
 cd frontend-admin
-npm test                    # 20 test giao diện
+npm test                    # 44 test giao diện
 ```
+
+---
+
+## Nhóm chức năng — Khổ mẫu MARC 21 và trao đổi biểu ghi (mục 2.4)
+
+| Mã | Chức năng | Bước thực hiện | Kết quả mong đợi | Tự động | Kết quả thực tế | Đạt |
+|---|---|---|---|---|---|---|
+| MARC.1 | Bộ định nghĩa trường được nạp sẵn | Vào Khổ mẫu MARC 21 → Định nghĩa trường MARC | 220 trường, tên tiếng Việt; có đủ các trường bắt buộc theo mục 3.1: 020, 022, 040, 041, 044, 082, 084, 100, 110, 111, 130, 245, 246, 250, 260, 264, 300, 310, 336, 337, 338, 490, 500, 504, 505, 520, 650, 653, 700, 710, 773, 852, 856 | Integration — `MarcTests` | | |
+| MARC.2 | Chi tiết định nghĩa một trường | Mở rộng dòng trường 245 | Hiện 2 chỉ thị kèm ý nghĩa từng giá trị và danh sách trường con $a, $b, $c, $n, $p… có đánh dấu bắt buộc và lặp lại | Integration — `MarcTests` | | |
+| MARC.3 | Trường điều khiển không có chỉ thị và trường con | Mở rộng dòng trường 008 | Được đánh dấu "Trường điều khiển"; không có chỉ thị và trường con | Integration — `MarcTests` | | |
+| MARC.4 | Soạn biểu ghi theo đúng cấu trúc MARC | Công cụ biểu ghi MARC → Biểu ghi trống | Có đầu biểu 24 ký tự, trường điều khiển 001 và 008 (đúng 40 ký tự), trường dữ liệu 245 với hai chỉ thị và trường con | Vitest — `marcRecord.test.ts` | | |
+| MARC.5 | Gợi ý theo bộ định nghĩa | Gõ "245" hoặc "nhan đề" vào ô Thêm trường | Danh sách gợi ý hiện nhãn trường kèm tên tiếng Việt; chọn xong hệ thống mở sẵn các trường con bắt buộc và điền chỉ thị hợp lệ | Vitest — `marcRecord.test.ts` | | |
+| MARC.6 | Chọn chỉ thị theo ý nghĩa | Mở ô chỉ thị 2 của trường 245 | Danh sách hiện "0 — Không bỏ qua ký tự nào" đến "9 — Bỏ qua 9 ký tự" thay vì bắt cán bộ nhớ mã | | | |
+| MARC.7 | Dán chuỗi trường con từ hệ thống khác | Dán chuỗi `$aGiáo trình cơ sở dữ liệu : $bdùng cho sinh viên / $cNguyễn Văn Ánh` vào một ô trường con rồi bấm nút tách | Chuỗi được tách thành ba trường con $a, $b, $c đúng nội dung | Vitest — `marcRecord.test.ts` | | |
+| MARC.8 | Kiểm tra biểu ghi — lỗi chặn lưu | Xóa trường 245 rồi bấm Kiểm tra biểu ghi | Báo lỗi "Thiếu trường bắt buộc 245", biểu ghi bị đánh dấu không hợp lệ | Integration — `MarcTests`; Unit — `MarcValidatorTests` | | |
+| MARC.9 | Kiểm tra biểu ghi — cảnh báo không chặn lưu | Xóa trường 082 rồi bấm Kiểm tra biểu ghi | Cảnh báo "Nên bổ sung trường 082" nhưng biểu ghi vẫn hợp lệ | Integration — `MarcTests`; Unit — `MarcValidatorTests` | | |
+| MARC.10 | Chặn trường lặp sai quy định | Thêm trường 245 lần thứ hai rồi kiểm tra | Báo lỗi trường 245 không được lặp lại | Unit — `MarcValidatorTests` | | |
+| MARC.11 | Chặn trường con lặp sai quy định | Thêm hai trường con $a vào trường 245 rồi kiểm tra | Báo lỗi trường con $a không được lặp lại | Unit — `MarcValidatorTests` | | |
+| MARC.12 | **Xuất ISO 2709** | Soạn biểu ghi tiếng Việt có dấu, bấm Xuất .mrc | Tải về tệp `.mrc`; 5 ký tự đầu là tổng độ dài tệp tính bằng byte; byte cuối là 0x1D | Integration — `MarcTests` | | |
+| MARC.13 | **Round-trip ISO 2709 với tiếng Việt** | Bấm Đọc tệp .mrc và chọn chính tệp vừa xuất | Biểu ghi hiện lại **giống hệt** bản gốc: đủ dấu ở nhan đề, tên tác giả, tên nhà xuất bản; chỉ thị và thứ tự trường không đổi | Unit — `Iso2709Tests`; Integration — `MarcTests` | | |
+| MARC.14 | Độ dài trường tính theo byte UTF-8 | Mở tệp `.mrc` bằng trình xem hệ mười sáu, đối chiếu mục danh mục của trường 245 | Độ dài ghi trong danh mục bằng số **byte** của trường, lớn hơn số ký tự vì chữ có dấu chiếm 2–3 byte | Unit — `Iso2709Tests` | | |
+| MARC.15 | Xuất và nhập lại MARCXML | Bấm Xuất MARCXML rồi Đọc lại chính tệp đó | Tệp dùng không gian tên `http://www.loc.gov/MARC21/slim`, chữ tiếng Việt ở dạng UTF-8 nguyên bản; biểu ghi đọc lại giống bản gốc | Unit — `MarcXmlTests`; Integration — `MarcTests` | | |
+| MARC.16 | Hai định dạng mô tả cùng một biểu ghi | Xuất cùng một biểu ghi ra cả `.mrc` và `.xml`, đọc lại cả hai | Hai biểu ghi đọc được giống hệt nhau | Unit — `MarcXmlTests` | | |
+| MARC.17 | Tệp nhiều biểu ghi | Đọc một tệp `.mrc` chứa nhiều biểu ghi | Danh sách bên trái liệt kê từng biểu ghi kèm nhan đề và số lỗi; chọn dòng nào thì mở biểu ghi đó | Unit — `Iso2709Tests`; Integration — `MarcTests` | | |
+| MARC.18 | Tệp có biểu ghi hỏng | Đọc một tệp có biểu ghi bị cắt cụt ở cuối | Các biểu ghi lành vẫn đọc được; biểu ghi hỏng được báo riêng kèm số thứ tự và vị trí byte | Unit — `Iso2709Tests`; Integration — `MarcTests` | | |
+| MARC.19 | Tệp có danh mục sai vị trí | Đọc tệp do phần mềm khác xuất sai vị trí trong danh mục | Hệ thống vẫn khôi phục được biểu ghi bằng cách quét dấu kết thúc trường | Unit — `Iso2709Tests` | | |
+| MARC.20 | Biểu ghi MARC-8 từ máy chủ nước ngoài | Đọc tệp có đầu biểu vị trí 09 là khoảng trắng | Dấu phụ được giải mã đúng và chuẩn hóa NFC, ví dụ "ế" là một ký tự | Unit — `Marc8Tests` | | |
+| MARC.21 | Tệp UTF-8 nhưng khai sai bảng mã | Đọc tệp UTF-8 có đầu biểu vị trí 09 để trống | Hệ thống tự nhận ra là UTF-8, chữ tiếng Việt không bị hỏng | Unit — `Marc8Tests` | | |
+| MARC.22 | Cảnh báo trường vượt giới hạn định dạng | Nhập tóm tắt dài trên 3.400 ký tự tiếng Việt vào trường 520 rồi kiểm tra | Báo lỗi trường vượt 9.999 byte kèm hướng dẫn tách nội dung — phát hiện ngay khi biên mục chứ không đợi đến lúc xuất tệp | Unit — `MarcValidatorTests`, `Iso2709Tests` | | |
+| MARC.23 | Khai báo trường dùng riêng của thư viện | Thêm trường 998 vào bộ định nghĩa rồi kiểm tra lại biểu ghi có trường 998 | Trước khi khai báo thì có cảnh báo "chưa có trong bộ định nghĩa"; sau khi khai báo thì hết cảnh báo | Integration — `MarcTests` | | |
+| MARC.24 | Không xóa được trường bắt buộc | Xóa định nghĩa trường 245 | Bị từ chối kèm giải thích phải bỏ đánh dấu bắt buộc trước | Integration — `MarcTests` | | |
+| MARC.25 | Không khai báo sai loại trường | Khai báo trường 007 kèm trường con | Bị từ chối: trường 001–009 là trường điều khiển, chỉ có giá trị | Integration — `MarcTests` | | |
 
 ---
 
 ## Ghi chú
 
-Các nhóm kiểm thử 2.2 (chức năng của 11 phân hệ), 2.4 (trao đổi dữ liệu ISO 2709 / Z39.50 / OAI-PMH),
+Nhóm kiểm thử 2.4 (trao đổi dữ liệu) đã có phần ISO 2709 và MARCXML ở nhóm kịch bản MARC bên
+trên; phần Z39.50 và OAI-PMH sẽ bổ sung khi bàn giao Phase 11.
+
+Các nhóm kiểm thử 2.2 (chức năng của 11 phân hệ),
 2.5 (chuyển đổi dữ liệu), 2.7 (ứng dụng di động) và 2.8 (báo cáo) sẽ được bổ sung vào tài liệu này
 theo từng phân hệ được bàn giao. Tài liệu luôn phản ánh đúng phạm vi đã hoàn thành tại thời điểm
 nghiệm thu, không liệt kê trước những gì chưa làm.

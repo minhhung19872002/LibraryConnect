@@ -49,6 +49,7 @@ export const PERMISSIONS = {
     bibApprove: 'CATALOG.BIB.APPROVE',
     bibImport: 'CATALOG.BIB.IMPORT',
     bibExport: 'CATALOG.BIB.EXPORT',
+    marcDefinitionView: 'CATALOG.MARC_DEFINITION.VIEW',
     marcDefinition: 'CATALOG.MARC_DEFINITION.MANAGE',
     template: 'CATALOG.TEMPLATE.MANAGE',
     defaultValue: 'CATALOG.DEFAULT_VALUE.MANAGE',
