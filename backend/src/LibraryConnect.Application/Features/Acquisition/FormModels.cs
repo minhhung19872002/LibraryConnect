@@ -24,6 +24,10 @@ public static class FormTypes
     public const string LoanSlip = "LOAN_SLIP";
     /// <summary>Phiếu trả.</summary>
     public const string ReturnSlip = "RETURN_SLIP";
+    /// <summary>Biên lai thu tiền phạt.</summary>
+    public const string FineReceipt = "FINE_RECEIPT";
+    /// <summary>Giấy xác nhận đã trả hết tài liệu, cấp cho sinh viên ra trường.</summary>
+    public const string Clearance = "CLEARANCE";
 
     public static readonly IReadOnlyDictionary<string, string> Labels = new Dictionary<string, string>
     {
@@ -34,7 +38,9 @@ public static class FormTypes
         [Disposal] = "Quyết định thanh lý",
         [PurchaseOrder] = "Đơn đặt hàng",
         [LoanSlip] = "Phiếu mượn",
-        [ReturnSlip] = "Phiếu trả"
+        [ReturnSlip] = "Phiếu trả",
+        [FineReceipt] = "Biên lai thu tiền phạt",
+        [Clearance] = "Giấy xác nhận trả sách"
     };
 }
 
@@ -187,6 +193,93 @@ public static class FormFieldCatalog
             new FormFieldOption("amount", "Thành tiền", IsRow: true),
             new FormFieldOption("note", "Ghi chú dòng", IsRow: true)
         },
+        [FormTypes.LoanSlip] = new[]
+        {
+            new FormFieldOption("code", "Số phiếu mượn"),
+            new FormFieldOption("loanDate", "Ngày mượn"),
+            new FormFieldOption("dueDate", "Hạn trả"),
+            new FormFieldOption("readerName", "Họ tên bạn đọc"),
+            new FormFieldOption("cardNumber", "Số thẻ"),
+            new FormFieldOption("studentCode", "Mã sinh viên"),
+            new FormFieldOption("readerType", "Loại bạn đọc"),
+            new FormFieldOption("faculty", "Khoa"),
+            new FormFieldOption("className", "Lớp"),
+            new FormFieldOption("totalItems", "Số tài liệu"),
+            new FormFieldOption("staffName", "Cán bộ ghi mượn"),
+            new FormFieldOption("index", "Số thứ tự", IsRow: true),
+            new FormFieldOption("barcode", "Mã vạch", IsRow: true),
+            new FormFieldOption("registerNumber", "Số ĐKCB", IsRow: true),
+            new FormFieldOption("title", "Nhan đề", IsRow: true),
+            new FormFieldOption("author", "Tác giả", IsRow: true),
+            new FormFieldOption("callNumber", "Ký hiệu xếp giá", IsRow: true),
+            new FormFieldOption("dueDate", "Hạn trả", IsRow: true),
+            new FormFieldOption("price", "Giá", IsRow: true)
+        },
+
+        [FormTypes.ReturnSlip] = new[]
+        {
+            new FormFieldOption("code", "Số phiếu trả"),
+            new FormFieldOption("returnDate", "Ngày trả"),
+            new FormFieldOption("readerName", "Họ tên bạn đọc"),
+            new FormFieldOption("cardNumber", "Số thẻ"),
+            new FormFieldOption("studentCode", "Mã sinh viên"),
+            new FormFieldOption("faculty", "Khoa"),
+            new FormFieldOption("className", "Lớp"),
+            new FormFieldOption("totalItems", "Số tài liệu"),
+            new FormFieldOption("totalFine", "Tổng tiền phạt"),
+            new FormFieldOption("staffName", "Cán bộ ghi trả"),
+            new FormFieldOption("index", "Số thứ tự", IsRow: true),
+            new FormFieldOption("barcode", "Mã vạch", IsRow: true),
+            new FormFieldOption("title", "Nhan đề", IsRow: true),
+            new FormFieldOption("dueDate", "Hạn trả", IsRow: true),
+            new FormFieldOption("returnDate", "Ngày trả", IsRow: true),
+            new FormFieldOption("overdueDays", "Số ngày quá hạn", IsRow: true),
+            new FormFieldOption("fine", "Tiền phạt", IsRow: true)
+        },
+
+        [FormTypes.FineReceipt] = new[]
+        {
+            new FormFieldOption("code", "Số biên lai"),
+            new FormFieldOption("paidAt", "Ngày thu"),
+            new FormFieldOption("readerName", "Họ tên bạn đọc"),
+            new FormFieldOption("cardNumber", "Số thẻ"),
+            new FormFieldOption("studentCode", "Mã sinh viên"),
+            new FormFieldOption("faculty", "Khoa"),
+            new FormFieldOption("className", "Lớp"),
+            new FormFieldOption("fineType", "Loại phạt"),
+            new FormFieldOption("amount", "Số tiền phạt"),
+            new FormFieldOption("paidAmount", "Số tiền đã thu"),
+            new FormFieldOption("outstanding", "Còn nợ"),
+            new FormFieldOption("amountInWords", "Số tiền bằng chữ"),
+            new FormFieldOption("reason", "Lý do phạt"),
+            new FormFieldOption("staffName", "Cán bộ thu tiền"),
+            new FormFieldOption("index", "Số thứ tự", IsRow: true),
+            new FormFieldOption("title", "Nhan đề", IsRow: true),
+            new FormFieldOption("barcode", "Mã vạch", IsRow: true),
+            new FormFieldOption("fine", "Số tiền", IsRow: true)
+        },
+
+        [FormTypes.Clearance] = new[]
+        {
+            new FormFieldOption("readerName", "Họ tên bạn đọc"),
+            new FormFieldOption("cardNumber", "Số thẻ"),
+            new FormFieldOption("studentCode", "Mã sinh viên"),
+            new FormFieldOption("dateOfBirth", "Ngày sinh"),
+            new FormFieldOption("readerType", "Loại bạn đọc"),
+            new FormFieldOption("faculty", "Khoa"),
+            new FormFieldOption("className", "Lớp"),
+            new FormFieldOption("courseYear", "Khóa"),
+            new FormFieldOption("totalLoans", "Tổng lượt đã mượn"),
+            new FormFieldOption("outstandingLoans", "Tài liệu chưa trả"),
+            new FormFieldOption("outstandingFines", "Tiền phạt còn nợ"),
+            new FormFieldOption("conclusion", "Kết luận"),
+            new FormFieldOption("staffName", "Cán bộ xác nhận"),
+            new FormFieldOption("index", "Số thứ tự", IsRow: true),
+            new FormFieldOption("barcode", "Mã vạch", IsRow: true),
+            new FormFieldOption("title", "Nhan đề", IsRow: true),
+            new FormFieldOption("dueDate", "Hạn trả", IsRow: true)
+        },
+
         [FormTypes.Transfer] = new[]
         {
             new FormFieldOption("code", "Số phiếu chuyển kho"),

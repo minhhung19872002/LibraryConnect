@@ -37,6 +37,10 @@ public static class DependencyInjection
         services.AddScoped<Features.Acquisition.IPurchaseDuplicateFinder, Features.Acquisition.PurchaseDuplicateFinder>();
         services.AddScoped<Features.Acquisition.IFormDataBuilder, Features.Acquisition.FormDataBuilder>();
         services.AddScoped<Features.Readers.ReaderImportProcessor>();
+        services.AddScoped<Features.Circulation.ICirculationPolicyResolver, Features.Circulation.CirculationPolicyResolver>();
+        services.AddScoped<Features.Circulation.ICirculationCalendarProvider, Features.Circulation.CirculationCalendarProvider>();
+        services.AddScoped<Features.Circulation.ICirculationDeskService, Features.Circulation.CirculationDeskService>();
+        services.AddScoped<Features.Circulation.ICirculationDailyJobs, Features.Circulation.CirculationDailyJobs>();
         services.AddScoped<Features.Readers.IReaderImportRunner, Features.Readers.ReaderImportRunner>();
 
         return services;

@@ -7,7 +7,7 @@ Cột **Đáp ứng** chỉ được đánh **Có** khi chức năng đã chạy
 được bằng thao tác demo hoặc bằng bộ kiểm thử tự động. Những hạng mục thuộc phân hệ chưa bàn giao
 được ghi rõ là **Đang thực hiện** kèm phase dự kiến, không đánh dấu đáp ứng.
 
-Cập nhật lần cuối: sau khi hoàn thành Phase 5.
+Cập nhật lần cuối: sau khi hoàn thành Phase 9.
 
 ---
 
@@ -244,6 +244,47 @@ Cập nhật lần cuối: sau khi hoàn thành Phase 5.
 
 ---
 
+## B8. Phân hệ VII — Lưu thông
+
+| # | Yêu cầu của E-HSMT | Đáp ứng | Thực hiện |
+|---|---|---|---|
+| VII.1 | Ma trận chính sách: Loại bạn đọc × Dạng tài liệu × Kho | **Có** | Một chính sách khai được cả ba chiều hoặc bỏ trống chiều nào không cần; màn hình có ô thử để chọn ba chiều và xem ngay chính sách nào thắng |
+| VII.1 | Số lượng mượn tối đa, số ngày mượn, số lần và số ngày gia hạn | **Có** | Sáu chính sách nạp sẵn khi cài đặt: sinh viên 3 bản/14 ngày, học viên 5/21, nghiên cứu sinh 7/30, giảng viên 10/60, cán bộ 5/30, khách 2 bản đọc tại chỗ |
+| VII.1 | Tiền phạt/ngày quá hạn, số ngày ân hạn | **Có** | Ngày ân hạn không tính tiền; ngày nghỉ trong khoảng quá hạn cũng không tính, vì thư viện đóng cửa thì bạn đọc không trả được |
+| VII.1 | Số đặt giữ tối đa, số ngày giữ chỗ, cho phép mượn / gia hạn / đặt giữ | **Có** | Ba công tắc riêng trên từng chính sách; loại "khách" tắt mượn về nhà nên chỉ đọc tại chỗ |
+| VII.1 | Độ ưu tiên khi nhiều chính sách cùng khớp | **Có** | Xếp theo độ ưu tiên khai tay trước, rồi tới chính sách khai cụ thể hơn (nhiều chiều hơn), cuối cùng mới tới tên — nên không bao giờ có hai chính sách hòa nhau |
+| VII.1 | Lịch nghỉ lễ; hạn trả rơi vào ngày nghỉ đẩy sang ngày làm việc kế tiếp | **Có** | Ngày nghỉ khai một lần cho mọi năm (Tết dương, Quốc khánh…) hoặc khai riêng từng năm; thêm ngày nghỉ hằng tuần lấy từ tham số `CIRCULATION.WEEKLY_CLOSED_DAYS` (mặc định Chủ nhật) |
+| VII.1 | Không tính phạt ngày nghỉ | **Có** | Cùng một bộ lịch dùng cho cả tính hạn trả lẫn đếm ngày phạt |
+| VII.2 | Ghi mượn: quét thẻ hiện thông tin, ảnh, số sách đang mượn, cảnh báo | **Có** | Ô quét nhận cả số thẻ lẫn mã sinh viên; cảnh báo chia hai loại — loại chặn hẳn (thẻ hết hạn, đang khóa, nợ phí quá ngưỡng, đủ hạn mức) và loại chỉ nhắc |
+| VII.2 | Quét barcode ĐKCB liên tục, mỗi lần quét kiểm tra chính sách | **Có** | Mỗi lần quét gọi máy chủ kiểm tra và trả về hạn trả đã tính sẵn; quét trùng trong cùng lượt bị chặn; bản đang có người mượn hoặc đang giữ cho người khác cũng bị chặn kèm lý do |
+| VII.2 | Hoàn tất và in phiếu mượn | **Có** | Phiếu mượn, phiếu trả, biên lai phạt và giấy xác nhận trả sách dùng chung trình thiết kế biểu mẫu của Phase 6, bốn mẫu nạp sẵn khi cài đặt |
+| VII.2 | Thao tác bằng bàn phím và máy quét, không cần chuột | **Có** | F2 về ô quét thẻ, F3 về ô quét mã vạch, F4 hoàn tất, Esc bỏ lượt; con trỏ tự về ô quét sau mỗi lần thành công |
+| VII.2 | Phản hồi bằng âm thanh thành công / lỗi | **Có** | Hai tiếng bíp khác cao độ dựng bằng Web Audio, không cần tệp âm thanh nên không phụ thuộc mạng |
+| VII.2 | Ghi trả: hiện thông tin mượn, tính tiền phạt nếu quá hạn | **Có** | Quét mã vạch là trả, không cần quét thẻ trước; tiền phạt tính ngay và lập thành khoản thu |
+| VII.2 | Có người đặt giữ thì cảnh báo giữ sách và báo cho người đặt | **Có** | Bản trả về được gán thẳng cho người đầu hàng đợi, chuyển sang trạng thái "Đặt giữ" và gửi thông báo; màn hình hiện rõ đang giữ cho ai |
+| VII.2 | Gia hạn: kiểm tra số lần, người đặt giữ, quá hạn | **Có** | Ba điều kiện kiểm ở máy chủ; hạn mới tính từ hôm nay chứ không nối vào hạn cũ, và không vượt quá hạn thẻ |
+| VII.2 | Đặt giữ theo biểu ghi hoặc theo ĐKCB, xếp hàng đợi, thông báo khi có sách | **Có** | Hàng đợi tự đánh lại số khi có phiếu bị hủy hoặc đã nhận; phiếu quá hạn nhận tự hết hiệu lực bằng tác vụ nền hằng ngày |
+| VII.2 | Thu tiền phạt, in biên lai, miễn giảm kèm lý do và quyền hạn | **Có** | Thu được nhiều lần cho tới khi hết nợ; miễn giảm bắt buộc ghi lý do và đòi quyền riêng `CIRCULATION.FINE.WAIVE`; biên lai in ra có dòng số tiền bằng chữ |
+| VII.2 | Ghi nhận ra / vào thư viện bằng quét thẻ tại cổng | **Có** | Một máy quét dùng chung: lần quét đầu là vào, lần sau là ra, cán bộ không phải bấm chọn |
+| VII.3 | Sơ đồ tủ trực quan theo khu vực, màu theo trạng thái | **Có** | 20 tủ nạp sẵn chia hai khu A và B; bấm thẳng vào ô tủ để giao hoặc nhận lại |
+| VII.3 | Giao tủ: quét thẻ, chọn tủ trống, giao chìa / mã | **Có** | Một bạn đọc chỉ giữ một tủ tại một thời điểm |
+| VII.3 | Trả tủ bằng quét thẻ hoặc nhập số tủ | **Có** | Cả hai cách đều nhận |
+| VII.3 | Cảnh báo tủ quá giờ chưa trả, báo hỏng tủ | **Có** | Ngưỡng quá giờ lấy từ tham số `CIRCULATION.LOCKER_MAX_HOURS`; ô tủ quá giờ viền đỏ; tủ hỏng khóa lại không giao được |
+| VII.4 | Thiết kế mẫu phiếu mượn, phiếu trả, biên lai phạt, giấy xác nhận trả sách | **Có** | Dùng lại trình thiết kế biểu mẫu chung thay vì làm bộ mẫu riêng — quyết định ghi ở `docs/00-quyet-dinh-ky-thuat.md` |
+| VII.4 | Chọn mẫu mặc định, in trực tiếp hoặc xuất PDF | **Có** | In thẳng từ màn hình quầy ngay sau khi ghi mượn / ghi trả |
+| VII.5.1 | Báo cáo bạn đọc ra vào thư viện, biểu đồ giờ cao điểm | **Có** | Chia 24 khung giờ; lọc theo loại bạn đọc và cổng |
+| VII.5.2 | Báo cáo bạn đọc đang mượn sách trong thư viện | **Có** | Danh sách hiện tại kèm số ngày còn lại của từng phiếu |
+| VII.5.3 | Báo cáo lịch sử bạn đọc mượn sách | **Có** | Tra theo một bạn đọc hoặc theo khoảng thời gian |
+| VII.5.4 | Báo cáo mượn quá hạn kèm số ngày, tiền phạt dự kiến, gửi email nhắc hàng loạt | **Có** | Chia bốn mức trễ (1–7, 8–30, 31–90, trên 90 ngày); nút gửi nhắc hàng loạt gửi đúng những phiếu đang lọc |
+| VII.5.5 | Báo cáo sử dụng tủ đựng đồ (tần suất, thời lượng trung bình) | **Có** | Kèm số lượt quá giờ theo từng tủ để biết tủ nào hay bị giữ lâu |
+| VII.5.6 | Thống kê bạn đọc mượn tài liệu nhiều nhất | **Có** | Chọn số lượng đứng đầu, lọc theo loại bạn đọc và khoa |
+| VII.5.7 | Thống kê ấn phẩm được mượn nhiều nhất | **Có** | Lọc theo dạng tài liệu, kho và môn loại |
+| VII.5 | Mỗi báo cáo có bảng, biểu đồ, xuất PDF và Excel | **Có** | Bảy báo cáo đều đủ ba dạng đầu ra, xuất đúng bộ lọc đang xem |
+| XI.4 | Nhóm `/api/reader/*` phần lưu thông | **Có** | Đăng nhập bằng số thẻ, thẻ điện tử, sách đang mượn, lịch sử, xin gia hạn, đặt giữ và hủy đặt giữ, tra tiền phạt, mượn tự phục vụ — mỗi endpoint đều có kiểm thử tích hợp |
+| XI.2 | Mượn tự phục vụ có xác thực vị trí | **Có** | Tắt sẵn khi cài đặt; bật bằng `CIRCULATION.SELF_CHECKOUT_ENABLED`, mã điểm quét khai ở `CIRCULATION.SELF_CHECKOUT_TOKENS` |
+
+---
+
 ## D. Trao đổi dữ liệu và các phân hệ còn lại
 
 | # | Yêu cầu | Đáp ứng | Ghi chú |
@@ -256,7 +297,7 @@ Cập nhật lần cuối: sau khi hoàn thành Phase 5.
 | D6 | Phân hệ IV — Ấn phẩm định kỳ | **Có** | Chi tiết ở mục B6 |
 | D7 | Phân hệ V — Tài liệu số | **Đang thực hiện** | Phase 10 |
 | D8 | Phân hệ VI — Bạn đọc | **Có** | Chi tiết ở mục B7 |
-| D9 | Phân hệ VII — Lưu thông | **Đang thực hiện** | Phase 9 |
+| D9 | Phân hệ VII — Lưu thông | **Có** | Chi tiết ở mục B8 |
 | D10 | Phân hệ VIII — Quản trị nội dung | **Đang thực hiện** | Phase 12 |
 | D11 | Phân hệ IX — Tra cứu OPAC | **Đang thực hiện** | Phase 12. Hạ tầng tra cứu tiếng Việt không dấu (`bib.vn_unaccent`, chỉ mục GIN/pg_trgm) đã hoàn thành ở Phase 1 |
 | D12 | Phân hệ X — Tài liệu môn học | **Đang thực hiện** | Phase 13 |

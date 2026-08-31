@@ -382,7 +382,10 @@ public class FormPrintService : IFormPrintService
 
                     if (!string.IsNullOrWhiteSpace(signature.Note))
                     {
-                        cell.Item().AlignCenter().Text(signature.Note).Italic().FontSize(fontSize - 1);
+                        // Ghi chú dưới ô ký cũng thay được trường dữ liệu như mọi dòng khác: mẫu
+                        // phiếu mượn để sẵn {staffName} ở đây cho cán bộ khỏi phải ký rồi ghi tên.
+                        cell.Item().AlignCenter().Text(Resolve(signature.Note, data))
+                            .Italic().FontSize(fontSize - 1);
                     }
 
                     // Chừa chỗ ký tay: thiếu khoảng trắng này thì tờ giấy in ra không ký được.

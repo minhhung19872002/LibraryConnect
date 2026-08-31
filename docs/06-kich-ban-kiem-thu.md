@@ -368,11 +368,45 @@ Ký hiệu bám theo **Mục 5 phần 2 của E-HSMT**.
 | BD.49 | Xuất báo cáo | Bấm Excel và PDF ở từng báo cáo | Tệp xuất đúng bằng bộ lọc đang hiển thị |
 | BD.50 | Phân quyền | Đăng nhập tài khoản Cán bộ biên mục | Menu Bạn đọc không hiện; gọi thẳng API trả 403 |
 
+## Nhóm chức năng — Phân hệ VII: Lưu thông
+
+| Mã | Kịch bản | Các bước | Kết quả mong đợi |
+|---|---|---|---|
+| LT.1 | Chính sách nạp sẵn khi cài đặt | Lưu thông → Chính sách lưu thông | Đủ sáu chính sách cho sáu loại bạn đọc; loại "Khách" tắt mượn về nhà |
+| LT.2 | Ô thử chính sách | Chọn loại bạn đọc Sinh viên, dạng tài liệu Sách, kho Kho mở rồi bấm Thử | Hiện chính sách thắng kèm số bản, số ngày mượn, số lần gia hạn và tiền phạt mỗi ngày |
+| LT.3 | Độ ưu tiên khi nhiều chính sách khớp | Tạo thêm một chính sách chỉ khai loại bạn đọc, độ ưu tiên thấp hơn chính sách khai đủ ba chiều, rồi thử lại | Chính sách khai cụ thể hơn thắng; đổi độ ưu tiên thì kết quả đổi theo |
+| LT.4 | Hạn trả rơi vào ngày nghỉ lễ | Mở ô thử hạn trả, chọn ngày mượn 01/09 và số ngày mượn 1 | Hạn trả 02/09 bị dời sang ngày làm việc kế tiếp, màn hình ghi rõ đã dời |
+| LT.5 | Quét thẻ ở quầy | Lưu thông → Quầy lưu thông, quét số thẻ (hoặc mã sinh viên) | Hiện ảnh, số sách đang mượn, hạn mức còn lại, nợ phí, hạn thẻ còn bao nhiêu ngày và danh sách phiếu đang mượn |
+| LT.6 | Quét mã vạch tài liệu | Quét mã vạch một bản đang trong kho | Dòng được thêm kèm hạn trả **do máy chủ tính**; kiểm chứng bằng cách gọi thẳng `POST /api/circulation/desk/scan` bằng Postman phải ra cùng ngày |
+| LT.7 | Quét trùng trong cùng lượt | Quét lại đúng mã vạch vừa quét | Bị chặn kèm lý do, không sinh hai phiếu mượn cho một bản |
+| LT.8 | Vượt hạn mức | Quét bốn bản cho một sinh viên (hạn mức 3) rồi hoàn tất | Ghi mượn 3 phiếu, bản thứ tư bị giữ lại kèm lý do "đã mượn đủ 3 tài liệu" |
+| LT.9 | Bản đang có người mượn | Bạn đọc khác quét đúng bản vừa cho mượn | Bị chặn kèm tên trạng thái, không cho mượn chồng |
+| LT.10 | In phiếu mượn | Sau khi hoàn tất, bấm In phiếu mượn | Ra tệp PDF đúng mẫu; ô chữ ký hiện tên cán bộ đang đăng nhập, không hiện mã trường dữ liệu |
+| LT.11 | Thao tác toàn bàn phím | Dùng F2, F3, F4 và Esc để làm trọn một lượt ghi mượn | Không cần chạm chuột; mỗi lần quét có tiếng bíp phản hồi khác nhau cho thành công và lỗi |
+| LT.12 | Đặt giữ chỗ và hàng đợi | Hai bạn đọc lần lượt đặt giữ cùng một biểu ghi | Người trước số 1, người sau số 2 |
+| LT.13 | Hủy phiếu đầu hàng đợi | Hủy phiếu số 1 kèm lý do | Người số 2 lên số 1 ngay, không còn phiếu nào mang số 2 |
+| LT.14 | Gia hạn khi có người đang đợi | Bấm gia hạn phiếu mượn của tài liệu đang có người đặt giữ | Bị chặn kèm lý do |
+| LT.15 | Ghi trả bản có người đặt giữ | Quét mã vạch bản đó ở tab Ghi trả | Bản chuyển sang trạng thái "Đặt giữ", giữ lại tại quầy, màn hình ghi rõ giữ cho ai và người đó nhận được thông báo |
+| LT.16 | Người đặt giữ tới nhận | Người đứng đầu hàng đợi quét thẻ rồi quét đúng bản đang giữ | Mượn được; phiếu đặt giữ chuyển sang "Đã nhận" |
+| LT.17 | Tính tiền phạt quá hạn | Trả một phiếu đã quá hạn | Số ngày phạt trừ ngày ân hạn và trừ ngày nghỉ; tiền phạt bằng số ngày còn lại nhân đơn giá của chính sách |
+| LT.18 | Ghi mất tài liệu | Mở phiếu mượn → Ghi nhận mất | Lập khoản bồi thường theo hệ số cấu hình (mặc định gấp đôi giá bìa); ấn phẩm chuyển sang "Mất" và bị khóa |
+| LT.19 | Thu tiền phạt nhiều lần | Thu một phần, rồi thu nốt phần còn lại | Còn nợ giảm dần về 0; thu thêm khi đã đủ thì bị chặn |
+| LT.20 | Miễn giảm phải có lý do | Bấm Miễn mà không ghi lý do | Bị chặn; ghi lý do thì miễn được và khoản nợ về 0 |
+| LT.21 | In biên lai phạt | Bấm Biên lai trên một khoản phạt | Ra PDF có số tiền bằng chữ tiếng Việt |
+| LT.22 | Ghi nhận ra vào thư viện | Quét cùng một thẻ hai lần tại tab Ra vào thư viện | Lần đầu ghi vào, lần sau ghi ra; danh sách người đang ở trong thư viện đổi theo |
+| LT.23 | Giao và nhận lại tủ gửi đồ | Bấm một ô tủ trống, quét thẻ, giao chìa; sau đó bấm lại ô tủ đó | Tủ chuyển sang "Đang dùng" rồi về "Trống"; giao tủ thứ hai cho cùng bạn đọc bị chặn |
+| LT.24 | Bảy báo cáo lưu thông | Lưu thông → Báo cáo lưu thông, mở lần lượt bảy tab | Mỗi tab có bảng, biểu đồ và xuất được PDF lẫn Excel đúng bộ lọc đang xem |
+| LT.25 | Nhắc hạn hàng loạt | Ở báo cáo quá hạn, bấm Gửi nhắc hàng loạt | Chỉ gửi cho đúng những phiếu đang lọc; số lượng gửi hiện trên màn hình |
+| LT.26 | Bạn đọc đăng nhập bằng số thẻ | `POST /api/reader/auth/login` với số thẻ và mật khẩu | Trả access token và refresh token; sai mật khẩu 5 lần thì khóa 15 phút |
+| LT.27 | Thẻ điện tử | `GET /api/reader/card` | Trả số thẻ, hạn thẻ và chuỗi mã vạch để hiện lên điện thoại |
+| LT.28 | Bạn đọc chỉ thấy dữ liệu của mình | Đăng nhập bạn đọc A rồi gọi `POST /api/reader/loans/{id}/renew` với phiếu của bạn đọc B | Trả HTTP 403 |
+| LT.29 | Mượn tự phục vụ khi chưa bật | `POST /api/reader/loans/self-checkout` | Bị chặn kèm thông báo thư viện chưa mở chức năng; bật tham số rồi gọi lại kèm mã điểm quét đúng thì mượn được |
+
 ## Cách chạy bộ kiểm thử tự động
 
 ```bash
 cd backend
-dotnet test                 # 237 unit test + 174 integration test
+dotnet test                 # 280 unit test + 223 integration test
 ```
 
 Integration test tự khởi tạo một container PostgreSQL 16 và một container MinIO riêng, chạy
@@ -381,7 +415,7 @@ duyệt dùng — không có thành phần nào bị giả lập.
 
 ```bash
 cd frontend-admin
-npm test                    # 76 test giao diện
+npm test                    # 85 test giao diện
 ```
 
 ---
@@ -394,8 +428,10 @@ trên; phần Z39.50 và OAI-PMH sẽ bổ sung khi bàn giao Phase 11.
 Nhóm kiểm thử 2.5 (chuyển đổi dữ liệu) đã có phần nhập ISO 2709 và nhập Excel ở nhóm kịch bản
 Biên mục; phần đối chiếu số lượng bạn đọc và giao dịch sẽ bổ sung khi bàn giao các phân hệ tương ứng.
 
-Nhóm kiểm thử 2.8 (báo cáo) đã có phần báo cáo bổ sung ở nhóm kịch bản Phân hệ III; các báo cáo của
+Nhóm kiểm thử 2.8 (báo cáo) đã có phần báo cáo bổ sung ở nhóm kịch bản Phân hệ III và bảy báo cáo lưu thông ở nhóm Phân hệ VII; các báo cáo của
 những phân hệ còn lại sẽ bổ sung khi bàn giao phân hệ tương ứng.
+
+Nhóm kiểm thử 2.7 (ứng dụng di động) trong đợt web này được thay bằng kiểm thử tích hợp nhóm `/api/reader/*`; phần lưu thông của nhóm này nằm ở các kịch bản LT.26–LT.29.
 
 Các nhóm kiểm thử 2.2 (các phân hệ chưa bàn giao) và 2.7 (ứng dụng di động) sẽ được bổ sung vào tài
 liệu này theo từng phân hệ được bàn giao. Tài liệu luôn phản ánh đúng phạm vi đã hoàn thành tại thời điểm

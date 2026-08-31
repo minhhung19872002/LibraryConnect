@@ -1,6 +1,7 @@
 using System.Globalization;
 using LibraryConnect.Application.Common.Exceptions;
 using LibraryConnect.Application.Common.Interfaces;
+using LibraryConnect.Application.Common.Text;
 using LibraryConnect.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
@@ -64,6 +65,18 @@ public class FormDataBuilder : IFormDataBuilder
                 break;
             case FormTypes.Inventory:
                 await BuildInventoryAsync(data, documentId, ct);
+                break;
+            case FormTypes.LoanSlip:
+                await BuildLoanSlipAsync(data, documentId, ct);
+                break;
+            case FormTypes.ReturnSlip:
+                await BuildReturnSlipAsync(data, documentId, ct);
+                break;
+            case FormTypes.FineReceipt:
+                await BuildFineReceiptAsync(data, documentId, ct);
+                break;
+            case FormTypes.Clearance:
+                await BuildClearanceAsync(data, documentId, ct);
                 break;
             default:
                 throw new Common.Exceptions.ValidationException(
@@ -454,6 +467,290 @@ public class FormDataBuilder : IFormDataBuilder
             });
         }
     }
+
+    /// <summary>
+    /// Phiếu mượn (VII.4). Mã chứng từ là mã phiếu của một trong các lượt vừa ghi; phiếu in ra gom
+    /// tất cả tài liệu bạn đọc mượn trong cùng lượt đó, vì đó mới là tờ giấy bạn đọc cầm về.
+    /// </summary>
+    private async Task BuildLoanSlipAsync(FormDataDto data, string documentId, CancellationToken ct)
+    {
+        var anchor = await _db.Loans
+            .AsNoTracking()
+            .Where(loan => loan.Code == documentId)
+            .Select(loan => new { loan.ReaderId, loan.LoanDate })
+            .FirstOrDefaultAsync(ct)
+            ?? throw new NotFoundException("phiếu mượn", documentId);
+
+        // Cùng bạn đọc, cùng thời điểm ghi mượn (chênh nhau dưới một phút) là cùng một lượt ở quầy.
+        var from = anchor.LoanDate.AddMinutes(-1);
+        var to = anchor.LoanDate.AddMinutes(1);
+
+        var loans = await _db.Loans
+            .AsNoTracking()
+            .Where(loan => loan.ReaderId == anchor.ReaderId
+                           && loan.LoanDate >= from && loan.LoanDate <= to)
+            .OrderBy(loan => loan.Code)
+            .Select(loan => new
+            {
+                loan.Code,
+                loan.LoanDate,
+                loan.DueDate,
+                loan.Barcode,
+                loan.BibTitle,
+                RegisterNumber = loan.Item!.RegisterNumber,
+                CallNumber = loan.Item!.CallNumber,
+                Price = loan.Item!.Price,
+                Author = loan.Item!.Bib!.AuthorMain,
+                loan.LoanByName,
+                ReaderName = loan.Reader!.FullName,
+                CardNumber = loan.Reader!.CardNumber,
+                StudentCode = loan.Reader!.StudentCode,
+                ReaderType = loan.Reader!.ReaderType!.Name,
+                Faculty = loan.Reader!.Faculty!.Name,
+                ClassName = loan.Reader!.ClassName
+            })
+            .ToListAsync(ct);
+
+        var first = loans[0];
+
+        data.Fields["code"] = documentId;
+        data.Fields["loanDate"] = first.LoanDate.ToString("dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture);
+        data.Fields["dueDate"] = Date(first.DueDate);
+        data.Fields["readerName"] = first.ReaderName;
+        data.Fields["cardNumber"] = first.CardNumber;
+        data.Fields["studentCode"] = first.StudentCode ?? string.Empty;
+        data.Fields["readerType"] = first.ReaderType ?? string.Empty;
+        data.Fields["faculty"] = first.Faculty ?? string.Empty;
+        data.Fields["className"] = first.ClassName ?? string.Empty;
+        data.Fields["totalItems"] = Number(loans.Count);
+        data.Fields["staffName"] = first.LoanByName ?? string.Empty;
+
+        var index = 0;
+
+        foreach (var loan in loans)
+        {
+            index++;
+
+            data.Rows.Add(new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["index"] = index.ToString(CultureInfo.InvariantCulture),
+                ["barcode"] = loan.Barcode ?? string.Empty,
+                ["registerNumber"] = loan.RegisterNumber ?? string.Empty,
+                ["title"] = loan.BibTitle ?? string.Empty,
+                ["author"] = loan.Author ?? string.Empty,
+                ["callNumber"] = loan.CallNumber ?? string.Empty,
+                ["dueDate"] = Date(loan.DueDate),
+                ["price"] = Money(loan.Price)
+            });
+        }
+    }
+
+    /// <summary>Phiếu trả (VII.4): các tài liệu vừa ghi trả trong cùng một lượt.</summary>
+    private async Task BuildReturnSlipAsync(FormDataDto data, string documentId, CancellationToken ct)
+    {
+        var anchor = await _db.Loans
+            .AsNoTracking()
+            .Where(loan => loan.Code == documentId && loan.ReturnDate != null)
+            .Select(loan => new { loan.ReaderId, loan.ReturnDate })
+            .FirstOrDefaultAsync(ct)
+            ?? throw new NotFoundException("phiếu trả", documentId);
+
+        var from = anchor.ReturnDate!.Value.AddMinutes(-1);
+        var to = anchor.ReturnDate!.Value.AddMinutes(1);
+
+        var loans = await _db.Loans
+            .AsNoTracking()
+            .Where(loan => loan.ReaderId == anchor.ReaderId
+                           && loan.ReturnDate != null
+                           && loan.ReturnDate >= from && loan.ReturnDate <= to)
+            .OrderBy(loan => loan.Code)
+            .Select(loan => new
+            {
+                loan.Code,
+                loan.DueDate,
+                loan.ReturnDate,
+                loan.Barcode,
+                loan.BibTitle,
+                loan.FineAmount,
+                loan.ReturnByName,
+                ReaderName = loan.Reader!.FullName,
+                CardNumber = loan.Reader!.CardNumber,
+                StudentCode = loan.Reader!.StudentCode,
+                Faculty = loan.Reader!.Faculty!.Name,
+                ClassName = loan.Reader!.ClassName
+            })
+            .ToListAsync(ct);
+
+        var first = loans[0];
+
+        data.Fields["code"] = documentId;
+        data.Fields["returnDate"] = first.ReturnDate!.Value
+            .ToString("dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture);
+        data.Fields["readerName"] = first.ReaderName;
+        data.Fields["cardNumber"] = first.CardNumber;
+        data.Fields["studentCode"] = first.StudentCode ?? string.Empty;
+        data.Fields["faculty"] = first.Faculty ?? string.Empty;
+        data.Fields["className"] = first.ClassName ?? string.Empty;
+        data.Fields["totalItems"] = Number(loans.Count);
+        data.Fields["totalFine"] = Money(loans.Sum(loan => loan.FineAmount));
+        data.Fields["staffName"] = first.ReturnByName ?? string.Empty;
+
+        var index = 0;
+
+        foreach (var loan in loans)
+        {
+            index++;
+
+            var returned = DateOnly.FromDateTime(loan.ReturnDate!.Value.LocalDateTime);
+            var overdue = returned.DayNumber - loan.DueDate.DayNumber;
+
+            data.Rows.Add(new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["index"] = index.ToString(CultureInfo.InvariantCulture),
+                ["barcode"] = loan.Barcode ?? string.Empty,
+                ["title"] = loan.BibTitle ?? string.Empty,
+                ["dueDate"] = Date(loan.DueDate),
+                ["returnDate"] = Date(returned),
+                ["overdueDays"] = overdue > 0 ? Number(overdue) : "0",
+                ["fine"] = Money(loan.FineAmount)
+            });
+        }
+    }
+
+    /// <summary>Biên lai thu tiền phạt (VII.4), in theo mã biên lai.</summary>
+    private async Task BuildFineReceiptAsync(FormDataDto data, string documentId, CancellationToken ct)
+    {
+        var fine = await _db.Fines
+            .AsNoTracking()
+            .Where(entity => entity.Code == documentId)
+            .Select(entity => new
+            {
+                entity.Code,
+                entity.Type,
+                entity.Amount,
+                entity.PaidAmount,
+                entity.Waived,
+                entity.PaidAt,
+                entity.PaidByName,
+                entity.Note,
+                Title = entity.Loan!.BibTitle,
+                Barcode = entity.Loan!.Barcode,
+                ReaderName = entity.Reader!.FullName,
+                CardNumber = entity.Reader!.CardNumber,
+                StudentCode = entity.Reader!.StudentCode,
+                Faculty = entity.Reader!.Faculty!.Name,
+                ClassName = entity.Reader!.ClassName
+            })
+            .FirstOrDefaultAsync(ct)
+            ?? throw new NotFoundException("biên lai phạt", documentId);
+
+        data.Fields["code"] = fine.Code;
+        data.Fields["paidAt"] = fine.PaidAt is null
+            ? Date(_clock.Today)
+            : fine.PaidAt.Value.ToString("dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture);
+        data.Fields["readerName"] = fine.ReaderName;
+        data.Fields["cardNumber"] = fine.CardNumber;
+        data.Fields["studentCode"] = fine.StudentCode ?? string.Empty;
+        data.Fields["faculty"] = fine.Faculty ?? string.Empty;
+        data.Fields["className"] = fine.ClassName ?? string.Empty;
+        data.Fields["fineType"] = FineTypeText(fine.Type);
+        data.Fields["amount"] = Money(fine.Amount);
+        data.Fields["paidAmount"] = Money(fine.PaidAmount);
+        data.Fields["outstanding"] = Money(fine.Waived ? 0 : fine.Amount - fine.PaidAmount);
+        data.Fields["amountInWords"] = VietnameseMoney.InWords(fine.PaidAmount);
+        data.Fields["reason"] = fine.Note ?? string.Empty;
+        data.Fields["staffName"] = fine.PaidByName ?? _currentUser.FullName ?? string.Empty;
+
+        data.Rows.Add(new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["index"] = "1",
+            ["title"] = fine.Title ?? fine.Note ?? string.Empty,
+            ["barcode"] = fine.Barcode ?? string.Empty,
+            ["fine"] = Money(fine.Amount)
+        });
+    }
+
+    /// <summary>
+    /// Giấy xác nhận trả sách (VII.4), in theo số thẻ bạn đọc.
+    ///
+    /// Đây là tờ giấy sinh viên mang đi làm thủ tục ra trường, nên nó phải nói rõ còn nợ gì
+    /// không, chứ không chỉ liệt kê.
+    /// </summary>
+    private async Task BuildClearanceAsync(FormDataDto data, string documentId, CancellationToken ct)
+    {
+        var reader = await _db.Readers
+            .AsNoTracking()
+            .Where(entity => entity.CardNumber == documentId || entity.StudentCode == documentId)
+            .Select(entity => new
+            {
+                entity.Id,
+                entity.FullName,
+                entity.CardNumber,
+                entity.StudentCode,
+                entity.DateOfBirth,
+                entity.ClassName,
+                entity.CourseYear,
+                ReaderType = entity.ReaderType!.Name,
+                Faculty = entity.Faculty!.Name
+            })
+            .FirstOrDefaultAsync(ct)
+            ?? throw new NotFoundException("bạn đọc", documentId);
+
+        var outstanding = await _db.Loans
+            .AsNoTracking()
+            .Where(loan => loan.ReaderId == reader.Id
+                           && (loan.Status == LoanStatus.Active || loan.Status == LoanStatus.Overdue))
+            .OrderBy(loan => loan.DueDate)
+            .Select(loan => new { loan.Barcode, loan.BibTitle, loan.DueDate })
+            .ToListAsync(ct);
+
+        var totalLoans = await _db.Loans.CountAsync(loan => loan.ReaderId == reader.Id, ct);
+
+        var debt = await _db.Fines
+            .Where(entity => entity.ReaderId == reader.Id && !entity.Waived)
+            .SumAsync(entity => (decimal?)(entity.Amount - entity.PaidAmount), ct) ?? 0;
+
+        data.Fields["readerName"] = reader.FullName;
+        data.Fields["cardNumber"] = reader.CardNumber;
+        data.Fields["studentCode"] = reader.StudentCode ?? string.Empty;
+        data.Fields["dateOfBirth"] = reader.DateOfBirth is null ? string.Empty : Date(reader.DateOfBirth.Value);
+        data.Fields["readerType"] = reader.ReaderType ?? string.Empty;
+        data.Fields["faculty"] = reader.Faculty ?? string.Empty;
+        data.Fields["className"] = reader.ClassName ?? string.Empty;
+        data.Fields["courseYear"] = reader.CourseYear ?? string.Empty;
+        data.Fields["totalLoans"] = Number(totalLoans);
+        data.Fields["outstandingLoans"] = Number(outstanding.Count);
+        data.Fields["outstandingFines"] = Money(debt);
+        data.Fields["staffName"] = _currentUser.FullName ?? string.Empty;
+
+        data.Fields["conclusion"] = outstanding.Count == 0 && debt <= 0
+            ? "Bạn đọc đã trả đủ tài liệu và không còn nợ phí với thư viện."
+            : $"Bạn đọc còn giữ {outstanding.Count} tài liệu chưa trả"
+              + (debt > 0 ? $" và còn nợ {Money(debt)} đ tiền phạt." : ".");
+
+        var index = 0;
+
+        foreach (var loan in outstanding)
+        {
+            index++;
+
+            data.Rows.Add(new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["index"] = index.ToString(CultureInfo.InvariantCulture),
+                ["barcode"] = loan.Barcode ?? string.Empty,
+                ["title"] = loan.BibTitle ?? string.Empty,
+                ["dueDate"] = Date(loan.DueDate)
+            });
+        }
+    }
+
+    private static string FineTypeText(FineType type) => type switch
+    {
+        FineType.Overdue => "Phạt quá hạn",
+        FineType.Lost => "Bồi thường tài liệu mất",
+        FineType.Damaged => "Bồi thường tài liệu hỏng",
+        _ => "Khoản thu khác"
+    };
 
     private static string Lookup(IReadOnlyDictionary<Guid, string> names, Guid? id) =>
         id is not null && names.TryGetValue(id.Value, out var name) ? name : string.Empty;

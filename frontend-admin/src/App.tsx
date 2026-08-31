@@ -37,6 +37,12 @@ import { ReadersPage } from '@/modules/readers/ReadersPage';
 import { ReaderCardTemplatePage } from '@/modules/readers/ReaderCardTemplatePage';
 import { ReaderImportPage } from '@/modules/readers/ReaderImportPage';
 import { ReaderReportsPage } from '@/modules/readers/ReaderReportsPage';
+import { CirculationDeskPage } from '@/modules/circulation/CirculationDeskPage';
+import { CirculationPolicyPage } from '@/modules/circulation/CirculationPolicyPage';
+import { HoldsPage } from '@/modules/circulation/HoldsPage';
+import { FinesPage } from '@/modules/circulation/FinesPage';
+import { LockersAndGatePage } from '@/modules/circulation/LockersAndGatePage';
+import { CirculationReportsPage } from '@/modules/circulation/CirculationReportsPage';
 import { SerialReportsPage } from '@/modules/serials/SerialReportsPage';
 import { CustomIndexPage } from '@/modules/cataloging/CustomIndexPage';
 import { CatalogQueuePage } from '@/modules/cataloging/CatalogQueuePage';
@@ -241,6 +247,54 @@ function AppRoutes() {
           element={
             <RequirePermissionRoute permission={PERMISSIONS.reader.reportView}>
               <ReaderReportsPage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/luu-thong/quay"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.circulation.loanCreate}>
+              <CirculationDeskPage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/luu-thong/dat-giu"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.circulation.holdManage}>
+              <HoldsPage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/luu-thong/tien-phat"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.circulation.fineView}>
+              <FinesPage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/luu-thong/cong-va-tu"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.circulation.lockerManage}>
+              <LockersAndGatePage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/luu-thong/chinh-sach"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.circulation.policyView}>
+              <CirculationPolicyPage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/luu-thong/bao-cao"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.circulation.reportView}>
+              <CirculationReportsPage />
             </RequirePermissionRoute>
           }
         />

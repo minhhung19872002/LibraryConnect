@@ -1,4 +1,5 @@
 using LibraryConnect.Application.Common.Interfaces;
+using LibraryConnect.Application.Features.Circulation;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -17,6 +18,9 @@ public class RecurringJobRegistrar : IHostedService
     public const string BackupJobId = "libraryconnect:auto-backup";
     public const string AuditPurgeJobId = "libraryconnect:audit-purge";
     public const string TokenCleanupJobId = "libraryconnect:token-cleanup";
+    public const string OverdueJobId = "libraryconnect:circulation-overdue";
+    public const string DueSoonJobId = "libraryconnect:circulation-due-soon";
+    public const string HoldExpiryJobId = "libraryconnect:circulation-hold-expiry";
 
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<RecurringJobRegistrar> _logger;
@@ -55,6 +59,17 @@ public class RecurringJobRegistrar : IHostedService
 
             jobs.AddOrUpdateRecurring<SystemMaintenanceJobs>(
                 TokenCleanupJobId, job => job.CleanupExpiredTokensAsync(), "0 4 * * *");
+
+            // Lưu thông chạy sớm hơn giờ mở cửa: cán bộ đến quầy là đã thấy đúng trạng thái quá hạn
+            // của hôm nay, và bạn đọc nhận thư nhắc từ sáng.
+            jobs.AddOrUpdateRecurring<ICirculationDailyJobs>(
+                OverdueJobId, job => job.MarkOverdueAsync(), "5 0 * * *");
+
+            jobs.AddOrUpdateRecurring<ICirculationDailyJobs>(
+                DueSoonJobId, job => job.SendDueSoonRemindersAsync(), "0 7 * * *");
+
+            jobs.AddOrUpdateRecurring<ICirculationDailyJobs>(
+                HoldExpiryJobId, job => job.ExpireHoldsAsync(), "30 0 * * *");
         }
         catch (Exception ex)
         {
