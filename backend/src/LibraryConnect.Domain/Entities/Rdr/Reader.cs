@@ -82,6 +82,8 @@ public class ReaderCardTemplate : BaseEntity
     public string FrontLayout { get; set; } = "{}";
     public string BackLayout { get; set; } = "{}";
     public string? BackgroundImageUrl { get; set; }
+    /// <summary>In cả mặt sau; tắt thì chỉ in mặt trước.</summary>
+    public bool PrintBack { get; set; }
     public int CardsPerPage { get; set; } = 10;
     public bool IsDefault { get; set; }
     public bool IsActive { get; set; } = true;

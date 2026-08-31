@@ -209,6 +209,41 @@ Cập nhật lần cuối: sau khi hoàn thành Phase 5.
 
 ---
 
+## B7. Phân hệ VI — Bạn đọc
+
+| # | Yêu cầu của E-HSMT | Đáp ứng | Thực hiện |
+|---|---|---|---|
+| VI.1 | Danh sách: tìm theo số thẻ, mã SV, họ tên, CCCD, email, điện thoại | **Có** | Một ô tìm kiếm nhận mọi thứ cán bộ có trong tay; họ tên gõ không dấu vẫn ra |
+| VI.1 | Lọc theo loại bạn đọc, khoa, ngành, lớp, khóa, trạng thái thẻ | **Có** | Thêm bộ lọc tình trạng: thẻ hết hạn, sắp hết hạn, còn nợ phí, đang giữ tài liệu, chưa từng mượn |
+| VI.1 | Thêm/sửa đầy đủ trường của mục 4.7 | **Có** | Form một màn hình, kiểm tra trùng số thẻ và mã sinh viên ngay khi lưu |
+| VI.1 | Upload ảnh có cắt ảnh, chụp ảnh từ webcam | **Có** | Cắt theo khung 3×4 ngay trên màn hình: kéo ảnh, phóng to, rồi mới tải lên; chụp thẳng từ webcam qua trình duyệt. Ảnh được kiểm tra bằng chữ ký nhị phân nên đổi đuôi tệp không qua được |
+| VI.1 | Sinh số thẻ tự động theo quy tắc cấu hình | **Có** | Lấy tiền tố, độ dài và cách đánh lại số theo năm từ Tham số hệ thống |
+| VI.1 | Tab lịch sử: đang mượn, lịch sử mượn trả, tiền phạt, vi phạm, lượt vào thư viện, tài liệu số | **Có** | Sáu tab trong hồ sơ; số liệu đọc thẳng từ sổ mượn, sổ phạt, sổ ra vào và nhật ký tài liệu số |
+| VI.1 | Gia hạn thẻ đơn lẻ và hàng loạt theo bộ lọc | **Có** | Thẻ còn hạn thì cộng tiếp vào hạn cũ, thẻ đã hết hạn thì tính từ hôm nay; danh sách hàng loạt dựng lại ở máy chủ từ chính bộ lọc đang xem |
+| VI.1 | Tạm khóa / mở khóa kèm lý do | **Có** | Bắt buộc ghi lý do khi khóa; khóa có thời hạn hoặc khóa tới khi mở lại |
+| VI.1 | Cấp lại thẻ, giữ lịch sử thẻ cũ | **Có** | Thẻ cũ chuyển sang "đã thu hồi" và vẫn nằm trong sổ cấp thẻ, vì sổ mượn trả cũ ghi theo số thẻ cũ; thẻ hỏng thì giữ nguyên số, thẻ mất thì cấp số mới |
+| VI.1 | Chuyển trạng thái ra trường hàng loạt theo khóa | **Có** | Lọc theo khóa rồi áp dụng cho toàn bộ kết quả |
+| VI.1 | Kiểm tra công nợ trước khi cho ra trường | **Có** | Còn tài liệu chưa trả hoặc còn nợ phí thì bị giữ lại kèm lý do từng người; có màn hình xác nhận công nợ cho giấy xác nhận trả sách |
+| VI.2 | Thiết kế mẫu thẻ: kéo thả, mặt trước và mặt sau | **Có** | Kéo trực tiếp từng ô trên khung xem trước đúng khổ thẻ, hoặc gõ số milimét cho chuẩn |
+| VI.2 | Khổ CR80 (85,6 × 54 mm) hoặc tùy chỉnh | **Có** | Mẫu CR80 nạp sẵn khi cài đặt, in được ngay từ ngày đầu |
+| VI.2 | Đặt ảnh nền, logo, ảnh bạn đọc, các trường thông tin, mã vạch/QR số thẻ | **Có** | Màu nền và dải màu đầu thẻ, ô logo lấy từ tham số hệ thống, ô ảnh bạn đọc, 18 trường thông tin, mã vạch Code 128 / Code 39 / QR |
+| VI.2 | In hàng loạt theo bộ lọc, xem trước, xuất PDF đúng khổ | **Có** | Hai kiểu in: mỗi thẻ một trang đúng khổ cho máy in thẻ nhựa, hoặc xếp nhiều thẻ trên tờ A4 để cắt; trang mặt sau đảo thứ tự cột để lật giấy in hai mặt là khớp |
+| VI.2 | Đếm số lần in mỗi thẻ | **Có** | Xem trước không tính là một lần in |
+| VI.3 | CRUD loại bạn đọc kèm chính sách, thời hạn thẻ, phí thẻ | **Có** | Danh mục loại bạn đọc có hạn thẻ, phí làm thẻ, tiền đặt cọc |
+| VI.3 | CRUD khoa, ngành, lớp, khóa học, loại vi phạm | **Có** | Năm danh mục, đủ nhập xuất Excel và gộp trùng như mọi danh mục khác |
+| VI.4 | Import Excel: tệp mẫu, ánh xạ cột, validate, bảng lỗi, chạy nền, log lỗi | **Có** | Tệp mẫu có sheet hướng dẫn từng cột; ánh xạ cột lưu lại cho lần sau; bước kiểm tra không ghi gì vào hệ thống; nhập chạy nền có thanh tiến độ; nhật ký lỗi tải về dạng Excel để sửa rồi nhập lại |
+| VI.4 | Xử lý trùng mã sinh viên | **Có** | Ba cách: báo lỗi, bỏ qua, hoặc cập nhật hồ sơ đang có — nhập lại danh sách lớp đã sửa không sinh hồ sơ trùng |
+| VI.4 | Import ảnh hàng loạt từ ZIP đặt tên theo mã SV | **Có** | Khớp theo mã sinh viên rồi tới số thẻ; ảnh không khớp hoặc không phải ảnh được liệt kê riêng |
+| VI.4 | Export danh sách bạn đọc ra Excel theo bộ lọc | **Có** | Xuất đúng bộ lọc đang xem, có ghi nhật ký ai xuất và bao nhiêu hồ sơ |
+| VI.4 | Đồng bộ từ hệ thống quản lý đào tạo qua API, cấu hình mapping | **Có** | Endpoint `POST /api/readers/sync` nhận dữ liệu theo tên trường của phía đào tạo; bảng ánh xạ khai được trên giao diện; khớp theo mã sinh viên nên gọi lại là cập nhật chứ không nhân đôi; có chế độ chạy thử |
+| VI.5 | Số lượng bạn đọc theo loại / khoa / ngành / khóa / trạng thái, bảng và biểu đồ | **Có** | Bảy chiều thống kê (thêm lớp và giới tính), bảng có dòng tổng cộng và biểu đồ tròn |
+| VI.5 | Bạn đọc mới đăng ký theo thời gian | **Có** | Gộp theo ngày, tháng, quý hoặc năm; biểu đồ đường kèm cột cộng dồn |
+| VI.5 | Thẻ sắp hết hạn / đã hết hạn | **Có** | Ba con số tổng quan và danh sách cần nhắc gia hạn kèm số ngày còn lại; bạn đọc đã ra trường không nằm trong danh sách nhắc |
+| VI.5 | Bạn đọc chưa từng mượn / bạn đọc tích cực | **Có** | Hai mặt của cùng một báo cáo, có biểu đồ cột cho nhóm mượn nhiều nhất |
+| VI.5 | Báo cáo xuất được ra PDF/Excel | **Có** | Cả bốn báo cáo, xuất đúng bộ lọc đang hiển thị |
+
+---
+
 ## D. Trao đổi dữ liệu và các phân hệ còn lại
 
 | # | Yêu cầu | Đáp ứng | Ghi chú |
@@ -220,7 +255,7 @@ Cập nhật lần cuối: sau khi hoàn thành Phase 5.
 | D5 | Phân hệ III — Bổ sung và Kho | **Có** | Chi tiết ở mục B5 |
 | D6 | Phân hệ IV — Ấn phẩm định kỳ | **Có** | Chi tiết ở mục B6 |
 | D7 | Phân hệ V — Tài liệu số | **Đang thực hiện** | Phase 10 |
-| D8 | Phân hệ VI — Bạn đọc | **Đang thực hiện** | Phase 8 |
+| D8 | Phân hệ VI — Bạn đọc | **Có** | Chi tiết ở mục B7 |
 | D9 | Phân hệ VII — Lưu thông | **Đang thực hiện** | Phase 9 |
 | D10 | Phân hệ VIII — Quản trị nội dung | **Đang thực hiện** | Phase 12 |
 | D11 | Phân hệ IX — Tra cứu OPAC | **Đang thực hiện** | Phase 12. Hạ tầng tra cứu tiếng Việt không dấu (`bib.vn_unaccent`, chỉ mục GIN/pg_trgm) đã hoàn thành ở Phase 1 |

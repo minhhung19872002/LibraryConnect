@@ -149,3 +149,30 @@ public class ViolationType : CatalogEntity
 {
     public decimal DefaultFine { get; set; }
 }
+
+/// <summary>
+/// Khóa học — niên khóa tuyển sinh, ví dụ "K45" (VI.3).
+///
+/// Hồ sơ bạn đọc giữ mã khóa dưới dạng chuỗi vì danh sách sinh viên nhập từ phòng đào tạo bao giờ
+/// cũng là chuỗi; danh mục này để cán bộ chuẩn hóa cách viết, lọc theo khóa và chuyển trạng thái ra
+/// trường hàng loạt cho cả khóa.
+/// </summary>
+public class Cohort : CatalogEntity
+{
+    /// <summary>Năm nhập học, dùng để sắp xếp và để lọc các khóa sắp ra trường.</summary>
+    public int? StartYear { get; set; }
+    /// <summary>Năm tốt nghiệp dự kiến.</summary>
+    public int? EndYear { get; set; }
+}
+
+/// <summary>Lớp sinh viên, ví dụ "DH19TH1" (VI.3).</summary>
+public class StudentClass : CatalogEntity
+{
+    public Guid? FacultyId { get; set; }
+    public Faculty? Faculty { get; set; }
+    public Guid? MajorId { get; set; }
+    public Major? Major { get; set; }
+    /// <summary>Mã khóa của lớp, khớp với <see cref="Cohort"/>.Code.</summary>
+    public string? CohortCode { get; set; }
+    public string? Advisor { get; set; }
+}

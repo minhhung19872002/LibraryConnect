@@ -52,6 +52,8 @@ public interface IApplicationDbContext
     DbSet<Major> Majors { get; }
     DbSet<Course> Courses { get; }
     DbSet<CourseMajor> CourseMajors { get; }
+    DbSet<Cohort> Cohorts { get; }
+    DbSet<StudentClass> StudentClasses { get; }
     DbSet<Supplier> Suppliers { get; }
     DbSet<FundingSource> FundingSources { get; }
     DbSet<ViolationType> ViolationTypes { get; }

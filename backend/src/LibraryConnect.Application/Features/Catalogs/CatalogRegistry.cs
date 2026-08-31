@@ -212,6 +212,31 @@ public static class CatalogRegistry
             }
         },
 
+        new CatalogDefinition<Cohort>("cohorts", "khóa học", "Khóa học")
+        {
+            Description = "Niên khóa tuyển sinh, ví dụ K45 — dùng để lọc bạn đọc và chuyển trạng thái ra trường theo khóa.",
+            Fields = new CatalogField[]
+            {
+                CatalogFields.Number<Cohort>("startYear", "Năm nhập học",
+                    e => e.StartYear, (e, v) => e.StartYear = v),
+                CatalogFields.Number<Cohort>("endYear", "Năm tốt nghiệp dự kiến",
+                    e => e.EndYear, (e, v) => e.EndYear = v)
+            }
+        },
+
+        new CatalogDefinition<StudentClass>("student-classes", "lớp", "Lớp")
+        {
+            Description = "Lớp sinh viên, ví dụ DH19TH1.",
+            Fields = new CatalogField[]
+            {
+                CatalogFields.Text<StudentClass>("cohortCode", "Mã khóa",
+                    e => e.CohortCode, (e, v) => e.CohortCode = v,
+                    "Khớp với mã trong danh mục Khóa học, ví dụ K45."),
+                CatalogFields.Text<StudentClass>("advisor", "Cố vấn học tập",
+                    e => e.Advisor, (e, v) => e.Advisor = v, showInList: false)
+            }
+        },
+
         new CatalogDefinition<ViolationType>("violation-types", "loại vi phạm", "Loại vi phạm")
         {
             Fields = new CatalogField[]

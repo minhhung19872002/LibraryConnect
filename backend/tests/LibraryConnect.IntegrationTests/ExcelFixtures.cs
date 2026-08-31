@@ -29,6 +29,18 @@ public static class ExcelFixtures
     public static byte[] BuildArticleSheet(IReadOnlyList<string[]> rows) =>
         Build("Mục lục bài trích", ArticleHeaders, rows);
 
+    /// <summary>Cột của tệp mẫu nhập bạn đọc (VI.4), đúng thứ tự và đúng tên tiêu đề.</summary>
+    private static readonly string[] ReaderHeaders =
+    {
+        "Số thẻ", "Mã sinh viên", "Họ và tên", "Giới tính", "Ngày sinh", "Số CCCD",
+        "Email", "Điện thoại", "Địa chỉ", "Loại bạn đọc", "Khoa", "Ngành đào tạo",
+        "Lớp", "Khóa", "Ngày cấp thẻ", "Ngày hết hạn", "Ghi chú"
+    };
+
+    /// <summary>Dựng một tệp danh sách bạn đọc theo đúng thứ tự cột của tệp mẫu.</summary>
+    public static byte[] BuildReaderSheet(IReadOnlyList<string[]> rows) =>
+        Build("Bạn đọc", ReaderHeaders, rows);
+
     private static byte[] Build(string sheetName, string[] headers, IReadOnlyList<string[]> rows)
     {
         using var workbook = new XLWorkbook();

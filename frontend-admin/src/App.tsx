@@ -33,6 +33,10 @@ import { LabelTemplatePage } from '@/modules/acquisition/LabelTemplatePage';
 import { FormTemplatePage } from '@/modules/acquisition/FormTemplatePage';
 import { AcquisitionReportsPage } from '@/modules/acquisition/AcquisitionReportsPage';
 import { SerialsPage } from '@/modules/serials/SerialsPage';
+import { ReadersPage } from '@/modules/readers/ReadersPage';
+import { ReaderCardTemplatePage } from '@/modules/readers/ReaderCardTemplatePage';
+import { ReaderImportPage } from '@/modules/readers/ReaderImportPage';
+import { ReaderReportsPage } from '@/modules/readers/ReaderReportsPage';
 import { SerialReportsPage } from '@/modules/serials/SerialReportsPage';
 import { CustomIndexPage } from '@/modules/cataloging/CustomIndexPage';
 import { CatalogQueuePage } from '@/modules/cataloging/CatalogQueuePage';
@@ -205,6 +209,38 @@ function AppRoutes() {
           element={
             <RequirePermissionRoute permission={PERMISSIONS.serial.reportView}>
               <SerialReportsPage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/ban-doc/ho-so"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.reader.view}>
+              <ReadersPage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/ban-doc/mau-the"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.reader.printCard}>
+              <ReaderCardTemplatePage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/ban-doc/nhap-xuat"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.reader.import}>
+              <ReaderImportPage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/ban-doc/bao-cao"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.reader.reportView}>
+              <ReaderReportsPage />
             </RequirePermissionRoute>
           }
         />

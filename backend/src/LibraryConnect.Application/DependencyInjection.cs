@@ -36,6 +36,8 @@ public static class DependencyInjection
         services.AddScoped<Features.Cataloging.IBibExcelImportRunner, Features.Cataloging.BibExcelImportRunner>();
         services.AddScoped<Features.Acquisition.IPurchaseDuplicateFinder, Features.Acquisition.PurchaseDuplicateFinder>();
         services.AddScoped<Features.Acquisition.IFormDataBuilder, Features.Acquisition.FormDataBuilder>();
+        services.AddScoped<Features.Readers.ReaderImportProcessor>();
+        services.AddScoped<Features.Readers.IReaderImportRunner, Features.Readers.ReaderImportRunner>();
 
         return services;
     }

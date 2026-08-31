@@ -18,6 +18,7 @@ public static class DependencyInjection
         services.AddSingleton<ICardPrintService, CardPrintService>();
         services.AddSingleton<ILabelPrintService, LabelPrintService>();
         services.AddSingleton<IFormPrintService, FormPrintService>();
+        services.AddSingleton<IReaderCardPrintService, ReaderCardPrintService>();
 
         return services;
     }

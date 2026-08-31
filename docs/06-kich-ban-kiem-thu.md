@@ -313,11 +313,66 @@ Ký hiệu bám theo **Mục 5 phần 2 của E-HSMT**.
 | DK.42 | Xuất báo cáo | Bấm Excel và PDF | Tệp xuất ra đúng bằng bộ lọc đang xem |
 | DK.43 | Phân quyền | Đăng nhập tài khoản không có quyền Ấn phẩm định kỳ | Menu không hiện; gọi thẳng API trả 403 |
 
+## Nhóm chức năng — Phân hệ VI: Bạn đọc
+
+| Mã | Kịch bản | Các bước | Kết quả mong đợi |
+|---|---|---|---|
+| BD.1 | Thêm bạn đọc, để trống số thẻ | Bạn đọc → Hồ sơ bạn đọc → Thêm bạn đọc, bỏ trống ô Số thẻ | Hệ thống sinh số thẻ theo quy tắc trong Tham số hệ thống; sổ cấp thẻ có một thẻ hiện hành trùng số |
+| BD.2 | Hạn thẻ tính theo loại bạn đọc | Thêm bạn đọc loại Sinh viên, bỏ trống ngày hết hạn | Hạn thẻ bằng ngày cấp cộng số tháng khai trong danh mục loại bạn đọc |
+| BD.3 | Trùng mã sinh viên | Thêm bạn đọc thứ hai cùng mã sinh viên | Bị chặn kèm thông báo mã đã có trong hệ thống |
+| BD.4 | Tra cứu gõ không dấu | Gõ "nguyen van an" vào ô tìm kiếm | Tìm được bạn đọc tên "Nguyễn Văn An" |
+| BD.5 | Tra cứu bằng số thẻ, mã SV, CCCD, email, điện thoại | Lần lượt gõ từng thứ vào cùng một ô | Mỗi lần đều ra đúng bạn đọc, không phải chọn trước tìm theo trường nào |
+| BD.6 | Lọc theo lớp và khóa | Chọn lớp, chọn khóa trên thanh lọc | Danh sách chỉ còn bạn đọc của lớp và khóa đó |
+| BD.7 | Cảnh báo hạn thẻ | Xem cột Hạn thẻ | Mỗi dòng ghi rõ "Còn N ngày" hoặc "Quá hạn N ngày", quá hạn tô đỏ |
+| BD.8 | Sửa hạn thẻ | Mở hồ sơ → Sửa hồ sơ → đổi ngày hết hạn | Sổ cấp thẻ đổi theo, không còn hai con số khác nhau trên cùng một tấm thẻ |
+| BD.9 | Tải ảnh không phải ảnh | Đổi tên một tệp bất kỳ thành .jpg rồi tải lên | Bị chặn — hệ thống kiểm tra chữ ký nhị phân chứ không tin phần mở rộng |
+| BD.10 | Cắt ảnh chân dung | Đổi ảnh → chọn tệp → kéo và phóng to trong khung 3×4 → Lưu | Ảnh lưu đúng phần đã cắt, hiện trên hồ sơ và trên danh sách |
+| BD.11 | Chụp ảnh từ webcam | Đổi ảnh → Chụp từ webcam → Chụp → Lưu | Ảnh chụp vào thẳng khung cắt; đóng hộp thoại là webcam tắt |
+| BD.12 | Ghi nhận vi phạm | Tab Vi phạm → Ghi nhận vi phạm, chọn loại, bỏ trống mức phạt | Mức phạt lấy theo mặc định của loại vi phạm |
+| BD.13 | Cấp lại thẻ mất | Hồ sơ → Cấp lại thẻ, ghi lý do | Số thẻ mới được cấp; thẻ cũ vẫn còn trong tab Thẻ đã cấp, đánh dấu đã thu hồi |
+| BD.14 | Cấp lại thẻ hỏng | Cấp lại thẻ, tick giữ nguyên số thẻ | Số thẻ không đổi, vẫn ghi thêm một dòng trong sổ cấp thẻ |
+| BD.15 | Cấp lại thẻ thiếu lý do | Bấm cấp lại mà không ghi lý do | Bị chặn |
+| BD.16 | Gia hạn thẻ đã hết hạn | Chọn bạn đọc có thẻ quá hạn → Gia hạn 12 tháng | Hạn mới tính từ hôm nay cộng 12 tháng |
+| BD.17 | Gia hạn thẻ còn hạn | Chọn bạn đọc còn 6 tháng → Gia hạn 12 tháng | Hạn mới cộng tiếp vào hạn cũ, không mất phần thời gian chưa dùng |
+| BD.18 | Gia hạn cả khóa | Lọc theo khóa → tick chọn → bật "Áp dụng cho toàn bộ kết quả lọc" → Gia hạn | Toàn bộ bạn đọc của khóa được gia hạn, không phải tick từng dòng |
+| BD.19 | Tạm khóa thẻ thiếu lý do | Thao tác hàng loạt → Tạm khóa, bỏ trống lý do | Bị chặn |
+| BD.20 | Tạm khóa và mở khóa | Khóa kèm lý do rồi mở lại | Trạng thái đổi tương ứng; khi khóa, hồ sơ hiện cảnh báo không đủ điều kiện mượn |
+| BD.21 | Ra trường khi còn công nợ | Chọn bạn đọc còn sách hoặc còn nợ phí → Chuyển ra trường | Người đó bị giữ lại kèm lý do; những người khác vẫn chuyển được |
+| BD.22 | Xác nhận công nợ | Mở hồ sơ, xem khối Công nợ với thư viện | Ghi rõ còn giữ mấy tài liệu và còn nợ bao nhiêu tiền |
+| BD.23 | Xóa hồ sơ còn công nợ | Xóa hồ sơ của bạn đọc đang nợ phí | Bị chặn |
+| BD.24 | Đặt lại mật khẩu bạn đọc | Hồ sơ → Đặt lại mật khẩu | Hiện mật khẩu mới để đọc lại cho bạn đọc; phiên đăng nhập cũ trên điện thoại mất hiệu lực; nhật ký ghi việc đặt lại nhưng không ghi mật khẩu |
+| BD.25 | Mẫu thẻ mặc định | Bạn đọc → Mẫu thẻ bạn đọc | Có sẵn mẫu CR80 85,6 × 54 mm dùng in được ngay |
+| BD.26 | Kéo thả thiết kế thẻ | Mở mẫu thẻ, kéo một ô trên khung xem trước | Tọa độ milimét đổi theo, làm tròn tới 0,5 mm |
+| BD.27 | Nội dung tràn khổ thẻ | Đặt một ô ra ngoài mép thẻ rồi lưu | Bị chặn — bắt lỗi trước khi in hỏng cả hộp phôi thẻ |
+| BD.28 | In thẻ một người | Hồ sơ → In thẻ | Tệp PDF một trang đúng khổ CR80, có ảnh, mã vạch số thẻ và tên thư viện lấy từ tham số |
+| BD.29 | Tên thư viện dài | Đặt tên thư viện dài trong Tham số hệ thống rồi in thẻ | Chữ tự co lại cho vừa ô, không bị cắt cụt |
+| BD.30 | In thẻ cả lớp | Lọc theo lớp → In thẻ, chọn xếp nhiều thẻ trên A4 | Một tệp PDF nhiều thẻ, mặt sau đảo cột để lật giấy in hai mặt là khớp |
+| BD.31 | Đếm số lần in | In thẻ rồi mở lại tab Thẻ đã cấp | Số lần in tăng lên một |
+| BD.32 | Xem trước thẻ | Bấm In thử trên màn hình mẫu thẻ | Ra tệp PDF nhưng số lần in giữ nguyên |
+| BD.33 | Tải tệp mẫu nhập bạn đọc | Nhập xuất dữ liệu bạn đọc → Tải tệp mẫu | Tệp Excel có hàng tiêu đề tiếng Việt và sheet hướng dẫn từng cột |
+| BD.34 | Kiểm tra tệp nhập | Chọn tệp có dòng thiếu tên, sai ngày, sai email → Kiểm tra tệp | Bảng lỗi chỉ đúng số dòng và đúng cột; không dòng nào được ghi vào hệ thống |
+| BD.35 | Trùng ngay trong tệp | Tệp có hai dòng cùng mã sinh viên | Dòng thứ hai bị báo lặp trong chính tệp |
+| BD.36 | Ánh xạ cột | Tệp của phòng đào tạo đặt tên cột khác tệp mẫu → khai ánh xạ | Nhập được; ánh xạ lưu lại cho lần nhập sau |
+| BD.37 | Nhập chạy nền | Bấm Nhập vào hệ thống | Đợt nhập hiện trong bảng bên dưới, tự cập nhật tiến độ đến khi hoàn thành |
+| BD.38 | Tự tạo danh mục khi nhập | Tệp có khoa, lớp, khóa chưa có trong danh mục | Được tạo mới để lần sau lọc được; tắt tùy chọn thì báo lỗi thay vì tự tạo |
+| BD.39 | Nhập lại tệp cũ | Nhập lại đúng tệp vừa nhập | Mặc định báo trùng; đổi sang Cập nhật thì hồ sơ được cập nhật chứ không nhân đôi |
+| BD.40 | Nhật ký lỗi | Đợt nhập có dòng lỗi → Nhật ký lỗi | Tải về tệp Excel liệt kê dòng, cột, giá trị và lý do |
+| BD.41 | Nhập ảnh hàng loạt | Nén ảnh đặt tên theo mã sinh viên thành ZIP rồi nhập | Ảnh khớp vào đúng hồ sơ; ảnh không tìm được chủ và tệp không phải ảnh được liệt kê riêng |
+| BD.42 | Xuất danh sách bạn đọc | Lọc theo lớp → Xuất Excel | Tệp xuất đúng bằng bộ lọc; nhật ký hệ thống ghi lại lượt xuất dữ liệu cá nhân |
+| BD.43 | Đồng bộ từ hệ thống đào tạo | Khai ánh xạ trường rồi gọi `POST /api/readers/sync` | Bản ghi mới được tạo, gọi lại lần hai thì cập nhật; chế độ chạy thử không ghi gì |
+| BD.44 | Báo cáo số lượng bạn đọc | Báo cáo bạn đọc → đổi chiều thống kê | Bảy chiều đều ra số liệu; tổng cộng khớp với tổng số trên danh sách |
+| BD.45 | Báo cáo đăng ký mới | Chọn Đăng ký mới theo thời gian, gộp theo tháng | Biểu đồ đường và bảng số liệu, có cột cộng dồn |
+| BD.46 | Báo cáo thẻ sắp hết hạn | Chọn Thẻ sắp hết hạn, đặt 30 ngày | Ba con số tổng quan và danh sách kèm số ngày còn lại |
+| BD.47 | Người ra trường không bị nhắc | Cho một bạn đọc ra trường rồi xem lại báo cáo | Không xuất hiện trong danh sách nhắc gia hạn |
+| BD.48 | Báo cáo mức độ sử dụng | Chọn Mức độ sử dụng, đổi giữa hai chế độ | Ra danh sách mượn nhiều nhất kèm biểu đồ cột, và danh sách chưa từng mượn |
+| BD.49 | Xuất báo cáo | Bấm Excel và PDF ở từng báo cáo | Tệp xuất đúng bằng bộ lọc đang hiển thị |
+| BD.50 | Phân quyền | Đăng nhập tài khoản Cán bộ biên mục | Menu Bạn đọc không hiện; gọi thẳng API trả 403 |
+
 ## Cách chạy bộ kiểm thử tự động
 
 ```bash
 cd backend
-dotnet test                 # 215 unit test + 131 integration test
+dotnet test                 # 237 unit test + 174 integration test
 ```
 
 Integration test tự khởi tạo một container PostgreSQL 16 và một container MinIO riêng, chạy
@@ -326,7 +381,7 @@ duyệt dùng — không có thành phần nào bị giả lập.
 
 ```bash
 cd frontend-admin
-npm test                    # 65 test giao diện
+npm test                    # 76 test giao diện
 ```
 
 ---

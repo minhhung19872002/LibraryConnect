@@ -69,6 +69,8 @@ public class LibraryConnectDbContext : DbContext, IApplicationDbContext
     public DbSet<Major> Majors => Set<Major>();
     public DbSet<Course> Courses => Set<Course>();
     public DbSet<CourseMajor> CourseMajors => Set<CourseMajor>();
+    public DbSet<Cohort> Cohorts => Set<Cohort>();
+    public DbSet<StudentClass> StudentClasses => Set<StudentClass>();
     public DbSet<Supplier> Suppliers => Set<Supplier>();
     public DbSet<FundingSource> FundingSources => Set<FundingSource>();
     public DbSet<ViolationType> ViolationTypes => Set<ViolationType>();

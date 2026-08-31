@@ -125,8 +125,16 @@ export const PERMISSIONS = {
   reader: {
     view: 'READER.PROFILE.VIEW',
     create: 'READER.PROFILE.CREATE',
+    update: 'READER.PROFILE.UPDATE',
+    delete: 'READER.PROFILE.DELETE',
+    lock: 'READER.PROFILE.LOCK',
+    extendCard: 'READER.CARD.EXTEND',
     printCard: 'READER.CARD.PRINT',
+    cardTemplate: 'READER.CARD_TEMPLATE.MANAGE',
     import: 'READER.PROFILE.IMPORT',
+    export: 'READER.PROFILE.EXPORT',
+    resetPassword: 'READER.PROFILE.RESET_PASSWORD',
+    violationManage: 'READER.VIOLATION.MANAGE',
     reportView: 'READER.REPORT.VIEW',
   },
   circulation: {

@@ -93,6 +93,22 @@ public class MajorConfiguration : CatalogEntityConfiguration<Major>
     }
 }
 
+public class CohortConfiguration : CatalogEntityConfiguration<Cohort> { }
+
+public class StudentClassConfiguration : CatalogEntityConfiguration<StudentClass>
+{
+    public override void Configure(EntityTypeBuilder<StudentClass> builder)
+    {
+        base.Configure(builder);
+        builder.Property(x => x.CohortCode).HasMaxLength(50);
+        builder.Property(x => x.Advisor).HasMaxLength(300);
+        builder.HasOne(x => x.Faculty).WithMany().HasForeignKey(x => x.FacultyId)
+            .OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(x => x.Major).WithMany().HasForeignKey(x => x.MajorId)
+            .OnDelete(DeleteBehavior.Restrict);
+    }
+}
+
 public class CourseConfiguration : CatalogEntityConfiguration<Course>
 {
     public override void Configure(EntityTypeBuilder<Course> builder)

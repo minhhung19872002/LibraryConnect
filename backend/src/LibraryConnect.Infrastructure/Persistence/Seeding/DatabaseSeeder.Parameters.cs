@@ -102,6 +102,17 @@ public partial class DatabaseSeeder
             ParameterDataType.Number, "0"),
 
         // ---- Lưu thông ----
+        // ---------------- Bạn đọc (Phân hệ VI) ----------------
+        new("READER.CARD_EXPIRING_DAYS", "READER", "Cấu hình bạn đọc", "Cảnh báo thẻ sắp hết hạn trước số ngày",
+            "Dùng cho cột cảnh báo trên danh sách bạn đọc và báo cáo thẻ sắp hết hạn.",
+            ParameterDataType.Number, "30"),
+        new("READER.IMPORT_MAPPING", "READER", "Cấu hình bạn đọc", "Ánh xạ cột tệp nhập bạn đọc",
+            "Hồ sơ ánh xạ trường dữ liệu sang tiêu đề cột của tệp Excel, lưu từ màn hình Nhập bạn đọc.",
+            ParameterDataType.Json, ""),
+        new("READER.SYNC_MAPPING", "READER", "Cấu hình bạn đọc", "Ánh xạ trường đồng bộ từ hệ thống đào tạo",
+            "Hồ sơ ánh xạ trường dữ liệu sang tên thuộc tính mà hệ thống quản lý đào tạo gửi sang.",
+            ParameterDataType.Json, ""),
+
         new(ParameterKeys.CirculationDefaultLoanDays, "CIRCULATION", "Cấu hình lưu thông", "Số ngày mượn mặc định",
             "Áp dụng khi không có chính sách nào khớp.", ParameterDataType.Number, "14"),
         new(ParameterKeys.CirculationDefaultMaxItems, "CIRCULATION", "Cấu hình lưu thông", "Số tài liệu mượn tối đa mặc định", null, ParameterDataType.Number, "5"),
