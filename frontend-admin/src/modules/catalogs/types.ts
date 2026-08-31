@@ -1,6 +1,14 @@
 /** Shapes returned by the shared `/api/catalogs/*` endpoints. */
 
-export type CatalogFieldType = 'Text' | 'LongText' | 'Number' | 'Decimal' | 'Boolean' | 'Select';
+export type CatalogFieldType =
+  | 'Text'
+  | 'LongText'
+  | 'Number'
+  | 'Decimal'
+  | 'Boolean'
+  | 'Select'
+  /** Trỏ tới một giá trị của danh mục khác; giá trị lưu là mã định danh của giá trị đó. */
+  | 'Reference';
 
 export interface CatalogFieldOption {
   value: string;
@@ -15,6 +23,8 @@ export interface CatalogField {
   required: boolean;
   showInList: boolean;
   options: CatalogFieldOption[];
+  /** Với trường kiểu Reference: mã danh mục cần nạp để dựng ô chọn. */
+  referenceCatalog?: string;
 }
 
 export interface CatalogMetadata {

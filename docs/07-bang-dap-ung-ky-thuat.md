@@ -410,6 +410,27 @@ Cập nhật lần cuối: sau khi hoàn thành Phase 11.
 
 ---
 
+## B13. Phân hệ X — Tài liệu môn học
+
+| # | Yêu cầu E-HSMT | Đáp ứng | Chức năng trong sản phẩm |
+|---|---|---|---|
+| X.1 | Quản lý ngành: mã ngành, tên, khoa quản lý, bậc đào tạo, mô tả | **Có** | Danh mục → Ngành đào tạo. Ô "Khoa quản lý" là ô chọn lấy thẳng từ danh mục Khoa, không phải gõ tay nên không lệch tên giữa hai bảng |
+| X.1 | Import ngành từ Excel | **Có** | Dùng chung khung nhập Excel của danh mục: tải tệp mẫu, kiểm tra thử trước, xem bảng lỗi rồi mới nhập thật |
+| X.2 | Quản lý môn học: mã môn, tên, số tín chỉ, ngành, học kỳ, giảng viên, mô tả | **Có** | Danh mục → Môn học cho phần thông tin chung; màn hình Gán tài liệu cho môn học sửa được danh sách ngành của từng môn |
+| X.2 | Gán môn học vào nhiều ngành (quan hệ nhiều-nhiều) | **Có** | Một môn thuộc bao nhiêu ngành cũng được; dữ liệu mẫu để sẵn Tin học đại cương dùng chung cho sáu ngành |
+| X.3 | Màn hình 2 cột: chọn môn bên trái, tìm và gán tài liệu bên phải | **Có** | Bên trái lọc theo ngành, theo từ khóa và theo cờ "chỉ môn chưa có tài liệu"; bên phải tìm tài liệu theo nhan đề, tác giả hoặc ISBN rồi tick chọn nhiều cuốn một lượt |
+| X.3 | Phân loại liên kết: Giáo trình chính / Tham khảo bắt buộc / Tham khảo thêm | **Có** | Đủ ba mức, mỗi mức một màu; sửa mức ngay trên dòng, không phải bỏ ra gán lại |
+| X.3 | Gán hàng loạt | **Có** | Chọn nhiều tài liệu rồi gán một lần; gán lại cuốn đã có thì cập nhật mức độ chứ không sinh thêm dòng trùng |
+| X.3 | Import danh mục tài liệu môn học từ Excel | **Có** | Tệp mẫu có sẵn tiêu đề tiếng Việt; đối chiếu tài liệu theo ISBN, số kiểm soát hoặc số ĐKCB; dòng hỏng bị bỏ qua kèm lý do chứ không chặn cả tệp |
+| X.3 | Trên OPAC: duyệt Ngành → Môn học → tài liệu, biết ngay còn bản rảnh không | **Có** | Trang Duyệt theo ngành đào tạo; mỗi tài liệu hiện mức độ và số bản còn rảnh tại thời điểm xem |
+| X.3 | Báo cáo môn học chưa có tài liệu | **Có** | Một thẻ riêng trong Báo cáo tài liệu môn học, lọc được theo ngành |
+| X.3 | Báo cáo tài liệu được gán nhiều môn nhất | **Có** | Kèm cột số bản còn rảnh, tô đỏ khi số bản ít hơn số môn đang dùng chung — đúng chỗ thư viện cần bổ sung thêm bản |
+| X.3 | Báo cáo mức độ đáp ứng tài liệu theo ngành | **Có** | Bảng kèm biểu đồ cột, tỷ lệ làm tròn một chữ số thập phân; xuất được Excel và PDF |
+| X.3 | Ba dạng đầu ra cho báo cáo: bảng, đồ họa, xuất tệp | **Có** | Bảng và biểu đồ trên màn hình; hai nút Xuất Excel và Xuất PDF dùng chung bộ lọc đang đặt |
+| 6.6 | Thao tác được bằng bàn phím | **Có** | Thẻ ngành và dòng môn học ở cả trang quản trị lẫn trang tra cứu nhận được phím Tab, mở bằng Enter hoặc Space |
+
+---
+
 ## D. Trao đổi dữ liệu và các phân hệ còn lại
 
 | # | Yêu cầu | Đáp ứng | Ghi chú |
@@ -425,5 +446,5 @@ Cập nhật lần cuối: sau khi hoàn thành Phase 11.
 | D9 | Phân hệ VII — Lưu thông | **Có** | Chi tiết ở mục B8 |
 | D10 | Phân hệ VIII — Quản trị nội dung | **Có** | Chi tiết ở mục B11 |
 | D11 | Phân hệ IX — Tra cứu OPAC | **Có** | Chi tiết ở mục B12. Trang tra cứu là ứng dụng riêng, chạy ở đường dẫn gốc |
-| D12 | Phân hệ X — Tài liệu môn học | **Đang thực hiện** | Phase 13 |
+| D12 | Phân hệ X — Tài liệu môn học | **Có** | Chi tiết ở mục B13 |
 | D13 | Phân hệ XI — Ứng dụng di động | **Đợt sau** | Nhóm endpoint `/api/reader/*` được hoàn thiện và kiểm thử trong đợt web này để ứng dụng cắm vào không phải sửa backend |

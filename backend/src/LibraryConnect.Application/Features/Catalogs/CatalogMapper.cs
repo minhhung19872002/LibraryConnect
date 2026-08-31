@@ -24,7 +24,8 @@ public static class CatalogMapper
             Description = field.Description,
             Required = field.Required,
             ShowInList = field.ShowInList,
-            Options = field.Options.Select(option => new CatalogOptionDto(option.Value, option.Label)).ToList()
+            Options = field.Options.Select(option => new CatalogOptionDto(option.Value, option.Label)).ToList(),
+            ReferenceCatalog = field.ReferenceCatalog
         }).ToList()
     };
 

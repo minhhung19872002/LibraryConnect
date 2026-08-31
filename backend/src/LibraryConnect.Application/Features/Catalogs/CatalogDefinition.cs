@@ -3,7 +3,17 @@ using LibraryConnect.Domain.Common;
 namespace LibraryConnect.Application.Features.Catalogs;
 
 /// <summary>Kiểu dữ liệu của một trường riêng, quyết định điều khiển nhập liệu trên giao diện.</summary>
-public enum CatalogFieldType { Text, LongText, Number, Decimal, Boolean, Select }
+public enum CatalogFieldType
+{
+    Text,
+    LongText,
+    Number,
+    Decimal,
+    Boolean,
+    Select,
+    /// <summary>Trỏ tới một giá trị của danh mục khác; giá trị lưu là mã định danh của giá trị đó.</summary>
+    Reference
+}
 
 /// <summary>
 /// A field that belongs to one particular lookup table rather than to all of them — a publisher's
@@ -30,6 +40,15 @@ public abstract class CatalogField
     public bool ShowInList { get; init; } = true;
     /// <summary>Options for <see cref="CatalogFieldType.Select"/>.</summary>
     public IReadOnlyList<CatalogOption> Options { get; init; } = Array.Empty<CatalogOption>();
+
+    /// <summary>
+    /// Mã danh mục được trỏ tới, dùng cho <see cref="CatalogFieldType.Reference"/>.
+    ///
+    /// Giao diện tự nạp danh sách giá trị của danh mục này để dựng ô chọn và để hiện tên thay cho
+    /// mã định danh — nhờ vậy phía máy chủ vẫn giữ nguyên cách mô tả danh mục thuần dữ liệu, không
+    /// phải biết bảng nào tham chiếu bảng nào.
+    /// </summary>
+    public string? ReferenceCatalog { get; init; }
 
     public abstract string? Read(object entity);
     public abstract void Write(object entity, string? value);
@@ -109,6 +128,17 @@ public static class CatalogFields
             Description = description, ShowInList = showInList
         };
 
+    /// <summary>Ô chọn một giá trị của danh mục khác, ví dụ khoa quản lý của một ngành đào tạo.</summary>
+    public static CatalogField<T> Reference<T>(
+        string key, string label, Func<T, Guid?> read, Action<T, Guid?> write,
+        string referenceCatalog, string? description = null, bool showInList = true) where T : class =>
+        new(key, label, CatalogFieldType.Reference,
+            entity => read(entity)?.ToString(),
+            (entity, value) => write(entity, ParseGuid(value)))
+        {
+            ReferenceCatalog = referenceCatalog, Description = description, ShowInList = showInList
+        };
+
     public static CatalogField<T> Select<T>(
         string key, string label, Func<T, string?> read, Action<T, string?> write,
         IReadOnlyList<CatalogOption> options, string? description = null) where T : class =>
@@ -116,6 +146,9 @@ public static class CatalogFields
         {
             Options = options, Description = description
         };
+
+    private static Guid? ParseGuid(string? value) =>
+        Guid.TryParse(value, out var parsed) ? parsed : null;
 
     private static int? ParseInt(string? value) =>
         int.TryParse(value, System.Globalization.NumberStyles.Any,

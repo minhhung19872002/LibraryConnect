@@ -37,6 +37,7 @@ import { CatalogFormDrawer } from './CatalogFormDrawer';
 import { CatalogImportModal } from './CatalogImportModal';
 import { CatalogMergeDrawer } from './CatalogMergeDrawer';
 import { buildTreeSelectData } from './treeUtils';
+import { ReferenceLabel } from './ReferenceSelect';
 import type { CatalogItem, CatalogMetadata, CatalogTreeNode } from './types';
 
 /**
@@ -146,7 +147,12 @@ export function CatalogPage() {
         key: field.key,
         width: field.type === 'Boolean' ? 130 : 170,
         ellipsis: true,
-        render: (_, record) => renderExtra(record.extras[field.key], field.type, field.options),
+        render: (_, record) =>
+          field.type === 'Reference' ? (
+            <ReferenceLabel catalog={field.referenceCatalog ?? ''} value={record.extras[field.key]} />
+          ) : (
+            renderExtra(record.extras[field.key], field.type, field.options)
+          ),
       });
     }
 

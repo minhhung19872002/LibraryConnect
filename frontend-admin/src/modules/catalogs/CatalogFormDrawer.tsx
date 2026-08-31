@@ -4,6 +4,7 @@ import { api } from '@/api/client';
 import { applyApiError } from '@/api/formErrors';
 import { messages } from '@/i18n/messages';
 import { buildTreeSelectData } from './treeUtils';
+import { ReferenceSelect } from './ReferenceSelect';
 import type { CatalogField, CatalogItem, CatalogMetadata, CatalogTreeNode } from './types';
 
 interface CatalogFormValues {
@@ -207,6 +208,8 @@ function renderControl(field: CatalogField) {
           options={field.options.map((option) => ({ value: option.value, label: option.label }))}
         />
       );
+    case 'Reference':
+      return <ReferenceSelect catalog={field.referenceCatalog ?? ''} />;
     default:
       return <Input />;
   }

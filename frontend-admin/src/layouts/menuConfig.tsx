@@ -475,9 +475,27 @@ export const menuTree: MenuNode[] = [
     key: 'courses',
     label: messages.menu.courses,
     icon: <ReadOutlined />,
-    path: '/tai-lieu-mon-hoc',
-    permissions: [PERMISSIONS.course.courseManage, PERMISSIONS.course.documentLink],
-    comingSoon: true,
+    permissions: [
+      PERMISSIONS.course.courseManage,
+      PERMISSIONS.course.documentLink,
+      PERMISSIONS.course.reportView,
+    ],
+    children: [
+      {
+        key: 'course-documents',
+        label: messages.menu.courseDocuments,
+        icon: <ReadOutlined />,
+        path: '/tai-lieu-mon-hoc/gan-tai-lieu',
+        permissions: [PERMISSIONS.course.documentLink, PERMISSIONS.course.courseManage],
+      },
+      {
+        key: 'course-reports',
+        label: messages.menu.courseReports,
+        icon: <BarChartOutlined />,
+        path: '/tai-lieu-mon-hoc/bao-cao',
+        permissions: [PERMISSIONS.course.reportView],
+      },
+    ],
   },
   {
     key: 'interlibrary',

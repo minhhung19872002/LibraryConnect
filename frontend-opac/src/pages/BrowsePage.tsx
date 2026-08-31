@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Breadcrumb, Button, Card, Col, Empty, List, Row, Space, Tag, Typography } from 'antd';
+import { clickable } from '@/components/clickable';
 import { opacApi } from '@/api/opac';
 import type { BrowseEntry } from '@/types/api';
 
@@ -128,7 +129,7 @@ export function BrowsePage() {
           grid={{ gutter: 12, xs: 1, sm: 2, md: 3, lg: 4 }}
           renderItem={(entry) => (
             <List.Item>
-              <Card size="small" hoverable onClick={() => openEntry(entry)}>
+              <Card size="small" hoverable {...clickable(() => openEntry(entry), entry.name)}>
                 <div style={{ fontWeight: 600 }}>
                   {/* Ký hiệu phân loại tự sinh từ biểu ghi có tên trùng luôn với mã; hiện hai lần
                       trông như lỗi hiển thị. */}
@@ -166,17 +167,38 @@ export function MajorCoursesPage() {
     enabled: Boolean(courseId),
   });
 
+  // Bạn đọc bấm vào một ngành rồi mới tới đây; nếu trang không nhắc lại tên ngành và không có
+  // đường quay lại thì mở từ liên kết đã lưu hay bấm F5 là mất dấu đang đứng ở ngành nào.
+  const majors = useQuery<BrowseEntry[]>({
+    queryKey: ['browse', 'majors'],
+    queryFn: () => opacApi.browseMajors(),
+  });
+
+  const major = (majors.data ?? []).find((entry) => entry.id === majorId);
+
   return (
     <div className="lc-container" style={{ padding: '24px 16px 48px' }}>
+      <Breadcrumb
+        style={{ marginBottom: 16 }}
+        items={[
+          { title: <Link to="/">Trang chủ</Link> },
+          { title: <Link to="/duyet/nganh">Duyệt theo ngành đào tạo</Link> },
+          { title: major?.name ?? 'Ngành đào tạo' },
+        ]}
+      />
+
       <Row gutter={24}>
         <Col xs={24} md={9}>
-          <Card title="Môn học" loading={courses.isLoading}>
+          <Card
+            title={major ? `Môn học ngành ${major.name}` : 'Môn học'}
+            loading={courses.isLoading}
+          >
             <List
               dataSource={courses.data ?? []}
               locale={{ emptyText: <Empty description="Ngành này chưa khai báo môn học." /> }}
               renderItem={(course) => (
                 <List.Item
-                  onClick={() => setCourseId(course.id)}
+                  {...clickable(() => setCourseId(course.id), `${course.code} — ${course.name}`)}
                   style={{
                     cursor: 'pointer',
                     background: courseId === course.id ? '#eef6f2' : undefined,

@@ -559,11 +559,47 @@ Ký hiệu bám theo **Mục 5 phần 2 của E-HSMT**.
 | TC.41 | Gọi API bạn đọc khi chưa đăng nhập | Gọi `/api/reader/profile` không kèm mã đăng nhập | Trả 401 |
 | TC.42 | Tài khoản bạn đọc gọi API quản trị | Dùng mã đăng nhập của bạn đọc gọi `/api/content/settings` | Trả 403 |
 
+## Nhóm 2.2 — Phân hệ X: Tài liệu môn học
+
+| Mã | Chức năng | Bước thực hiện | Kết quả mong đợi | Tự động | Kết quả thực tế | Đạt |
+|---|---|---|---|---|---|---|
+| MH.1 | Danh mục ngành có sẵn | Vào Danh mục → Ngành đào tạo | Có sẵn 6 ngành mẫu, ngành nào cũng ghi rõ khoa quản lý | Integration — `CourseDocumentTests` | | |
+| MH.2 | Chọn khoa quản lý cho ngành | Sửa một ngành, mở ô Khoa quản lý | Là ô chọn lấy từ danh mục Khoa, không phải ô gõ tay | | | |
+| MH.3 | Danh mục môn học có sẵn | Vào Tài liệu môn học → Gán tài liệu cho môn học | Có sẵn 14 môn mẫu, mỗi môn ghi số tín chỉ và học kỳ | Integration — `CourseDocumentTests` | | |
+| MH.4 | Một môn thuộc nhiều ngành | Mở môn Tin học đại cương | Hiện đủ 6 ngành cùng học môn này | Integration — `CourseDocumentTests` | | |
+| MH.5 | Sửa danh sách ngành của môn | Bấm nút Ngành đào tạo, bỏ một ngành rồi lưu | Lưu được, danh sách ngành ở cột trái đổi theo ngay | Integration — `CourseDocumentTests` | | |
+| MH.6 | Lọc môn theo ngành | Chọn một ngành ở ô lọc | Chỉ còn môn thuộc ngành đó | Integration — `CourseDocumentTests` | | |
+| MH.7 | Lọc môn chưa có tài liệu | Bật nút "Chỉ môn chưa có tài liệu" | Chỉ còn môn chưa được gán tài liệu nào | Integration — `CourseDocumentTests` | | |
+| MH.8 | Tìm và gán tài liệu | Chọn một môn, gõ từ khóa ở ô bên phải rồi Enter, tick vài cuốn, chọn mức độ và bấm Gán tài liệu | Các cuốn đã chọn xuất hiện trong bảng tài liệu của môn với đúng mức độ | Integration — `CourseDocumentTests` | | |
+| MH.9 | Gán lại cuốn đã có | Gán lại một cuốn đang có, chọn mức độ khác | Số dòng không tăng, dòng cũ đổi sang mức độ mới | Integration — `CourseDocumentTests` | | |
+| MH.10 | Sửa mức độ ngay trên dòng | Đổi ô mức độ của một dòng trong bảng | Lưu ngay, không phải bỏ ra gán lại | Integration — `CourseDocumentTests` | | |
+| MH.11 | Bỏ tài liệu khỏi môn | Bấm nút xóa ở một dòng rồi xác nhận | Dòng biến mất, số tài liệu của môn giảm một | Integration — `CourseDocumentTests` | | |
+| MH.12 | Tệp Excel mẫu | Bấm Tải tệp mẫu | Tải về tệp xlsx có sẵn tiêu đề tiếng Việt và dòng hướng dẫn | Integration — `CourseDocumentTests` | | |
+| MH.13 | Kiểm tra thử tệp Excel | Nhập từ Excel một tệp có cả dòng đúng lẫn dòng sai, chọn kiểm tra thử | Bảng kết quả nêu rõ dòng nào hỏng vì lý do gì; chưa ghi gì vào dữ liệu | Integration — `CourseDocumentTests` | | |
+| MH.14 | Nhập thật từ Excel | Nhập lại tệp đó, bỏ chọn kiểm tra thử | Dòng đúng được nhập, dòng hỏng bị bỏ qua kèm lý do, không chặn cả tệp | Integration — `CourseDocumentTests` | | |
+| MH.15 | Đối chiếu tài liệu khi nhập | Trong tệp Excel, ghi mã tài liệu bằng ISBN, bằng số kiểm soát và bằng số ĐKCB | Cả ba cách đều tìm đúng tài liệu | Integration — `CourseDocumentTests` | | |
+| MH.16 | Cột mức độ ghi kiểu khác nhau | Trong tệp Excel, ghi "Giáo trình chính", "giao trinh chinh", "GIÁO TRÌNH" | Cả ba đều hiểu là giáo trình chính | Unit — `CourseRulesTests` | | |
+| MH.17 | Cột mức độ bỏ trống | Trong tệp Excel, để trống cột Mức độ | Hiểu là tài liệu tham khảo bắt buộc | Unit — `CourseRulesTests` | | |
+| MH.18 | Báo cáo môn chưa có tài liệu | Mở Báo cáo tài liệu môn học, thẻ "Môn chưa có tài liệu" | Liệt kê đúng các môn chưa được gán, lọc được theo ngành | Integration — `CourseDocumentTests` | | |
+| MH.19 | Báo cáo tài liệu dùng nhiều môn | Mở thẻ "Tài liệu dùng nhiều môn" | Mỗi dòng ghi số môn đang dùng và số bản còn rảnh; số bản ít hơn số môn thì tô đỏ | Integration — `CourseDocumentTests` | | |
+| MH.20 | Báo cáo đáp ứng theo ngành | Mở thẻ "Đáp ứng theo ngành" | Bảng và biểu đồ cột khớp nhau; tỷ lệ làm tròn một chữ số thập phân | Integration — `CourseDocumentTests` | | |
+| MH.21 | Ngành chưa khai môn học | Xem dòng của một ngành chưa có môn nào | Tỷ lệ đáp ứng là 0%, không báo lỗi chia cho không | Unit — `CourseRulesTests` | | |
+| MH.22 | Xuất báo cáo ra Excel | Bấm Xuất Excel | Tải về tệp xlsx đủ ba phần báo cáo, theo đúng bộ lọc đang đặt | Integration — `CourseDocumentTests` | | |
+| MH.23 | Xuất báo cáo ra PDF | Bấm Xuất PDF | Tải về tệp PDF mở được, tiếng Việt hiển thị đúng dấu | Integration — `CourseDocumentTests` | | |
+| MH.24 | Bạn đọc duyệt theo ngành | Trên trang tra cứu, mở Duyệt theo ngành đào tạo | Mỗi ngành một thẻ kèm số môn học | | | |
+| MH.25 | Bạn đọc xem tài liệu của môn | Chọn một ngành rồi chọn một môn | Hiện tài liệu của môn kèm mức độ và số bản còn rảnh; đầu trang ghi rõ đang ở ngành nào | Integration — `CourseDocumentTests` | | |
+| MH.26 | Bạn đọc chỉ thấy tài liệu đã xuất bản | Gán một biểu ghi còn ở trạng thái nháp cho một môn rồi xem trên trang tra cứu | Biểu ghi nháp không hiện ra | Integration — `CourseDocumentTests` | | |
+| MH.27 | Thao tác bằng bàn phím | Ở cả hai trang, dùng phím Tab tới thẻ ngành hoặc dòng môn học rồi bấm Enter | Mở được mục đang chọn mà không cần chuột | UI — `clickable.test.ts` | | |
+| MH.28 | Gọi API môn học khi chưa đăng nhập | Gọi `/api/courses` không kèm mã đăng nhập | Trả 401 | | | |
+| MH.29 | Tài khoản không đủ quyền | Dùng mã đăng nhập của bạn đọc gọi `/api/courses` và `/api/courses/reports` | Trả 403 ở cả hai, vì hai đường dẫn này đòi quyền `COURSE.COURSE.MANAGE` và `COURSE.REPORT.VIEW` | Integration — `CourseDocumentTests` | | |
+
+---
+
 ## Cách chạy bộ kiểm thử tự động
 
 ```bash
 cd backend
-dotnet test                 # 399 unit test + 304 integration test
+dotnet test                 # 415 unit test + 319 integration test
 ```
 
 Integration test tự khởi tạo một container PostgreSQL 16 và một container MinIO riêng, chạy
@@ -572,7 +608,10 @@ duyệt dùng — không có thành phần nào bị giả lập.
 
 ```bash
 cd frontend-admin
-npm test                    # 107 test giao diện
+npm test                    # 123 test giao diện
+
+cd frontend-opac
+npm test                    # 19 test giao diện trang tra cứu
 ```
 
 ---

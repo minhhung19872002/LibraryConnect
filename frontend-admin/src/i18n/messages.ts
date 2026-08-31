@@ -118,6 +118,8 @@ export const messages = {
     cmsGalleries: 'Thư viện ảnh',
     cmsReviews: 'Nhận xét bạn đọc',
     courses: 'Tài liệu môn học',
+    courseDocuments: 'Gán tài liệu cho môn học',
+    courseReports: 'Báo cáo tài liệu môn học',
     reports: 'Báo cáo thống kê',
   },
 

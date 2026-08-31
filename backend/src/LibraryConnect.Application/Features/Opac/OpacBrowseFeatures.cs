@@ -1,6 +1,7 @@
 using LibraryConnect.Application.Common.Extensions;
 using LibraryConnect.Application.Common.Interfaces;
 using LibraryConnect.Application.Common.Models;
+using LibraryConnect.Application.Features.Courses;
 using LibraryConnect.Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -325,16 +326,6 @@ public class OpacCourseDocumentsQueryHandler
 
         return page;
     }
-}
-
-public static class CourseRelationLabels
-{
-    public static string Describe(CourseRelationType type) => type switch
-    {
-        CourseRelationType.MainTextbook => "Giáo trình chính",
-        CourseRelationType.RequiredReference => "Tài liệu tham khảo bắt buộc",
-        _ => "Tài liệu tham khảo thêm"
-    };
 }
 
 /// <summary>

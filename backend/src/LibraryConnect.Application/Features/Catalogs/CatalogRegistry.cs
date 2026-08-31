@@ -188,6 +188,8 @@ public static class CatalogRegistry
         {
             Fields = new CatalogField[]
             {
+                CatalogFields.Reference<Major>("facultyId", "Khoa quản lý",
+                    e => e.FacultyId, (e, v) => e.FacultyId = v, "faculties"),
                 CatalogFields.Select<Major>("trainingLevel", "Bậc đào tạo",
                     e => e.TrainingLevel, (e, v) => e.TrainingLevel = v,
                     new List<CatalogOption>

@@ -48,6 +48,9 @@ public class CatalogFieldDto
     public bool Required { get; set; }
     public bool ShowInList { get; set; }
     public List<CatalogOptionDto> Options { get; set; } = new();
+
+    /// <summary>Với trường kiểu Reference: mã danh mục cần nạp để dựng ô chọn.</summary>
+    public string? ReferenceCatalog { get; set; }
 }
 
 public record CatalogOptionDto(string Value, string Label);

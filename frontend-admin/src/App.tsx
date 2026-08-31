@@ -55,6 +55,8 @@ import { CmsPagesPage } from '@/modules/cms/PagesPage';
 import { CmsNewsPage } from '@/modules/cms/NewsPage';
 import { CmsGalleriesPage } from '@/modules/cms/GalleriesPage';
 import { CmsReviewsPage } from '@/modules/cms/ReviewsPage';
+import { CourseDocumentsPage } from '@/modules/courses/CourseDocumentsPage';
+import { CourseReportsPage } from '@/modules/courses/CourseReportsPage';
 import { SerialReportsPage } from '@/modules/serials/SerialReportsPage';
 import { CustomIndexPage } from '@/modules/cataloging/CustomIndexPage';
 import { CatalogQueuePage } from '@/modules/cataloging/CatalogQueuePage';
@@ -518,6 +520,24 @@ function AppRoutes() {
           element={
             <RequirePermissionRoute permission={PERMISSIONS.cms.reviewModerate}>
               <CmsReviewsPage />
+            </RequirePermissionRoute>
+          }
+        />
+
+        {/* Phân hệ X — Tài liệu môn học. */}
+        <Route
+          path="/tai-lieu-mon-hoc/gan-tai-lieu"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.course.documentLink}>
+              <CourseDocumentsPage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/tai-lieu-mon-hoc/bao-cao"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.course.reportView}>
+              <CourseReportsPage />
             </RequirePermissionRoute>
           }
         />
