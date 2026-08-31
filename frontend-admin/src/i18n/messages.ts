@@ -68,6 +68,8 @@ export const messages = {
     backups: 'Sao lưu cơ sở dữ liệu',
     catalogs: 'Danh mục',
     cataloging: 'Biên mục',
+    bibRecords: 'Biểu ghi thư mục',
+    bibImport: 'Nhập biểu ghi từ tệp',
     marc: 'Khổ mẫu MARC 21',
     marcFields: 'Định nghĩa trường MARC',
     marcTool: 'Công cụ biểu ghi MARC',

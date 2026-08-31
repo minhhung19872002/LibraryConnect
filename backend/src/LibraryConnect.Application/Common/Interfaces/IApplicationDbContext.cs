@@ -159,4 +159,13 @@ public interface IApplicationDbContext
 
     /// <summary>Escape hatch for the few places that need raw SQL (full-text search, statistics).</summary>
     Microsoft.EntityFrameworkCore.Infrastructure.DatabaseFacade Database { get; }
+
+    /// <summary>
+    /// Needed by the bulk importers, which process thousands of records in one long-lived context.
+    ///
+    /// After a record fails half-way through, the tracker still holds the entities it created; a
+    /// batch importer has to drop them, or the next record in the file inherits the failure. Nothing
+    /// outside the import runners has any business touching this.
+    /// </summary>
+    Microsoft.EntityFrameworkCore.ChangeTracking.ChangeTracker ChangeTracker { get; }
 }

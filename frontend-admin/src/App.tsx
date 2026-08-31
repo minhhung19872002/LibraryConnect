@@ -19,6 +19,10 @@ import { CatalogIndexPage } from '@/modules/catalogs/CatalogIndexPage';
 import { CatalogPage } from '@/modules/catalogs/CatalogPage';
 import { MarcFieldsPage } from '@/modules/marc/MarcFieldsPage';
 import { MarcToolPage } from '@/modules/marc/MarcToolPage';
+import { BibListPage } from '@/modules/cataloging/BibListPage';
+import { BibEditorPage } from '@/modules/cataloging/BibEditorPage';
+import { BibDetailPage } from '@/modules/cataloging/BibDetailPage';
+import { BibImportPage } from '@/modules/cataloging/BibImportPage';
 import { RequirePermissionRoute } from '@/components/PermissionGate';
 import { PERMISSIONS } from '@/api/permissions';
 import { messages } from '@/i18n/messages';
@@ -130,6 +134,48 @@ function AppRoutes() {
             </RequirePermissionRoute>
           }
         />
+        {/* Phân hệ II — Biên mục. */}
+        <Route
+          path="/bien-muc"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.cataloging.bibView}>
+              <BibListPage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/bien-muc/nhap-tep"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.cataloging.bibImport}>
+              <BibImportPage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/bien-muc/moi"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.cataloging.bibCreate}>
+              <BibEditorPage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/bien-muc/:id"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.cataloging.bibView}>
+              <BibDetailPage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/bien-muc/:id/sua"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.cataloging.bibUpdate}>
+              <BibEditorPage />
+            </RequirePermissionRoute>
+          }
+        />
+
         <Route
           path="/marc/cong-cu"
           element={

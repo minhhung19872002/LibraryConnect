@@ -31,6 +31,8 @@ public static class DependencyInjection
         services.AddScoped<Features.Marc.IMarcRuleProvider, Features.Marc.MarcRuleProvider>();
         services.AddScoped<Features.Cataloging.IBibAuthorityLinker, Features.Cataloging.BibAuthorityLinker>();
         services.AddScoped<Features.Cataloging.IBibRecordWriter, Features.Cataloging.BibRecordWriter>();
+        services.AddScoped<Features.Cataloging.IBibDuplicateFinder, Features.Cataloging.BibDuplicateFinder>();
+        services.AddScoped<Features.Cataloging.IBibImportRunner, Features.Cataloging.BibImportRunner>();
 
         return services;
     }

@@ -6,6 +6,7 @@ using LibraryConnect.Application.Common.Models;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Hosting;
+using Testcontainers.Minio;
 using Testcontainers.PostgreSql;
 
 namespace LibraryConnect.IntegrationTests;
@@ -27,6 +28,14 @@ public class LibraryConnectFactory : WebApplicationFactory<Program>, IAsyncLifet
         .WithPassword("libraryconnect")
         .Build();
 
+    // Object storage is where import files and digital documents live, so it is a real container
+    // too: an import that never touches the store would prove nothing about the feature.
+    private readonly MinioContainer _minio = new MinioBuilder()
+        .WithImage("minio/minio:RELEASE.2024-10-13T13-34-11Z")
+        .WithUsername("libraryconnect")
+        .WithPassword("libraryconnect-secret")
+        .Build();
+
     /// <summary>
     /// Mirrors the API's own serialiser settings — notably enums as strings — so a test reads exactly
     /// what a browser or the mobile client would receive.
@@ -44,7 +53,7 @@ public class LibraryConnectFactory : WebApplicationFactory<Program>, IAsyncLifet
 
     public async Task InitializeAsync()
     {
-        await _postgres.StartAsync();
+        await Task.WhenAll(_postgres.StartAsync(), _minio.StartAsync());
 
         // Program.cs reads its configuration while the top-level statements run, which happens before
         // WebApplicationFactory gets a chance to contribute through ConfigureAppConfiguration. The
@@ -55,10 +64,21 @@ public class LibraryConnectFactory : WebApplicationFactory<Program>, IAsyncLifet
         Environment.SetEnvironmentVariable("LC_Jwt__Issuer", "LibraryConnect");
         Environment.SetEnvironmentVariable("LC_Jwt__Audience", "LibraryConnect");
 
-        // The cache, the object store and the job server are not what these tests assert, and leaving
-        // them off keeps the suite runnable on a build agent that only has Docker.
+        // The MinIO container replaces the production object store; the endpoint is the container's
+        // mapped port, and the container runs without TLS.
+        var minio = new Uri(_minio.GetConnectionString());
+        Environment.SetEnvironmentVariable("LC_Minio__Endpoint", $"{minio.Host}:{minio.Port}");
+        Environment.SetEnvironmentVariable("LC_Minio__AccessKey", "libraryconnect");
+        Environment.SetEnvironmentVariable("LC_Minio__SecretKey", "libraryconnect-secret");
+        Environment.SetEnvironmentVariable("LC_Minio__UseSsl", "false");
+
+        // The cache is not what these tests assert, and the in-memory fallback behaves the same way
+        // from the outside.
         Environment.SetEnvironmentVariable("LC_Redis__Enabled", "false");
-        Environment.SetEnvironmentVariable("LC_Hangfire__ServerEnabled", "false");
+
+        // The job server is on: the import feature is a background job, and a test that only checked
+        // the job row was queued would prove nothing about whether records actually arrive.
+        Environment.SetEnvironmentVariable("LC_Hangfire__ServerEnabled", "true");
         Environment.SetEnvironmentVariable("LC_Swagger__Enabled", "false");
         Environment.SetEnvironmentVariable("LC_Database__AutoMigrate", "true");
 
@@ -77,6 +97,7 @@ public class LibraryConnectFactory : WebApplicationFactory<Program>, IAsyncLifet
     {
         await base.DisposeAsync();
         await _postgres.DisposeAsync();
+        await _minio.DisposeAsync();
 
         if (_backupDirectory is not null && Directory.Exists(_backupDirectory))
         {

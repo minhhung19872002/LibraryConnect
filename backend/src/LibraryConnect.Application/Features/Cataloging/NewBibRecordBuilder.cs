@@ -70,6 +70,13 @@ public class GetNewBibRecordQueryHandler : IRequestHandler<GetNewBibRecordQuery,
 
         EnsureTitleField(record);
 
+        // Fields added by the default-value rules land at the end; a cataloguer reads the record top
+        // to bottom and expects 040 above 245. The sort is stable, so repeated fields keep the order
+        // the template put them in.
+        record.DataFields = record.DataFields
+            .OrderBy(field => field.Tag, StringComparer.Ordinal)
+            .ToList();
+
         return new NewBibRecordDto
         {
             MarcJson = MarcJson.Serialize(record),
@@ -88,14 +95,24 @@ public class GetNewBibRecordQueryHandler : IRequestHandler<GetNewBibRecordQuery,
                 .FirstOrDefaultAsync(template => template.Id == query.TemplateId, ct);
         }
 
-        // Without an explicit choice: the default template of this document type, else the general
-        // default, else no template at all.
-        return await _db.MarcTemplates.AsNoTracking()
-                   .Where(template => template.IsActive && template.IsDefault)
-                   .OrderByDescending(template => template.DocumentTypeId == query.DocumentTypeId)
-                   .FirstOrDefaultAsync(
-                       template => template.DocumentTypeId == query.DocumentTypeId || template.DocumentTypeId == null,
-                       ct);
+        var candidates = _db.MarcTemplates.AsNoTracking()
+            .Where(template => template.IsActive && template.IsDefault);
+
+        if (query.DocumentTypeId is null)
+        {
+            // No document type chosen yet: hand back the library's default template rather than an
+            // empty skeleton, so a cataloguer who just wants to start typing sees the usual fields.
+            return await candidates
+                .OrderBy(template => template.DocumentTypeId == null ? 0 : 1)
+                .ThenBy(template => template.Name)
+                .FirstOrDefaultAsync(ct);
+        }
+
+        // With one chosen: its own default template, else the general one, else no template.
+        return await candidates
+            .Where(template => template.DocumentTypeId == query.DocumentTypeId || template.DocumentTypeId == null)
+            .OrderByDescending(template => template.DocumentTypeId == query.DocumentTypeId)
+            .FirstOrDefaultAsync(ct);
     }
 
     /// <summary>
@@ -312,13 +329,10 @@ public class GetNewBibRecordQueryHandler : IRequestHandler<GetNewBibRecordQuery,
     /// <summary>Mọi biểu ghi đều phải có trường 245, nên trình soạn thảo luôn mở sẵn nó.</summary>
     private static void EnsureTitleField(MarcRecord record)
     {
-        if (record.GetField("245") is not null)
+        if (record.GetField("245") is null)
         {
-            return;
+            record.AddField("245", '1', '0').AddSubfield('a', string.Empty);
         }
-
-        record.AddField("245", '1', '0').AddSubfield('a', string.Empty);
-        record.DataFields.Sort((left, right) => string.CompareOrdinal(left.Tag, right.Tag));
     }
 
     /// <summary>Hình dạng một trường trong JSON của mẫu biên mục.</summary>

@@ -1,0 +1,405 @@
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import {
+  App,
+  Button,
+  Card,
+  Col,
+  Input,
+  Row,
+  Select,
+  Space,
+  Spin,
+  Tag,
+  Tooltip,
+  Typography,
+} from 'antd';
+import { ArrowLeftOutlined, SafetyCertificateOutlined, SaveOutlined } from '@ant-design/icons';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { PageHeader } from '@/components/PageHeader';
+import { errorMessage } from '@/api/formErrors';
+import { ApiRequestError } from '@/api/client';
+import { MarcEditor, MarcValidationSummary } from '@/modules/marc/MarcEditor';
+import { marcApi } from '@/modules/marc/api';
+import { formatRecordAsText } from '@/modules/marc/marcRecord';
+import type { MarcRecord, MarcValidationResult } from '@/modules/marc/types';
+import { catalogingApi, parseMarc } from './api';
+import { useCatalogOptions, toOptions } from './useCatalogOptions';
+import { RECORD_STATUS_LABELS, type RecordStatus } from './types';
+
+const MONOSPACE = { fontFamily: 'ui-monospace, Consolas, monospace' } as const;
+
+/**
+ * Soạn biểu ghi thư mục (II.2, II.3).
+ *
+ * The MARC editor is the whole screen because that is what cataloguing is; the few things that are
+ * not part of the record — document type, collections, publication status — sit in a narrow column
+ * beside it rather than above, so the record stays in view while they are set.
+ *
+ * Ctrl+S saves, which is how cataloguers work: they type a record, save, and start the next one
+ * without reaching for the mouse.
+ */
+export function BibEditorPage() {
+  const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { message } = App.useApp();
+  const queryClient = useQueryClient();
+
+  const isEdit = Boolean(id);
+
+  const [record, setRecord] = useState<MarcRecord | null>(null);
+  const [documentTypeId, setDocumentTypeId] = useState<string | undefined>(
+    searchParams.get('documentTypeId') ?? undefined,
+  );
+  const [templateId, setTemplateId] = useState<string | undefined>();
+  const [collectionIds, setCollectionIds] = useState<string[]>([]);
+  const [status, setStatus] = useState<RecordStatus>('Published');
+  const [changeNote, setChangeNote] = useState('');
+  const [validation, setValidation] = useState<MarcValidationResult | null>(null);
+  const [templateName, setTemplateName] = useState<string | null>(null);
+
+  const documentTypes = useCatalogOptions('document-types');
+  const collections = useCatalogOptions('collections');
+
+  const definitions = useQuery({
+    queryKey: ['marc-fields', '', false],
+    queryFn: () => marcApi.getFields(),
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const templates = useQuery({
+    queryKey: ['marc-templates', documentTypeId],
+    queryFn: () => catalogingApi.templates(documentTypeId),
+    enabled: !isEdit,
+  });
+
+  const existing = useQuery({
+    queryKey: ['bib-record', id],
+    queryFn: () => catalogingApi.get(id!),
+    enabled: isEdit,
+  });
+
+  // Rebuilding the skeleton after the cataloguer has started typing would throw their work away,
+  // so it is only fetched while the chooser is still open.
+  const [started, setStarted] = useState(isEdit);
+
+  const blank = useQuery({
+    queryKey: ['bib-blank', documentTypeId, templateId],
+    queryFn: () => catalogingApi.blank(documentTypeId, templateId),
+    enabled: !isEdit && !started,
+  });
+
+  useEffect(() => {
+    if (isEdit && existing.data) {
+      setRecord(parseMarc(existing.data.marcJson));
+      setDocumentTypeId(existing.data.documentTypeId ?? undefined);
+      setCollectionIds(existing.data.collectionIds);
+      setStatus(existing.data.status);
+    }
+  }, [isEdit, existing.data]);
+
+  useEffect(() => {
+    if (!isEdit && blank.data) {
+      setRecord(parseMarc(blank.data.marcJson));
+      setTemplateName(blank.data.templateName ?? null);
+    }
+  }, [isEdit, blank.data]);
+
+  const save = useMutation({
+    mutationFn: async () => {
+      const payload = {
+        marcJson: JSON.stringify(record),
+        documentTypeId: documentTypeId ?? null,
+        collectionIds,
+        status,
+        changeNote: changeNote.trim() || null,
+      };
+
+      return isEdit ? catalogingApi.update(id!, payload) : catalogingApi.create(payload);
+    },
+    onSuccess: async (result) => {
+      message.success(
+        isEdit ? 'Đã cập nhật biểu ghi.' : `Đã lưu biểu ghi ${result.controlNumber}.`,
+      );
+
+      await queryClient.invalidateQueries({ queryKey: ['bib-records'] });
+      await queryClient.invalidateQueries({ queryKey: ['bib-record', result.id] });
+
+      navigate(`/bien-muc/${result.id}`);
+    },
+    onError: (error: unknown) => {
+      if (error instanceof ApiRequestError && error.errors.length > 0) {
+        // The server returns one error per MARC field, so they are shown the same way the editor
+        // shows its own validation instead of being flattened into a single toast.
+        setValidation({
+          isValid: false,
+          errorCount: error.errors.length,
+          warningCount: 0,
+          issues: error.errors.map((item) => ({
+            severity: 'Error' as const,
+            message: item.message,
+            tag: item.field,
+          })),
+        });
+      }
+
+      message.error(errorMessage(error));
+    },
+  });
+
+  const validate = useMutation({
+    mutationFn: () => marcApi.validate(record!),
+    onSuccess: (result) => {
+      setValidation(result);
+
+      if (result.isValid && result.warningCount === 0) {
+        message.success('Biểu ghi hợp lệ.');
+      }
+    },
+    onError: (error: unknown) => message.error(errorMessage(error)),
+  });
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
+        event.preventDefault();
+
+        if (record && !save.isPending) {
+          save.mutate();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [record, save]);
+
+  const preview = useMemo(() => (record ? formatRecordAsText(record) : ''), [record]);
+
+  if ((isEdit && existing.isLoading) || (!isEdit && blank.isLoading) || !record) {
+    return (
+      <Card>
+        <Spin tip="Đang tải biểu ghi...">
+          <div style={{ height: 120 }} />
+        </Spin>
+      </Card>
+    );
+  }
+
+  if (!started) {
+    return (
+      <Space direction="vertical" size={16} style={{ width: '100%' }}>
+        <PageHeader
+          title="Biên mục mới"
+          description="Chọn dạng tài liệu và mẫu biên mục trước, vì đó là thứ quyết định khung biểu ghi."
+        />
+
+        <Card style={{ maxWidth: 640 }}>
+          <Space direction="vertical" size={16} style={{ width: '100%' }}>
+            <div>
+              <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                Dạng tài liệu
+              </Typography.Text>
+              <Select
+                value={documentTypeId}
+                onChange={(value) => {
+                  setDocumentTypeId(value);
+                  setTemplateId(undefined);
+                }}
+                options={toOptions(documentTypes.data)}
+                placeholder="Chọn dạng tài liệu"
+                allowClear
+                showSearch
+                optionFilterProp="label"
+                style={{ width: '100%' }}
+              />
+            </div>
+
+            <div>
+              <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                Mẫu biên mục
+              </Typography.Text>
+              <Select
+                value={templateId}
+                onChange={setTemplateId}
+                options={(templates.data ?? []).map((template) => ({
+                  value: template.id,
+                  label: `${template.name}${template.isDefault ? ' (mặc định)' : ''} \u2014 ${template.fieldCount} trường`,
+                }))}
+                placeholder="Dùng mẫu mặc định"
+                allowClear
+                style={{ width: '100%' }}
+              />
+            </div>
+
+            <Typography.Text type="secondary">
+              {templateName
+                ? `Khung biểu ghi lấy từ mẫu "${templateName}", các trường có giá trị ngầm định được điền sẵn.`
+                : 'Chưa có mẫu biên mục nào phù hợp; khung biểu ghi sẽ chỉ gồm các trường bắt buộc.'}
+            </Typography.Text>
+
+            <Space>
+              <Button onClick={() => navigate('/bien-muc')}>Hủy</Button>
+              <Button type="primary" onClick={() => setStarted(true)}>
+                Bắt đầu biên mục
+              </Button>
+            </Space>
+          </Space>
+        </Card>
+      </Space>
+    );
+  }
+
+  return (
+    <Space direction="vertical" size={16} style={{ width: '100%' }}>
+      <PageHeader
+        title={isEdit ? `Sửa biểu ghi ${existing.data?.controlNumber ?? ''}` : 'Biên mục mới'}
+        description={
+          isEdit
+            ? 'Phiên bản trước được lưu lại trước khi ghi đè, có thể xem so sánh và khôi phục.'
+            : templateName
+              ? `Khung biểu ghi lấy từ mẫu "${templateName}", các trường có giá trị ngầm định đã được điền sẵn.`
+              : 'Chưa có mẫu biên mục cho dạng tài liệu này nên khung biểu ghi để trống.'
+        }
+        actions={
+          <Space wrap>
+            <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/bien-muc')}>
+              Về danh sách
+            </Button>
+            <Button
+              icon={<SafetyCertificateOutlined />}
+              loading={validate.isPending}
+              onClick={() => validate.mutate()}
+            >
+              Kiểm tra
+            </Button>
+            <Tooltip title="Ctrl + S">
+              <Button
+                type="primary"
+                icon={<SaveOutlined />}
+                loading={save.isPending}
+                onClick={() => save.mutate()}
+              >
+                Lưu biểu ghi
+              </Button>
+            </Tooltip>
+          </Space>
+        }
+      />
+
+      {validation && <MarcValidationSummary issues={validation.issues} isValid={validation.isValid} />}
+
+      <Row gutter={16}>
+        <Col xs={24} xl={18}>
+          <MarcEditor
+            record={record}
+            onChange={(next) => {
+              setRecord(next);
+              setValidation(null);
+            }}
+            definitions={definitions.data ?? []}
+            issues={validation?.issues ?? []}
+          />
+        </Col>
+
+        <Col xs={24} xl={6}>
+          <Space direction="vertical" size={12} style={{ width: '100%' }}>
+            <Card size="small" title="Thông tin quản lý">
+              <Space direction="vertical" size={10} style={{ width: '100%' }}>
+                <div>
+                  <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                    Dạng tài liệu
+                  </Typography.Text>
+                  {/* Only a property of the record now: the skeleton has already been built. */}
+                  <Select
+                    value={documentTypeId}
+                    onChange={setDocumentTypeId}
+                    options={toOptions(documentTypes.data)}
+                    placeholder="Chọn dạng tài liệu"
+                    allowClear
+                    showSearch
+                    optionFilterProp="label"
+                    style={{ width: '100%' }}
+                  />
+                </div>
+
+                <div>
+                  <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                    Bộ sưu tập
+                  </Typography.Text>
+                  <Select
+                    mode="multiple"
+                    value={collectionIds}
+                    onChange={setCollectionIds}
+                    options={toOptions(collections.data)}
+                    placeholder="Không thuộc bộ sưu tập nào"
+                    style={{ width: '100%' }}
+                    showSearch
+                    optionFilterProp="label"
+                  />
+                </div>
+
+                <div>
+                  <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                    Trạng thái biểu ghi
+                  </Typography.Text>
+                  <Select<RecordStatus>
+                    value={status}
+                    onChange={setStatus}
+                    options={Object.entries(RECORD_STATUS_LABELS).map(([value, label]) => ({
+                      value: value as RecordStatus,
+                      label,
+                    }))}
+                    style={{ width: '100%' }}
+                  />
+                </div>
+
+                {isEdit && (
+                  <div>
+                    <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                      Ghi chú thay đổi
+                    </Typography.Text>
+                    <Input.TextArea
+                      rows={2}
+                      value={changeNote}
+                      onChange={(event) => setChangeNote(event.target.value)}
+                      placeholder="Ghi lại vì sao sửa, để người sau đọc lịch sử hiểu được"
+                      maxLength={500}
+                    />
+                  </div>
+                )}
+              </Space>
+            </Card>
+
+            {isEdit && existing.data && (
+              <Card size="small" title="Biểu ghi này">
+                <Space direction="vertical" size={4} style={{ width: '100%' }}>
+                  <Typography.Text style={MONOSPACE}>{existing.data.controlNumber}</Typography.Text>
+                  <Space size={4} wrap>
+                    <Tag>{existing.data.itemCount} bản</Tag>
+                    <Tag>{existing.data.versionCount} phiên bản</Tag>
+                    {existing.data.loanCount > 0 && <Tag>{existing.data.loanCount} lượt mượn</Tag>}
+                  </Space>
+                  {existing.data.createdByName && (
+                    <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                      Người tạo: {existing.data.createdByName}
+                    </Typography.Text>
+                  )}
+                </Space>
+              </Card>
+            )}
+
+            <Card size="small" title="Biểu ghi ở dạng văn bản">
+              <Typography.Paragraph
+                style={{ ...MONOSPACE, whiteSpace: 'pre-wrap', fontSize: 12, marginBottom: 0 }}
+              >
+                {preview}
+              </Typography.Paragraph>
+            </Card>
+          </Space>
+        </Col>
+      </Row>
+    </Space>
+  );
+}

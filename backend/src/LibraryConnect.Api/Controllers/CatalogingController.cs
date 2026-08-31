@@ -269,6 +269,141 @@ public class CatalogingController : ApiControllerBase
         await Mediator.Send(new DeleteMarcTemplateCommand(id), ct);
         return Ok(Success<object?>(null, "Đã xóa mẫu biên mục."));
     }
+
+    // ---------------------------------------------------------------
+    // Nhập và xuất biểu ghi (II.6)
+    // ---------------------------------------------------------------
+
+    /// <summary>
+    /// Bước xem trước: đọc tệp .mrc hoặc .xml, kiểm tra từng biểu ghi và đối chiếu trùng với biểu ghi
+    /// đã có. Không ghi gì vào cơ sở dữ liệu.
+    /// </summary>
+    [HttpPost("import/preview")]
+    [RequirePermission(PermissionCodes.CatalogBibImport)]
+    [ProducesResponseType(typeof(ApiResponse<BibImportPreviewDto>), StatusCodes.Status200OK)]
+    [RequestSizeLimit(100 * 1024 * 1024)]
+    public async Task<ActionResult<ApiResponse<BibImportPreviewDto>>> PreviewImport(
+        IFormFile file, [FromQuery] DuplicateMatchBy matchBy, CancellationToken ct)
+    {
+        if (file is null || file.Length == 0)
+        {
+            return BadRequest(ApiResponse.Fail("Vui lòng chọn tệp biểu ghi cần nhập."));
+        }
+
+        var content = await ReadAllAsync(file, ct);
+        var result = await Mediator.Send(new PreviewBibImportCommand(content, file.FileName, matchBy), ct);
+
+        var message = result.DuplicateCount == 0
+            ? $"Đọc được {result.TotalRecords} biểu ghi, không có biểu ghi nào trùng."
+            : $"Đọc được {result.TotalRecords} biểu ghi, {result.DuplicateCount} biểu ghi trùng với dữ liệu đã có.";
+
+        return Ok(Success(result, message));
+    }
+
+    /// <summary>
+    /// Bắt đầu nhập thật. Tác vụ chạy nền; dùng mã trả về để theo dõi tiến độ.
+    /// </summary>
+    [HttpPost("import")]
+    [RequirePermission(PermissionCodes.CatalogBibImport)]
+    [ProducesResponseType(typeof(ApiResponse<Guid>), StatusCodes.Status200OK)]
+    [RequestSizeLimit(100 * 1024 * 1024)]
+    public async Task<ActionResult<ApiResponse<Guid>>> StartImport(
+        IFormFile file, [FromForm] string options, CancellationToken ct)
+    {
+        if (file is null || file.Length == 0)
+        {
+            return BadRequest(ApiResponse.Fail("Vui lòng chọn tệp biểu ghi cần nhập."));
+        }
+
+        BibImportOptions parsed;
+
+        try
+        {
+            parsed = System.Text.Json.JsonSerializer.Deserialize<BibImportOptions>(
+                         string.IsNullOrWhiteSpace(options) ? "{}" : options,
+                         ImportOptionsJson)
+                     ?? new BibImportOptions();
+        }
+        catch (System.Text.Json.JsonException exception)
+        {
+            return BadRequest(ApiResponse.Fail($"Tùy chọn nhập dữ liệu không đọc được: {exception.Message}"));
+        }
+
+        var content = await ReadAllAsync(file, ct);
+        var jobId = await Mediator.Send(new StartBibImportCommand(content, file.FileName, parsed), ct);
+
+        return Ok(Success(jobId, "Đã bắt đầu nhập dữ liệu. Tiến độ hiển thị bên dưới."));
+    }
+
+    /// <summary>Danh sách tác vụ nhập và xuất gần đây.</summary>
+    [HttpGet("import/jobs")]
+    [RequirePermission(PermissionCodes.CatalogBibImport)]
+    [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<ImportJobDto>>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<IReadOnlyList<ImportJobDto>>>> GetImportJobs(
+        [FromQuery] int take, CancellationToken ct)
+    {
+        var result = await Mediator.Send(new GetImportJobsQuery(take <= 0 ? 30 : take), ct);
+        return Ok(Success(result));
+    }
+
+    /// <summary>Tiến độ và kết quả của một tác vụ nhập.</summary>
+    [HttpGet("import/jobs/{jobId:guid}")]
+    [RequirePermission(PermissionCodes.CatalogBibImport)]
+    [ProducesResponseType(typeof(ApiResponse<ImportJobDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<ImportJobDto>>> GetImportJob(Guid jobId, CancellationToken ct)
+    {
+        var result = await Mediator.Send(new GetImportJobQuery(jobId), ct);
+        return Ok(Success(result));
+    }
+
+    /// <summary>
+    /// Xuất biểu ghi ra tệp trao đổi: theo danh sách đã tick chọn, hoặc theo đúng bộ lọc đang dùng
+    /// trên màn hình danh sách.
+    /// </summary>
+    [HttpPost("export")]
+    [RequirePermission(PermissionCodes.CatalogBibExport)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> Export([FromBody] ExportBibsRequest request, CancellationToken ct)
+    {
+        var file = await Mediator.Send(
+            new ExportBibRecordsCommand(request.Filter ?? new BibListRequest(), request.Ids, request.Format), ct);
+
+        return File(file.Content, file.ContentType, file.FileName);
+    }
+
+    /// <summary>
+    /// Tùy chọn nhập đi kèm tệp trong một biểu mẫu multipart nên phải tự đọc từ chuỗi JSON.
+    /// Cấu hình phải khớp với cấu hình chung của API, nhất là việc đọc enum theo tên.
+    /// </summary>
+    private static readonly System.Text.Json.JsonSerializerOptions ImportOptionsJson = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
+    };
+
+    private static async Task<byte[]> ReadAllAsync(IFormFile file, CancellationToken ct)
+    {
+        using var buffer = new MemoryStream();
+
+        await using (var stream = file.OpenReadStream())
+        {
+            await stream.CopyToAsync(buffer, ct);
+        }
+
+        return buffer.ToArray();
+    }
+}
+
+/// <summary>Yêu cầu xuất biểu ghi: hoặc danh sách đã chọn, hoặc bộ lọc đang dùng.</summary>
+public class ExportBibsRequest
+{
+    /// <summary>Danh sách biểu ghi đã tick chọn. Bỏ trống thì xuất theo bộ lọc.</summary>
+    public List<Guid> Ids { get; set; } = new();
+
+    public BibListRequest? Filter { get; set; }
+
+    /// <summary>iso2709 hoặc marcxml.</summary>
+    public string Format { get; set; } = "iso2709";
 }
 
 /// <summary>Lý do xóa, bắt buộc nhập khi xóa biểu ghi hoặc đăng ký cá biệt.</summary>
