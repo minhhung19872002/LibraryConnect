@@ -109,7 +109,7 @@ Không sửa migration đã commit — luôn tạo migration mới.
 ### Kiểm thử
 
 ```bash
-cd backend && dotnet test          # 132 unit test + 45 integration test
+cd backend && dotnet test          # 179 unit test + 96 integration test
 cd frontend-admin && npm test      # 44 test giao diện
 ```
 
@@ -158,8 +158,8 @@ vào mà không phải sửa lại — xem `mobile/README.md`.
 | 2 | Phân hệ I — Quản trị hệ thống (nhóm quyền, người dùng, tham số, nhật ký, sao lưu/phục hồi) | ✅ Hoàn thành |
 | 3 | Danh mục nghiệp vụ (20 danh mục dùng chung một màn hình, nhập/xuất Excel, gộp trùng) | ✅ Hoàn thành |
 | 4 | MARC Core: mô hình MARC 21, đọc/ghi ISO 2709 và MARCXML, bộ định nghĩa 220 trường, trình soạn MARC | ✅ Hoàn thành |
-| 5 | Phân hệ II — Biên mục | 🔄 Đang thực hiện |
-| 6 | Phân hệ III — Bổ sung & Kho | ⏳ |
+| 5 | Phân hệ II — Biên mục (trình soạn MARC, ĐKCB, lịch sử phiên bản, hàng đợi, nhập/xuất ISO 2709 và Excel, danh mục tự tạo, in phích) | ✅ Hoàn thành |
+| 6 | Phân hệ III — Bổ sung & Kho | 🔄 Đang thực hiện |
 | 7 | Phân hệ IV — Ấn phẩm định kỳ | ⏳ |
 | 8 | Phân hệ VI — Bạn đọc | ⏳ |
 | 9 | Phân hệ VII — Lưu thông | ⏳ |

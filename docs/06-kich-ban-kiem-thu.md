@@ -120,23 +120,6 @@ Ký hiệu bám theo **Mục 5 phần 2 của E-HSMT**.
 
 ---
 
-## Cách chạy bộ kiểm thử tự động
-
-```bash
-cd backend
-dotnet test                 # 132 unit test + 45 integration test
-```
-
-Integration test tự khởi tạo một container PostgreSQL 16 riêng, chạy migration, nạp dữ liệu nền và
-gọi API qua đúng giao diện HTTP mà trình duyệt dùng — không có thành phần nào bị giả lập.
-
-```bash
-cd frontend-admin
-npm test                    # 44 test giao diện
-```
-
----
-
 ## Nhóm chức năng — Khổ mẫu MARC 21 và trao đổi biểu ghi (mục 2.4)
 
 | Mã | Chức năng | Bước thực hiện | Kết quả mong đợi | Tự động | Kết quả thực tế | Đạt |
@@ -169,12 +152,80 @@ npm test                    # 44 test giao diện
 
 ---
 
+## Nhóm chức năng — Phân hệ II: Biên mục
+
+| Mã | Chức năng | Bước thực hiện | Kết quả mong đợi | Tự động | Kết quả thực tế | Đạt |
+|---|---|---|---|---|---|---|
+| BM.1 | Giá trị ngầm định cho trường MARC (II.1) | Biên mục → Cấu hình biên mục → Giá trị ngầm định | Có sẵn 7 giá trị; ba giá trị lấy từ tham số hệ thống (nguồn biên mục, ngôn ngữ, mã nước) | Integration — `CatalogingTests` | | |
+| BM.2 | Đổi tham số thì biểu ghi mới đổi theo | Sửa tham số CATALOG.MARC_040A rồi tạo biểu ghi mới | Trường 040$a của biểu ghi mới mang giá trị vừa sửa, không phải sửa ở hai nơi | | | |
+| BM.3 | Mẫu biên mục theo dạng tài liệu (II.5) | Biên mục → Cấu hình biên mục → Mẫu biên mục | Có sẵn 3 mẫu: sách, luận văn, bài trích; mẫu sách là mặc định | Integration — `CatalogingTests` | | |
+| BM.4 | Khung biểu ghi mới | Biên mục mới → chọn dạng tài liệu Sách → Bắt đầu biên mục | Khung có đủ trường của mẫu, sắp theo thứ tự nhãn trường; trường 008 đúng 40 ký tự với mã ngôn ngữ ở vị trí 35–37 và mã nước ở 15–17 | Integration — `CatalogingTests` | | |
+| BM.5 | **Thêm mới ấn phẩm (II.2)** | Nhập nhan đề, tác giả, xuất bản, mô tả vật lý, ISBN, DDC, chủ đề rồi bấm Lưu (hoặc Ctrl+S) | Lưu được, hệ thống cấp số kiểm soát tự động, hiện thông báo kèm số kiểm soát | Integration — `CatalogingTests` | | |
+| BM.6 | Rút dữ liệu tra cứu từ MARC | Mở biểu ghi vừa lưu | Nhan đề, tác giả, NXB, năm, ISBN đã chuẩn hóa, DDC, chủ đề, từ khóa đều đúng; dấu câu ISBD không lọt vào cột hiển thị | Integration — `CatalogingTests`; Unit — `MarcProjectionTests` | | |
+| BM.7 | Tự tạo giá trị danh mục khi biên mục | Sau BM.5, vào Danh mục → Tác giả | Tác giả vừa nhập đã có trong danh mục, không phải tạo trước | Integration — `CatalogingTests` | | |
+| BM.8 | Không sinh tác giả trùng do cách viết | Lưu một biểu ghi khác với tác giả viết hoa toàn bộ | Vẫn chỉ một bản ghi tác giả trong danh mục | Integration — `CatalogingTests` | | |
+| BM.9 | Chỉ số phân loại vào đúng nhánh | Lưu biểu ghi có DDC 005.74, rồi xem cây Khung phân loại | DDC vẫn 10 lớp chính; 005.74 nằm dưới lớp 000 chứ không thành lớp thứ 11 | Integration — `CatalogingTests` | | |
+| BM.10 | Chặn lưu biểu ghi thiếu trường bắt buộc | Xóa trường 245 rồi bấm Lưu | Bị từ chối, lỗi hiện ngay dưới trường 245 | Integration — `CatalogingTests` | | |
+| BM.11 | Xem chi tiết bốn tab (II.3) | Mở một biểu ghi | Bốn tab: Thông tin thư mục (mô tả ISBD theo vùng), MARC thô, Đăng ký cá biệt, Lịch sử | | | |
+| BM.12 | **Lịch sử phiên bản và khôi phục (II.3)** | Sửa nhan đề, lưu kèm ghi chú, mở tab Lịch sử, chọn phiên bản, xem khác biệt rồi bấm Khôi phục | Phiên bản trước còn nguyên kèm người sửa và ghi chú; bảng khác biệt chỉ đúng trường đã đổi; khôi phục đưa nhan đề về như cũ | Integration — `CatalogingTests` | | |
+| BM.13 | **Đăng ký cá biệt (II.2)** | Tab Đăng ký cá biệt → Thêm bản sách → số bản 3, chọn kho | Tạo 3 bản, mã vạch và số ĐKCB liền nhau, ký hiệu xếp giá sinh theo quy tắc (ví dụ 005.74 NGU) | Integration — `CatalogingTests` | | |
+| BM.14 | Chặn xóa biểu ghi còn ĐKCB | Bấm Xóa biểu ghi đang có bản sách | Bị từ chối kèm số bản còn lại | Integration — `CatalogingTests` | | |
+| BM.15 | Xóa biểu ghi bắt buộc nhập lý do | Xóa biểu ghi không còn bản sách, để trống ô lý do | Bị từ chối; nhập lý do thì xóa được và biểu ghi biến mất khỏi danh sách | Integration — `CatalogingTests` | | |
+| BM.16 | **Tra cứu tiếng Việt không dấu** | Gõ "giao trinh co so du lieu" và "NGUYEN VAN ANH" vào ô tìm kiếm | Cả hai đều ra kết quả đúng | Integration — `CatalogingTests` | | |
+| BM.17 | Hàng đợi biên mục — chờ xử lý (II.4) | Đưa một biểu ghi vào hàng đợi | Việc nằm ở cột "Chờ xử lý", chưa phân công cho ai | Integration — `CatalogQueueTests` | | |
+| BM.18 | Phân công và đặt hạn xử lý | Chọn việc → Phân công → chọn cán bộ, ưu tiên 1, hạn 7 ngày | Việc chuyển sang cột "Đang biên mục", hiện tên cán bộ và hạn | Integration — `CatalogQueueTests` | | |
+| BM.19 | Quy trình duyệt và trả lại | Nhận việc → Gửi duyệt → Trả lại (bỏ trống lý do) → Trả lại kèm lý do | Trả lại không có lý do bị từ chối; có lý do thì việc sang cột "Bị trả lại" và hiện lý do cho cán bộ biên mục | Integration — `CatalogQueueTests` | | |
+| BM.20 | Thống kê năng suất biên mục | Hoàn thành một việc rồi xem bảng Năng suất | Hiện số việc được giao, hoàn thành, bị trả lại và thời gian trung bình theo từng cán bộ | Integration — `CatalogQueueTests` | | |
+| BM.21 | **Nhập ISO 2709 — xem trước (II.6)** | Nhập biểu ghi từ tệp → chọn tệp .mrc | Hiện định dạng, số biểu ghi, biểu ghi nào trùng dữ liệu đã có; chưa ghi gì vào CSDL | Integration — `BibImportTests` | | |
+| BM.22 | Nhập ISO 2709 — chạy thật | Chọn xử lý trùng "Bỏ qua" rồi bấm Bắt đầu nhập | Thanh tiến trình chạy, kết thúc báo số thành công / bỏ qua / lỗi | Integration — `BibImportTests` | | |
+| BM.23 | Nhập lại đúng tệp đó | Nhập lại tệp vừa nhập với cùng tùy chọn | Toàn bộ bị bỏ qua vì trùng — kho không bị nhân đôi | Integration — `BibImportTests` | | |
+| BM.24 | Xử lý trùng bằng ghi đè | Sửa nhan đề trong tệp rồi nhập với tùy chọn "Ghi đè" | Biểu ghi được cập nhật; bản trước khi ghi đè vẫn còn trong lịch sử phiên bản | Integration — `BibImportTests` | | |
+| BM.25 | Xử lý trùng bằng gộp | Nhập tệp có thêm trường 500 và nhan đề khác, chọn "Gộp" | Nhan đề tại chỗ giữ nguyên; trường 500 mà biểu ghi chưa có được bổ sung | Integration — `BibImportTests` | | |
+| BM.26 | Nhật ký lỗi từng dòng | Nhập tệp có một biểu ghi thiếu nhan đề | Các biểu ghi lành vẫn vào; biểu ghi hỏng báo riêng kèm số thứ tự và lý do | Integration — `BibImportTests` | | |
+| BM.27 | Nhập tệp MARCXML | Nhập một tệp .xml theo MARC21slim | Nhập được như tệp .mrc | Integration — `BibImportTests` | | |
+| BM.28 | **Xuất ISO 2709 theo bộ lọc** | Lọc danh sách rồi bấm "Xuất theo bộ lọc (.mrc)" | Tải về tệp .mrc; đọc lại được đúng các biểu ghi đã lọc | Integration — `BibImportTests` | | |
+| BM.29 | Xuất biểu ghi đã tick chọn | Tick vài dòng rồi bấm xuất | Nút đổi thành "Xuất N biểu ghi", tệp chỉ chứa những biểu ghi đã chọn | | | |
+| BM.30 | **Nhập Excel — tệp mẫu (II.8)** | Nhập biểu ghi từ Excel → Tải tệp mẫu | Tệp có tiêu đề tiếng Việt và một sheet hướng dẫn giải thích từng cột | Integration — `ExcelImportTests` | | |
+| BM.31 | Nhập Excel — đoán ánh xạ | Tải lên tệp làm theo mẫu | Hệ thống đoán sẵn ánh xạ cột sang trường MARC, cán bộ chỉ sửa chỗ sai | Integration — `ExcelImportTests` | | |
+| BM.32 | Nhập Excel — một ô nhiều giá trị | Ô đề mục chủ đề ghi "Cơ sở dữ liệu; Tin học; Lập trình", đặt ký tự tách là dấu chấm phẩy | Biểu ghi nhập vào có ba trường 650 riêng | Integration — `ExcelImportTests` | | |
+| BM.33 | Nhập Excel — báo lỗi theo dòng | Để trống ô nhan đề ở một dòng | Dòng đó báo lỗi kèm đúng số dòng trong bảng tính; các dòng khác vẫn nhập | Integration — `ExcelImportTests` | | |
+| BM.34 | Nhập Excel — lưu hồ sơ ánh xạ | Ánh xạ xong bấm "Lưu hồ sơ ánh xạ" | Lần sau nhận tệp cùng khuôn, chọn lại hồ sơ là xong | Integration — `ExcelImportTests` | | |
+| BM.35 | **Danh mục tự tạo (II.9)** | Danh mục tự tạo → Khai báo "Nơi xuất bản" từ 260$a → Quét | Rút được các giá trị duy nhất kèm số biểu ghi dùng mỗi giá trị | Integration — `CustomIndexTests` | | |
+| BM.36 | Danh mục tự tạo — dùng làm bộ lọc | Bấm vào số biểu ghi của một giá trị | Danh sách biểu ghi lọc đúng theo giá trị đó | Integration — `CustomIndexTests` | | |
+| BM.37 | Danh mục tự tạo — gộp và giữ kết quả gộp | Gộp "TP. HCM" vào "TP. Hồ Chí Minh" rồi bấm Quét lại | Sau khi quét lại, cách viết đã gộp không bị tạo lại; số biểu ghi cộng dồn đúng | Integration — `CustomIndexTests` | | |
+| BM.38 | **Mẫu phích kéo thả (II.10)** | Mẫu phích và in phích → Thêm mẫu phích | Khung vẽ đúng tỷ lệ khổ phích, các ô kéo thả được, mỗi ô chọn nguồn nội dung | Integration — `CardPrintTests` | | |
+| BM.39 | Chặn ô nằm ngoài khổ phích | Kéo một ô vượt ra ngoài rồi bấm Lưu | Bị từ chối kèm số đo khổ phích | Integration — `CardPrintTests` | | |
+| BM.40 | **In phích ra PDF (II.10)** | Chọn cả bốn loại phích rồi bấm Tạo tệp PDF | Tải về tệp PDF hợp lệ; phích chính xếp theo tác giả, phích nhan đề theo nhan đề, mỗi đề mục chủ đề một phích; chữ tiếng Việt đủ dấu | Integration — `CardPrintTests` | | |
+| BM.41 | Hai cách xếp giấy | In lần lượt hai chế độ | "Nhiều phích trên A4" xếp lưới để cắt; "mỗi phích một trang" đúng khổ phích để in lên bìa in sẵn | Integration — `CardPrintTests` | | |
+
+---
+
+## Cách chạy bộ kiểm thử tự động
+
+```bash
+cd backend
+dotnet test                 # 179 unit test + 96 integration test
+```
+
+Integration test tự khởi tạo một container PostgreSQL 16 và một container MinIO riêng, chạy
+migration, nạp dữ liệu nền, bật máy chủ tác vụ nền rồi gọi API qua đúng giao diện HTTP mà trình
+duyệt dùng — không có thành phần nào bị giả lập.
+
+```bash
+cd frontend-admin
+npm test                    # 44 test giao diện
+```
+
+---
+
 ## Ghi chú
 
 Nhóm kiểm thử 2.4 (trao đổi dữ liệu) đã có phần ISO 2709 và MARCXML ở nhóm kịch bản MARC bên
 trên; phần Z39.50 và OAI-PMH sẽ bổ sung khi bàn giao Phase 11.
 
-Các nhóm kiểm thử 2.2 (chức năng của 11 phân hệ),
-2.5 (chuyển đổi dữ liệu), 2.7 (ứng dụng di động) và 2.8 (báo cáo) sẽ được bổ sung vào tài liệu này
-theo từng phân hệ được bàn giao. Tài liệu luôn phản ánh đúng phạm vi đã hoàn thành tại thời điểm
+Nhóm kiểm thử 2.5 (chuyển đổi dữ liệu) đã có phần nhập ISO 2709 và nhập Excel ở nhóm kịch bản
+Biên mục; phần đối chiếu số lượng bạn đọc và giao dịch sẽ bổ sung khi bàn giao các phân hệ tương ứng.
+
+Các nhóm kiểm thử 2.2 (các phân hệ chưa bàn giao), 2.7 (ứng dụng di động) và 2.8 (báo cáo) sẽ được
+bổ sung vào tài liệu này theo từng phân hệ được bàn giao. Tài liệu luôn phản ánh đúng phạm vi đã hoàn thành tại thời điểm
 nghiệm thu, không liệt kê trước những gì chưa làm.

@@ -7,7 +7,7 @@ Cột **Đáp ứng** chỉ được đánh **Có** khi chức năng đã chạy
 được bằng thao tác demo hoặc bằng bộ kiểm thử tự động. Những hạng mục thuộc phân hệ chưa bàn giao
 được ghi rõ là **Đang thực hiện** kèm phase dự kiến, không đánh dấu đáp ứng.
 
-Cập nhật lần cuối: sau khi hoàn thành Phase 4.
+Cập nhật lần cuối: sau khi hoàn thành Phase 5.
 
 ---
 
@@ -96,6 +96,25 @@ Cập nhật lần cuối: sau khi hoàn thành Phase 4.
 
 ---
 
+## B4. Phân hệ II — Biên mục
+
+| # | Yêu cầu | Đáp ứng | Chức năng tương ứng | Chứng minh |
+|---|---|---|---|---|
+| II.1 | Cài đặt giá trị ngầm định cho trường MARC 21 | **Có** | Bảng giá trị ngầm định theo dạng tài liệu, chỉ định được cả trường con lẫn vị trí ký tự của trường điều khiển; giá trị lấy được từ tham số hệ thống nên đổi tham số là biểu ghi mới đổi theo | Kịch bản BM.1, BM.2 |
+| II.2 | Thêm mới ấn phẩm bằng trình soạn MARC chuyên nghiệp | **Có** | Bảng nhập theo dòng Tag / Ind1 / Ind2 / trường con; gợi ý tên trường tiếng Việt; chọn chỉ thị theo ý nghĩa; tách chuỗi trường con dán từ hệ thống khác; kiểm tra tại chỗ; chọn mẫu biên mục theo dạng tài liệu; xem trước dạng ISBD; Ctrl+S để lưu | Kịch bản BM.4 → BM.6, BM.10 |
+| II.2b | Tạo đăng ký cá biệt sau khi lưu biểu ghi | **Có** | Tạo theo lô, mã vạch và số ĐKCB sinh liền nhau, ký hiệu xếp giá theo quy tắc cấu hình được của thư viện hoặc riêng của từng kho | Kịch bản BM.13 |
+| II.3 | Cập nhật, xóa, xem chi tiết ấn phẩm | **Có** | Bốn tab chi tiết; lịch sử giữ mọi phiên bản, xem khác biệt theo từng trường, khôi phục được; xóa mềm bắt buộc nhập lý do và bị chặn khi còn đăng ký cá biệt hoặc tài liệu số | Kịch bản BM.11, BM.12, BM.14, BM.15 |
+| II.4 | Hàng đợi biên mục chi tiết | **Có** | Bảng công việc năm cột kèm số việc; phân công hàng loạt với độ ưu tiên và hạn xử lý; cảnh báo quá hạn; duyệt hoặc trả lại kèm lý do bắt buộc; thống kê năng suất theo cán bộ | Kịch bản BM.17 → BM.20 |
+| II.5 | Cập nhật mẫu và trường biên mục | **Có** | Bộ định nghĩa 220 trường MARC 21 (mục B3) và mẫu biên mục theo dạng tài liệu, có mẫu mặc định | Kịch bản BM.3, và mục B3 |
+| II.6 | Nhập dữ liệu từ biểu ghi ISO 2709 | **Có** | Luồng bốn bước: chọn tệp, xem trước kèm đối chiếu trùng, chọn cách xử lý trùng và nơi để bản sách, chạy nền có tiến trình và nhật ký lỗi từng biểu ghi. Bốn cách xử lý trùng và ba cách đối chiếu | Kịch bản BM.21 → BM.27 |
+| II.6b | Xuất ISO 2709 | **Có** | Xuất theo danh sách tick chọn hoặc theo đúng bộ lọc đang xem, ra .mrc hoặc MARCXML | Kịch bản BM.28, BM.29 |
+| II.7 | Nhập dữ liệu từ chuẩn Z39.50 | **Đang thực hiện** | Phase 11 — cần máy khách Z39.50. Bảng `ill.z3950_targets` đã sẵn sàng; trình soạn MARC và đường ghi biểu ghi dùng chung với luồng nhập tệp nên khi có máy khách chỉ cần nối vào |
+| II.8 | Nhập dữ liệu từ Excel | **Có** | Tệp mẫu có sheet hướng dẫn; hệ thống đoán ánh xạ từ tên cột; ánh xạ sửa được và lưu lại thành hồ sơ dùng lại; một ô nhiều giá trị tách thành nhiều lần lặp của trường; chạy nền, báo lỗi theo số dòng bảng tính | Kịch bản BM.30 → BM.34 |
+| II.9 | Quản lý danh mục (chỉ mục) | **Có** | Danh mục có sẵn ở mục B2; danh mục tự tạo từ trường MARC ở dòng DM.9 | Kịch bản BM.35 → BM.37 |
+| II.10 | Xử lý phích (thẻ mục lục) | **Có** | Trình thiết kế kéo thả theo milimét, khổ chuẩn 12,5 × 7,5 cm hoặc tùy chỉnh, mỗi ô ánh xạ tới trường MARC hoặc trường tổng hợp; bốn loại phích; in hàng loạt ra PDF, xếp nhiều phích trên A4 hoặc mỗi phích một trang | Kịch bản BM.38 → BM.41 |
+
+---
+
 ## C. Yêu cầu phi chức năng
 
 | # | Yêu cầu | Đáp ứng | Chức năng tương ứng | Chứng minh |
@@ -128,7 +147,7 @@ Cập nhật lần cuối: sau khi hoàn thành Phase 4.
 | D1 | MARC 21, ISO 2709, MARCXML | **Có** | Chi tiết ở mục B3 |
 | D2 | Z39.50 client và server, SRU/SRW | **Đang thực hiện** | Phase 11. Bảng `ill.z3950_targets` và tuyến `/sru` đã có trong cấu hình Nginx |
 | D3 | OAI-PMH provider và harvester | **Đang thực hiện** | Phase 11. Bảng `ill.oai_repositories` và tuyến `/oai` đã có |
-| D4 | Phân hệ II — Biên mục | **Đang thực hiện** | Phase 5 |
+| D4 | Phân hệ II — Biên mục | **Có** | Chi tiết ở mục B4. Riêng II.7 (nhập từ Z39.50) thuộc Phase 11 |
 | D5 | Phân hệ III — Bổ sung và Kho | **Đang thực hiện** | Phase 6 |
 | D6 | Phân hệ IV — Ấn phẩm định kỳ | **Đang thực hiện** | Phase 7 |
 | D7 | Phân hệ V — Tài liệu số | **Đang thực hiện** | Phase 10 |

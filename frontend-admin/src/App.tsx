@@ -23,9 +23,11 @@ import { BibListPage } from '@/modules/cataloging/BibListPage';
 import { BibEditorPage } from '@/modules/cataloging/BibEditorPage';
 import { BibDetailPage } from '@/modules/cataloging/BibDetailPage';
 import { BibImportPage } from '@/modules/cataloging/BibImportPage';
+import { BibExcelImportPage } from '@/modules/cataloging/BibExcelImportPage';
 import { CustomIndexPage } from '@/modules/cataloging/CustomIndexPage';
 import { CatalogQueuePage } from '@/modules/cataloging/CatalogQueuePage';
 import { CardTemplatePage } from '@/modules/cataloging/CardTemplatePage';
+import { CatalogingConfigPage } from '@/modules/cataloging/CatalogingConfigPage';
 import { RequirePermissionRoute } from '@/components/PermissionGate';
 import { PERMISSIONS } from '@/api/permissions';
 import { messages } from '@/i18n/messages';
@@ -147,6 +149,16 @@ function AppRoutes() {
           }
         />
         <Route
+          path="/bien-muc/cau-hinh"
+          element={
+            <RequirePermissionRoute
+              permission={[PERMISSIONS.cataloging.defaultValue, PERMISSIONS.cataloging.template]}
+            >
+              <CatalogingConfigPage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
           path="/bien-muc/phich"
           element={
             <RequirePermissionRoute permission={PERMISSIONS.cataloging.cardPrint}>
@@ -167,6 +179,14 @@ function AppRoutes() {
           element={
             <RequirePermissionRoute permission={PERMISSIONS.catalogList.customIndex}>
               <CustomIndexPage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/bien-muc/nhap-excel"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.cataloging.bibImport}>
+              <BibExcelImportPage />
             </RequirePermissionRoute>
           }
         />

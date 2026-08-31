@@ -138,6 +138,7 @@ export const menuTree: MenuNode[] = [
       PERMISSIONS.catalogList.customIndex,
       PERMISSIONS.cataloging.queueView,
       PERMISSIONS.cataloging.cardPrint,
+      PERMISSIONS.cataloging.defaultValue,
     ],
     children: [
       {
@@ -162,11 +163,25 @@ export const menuTree: MenuNode[] = [
         permissions: [PERMISSIONS.cataloging.bibImport],
       },
       {
+        key: 'cataloging-excel',
+        label: messages.menu.bibExcelImport,
+        icon: <ImportOutlined />,
+        path: '/bien-muc/nhap-excel',
+        permissions: [PERMISSIONS.cataloging.bibImport],
+      },
+      {
         key: 'cataloging-cards',
         label: messages.menu.cards,
         icon: <FileTextOutlined />,
         path: '/bien-muc/phich',
         permissions: [PERMISSIONS.cataloging.cardPrint],
+      },
+      {
+        key: 'cataloging-config',
+        label: messages.menu.catalogingConfig,
+        icon: <SettingOutlined />,
+        path: '/bien-muc/cau-hinh',
+        permissions: [PERMISSIONS.cataloging.defaultValue, PERMISSIONS.cataloging.template],
       },
       {
         key: 'cataloging-custom-index',

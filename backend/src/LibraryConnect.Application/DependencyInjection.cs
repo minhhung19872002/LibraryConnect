@@ -33,6 +33,7 @@ public static class DependencyInjection
         services.AddScoped<Features.Cataloging.IBibRecordWriter, Features.Cataloging.BibRecordWriter>();
         services.AddScoped<Features.Cataloging.IBibDuplicateFinder, Features.Cataloging.BibDuplicateFinder>();
         services.AddScoped<Features.Cataloging.IBibImportRunner, Features.Cataloging.BibImportRunner>();
+        services.AddScoped<Features.Cataloging.IBibExcelImportRunner, Features.Cataloging.BibExcelImportRunner>();
 
         return services;
     }

@@ -4,6 +4,7 @@ import type { MarcRecord } from '@/modules/marc/types';
 import type { BibImportOptions, BibImportPreview, DuplicateMatchBy, ImportJob } from './importTypes';
 import type { CustomIndex, CustomIndexValue, HarvestResult } from './customIndexTypes';
 import type { CardTemplate } from './cardTypes';
+import type { ExcelImportOptions, ExcelPreview, ImportMappingProfile } from './excelTypes';
 import type {
   CatalogProductivity,
   CatalogQueueItem,
@@ -269,6 +270,42 @@ export const cardApi = {
       fileName: match?.[1] ? decodeURIComponent(match[1]) : 'phich.pdf',
     };
   },
+};
+
+/** Nhập biểu ghi từ bảng tính Excel (II.8). */
+export const excelApi = {
+  /** Tệp mẫu có tiêu đề tiếng Việt và sheet hướng dẫn. */
+  async template(): Promise<{ blob: Blob; fileName: string }> {
+    return api.download('/cataloging/excel/template');
+  },
+
+  async preview(file: File): Promise<ExcelPreview> {
+    const form = new FormData();
+    form.append('file', file);
+
+    return api.post<ExcelPreview>('/cataloging/excel/preview', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+
+  async start(file: File, options: ExcelImportOptions): Promise<string> {
+    const form = new FormData();
+    form.append('file', file);
+    form.append('options', JSON.stringify(options));
+
+    return api.post<string>('/cataloging/excel/import', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+
+  profiles: () => api.get<ImportMappingProfile[]>('/cataloging/excel/mapping-profiles'),
+
+  saveProfile: (id: string | null, payload: Record<string, unknown>) =>
+    id
+      ? api.put<string>(`/cataloging/excel/mapping-profiles/${id}`, payload)
+      : api.post<string>('/cataloging/excel/mapping-profiles', payload),
+
+  deleteProfile: (id: string) => api.delete<null>(`/cataloging/excel/mapping-profiles/${id}`),
 };
 
 export const locationsApi = {

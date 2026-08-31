@@ -601,6 +601,117 @@ public class CatalogingController : ApiControllerBase
         return File(file.Content, file.ContentType, file.FileName);
     }
 
+    // ---------------------------------------------------------------
+    // Nhập biểu ghi từ Excel (II.8)
+    // ---------------------------------------------------------------
+
+    /// <summary>Tải tệp Excel mẫu có tiêu đề tiếng Việt và sheet hướng dẫn từng cột.</summary>
+    [HttpGet("excel/template")]
+    [RequirePermission(PermissionCodes.CatalogBibImport)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetExcelTemplate(CancellationToken ct)
+    {
+        var file = await Mediator.Send(new GetBibExcelTemplateQuery(), ct);
+
+        return File(file.Content, file.ContentType, file.FileName);
+    }
+
+    /// <summary>
+    /// Đọc thử tệp Excel: trả về danh sách cột, vài dòng đầu và ánh xạ hệ thống đoán được từ tên cột.
+    /// </summary>
+    [HttpPost("excel/preview")]
+    [RequirePermission(PermissionCodes.CatalogBibImport)]
+    [ProducesResponseType(typeof(ApiResponse<ExcelPreviewDto>), StatusCodes.Status200OK)]
+    [RequestSizeLimit(50 * 1024 * 1024)]
+    public async Task<ActionResult<ApiResponse<ExcelPreviewDto>>> PreviewExcel(
+        IFormFile file, CancellationToken ct)
+    {
+        if (file is null || file.Length == 0)
+        {
+            return BadRequest(ApiResponse.Fail("Vui lòng chọn tệp Excel cần nhập."));
+        }
+
+        var content = await ReadAllAsync(file, ct);
+        var result = await Mediator.Send(new PreviewBibExcelCommand(content), ct);
+
+        return Ok(Success(result, $"Đọc được {result.TotalRows} dòng dữ liệu."));
+    }
+
+    /// <summary>Bắt đầu nhập từ Excel. Tác vụ chạy nền, theo dõi tiến độ qua mã trả về.</summary>
+    [HttpPost("excel/import")]
+    [RequirePermission(PermissionCodes.CatalogBibImport)]
+    [ProducesResponseType(typeof(ApiResponse<Guid>), StatusCodes.Status200OK)]
+    [RequestSizeLimit(50 * 1024 * 1024)]
+    public async Task<ActionResult<ApiResponse<Guid>>> StartExcelImport(
+        IFormFile file, [FromForm] string options, CancellationToken ct)
+    {
+        if (file is null || file.Length == 0)
+        {
+            return BadRequest(ApiResponse.Fail("Vui lòng chọn tệp Excel cần nhập."));
+        }
+
+        ExcelImportOptions parsed;
+
+        try
+        {
+            parsed = System.Text.Json.JsonSerializer.Deserialize<ExcelImportOptions>(
+                         string.IsNullOrWhiteSpace(options) ? "{}" : options,
+                         ImportOptionsJson)
+                     ?? new ExcelImportOptions();
+        }
+        catch (System.Text.Json.JsonException exception)
+        {
+            return BadRequest(ApiResponse.Fail($"Tùy chọn nhập dữ liệu không đọc được: {exception.Message}"));
+        }
+
+        var content = await ReadAllAsync(file, ct);
+        var jobId = await Mediator.Send(new StartBibExcelImportCommand(content, file.FileName, parsed), ct);
+
+        return Ok(Success(jobId, "Đã bắt đầu nhập dữ liệu từ bảng tính."));
+    }
+
+    /// <summary>Các hồ sơ ánh xạ cột đã lưu, để dùng lại cho tệp cùng khuôn.</summary>
+    [HttpGet("excel/mapping-profiles")]
+    [RequirePermission(PermissionCodes.CatalogBibImport)]
+    [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<ImportMappingProfileDto>>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<IReadOnlyList<ImportMappingProfileDto>>>> GetMappingProfiles(
+        CancellationToken ct)
+    {
+        var result = await Mediator.Send(new GetImportMappingProfilesQuery(), ct);
+        return Ok(Success(result));
+    }
+
+    [HttpPost("excel/mapping-profiles")]
+    [RequirePermission(PermissionCodes.CatalogBibImport)]
+    [ProducesResponseType(typeof(ApiResponse<Guid>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<Guid>>> CreateMappingProfile(
+        [FromBody] SaveImportMappingProfileCommand command, CancellationToken ct)
+    {
+        command.Id = null;
+        var result = await Mediator.Send(command, ct);
+        return Ok(Success(result, "Đã lưu hồ sơ ánh xạ."));
+    }
+
+    [HttpPut("excel/mapping-profiles/{id:guid}")]
+    [RequirePermission(PermissionCodes.CatalogBibImport)]
+    [ProducesResponseType(typeof(ApiResponse<Guid>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<Guid>>> UpdateMappingProfile(
+        Guid id, [FromBody] SaveImportMappingProfileCommand command, CancellationToken ct)
+    {
+        command.Id = id;
+        var result = await Mediator.Send(command, ct);
+        return Ok(Success(result, "Đã cập nhật hồ sơ ánh xạ."));
+    }
+
+    [HttpDelete("excel/mapping-profiles/{id:guid}")]
+    [RequirePermission(PermissionCodes.CatalogBibImport)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<object>>> DeleteMappingProfile(Guid id, CancellationToken ct)
+    {
+        await Mediator.Send(new DeleteImportMappingProfileCommand(id), ct);
+        return Ok(Success<object?>(null, "Đã xóa hồ sơ ánh xạ."));
+    }
+
     /// <summary>
     /// Tùy chọn nhập đi kèm tệp trong một biểu mẫu multipart nên phải tự đọc từ chuỗi JSON.
     /// Cấu hình phải khớp với cấu hình chung của API, nhất là việc đọc enum theo tên.
