@@ -152,9 +152,27 @@ export const api = {
   /** Downloads a report or export and hands back the blob together with the server-supplied name. */
   async download(url: string, config?: AxiosRequestConfig): Promise<{ blob: Blob; fileName: string }> {
     const response = await http.get<Blob>(url, { ...config, responseType: 'blob' });
-    const disposition = response.headers['content-disposition'] as string | undefined;
-    const match = disposition?.match(/filename\*?=(?:UTF-8'')?"?([^";]+)"?/i);
-    const fileName = match?.[1] ? decodeURIComponent(match[1]) : 'download';
-    return { blob: response.data, fileName };
+    return { blob: response.data, fileName: fileNameOf(response.headers, 'download') };
+  },
+
+  /**
+   * Same, for endpoints that take the selection or the filter in the body — printing labels and
+   * exporting a filtered report both have too much input to fit in a query string.
+   */
+  async downloadPost(
+    url: string,
+    body?: unknown,
+    fallbackName = 'download',
+    config?: AxiosRequestConfig,
+  ): Promise<{ blob: Blob; fileName: string }> {
+    const response = await http.post<Blob>(url, body, { ...config, responseType: 'blob' });
+    return { blob: response.data, fileName: fileNameOf(response.headers, fallbackName) };
   },
 };
+
+/** Reads the file name the server suggested in Content-Disposition. */
+function fileNameOf(headers: unknown, fallback: string): string {
+  const disposition = (headers as Record<string, string | undefined>)['content-disposition'];
+  const match = disposition?.match(/filename\*?=(?:UTF-8'')?"?([^";]+)"?/i);
+  return match?.[1] ? decodeURIComponent(match[1]) : fallback;
+}

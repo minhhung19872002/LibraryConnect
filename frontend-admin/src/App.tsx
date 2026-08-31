@@ -24,6 +24,14 @@ import { BibEditorPage } from '@/modules/cataloging/BibEditorPage';
 import { BibDetailPage } from '@/modules/cataloging/BibDetailPage';
 import { BibImportPage } from '@/modules/cataloging/BibImportPage';
 import { BibExcelImportPage } from '@/modules/cataloging/BibExcelImportPage';
+import { PurchaseRequestPage } from '@/modules/acquisition/PurchaseRequestPage';
+import { PurchaseOrderPage } from '@/modules/acquisition/PurchaseOrderPage';
+import { StockItemsPage } from '@/modules/acquisition/StockItemsPage';
+import { WarehousePage } from '@/modules/acquisition/WarehousePage';
+import { InventoryPage } from '@/modules/acquisition/InventoryPage';
+import { LabelTemplatePage } from '@/modules/acquisition/LabelTemplatePage';
+import { FormTemplatePage } from '@/modules/acquisition/FormTemplatePage';
+import { AcquisitionReportsPage } from '@/modules/acquisition/AcquisitionReportsPage';
 import { CustomIndexPage } from '@/modules/cataloging/CustomIndexPage';
 import { CatalogQueuePage } from '@/modules/cataloging/CatalogQueuePage';
 import { CardTemplatePage } from '@/modules/cataloging/CardTemplatePage';
@@ -179,6 +187,70 @@ function AppRoutes() {
           element={
             <RequirePermissionRoute permission={PERMISSIONS.catalogList.customIndex}>
               <CustomIndexPage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/bo-sung/yeu-cau"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.acquisition.requestView}>
+              <PurchaseRequestPage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/bo-sung/don-dat"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.acquisition.orderView}>
+              <PurchaseOrderPage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/bo-sung/an-pham"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.acquisition.itemView}>
+              <StockItemsPage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/bo-sung/kho"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.acquisition.warehouseView}>
+              <WarehousePage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/bo-sung/kiem-ke"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.acquisition.inventoryView}>
+              <InventoryPage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/bo-sung/mau-tem"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.acquisition.itemPrintBarcode}>
+              <LabelTemplatePage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/bo-sung/mau-bieu"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.acquisition.formTemplate}>
+              <FormTemplatePage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/bo-sung/bao-cao"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.acquisition.reportView}>
+              <AcquisitionReportsPage />
             </RequirePermissionRoute>
           }
         />

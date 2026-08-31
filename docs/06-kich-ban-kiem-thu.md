@@ -200,11 +200,76 @@ Ký hiệu bám theo **Mục 5 phần 2 của E-HSMT**.
 
 ---
 
+## Nhóm chức năng — Phân hệ III: Bổ sung và Kho
+
+| Mã | Kịch bản | Các bước | Kết quả mong đợi |
+|---|---|---|---|
+| BS.1 | Thêm thư viện / cơ sở | Bổ sung → Quản lý kho → Thư viện → Thêm | Cơ sở mới xuất hiện; đánh dấu trụ sở chính thì cơ sở cũ tự bỏ đánh dấu |
+| BS.2 | Thêm kho và giá | Tab Kho → Thêm kho; tab Giá → Thêm giá, đặt hàng 1 cột 1 | Giá hiện trong danh sách và trong bản đồ kho |
+| BS.3 | Mã giá trùng trong cùng kho | Thêm giá thứ hai cùng mã trong một kho | Bị chặn kèm thông báo mã đã dùng |
+| BS.4 | Mã giá trùng ở kho khác | Thêm giá cùng mã ở kho khác | Lưu được — mã giá chỉ duy nhất trong phạm vi kho |
+| BS.5 | Xóa kho còn ấn phẩm | Xóa kho đang chứa sách | Bị chặn kèm số ấn phẩm còn trong kho |
+| BS.6 | Bản đồ kho | Chọn kho ở tab Giá và bản đồ kho | Lưới giá theo hàng/cột; mỗi ô hiện số bản trên sức chứa |
+| BS.7 | Lập yêu cầu đặt mua | Bổ sung → Yêu cầu đặt mua → Tạo yêu cầu, thêm hai đầu sách | Yêu cầu ở trạng thái Nháp, tổng tiền bằng tổng số lượng nhân đơn giá |
+| BS.8 | Cảnh báo tài liệu đã có | Nhập ISBN của sách thư viện đang có rồi lưu | Dòng được đánh dấu trùng, danh sách hiện "n dòng trùng" |
+| BS.9 | Tra nhanh không dấu | Bấm nút tra nhanh với nhan đề gõ không dấu | Vẫn tìm ra biểu ghi đã có, ghi rõ khớp theo nhan đề |
+| BS.10 | Nhập đề nghị từ Excel | Tải tệp mẫu, điền, nhập lại | Số dòng nhập được báo đúng; dòng thiếu nhan đề báo theo số dòng trong tệp |
+| BS.11 | Duyệt sai quy trình | Duyệt một yêu cầu còn ở trạng thái Nháp | Bị chặn — phải gửi duyệt trước |
+| BS.12 | Duyệt một phần | Gửi duyệt rồi duyệt 3 trên 4 bản | Yêu cầu chuyển sang Duyệt một phần, giá trị duyệt tính theo số đã duyệt |
+| BS.13 | Từ chối yêu cầu | Bấm Từ chối, nhập lý do | Yêu cầu chuyển sang Từ chối, giá trị duyệt về 0, lý do hiện trên màn hình |
+| BS.14 | Duyệt nhiều cấp | Đặt `ACQ.APPROVAL_LEVELS` = 2, duyệt lần một | Yêu cầu vẫn ở Chờ duyệt, hiện "đã qua 1/2 cấp" |
+| BS.15 | Lập đơn đặt từ yêu cầu | Chọn yêu cầu đã duyệt → Lập đơn đặt | Một đơn cho mỗi nhà cung cấp; dòng đơn mang số đã duyệt, không phải số đề nghị |
+| BS.16 | Gộp lại lần hai | Lập đơn lần nữa từ chính yêu cầu đó | Bị chặn — các dòng đã nằm trong đơn trước |
+| BS.17 | Ghi nhận giao hàng từng phần | Nhận 2 trên 3 bản | Đơn chuyển sang Nhận một phần |
+| BS.18 | Nhập kho khi chưa biên mục | Bấm Nhập kho cho dòng chưa có biểu ghi | Không tạo ĐKCB, hệ thống liệt kê rõ dòng còn thiếu biểu ghi |
+| BS.19 | Biên mục sơ lược | Bấm Biên mục sơ lược trên dòng đơn, nhập mười trường | Sinh biểu ghi MARC 21, vào hàng đợi biên mục chi tiết, nối vào dòng đơn |
+| BS.20 | Biên mục sơ lược trùng | Biên mục sơ lược một cuốn thư viện đã có | Dùng lại biểu ghi cũ, không tạo biểu ghi thứ hai |
+| BS.21 | Tạo ĐKCB từ đơn | Bấm Nhập kho sau khi đã biên mục | Tạo đúng số bản đã nhận, mã vạch và số ĐKCB sinh liên tiếp |
+| BS.22 | Bấm nhập kho hai lần | Bấm Nhập kho lần nữa | Bị chặn — đã tạo đủ ĐKCB cho số đã nhận |
+| BS.23 | Ấn phẩm mới chờ kiểm nhận | Mở Ấn phẩm trong kho | Bản mới ở trạng thái Chưa kiểm nhận và đang khóa lưu thông |
+| BS.24 | Mở khóa khi chưa kiểm nhận | Chọn bản chưa kiểm nhận → Mở khóa | Bỏ qua kèm lý do "chưa kiểm nhận" |
+| BS.25 | Kiểm nhận | Chọn các bản → Kiểm nhận, ghi tình trạng Tốt | Chuyển sang Trong kho, mở khóa, ghi tình trạng vật lý |
+| BS.26 | Xếp giá hàng loạt | Chọn nhiều bản → Xếp giá, bật sinh lại ký hiệu | Các bản về đúng giá, ký hiệu xếp giá sinh theo quy tắc của kho |
+| BS.27 | Khóa lưu thông thiếu lý do | Khóa mà bỏ trống lý do | Bị chặn — phải ghi lý do |
+| BS.28 | In tem mã vạch | Chọn vài bản → In tem mã vạch | Tệp PDF đúng khổ tờ tem, mỗi tem có vạch và dãy số dưới vạch |
+| BS.29 | In nhãn gáy | Chọn vài bản → In nhãn gáy | Tệp PDF, ký hiệu xếp giá tách thành các dòng trên nhãn |
+| BS.30 | In khi chưa chọn gì | Bấm In tem khi chưa chọn bản nào | Báo rõ chưa chọn ấn phẩm nào |
+| BS.31 | Mẫu tem vượt khổ giấy | Đặt 6 cột × 50 mm, lề trái 8 mm | Màn hình chặn lưu và chỉ rõ vượt khổ A4 |
+| BS.32 | Chuyển kho thiếu lý do | Chuyển kho mà bỏ trống lý do | Bị chặn — phiếu chuyển kho cần lý do |
+| BS.33 | Chuyển kho | Chọn bản → Chuyển kho, ghi lý do và số quyết định | Sinh số phiếu chuyển kho; bản sách đổi kho; lịch sử hiện trên bản đó |
+| BS.34 | In phiếu chuyển kho | Mở phiếu vừa lập → In | PDF đúng thể thức hành chính, có bảng chi tiết và ô ký |
+| BS.35 | Thanh lý | Chọn bản → Thanh lý, ghi lý do | Sinh số quyết định; bản chuyển sang Thanh lý, rời giá, bị khóa |
+| BS.36 | Thanh lý lần hai | Thanh lý lại chính các bản đó | Bị chặn — các bản đã ra khỏi kho |
+| BS.37 | Lập biên bản bàn giao | Mở đơn đặt → Lập biên bản | Số bản và giá trị lấy đúng theo số thực nhận của đơn |
+| BS.38 | In biên bản bàn giao | Bấm In trên biên bản | PDF có quốc hiệu, tên biểu mẫu, bảng chi tiết, dòng tổng cộng và hai ô ký |
+| BS.39 | Đính kèm bản scan | Tải lên tệp PDF đã ký | Biên bản hiện đã có bản scan; tải lại đúng tệp đã gửi |
+| BS.40 | Đóng kho | Bổ sung → Kiểm kê kho → Đóng kho | Kho chuyển sang Đang đóng |
+| BS.41 | Tạo kỳ kiểm kê | Tạo kỳ, phạm vi toàn kho | Danh sách kỳ vọng được chốt ngay; kho tự đóng nếu chọn |
+| BS.42 | Hai kỳ trên một kho | Tạo kỳ thứ hai cho cùng kho | Bị chặn — còn kỳ chưa chốt |
+| BS.43 | Chuyển vào kho đang kiểm kê | Chuyển sách vào kho đang đóng | Bị chặn kèm lý do kho đang kiểm kê |
+| BS.44 | Quét khớp | Quét mã vạch của bản thuộc kho | Báo Khớp, hiện nhan đề, tiến độ tăng |
+| BS.45 | Quét mã lạ | Quét một mã không có trong hệ thống | Báo Thừa; tiến độ không vượt quá số bản kỳ vọng |
+| BS.46 | Quét trùng | Quét lại đúng mã vừa quét | Báo đã quét rồi, không tính thêm |
+| BS.47 | Nạp tệp quét rời | Tải lên tệp mỗi dòng một mã | Báo số mã khớp, thừa, sai kho và trùng |
+| BS.48 | Chốt kỳ kiểm kê | Bấm Chốt kỳ | Ra bốn nhóm kết quả và giá trị bản thiếu; kho được mở lại |
+| BS.49 | Xuất kết quả kiểm kê | Bấm Xuất kết quả | Tệp Excel liệt kê đúng nhóm đang lọc |
+| BS.50 | In biên bản kiểm kê | Bấm In biên bản | PDF liệt kê các bản không khớp, kèm số liệu tổng hợp |
+| BS.51 | Lập quyết định từ bản thiếu | Bấm Xử lý bản thiếu → Mất | Sinh quyết định, các bản chuyển sang Mất, dòng kết quả đánh dấu đã xử lý |
+| BS.52 | Thống kê theo chiều | Báo cáo bổ sung → Thống kê theo chiều, đổi chiều | Bảng và tỷ trọng đổi theo; tổng cộng khớp với tổng số bản |
+| BS.53 | Thống kê theo thời gian | Chọn chiều Thời gian, đổi đơn vị nhóm | Dòng gộp lại theo ngày / tháng / quý / năm |
+| BS.54 | Bảng tổng hợp đa chiều | Chọn chiều hàng và chiều cột khác nhau | Tổng theo hàng, theo cột và tổng chung khớp nhau |
+| BS.55 | Hai chiều trùng nhau | Chọn cùng một chiều cho hàng và cột | Bị chặn kèm thông báo rõ |
+| BS.56 | Xuất báo cáo | Bấm Excel và PDF trên từng tab | Tệp xuất ra đúng bằng bộ lọc đang xem |
+| BS.57 | Báo cáo duyệt mua | Mở tab Duyệt mua | Số yêu cầu theo trạng thái và đơn vị; tỷ lệ duyệt trong khoảng 0–100% |
+| BS.58 | Lịch sử nhà cung cấp | Chọn một nhà cung cấp ở bộ lọc | Số đơn, tổng giá trị, tỷ lệ giao đủ và danh sách đơn |
+| BS.59 | Xuất danh sách ĐKCB | Ấn phẩm trong kho → Xuất Excel | Tệp Excel đúng bằng danh sách đang lọc |
+| BS.60 | Phân quyền | Đăng nhập tài khoản không có quyền Bổ sung | Menu Bổ sung không hiện; gọi thẳng API trả 403 |
+
 ## Cách chạy bộ kiểm thử tự động
 
 ```bash
 cd backend
-dotnet test                 # 179 unit test + 96 integration test
+dotnet test                 # 194 unit test + 116 integration test
 ```
 
 Integration test tự khởi tạo một container PostgreSQL 16 và một container MinIO riêng, chạy
@@ -213,7 +278,7 @@ duyệt dùng — không có thành phần nào bị giả lập.
 
 ```bash
 cd frontend-admin
-npm test                    # 44 test giao diện
+npm test                    # 52 test giao diện
 ```
 
 ---
@@ -226,6 +291,9 @@ trên; phần Z39.50 và OAI-PMH sẽ bổ sung khi bàn giao Phase 11.
 Nhóm kiểm thử 2.5 (chuyển đổi dữ liệu) đã có phần nhập ISO 2709 và nhập Excel ở nhóm kịch bản
 Biên mục; phần đối chiếu số lượng bạn đọc và giao dịch sẽ bổ sung khi bàn giao các phân hệ tương ứng.
 
-Các nhóm kiểm thử 2.2 (các phân hệ chưa bàn giao), 2.7 (ứng dụng di động) và 2.8 (báo cáo) sẽ được
-bổ sung vào tài liệu này theo từng phân hệ được bàn giao. Tài liệu luôn phản ánh đúng phạm vi đã hoàn thành tại thời điểm
+Nhóm kiểm thử 2.8 (báo cáo) đã có phần báo cáo bổ sung ở nhóm kịch bản Phân hệ III; các báo cáo của
+những phân hệ còn lại sẽ bổ sung khi bàn giao phân hệ tương ứng.
+
+Các nhóm kiểm thử 2.2 (các phân hệ chưa bàn giao) và 2.7 (ứng dụng di động) sẽ được bổ sung vào tài
+liệu này theo từng phân hệ được bàn giao. Tài liệu luôn phản ánh đúng phạm vi đã hoàn thành tại thời điểm
 nghiệm thu, không liệt kê trước những gì chưa làm.

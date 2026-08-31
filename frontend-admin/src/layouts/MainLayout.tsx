@@ -29,6 +29,11 @@ export function MainLayout() {
 
   const libraryName = useLibraryName();
 
+  // hasAnyPermission là một tham chiếu cố định của kho trạng thái: nó đọc quyền hiện tại qua get()
+  // chứ không đóng gói quyền vào chính nó. Vì vậy user phải nằm trong danh sách phụ thuộc — bỏ nó
+  // ra thì menu được dựng một lần lúc chưa đăng nhập rồi không bao giờ dựng lại, và cán bộ chỉ
+  // thấy mỗi mục Tổng quan.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const visibleMenu = useMemo(() => filterMenuByPermission(menuTree, hasAnyPermission), [hasAnyPermission, user]);
 
   const antdItems = useMemo<MenuProps['items']>(() => visibleMenu.map(toAntdItem), [visibleMenu]);

@@ -32,7 +32,8 @@ import { applyApiError, errorMessage } from '@/api/formErrors';
 import { PERMISSIONS } from '@/api/permissions';
 import { FilterBar } from '@/components/FilterBar';
 import { PageHeader } from '@/components/PageHeader';
-import { Can, usePermission } from '@/components/PermissionGate';
+import { Can } from '@/components/PermissionGate';
+import { usePermission } from '@/hooks/usePermission';
 import { usePagedQuery } from '@/hooks/usePagedQuery';
 import { messages } from '@/i18n/messages';
 import type {

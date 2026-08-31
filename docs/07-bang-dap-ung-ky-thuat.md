@@ -140,6 +140,46 @@ Cập nhật lần cuối: sau khi hoàn thành Phase 5.
 
 ---
 
+## B5. Phân hệ III — Bổ sung và Kho
+
+| # | Yêu cầu của E-HSMT | Đáp ứng | Thực hiện |
+|---|---|---|---|
+| III.1 | Yêu cầu đặt mua ấn phẩm đơn bản | **Có** | Form đề nghị có người đề nghị, đơn vị, lý do, nguồn kinh phí; thêm từng đầu sách kèm số lượng và đơn giá dự kiến |
+| III.1 | Yêu cầu đặt mua ấn phẩm định kỳ | **Có** | Cùng màn hình, chọn loại "Ấn phẩm định kỳ"; dòng đề nghị nhận thêm ISSN, kỳ hạn, số kỳ/năm và thời gian đặt |
+| III.1 | Tra nhanh tài liệu thư viện đã có | **Có** | Tra theo ISBN trước, không có thì so nhan đề đã bỏ dấu; dòng trùng được đánh dấu ngay lúc lưu để người duyệt nhìn thấy |
+| III.1 | Nhập danh sách đề nghị từ Excel | **Có** | Tệp mẫu có sheet hướng dẫn; nhà cung cấp so theo tên không dấu; dòng lỗi báo theo đúng số dòng trong tệp |
+| III.1 | Duyệt yêu cầu, duyệt từng dòng, từ chối kèm lý do | **Có** | Sửa được số lượng duyệt từng dòng; duyệt thiếu thì yêu cầu thành "Duyệt một phần" |
+| III.1 | Quy trình duyệt nhiều cấp | **Có** | Tham số `ACQ.APPROVAL_LEVELS`; yêu cầu chỉ thành "Đã duyệt" sau khi qua đủ số cấp |
+| III.1 | Tạo đơn đặt từ yêu cầu đã duyệt, gộp và nhóm theo NCC | **Có** | Một đơn cho mỗi nhà cung cấp; dòng đã nằm trong đơn trước đó được bỏ qua |
+| III.1 | In đơn đặt hàng theo mẫu | **Có** | Qua trình kết xuất biểu mẫu chung, mẫu `DH-DATHANG` |
+| III.1 | Theo dõi giao hàng, nhận từng phần, cảnh báo quá hạn | **Có** | Trạng thái đơn là hệ quả của số thực nhận; cảnh báo quá hạn theo tham số `ACQ.ORDER_OVERDUE_DAYS` |
+| III.1 | Biên bản bàn giao, in PDF, đính kèm bản scan | **Có** | Số liệu lấy từ số thực nhận của đơn; bản scan lưu ở kho đối tượng, không nằm dưới thư mục web |
+| III.1 | Báo cáo duyệt mua | **Có** | Theo trạng thái, đơn vị đề nghị, theo tháng; tỷ lệ duyệt và tổng kinh phí duyệt |
+| III.1 | Quản lý nhà cung cấp và lịch sử giao dịch | **Có** | CRUD ở màn hình danh mục; lịch sử giao dịch, tỷ lệ giao đủ và số đơn chưa giao đủ ở màn hình báo cáo |
+| III.2 | Biên mục sơ lược tuân thủ MARC 21 | **Có** | Mười trường, lưu thành biểu ghi MARC 21 mức biên mục 3, tự đẩy vào hàng đợi biên mục chi tiết |
+| III.2 | Xếp giá, sinh ký hiệu tự động, xếp giá hàng loạt | **Có** | Quy tắc theo kho, không có thì theo tham số chung; xếp giá cho danh sách tick chọn hoặc cho toàn bộ kết quả lọc |
+| III.2 | Bản đồ kho trực quan | **Có** | Lưới giá theo hàng/cột, tô mức lấp đầy; số bản đếm lại từ bảng ấn phẩm |
+| III.2 | In mã vạch — CODE39, CODE128, QR | **Có** | ZXing sinh ma trận, SkiaSharp đóng PNG ở 300 dpi; chọn theo danh sách, theo khoảng ĐKCB hoặc theo bộ lọc |
+| III.2 | In nhãn gáy sách | **Có** | Cùng trình thiết kế, ký hiệu xếp giá tách sẵn thành ba dòng |
+| III.2 | Mẫu tem, xem trước, xuất PDF đúng khổ tờ tem | **Có** | Số cột, số hàng, lề trên và lề trái lấy đúng từ mẫu; màn hình chặn mẫu vượt khổ A4 |
+| III.2 | Báo cáo bổ sung, ĐKCB hủy bỏ, tổng quát, tổng hợp (pivot) | **Có** | Bốn báo cáo, đều xuất được Excel và PDF từ đúng bộ lọc đang xem |
+| III.3 | Thông tin thư viện / cơ sở | **Có** | CRUD kèm địa chỉ, giờ mở cửa, người phụ trách, tọa độ |
+| III.3 | Thông tin kho, giá, ngăn, quy tắc ký hiệu | **Có** | CRUD kho và giá; mã giá duy nhất trong phạm vi kho |
+| III.4 | Đóng kho khi bắt đầu kiểm kê | **Có** | Kho đóng thì ngưng nhận chuyển kho; trạng thái từng kho hiện ngay trên màn hình kiểm kê |
+| III.4 | Tạo kỳ kiểm kê, snapshot danh sách kỳ vọng | **Có** | Phạm vi toàn kho / theo khoảng ĐKCB / theo dạng tài liệu; danh sách chốt ngay lúc tạo kỳ |
+| III.4 | Quét barcode liên tục, phản hồi khớp / thừa / sai kho | **Có** | Ô quét giữ tiêu điểm sau mỗi lần quét; nhật ký quét hiện ngay bên dưới |
+| III.4 | Nhập tệp quét từ máy đọc rời | **Có** | Mỗi dòng một mã, hoặc CSV lấy cột đầu |
+| III.4 | Tiến độ realtime | **Có** | Đếm số bản kỳ vọng đã quét; mã lạ không đẩy tiến độ vượt tổng |
+| III.4 | Đóng kỳ, đối chiếu, sinh kết quả | **Có** | Chốt kỳ mở lại kho và ra bốn nhóm kết quả |
+| III.4 | Báo cáo kết quả, xuất Excel, lập quyết định từ danh sách thiếu | **Có** | Lọc theo nhóm kết quả, xuất Excel, và lập thẳng quyết định ghi mất cho các bản thiếu |
+| III.5 | Xếp giá chưa kiểm nhận / trong kho / thanh lý | **Có** | Các thẻ đếm theo trạng thái lọc thẳng danh sách |
+| III.5 | Chuyển kho đơn lẻ và hàng loạt, in phiếu, lịch sử | **Có** | Mỗi lần chuyển sinh một số phiếu; lịch sử hiện trên chính bản sách |
+| III.5 | Kiểm nhận và mở khóa, khóa lại kèm lý do | **Có** | Chưa kiểm nhận thì không mở khóa được; khóa lại bắt buộc ghi lý do |
+| III.6 | Trình thiết kế biểu mẫu dùng chung | **Có** | Một bộ kết xuất cho sáu loại chứng từ; chọn nguồn dữ liệu, cột bảng, khổ giấy, logo, ô ký |
+| III.7 | Thống kê theo dạng tài liệu, vật mang tin, thời gian, ngôn ngữ | **Có** | Chín chiều thống kê, nhóm thời gian theo ngày/tháng/quý/năm; đều có bảng, biểu đồ và xuất Excel/PDF |
+
+---
+
 ## D. Trao đổi dữ liệu và các phân hệ còn lại
 
 | # | Yêu cầu | Đáp ứng | Ghi chú |
@@ -148,7 +188,7 @@ Cập nhật lần cuối: sau khi hoàn thành Phase 5.
 | D2 | Z39.50 client và server, SRU/SRW | **Đang thực hiện** | Phase 11. Bảng `ill.z3950_targets` và tuyến `/sru` đã có trong cấu hình Nginx |
 | D3 | OAI-PMH provider và harvester | **Đang thực hiện** | Phase 11. Bảng `ill.oai_repositories` và tuyến `/oai` đã có |
 | D4 | Phân hệ II — Biên mục | **Có** | Chi tiết ở mục B4. Riêng II.7 (nhập từ Z39.50) thuộc Phase 11 |
-| D5 | Phân hệ III — Bổ sung và Kho | **Đang thực hiện** | Phase 6 |
+| D5 | Phân hệ III — Bổ sung và Kho | **Có** | Chi tiết ở mục B5 |
 | D6 | Phân hệ IV — Ấn phẩm định kỳ | **Đang thực hiện** | Phase 7 |
 | D7 | Phân hệ V — Tài liệu số | **Đang thực hiện** | Phase 10 |
 | D8 | Phân hệ VI — Bạn đọc | **Đang thực hiện** | Phase 8 |

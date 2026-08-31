@@ -46,7 +46,9 @@ export function MarcFieldsPage() {
     },
   });
 
-  const fields = data ?? [];
+  // Giữ tham chiếu ổn định khi truy vấn chưa trả về: một mảng rỗng dựng mới mỗi lần vẽ sẽ khiến
+  // mọi phép ghi nhớ bên dưới chạy lại vô ích.
+  const fields = useMemo(() => data ?? [], [data]);
 
   const counts = useMemo(
     () => ({

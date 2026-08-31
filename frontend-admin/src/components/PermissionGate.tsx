@@ -59,11 +59,3 @@ export function Can({ permission, children, mode = 'hide' }: CanProps) {
     </Tooltip>
   );
 }
-
-/** Imperative form for callbacks and column definitions, where a component would be awkward. */
-export function usePermission() {
-  const hasPermission = useAuthStore((state) => state.hasPermission);
-  const hasAnyPermission = useAuthStore((state) => state.hasAnyPermission);
-
-  return { can: hasPermission, canAny: hasAnyPermission };
-}

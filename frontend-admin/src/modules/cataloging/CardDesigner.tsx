@@ -26,12 +26,19 @@ export function CardDesigner({ widthMm, heightMm, layout, onChange }: CardDesign
   const [selected, setSelected] = useState<number | null>(null);
   const dragState = useRef<{ index: number; offsetX: number; offsetY: number } | null>(null);
 
-  const update = (index: number, change: Partial<CardBox>) => {
-    onChange({
-      ...layout,
-      boxes: layout.boxes.map((box, position) => (position === index ? { ...box, ...change } : box)),
-    });
-  };
+  // Bọc lại để tham chiếu ổn định: hàm kéo thả bên dưới phụ thuộc vào nó, mà một hàm dựng mới mỗi
+  // lần vẽ sẽ khiến bộ xử lý kéo bị gắn lại giữa chừng thao tác.
+  const update = useCallback(
+    (index: number, change: Partial<CardBox>) => {
+      onChange({
+        ...layout,
+        boxes: layout.boxes.map((box, position) =>
+          position === index ? { ...box, ...change } : box,
+        ),
+      });
+    },
+    [layout, onChange],
+  );
 
   const onMouseDown = (event: React.MouseEvent, index: number) => {
     event.preventDefault();
@@ -64,7 +71,7 @@ export function CardDesigner({ widthMm, heightMm, layout, onChange }: CardDesign
 
       update(drag.index, { x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 });
     },
-    [layout, widthMm, heightMm],
+    [layout, widthMm, heightMm, update],
   );
 
   const onMouseUp = () => {

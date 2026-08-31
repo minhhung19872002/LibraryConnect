@@ -109,8 +109,8 @@ Không sửa migration đã commit — luôn tạo migration mới.
 ### Kiểm thử
 
 ```bash
-cd backend && dotnet test          # 179 unit test + 96 integration test
-cd frontend-admin && npm test      # 44 test giao diện
+cd backend && dotnet test          # 194 unit test + 116 integration test
+cd frontend-admin && npm test      # 52 test giao diện
 ```
 
 Integration test tự khởi tạo một container PostgreSQL 16 riêng, chạy migration, nạp dữ liệu nền rồi
@@ -159,8 +159,8 @@ vào mà không phải sửa lại — xem `mobile/README.md`.
 | 3 | Danh mục nghiệp vụ (20 danh mục dùng chung một màn hình, nhập/xuất Excel, gộp trùng) | ✅ Hoàn thành |
 | 4 | MARC Core: mô hình MARC 21, đọc/ghi ISO 2709 và MARCXML, bộ định nghĩa 220 trường, trình soạn MARC | ✅ Hoàn thành |
 | 5 | Phân hệ II — Biên mục (trình soạn MARC, ĐKCB, lịch sử phiên bản, hàng đợi, nhập/xuất ISO 2709 và Excel, danh mục tự tạo, in phích) | ✅ Hoàn thành |
-| 6 | Phân hệ III — Bổ sung & Kho | 🔄 Đang thực hiện |
-| 7 | Phân hệ IV — Ấn phẩm định kỳ | ⏳ |
+| 6 | Phân hệ III — Bổ sung & Kho (đơn đặt, nhập kho, xếp giá, in tem mã vạch và nhãn gáy, chuyển kho, kiểm kê, mẫu biểu in, báo cáo) | ✅ Hoàn thành |
+| 7 | Phân hệ IV — Ấn phẩm định kỳ | 🔄 Đang thực hiện |
 | 8 | Phân hệ VI — Bạn đọc | ⏳ |
 | 9 | Phân hệ VII — Lưu thông | ⏳ |
 | 10 | Phân hệ V — Tài liệu số | ⏳ |
