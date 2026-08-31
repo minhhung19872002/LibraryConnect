@@ -161,5 +161,8 @@ public static class DependencyInjection
         // to know, and a missing configuration no longer breaks unrelated screens.
         services.AddSingleton<MinioClientProvider>();
         services.AddScoped<IFileStorage, MinioFileStorage>();
+
+        // Xử lý tệp tài liệu số: đếm trang, rút chữ, kết xuất trang thành ảnh, nhận dạng ký tự.
+        services.AddScoped<IDocumentProcessor, DocumentProcessor>();
     }
 }

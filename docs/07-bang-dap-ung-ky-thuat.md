@@ -7,7 +7,7 @@ Cột **Đáp ứng** chỉ được đánh **Có** khi chức năng đã chạy
 được bằng thao tác demo hoặc bằng bộ kiểm thử tự động. Những hạng mục thuộc phân hệ chưa bàn giao
 được ghi rõ là **Đang thực hiện** kèm phase dự kiến, không đánh dấu đáp ứng.
 
-Cập nhật lần cuối: sau khi hoàn thành Phase 9.
+Cập nhật lần cuối: sau khi hoàn thành Phase 10.
 
 ---
 
@@ -285,6 +285,42 @@ Cập nhật lần cuối: sau khi hoàn thành Phase 9.
 
 ---
 
+## B9. Phân hệ V — Tài liệu số
+
+| # | Yêu cầu của E-HSMT | Đáp ứng | Thực hiện |
+|---|---|---|---|
+| V.1 | Cây bộ sưu tập phân cấp (Giáo trình, Luận văn, Luận án, Đề tài NCKH, Bài giảng…) | **Có** | Sáu nhánh gốc nạp sẵn khi cài đặt, thêm bớt và lồng nhau tùy ý; hệ thống chặn việc kéo một nhánh xuống dưới chính nhánh con của nó |
+| V.1 | Upload PDF, DOCX, EPUB, MP4, MP3, ảnh | **Có** | Kiểu tệp nhận bằng chữ ký nhị phân chứ không bằng phần mở rộng, nên đổi đuôi tệp không qua được |
+| V.1 | Upload nhiều tệp, upload theo mảnh cho tệp lớn, hiển thị tiến trình, tiếp tục khi gián đoạn | **Có** | Tệp lớn được cắt thành mảnh; mỗi lần gửi xong máy chủ trả về danh sách mảnh đã nhận nên đứt mạng thì gửi tiếp phần còn thiếu. Gửi lại một mảnh đã có không làm hỏng phiên |
+| V.1 | Gắn tài liệu số vào biểu ghi thư mục, một biểu ghi nhiều tệp | **Có** | Gắn khi tải lên hoặc sửa lại sau; nhập hàng loạt tự khớp theo số ĐKCB, số kiểm soát 001 hoặc ISBN |
+| V.1 | Tự trích số trang, sinh thumbnail trang bìa, tính checksum SHA-256 | **Có** | Chạy nền ngay sau khi tải lên nên người tải không phải ngồi chờ; mã kiểm tra dùng để đối chiếu khi bàn giao dữ liệu |
+| V.1 | Tạo bản preview N trang đầu | **Có** | Số trang xem thử khai theo từng tài liệu, mặc định lấy từ `DIGITAL.PREVIEW_PAGES`; giới hạn được kiểm ở máy chủ chứ không phải ở giao diện |
+| V.1 | OCR văn bản (Tesseract, tiếng Việt) để tìm kiếm toàn văn | **Có** | Tệp có sẵn lớp chữ thì rút thẳng; tệp quét thì nhận dạng bằng Tesseract tiếng Việt cài trong máy chủ, giới hạn số trang để một cuốn dày không chiếm máy hàng giờ |
+| V.1 | Đặt mức truy cập Công khai / Nội bộ / Hạn chế / Cấm | **Có** | Bốn mức đúng như đặc tả; tài liệu mới lấy mức mặc định theo bộ sưu tập chứa nó |
+| V.1 | Cấu hình cho tải về, cho in, số trang xem thử, bật watermark | **Có** | Bốn công tắc trên từng tài liệu |
+| V.1 | Trình đọc trực tuyến trên trình duyệt | **Có** | Lật trang bằng nút hoặc phím mũi tên, phóng to thu nhỏ, hiện rõ đang được đọc toàn văn hay chỉ xem thử |
+| V.1 | Chặn tải và in bằng cách stream từng trang dạng ảnh | **Có** | Nội dung không bao giờ đi xuống trình duyệt dưới dạng tệp: mỗi trang là một ảnh do máy chủ kết xuất, nên máy bạn đọc không có tệp gốc để lưu lại |
+| V.1 | Watermark động (tên bạn đọc, thời gian, IP) trên từng trang | **Có** | Chữ chìm lát kín cả trang theo đường chéo nên cắt một khúc ảnh vẫn còn dấu vết |
+| V.1 | Tìm kiếm toàn văn trong nội dung tài liệu số | **Có** | Gõ không dấu vẫn ra kết quả, kèm đoạn trích quanh chỗ khớp để biết vì sao tài liệu này ra |
+| V.2 | Bạn đọc gửi yêu cầu từ OPAC/Mobile kèm lý do sử dụng | **Có** | `POST /api/reader/digital/{id}/request`, bắt buộc ghi lý do; gửi trùng khi lần trước còn treo thì bị chặn |
+| V.2 | Cán bộ xem danh sách chờ duyệt kèm thông tin bạn đọc và tài liệu | **Có** | Hàng đợi xếp phiếu chờ duyệt lên trước, hiện cả loại bạn đọc và khoa để cán bộ có căn cứ xét |
+| V.2 | Duyệt: đặt thời hạn truy cập, số lần xem tối đa, có cho tải không | **Có** | Ba tham số ngay trên hộp duyệt; lời duyệt cho tải thắng chính sách chung của tài liệu, vì đó là quyết định riêng cho bạn đọc này |
+| V.2 | Từ chối kèm lý do | **Có** | Bắt buộc ghi lý do, bạn đọc nhìn thấy đúng lý do đó khi mở lại tài liệu |
+| V.2 | Tự động gửi email/thông báo cho bạn đọc | **Có** | Gửi ngay sau khi duyệt hoặc từ chối, kèm thời hạn và số lượt xem được cấp |
+| V.2 | Quyền truy cập tự hết hạn theo thời hạn đã đặt | **Có** | Tác vụ nền chạy hằng ngày đóng các quyền hết hạn; hết lượt xem cũng tự khép lại. Cán bộ thu hồi tay được kèm lý do |
+| V.2 | Nhật ký truy cập chi tiết: ai xem, tài liệu nào, trang nào, thời điểm, IP | **Có** | Ghi cả lần mở tài liệu lẫn từng trang lật; lọc theo tài liệu, bạn đọc, hành động và khoảng thời gian |
+| V.3 | Import hàng loạt từ tệp nén, khớp tệp với biểu ghi theo tên tệp hoặc mã | **Có** | Khớp lần lượt theo số ĐKCB, số kiểm soát 001 rồi ISBN; nút "Kiểm tra trước" chạy đúng đường đi thật nhưng không ghi gì vào hệ thống |
+| V.3 | Export metadata (Excel / Dublin Core) kèm file, đóng gói ZIP | **Có** | Gói gồm thư mục `files/` chứa tệp gốc và `metadata/` chứa danh mục Excel cùng tệp Dublin Core đúng không gian tên chuẩn |
+| V.3 | Xuất được toàn bộ dữ liệu khi kết thúc hợp đồng (mục 4 E-HSMT) | **Có** | Bỏ trống bộ lọc là xuất cả kho; phần biểu ghi MARC xuất từ Phân hệ II (ISO 2709 và MARCXML), phần bạn đọc và giao dịch xuất từ các phân hệ tương ứng |
+| V.4 | Số lượng tài liệu theo bộ sưu tập, định dạng, mức truy cập | **Có** | Bảng và biểu đồ, kèm số tài liệu đã tìm được toàn văn |
+| V.4 | Lượt xem / lượt tải theo thời gian, theo tài liệu, theo bạn đọc | **Có** | Gộp theo ngày, tháng, quý hoặc năm; hai bảng xếp hạng tài liệu và bạn đọc |
+| V.4 | Dung lượng lưu trữ đã dùng | **Có** | Tách riêng dung lượng bản gốc và bản dẫn xuất để biết chi phí thật của kho |
+| V.4 | Thống kê yêu cầu truy cập hạn chế, thời gian xử lý trung bình | **Có** | Tổng, chờ duyệt, đã duyệt, từ chối, hết hạn và số giờ xử lý trung bình |
+| V.4 | Báo cáo có bảng, biểu đồ, xuất PDF và Excel | **Có** | Cả bốn báo cáo, xuất đúng bộ lọc đang hiển thị, có ghi nhật ký ai xuất |
+| XI.4 | Nhóm `/api/reader/digital/*` | **Có** | Danh sách tài liệu xem được, chi tiết kèm quyền của chính người gọi, mở trình đọc, xem từng trang, tải về, gửi yêu cầu, tra trạng thái yêu cầu và lịch sử xem — mỗi endpoint đều có kiểm thử tích hợp |
+
+---
+
 ## D. Trao đổi dữ liệu và các phân hệ còn lại
 
 | # | Yêu cầu | Đáp ứng | Ghi chú |
@@ -295,7 +331,7 @@ Cập nhật lần cuối: sau khi hoàn thành Phase 9.
 | D4 | Phân hệ II — Biên mục | **Có** | Chi tiết ở mục B4. Riêng II.7 (nhập từ Z39.50) thuộc Phase 11 |
 | D5 | Phân hệ III — Bổ sung và Kho | **Có** | Chi tiết ở mục B5 |
 | D6 | Phân hệ IV — Ấn phẩm định kỳ | **Có** | Chi tiết ở mục B6 |
-| D7 | Phân hệ V — Tài liệu số | **Đang thực hiện** | Phase 10 |
+| D7 | Phân hệ V — Tài liệu số | **Có** | Chi tiết ở mục B9 |
 | D8 | Phân hệ VI — Bạn đọc | **Có** | Chi tiết ở mục B7 |
 | D9 | Phân hệ VII — Lưu thông | **Có** | Chi tiết ở mục B8 |
 | D10 | Phân hệ VIII — Quản trị nội dung | **Đang thực hiện** | Phase 12 |

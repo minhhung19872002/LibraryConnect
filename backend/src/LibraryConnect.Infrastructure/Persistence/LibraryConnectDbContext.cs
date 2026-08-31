@@ -126,6 +126,7 @@ public class LibraryConnectDbContext : DbContext, IApplicationDbContext
     public DbSet<DigitalDocumentFile> DigitalDocumentFiles => Set<DigitalDocumentFile>();
     public DbSet<DigitalAccessRequest> DigitalAccessRequests => Set<DigitalAccessRequest>();
     public DbSet<DigitalAccessLog> DigitalAccessLogs => Set<DigitalAccessLog>();
+    public DbSet<DigitalUploadSession> DigitalUploadSessions => Set<DigitalUploadSession>();
 
     // ---- rdr ----
     public DbSet<Reader> Readers => Set<Reader>();

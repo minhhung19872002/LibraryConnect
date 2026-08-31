@@ -1,5 +1,6 @@
 using LibraryConnect.Application.Common.Interfaces;
 using LibraryConnect.Application.Features.Circulation;
+using LibraryConnect.Application.Features.Digital;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -21,6 +22,8 @@ public class RecurringJobRegistrar : IHostedService
     public const string OverdueJobId = "libraryconnect:circulation-overdue";
     public const string DueSoonJobId = "libraryconnect:circulation-due-soon";
     public const string HoldExpiryJobId = "libraryconnect:circulation-hold-expiry";
+    public const string DigitalExpiryJobId = "libraryconnect:digital-access-expiry";
+    public const string DigitalUploadCleanupJobId = "libraryconnect:digital-upload-cleanup";
 
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<RecurringJobRegistrar> _logger;
@@ -70,6 +73,16 @@ public class RecurringJobRegistrar : IHostedService
 
             jobs.AddOrUpdateRecurring<ICirculationDailyJobs>(
                 HoldExpiryJobId, job => job.ExpireHoldsAsync(), "30 0 * * *");
+
+            // Tài liệu số: quyền đọc hết hạn được đóng lại từ nửa đêm, còn các phiên tải dở dang
+            // dọn vào lúc rảnh nhất trong ngày vì việc này đụng tới kho đối tượng.
+            jobs.AddOrUpdateRecurring<IDigitalMaintenanceJob>(
+                DigitalExpiryJobId, job => job.ExpireAccessRequestsAsync(CancellationToken.None), "10 0 * * *");
+
+            jobs.AddOrUpdateRecurring<IDigitalMaintenanceJob>(
+                DigitalUploadCleanupJobId,
+                job => job.CleanUploadSessionsAsync(CancellationToken.None),
+                "45 3 * * *");
         }
         catch (Exception ex)
         {

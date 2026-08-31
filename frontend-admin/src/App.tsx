@@ -43,6 +43,10 @@ import { HoldsPage } from '@/modules/circulation/HoldsPage';
 import { FinesPage } from '@/modules/circulation/FinesPage';
 import { LockersAndGatePage } from '@/modules/circulation/LockersAndGatePage';
 import { CirculationReportsPage } from '@/modules/circulation/CirculationReportsPage';
+import { DigitalDocumentsPage } from '@/modules/digital/DigitalDocumentsPage';
+import { DigitalRequestsPage } from '@/modules/digital/DigitalRequestsPage';
+import { DigitalImportExportPage } from '@/modules/digital/DigitalImportExportPage';
+import { DigitalReportsPage } from '@/modules/digital/DigitalReportsPage';
 import { SerialReportsPage } from '@/modules/serials/SerialReportsPage';
 import { CustomIndexPage } from '@/modules/cataloging/CustomIndexPage';
 import { CatalogQueuePage } from '@/modules/cataloging/CatalogQueuePage';
@@ -295,6 +299,38 @@ function AppRoutes() {
           element={
             <RequirePermissionRoute permission={PERMISSIONS.circulation.reportView}>
               <CirculationReportsPage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/tai-lieu-so/kho"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.digital.view}>
+              <DigitalDocumentsPage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/tai-lieu-so/yeu-cau"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.digital.requestView}>
+              <DigitalRequestsPage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/tai-lieu-so/nhap-xuat"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.digital.import}>
+              <DigitalImportExportPage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/tai-lieu-so/bao-cao"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.digital.reportView}>
+              <DigitalReportsPage />
             </RequirePermissionRoute>
           }
         />

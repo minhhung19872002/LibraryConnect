@@ -109,8 +109,8 @@ Không sửa migration đã commit — luôn tạo migration mới.
 ### Kiểm thử
 
 ```bash
-cd backend && dotnet test          # 280 unit test + 223 integration test
-cd frontend-admin && npm test      # 85 test giao diện
+cd backend && dotnet test          # 304 unit test + 247 integration test
+cd frontend-admin && npm test      # 97 test giao diện
 ```
 
 Integration test tự khởi tạo một container PostgreSQL 16 riêng, chạy migration, nạp dữ liệu nền rồi
@@ -163,8 +163,8 @@ vào mà không phải sửa lại — xem `mobile/README.md`.
 | 7 | Phân hệ IV — Ấn phẩm định kỳ (khai kỳ hạn, sinh số dự kiến, ghi nhận, khiếu nại, bài trích, đóng tập, báo cáo) | ✅ Hoàn thành |
 | 8 | Phân hệ VI — Bạn đọc (hồ sơ, ảnh chân dung, thẻ, in thẻ, nhập xuất, đồng bộ, báo cáo) | ✅ Hoàn thành |
 | 9 | Phân hệ VII — Lưu thông (chính sách và lịch nghỉ, quầy ghi mượn/ghi trả bằng bàn phím, đặt giữ chỗ, tiền phạt, cổng ra vào, tủ gửi đồ, 7 báo cáo, nhóm `/api/reader/*`) | ✅ Hoàn thành |
-| 10 | Phân hệ V — Tài liệu số | 🔄 Đang thực hiện |
-| 11 | Liên thư viện: Z39.50, SRU, OAI-PMH | ⏳ |
+| 10 | Phân hệ V — Tài liệu số (bộ sưu tập, tải tệp lớn theo mảnh, nhận dạng ký tự tiếng Việt, trình đọc có chữ chìm, duyệt yêu cầu đọc, nhập xuất, 4 báo cáo) | ✅ Hoàn thành |
+| 11 | Liên thư viện: Z39.50, SRU, OAI-PMH | 🔄 Đang thực hiện |
 | 12 | Phân hệ VIII, IX — OPAC và quản trị nội dung | ⏳ |
 | 13 | Phân hệ X — Tài liệu môn học | ⏳ |
 | 14 | Hoàn thiện, tài liệu bàn giao, kịch bản kiểm thử | ⏳ |

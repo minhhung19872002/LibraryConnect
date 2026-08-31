@@ -402,11 +402,48 @@ Ký hiệu bám theo **Mục 5 phần 2 của E-HSMT**.
 | LT.28 | Bạn đọc chỉ thấy dữ liệu của mình | Đăng nhập bạn đọc A rồi gọi `POST /api/reader/loans/{id}/renew` với phiếu của bạn đọc B | Trả HTTP 403 |
 | LT.29 | Mượn tự phục vụ khi chưa bật | `POST /api/reader/loans/self-checkout` | Bị chặn kèm thông báo thư viện chưa mở chức năng; bật tham số rồi gọi lại kèm mã điểm quét đúng thì mượn được |
 
+## Nhóm chức năng — Phân hệ V: Tài liệu số
+
+| Mã | Kịch bản | Các bước | Kết quả mong đợi |
+|---|---|---|---|
+| TLS.1 | Cây bộ sưu tập nạp sẵn | Tài liệu số → Kho tài liệu số | Sáu nhánh gốc; nhánh Luận văn – Luận án có hai nhánh con và mặc định mức Hạn chế |
+| TLS.2 | Chặn vòng cha con | Sửa một nhánh cha, đặt nó nằm dưới chính nhánh con của nó | Bị chặn kèm lý do |
+| TLS.3 | Bộ sưu tập còn tài liệu | Xóa một bộ sưu tập đang chứa tài liệu | Bị chặn kèm lý do |
+| TLS.4 | Tải tệp PDF lên | Bấm Tải tài liệu lên, chọn một tệp PDF | Sau vài giây danh sách hiện đủ số trang, ảnh bìa và nhãn "Có văn bản" |
+| TLS.5 | Tệp giả dạng | Đổi tên một tệp bất kỳ thành .pdf rồi tải lên | Bị từ chối kèm thông báo không nhận ra định dạng |
+| TLS.6 | Tải tệp lớn theo mảnh | Tải một tệp trên 16 MB | Thanh tiến trình chạy theo từng mảnh; ngắt mạng giữa chừng rồi tải lại thì chỉ gửi phần còn thiếu |
+| TLS.7 | Ghép thiếu mảnh | Gọi `POST /api/digital/uploads/{id}/complete` khi còn thiếu mảnh | Bị chặn, thông báo ghi rõ còn thiếu mảnh nào |
+| TLS.8 | Mã kiểm tra tệp | Mở chi tiết tài liệu | Có mã SHA-256 64 ký tự, dùng đối chiếu khi bàn giao dữ liệu |
+| TLS.9 | Đọc trực tuyến | Bấm Đọc trên một tài liệu PDF | Mỗi trang hiện dưới dạng ảnh, không có tệp gốc nào tải xuống trình duyệt |
+| TLS.10 | Chữ chìm | Xem một tài liệu có bật chữ chìm | Trên trang có tên người xem, thời điểm và địa chỉ IP, lát kín cả trang |
+| TLS.11 | Xin trang ngoài khoảng | Gọi `GET /api/digital/documents/{id}/pages/999` | Trả 404 kèm thông báo tài liệu chỉ có bao nhiêu trang |
+| TLS.12 | Giới hạn xem thử kiểm ở máy chủ | Bạn đọc chưa được duyệt gọi thẳng API xin trang thứ 50 của tài liệu chỉ cho xem thử 10 trang | Trả 403, không phụ thuộc việc giao diện có che nút hay không |
+| TLS.13 | Tìm kiếm toàn văn không dấu | Bật "Tìm trong nội dung", gõ từ khóa không dấu | Ra đúng tài liệu kèm đoạn trích quanh chỗ khớp |
+| TLS.14 | Lọc theo nhánh bộ sưu tập | Chọn nhánh cha trên cây | Thấy cả tài liệu nằm trong các nhánh con |
+| TLS.15 | Tài liệu công khai | Khách chưa đăng nhập mở tài liệu công khai | Đọc được toàn văn |
+| TLS.16 | Tài liệu nội bộ | Khách chưa đăng nhập mở tài liệu nội bộ | Chỉ xem thử được số trang đã khai, kèm lời nhắc đăng nhập |
+| TLS.17 | Tài liệu cấm | Bạn đọc mở tài liệu mức Cấm | Không mở được nội dung, và tài liệu không hiện trên danh sách của bạn đọc |
+| TLS.18 | Bạn đọc xin đọc tài liệu hạn chế | Đăng nhập bằng số thẻ, mở tài liệu hạn chế, gửi yêu cầu kèm lý do | Yêu cầu vào hàng đợi ở trạng thái Chờ duyệt |
+| TLS.19 | Gửi yêu cầu trùng | Gửi lại yêu cầu khi lần trước còn đang chờ | Bị chặn kèm lý do |
+| TLS.20 | Xin đọc tài liệu không hạn chế | Gửi yêu cầu cho một tài liệu công khai | Bị chặn kèm thông báo không cần xin phép |
+| TLS.21 | Duyệt yêu cầu | Bấm Duyệt, đặt thời hạn 15 ngày, 5 lượt xem, tick cho tải | Bạn đọc đọc được toàn văn và tải được tệp, dù chính sách chung của tài liệu là không cho tải |
+| TLS.22 | Từ chối phải có lý do | Bấm Từ chối mà bỏ trống lý do | Bị chặn; ghi lý do thì từ chối được và bạn đọc thấy đúng lý do đó |
+| TLS.23 | Thu hồi quyền đọc | Bấm Thu hồi trên một quyền đang có hiệu lực | Bạn đọc quay về mức xem thử |
+| TLS.24 | Quyền đọc hết hạn | Đặt thời hạn về quá khứ rồi chạy tác vụ nền `libraryconnect:digital-access-expiry` | Yêu cầu chuyển sang Hết hạn, bạn đọc không còn đọc toàn văn |
+| TLS.25 | Nhật ký truy cập | Bạn đọc mở một tài liệu, cán bộ vào tab Nhật ký truy cập | Có dòng ghi đúng người xem, thời điểm, địa chỉ IP và thiết bị |
+| TLS.26 | Lịch sử của bạn đọc | Gọi `GET /api/reader/digital/history` | Chỉ thấy lịch sử của chính mình, mỗi lần mở tài liệu là một dòng |
+| TLS.27 | Nhập hàng loạt, kiểm tra trước | Chọn tệp ZIP rồi bấm Kiểm tra trước | Liệt kê từng tệp và kết quả dự kiến, không ghi gì vào hệ thống |
+| TLS.28 | Nhập hàng loạt thật | Bấm Nhập vào hệ thống | Số tệp nhập được đúng bằng số tệp trong gói; tệp đặt tên theo số ĐKCB tự gắn vào biểu ghi |
+| TLS.29 | Xuất gói tài liệu | Bấm Xuất gói | Tệp ZIP có `metadata/tai-lieu-so.xlsx`, `metadata/dublin-core.xml` và thư mục `files/` |
+| TLS.30 | Bốn báo cáo tài liệu số | Mở lần lượt bốn tab báo cáo | Mỗi tab có số liệu, biểu đồ và xuất được cả PDF lẫn Excel |
+| TLS.31 | Nhật ký hệ thống ghi việc xuất dữ liệu | Sau khi xuất gói, vào Nhật ký hệ thống lọc đối tượng `DigitalDocument` | Có dòng hành động Xuất |
+| TLS.32 | Phân quyền | Đăng nhập tài khoản bạn đọc rồi gọi `POST /api/digital/requests/search` | Trả 403 kèm tên mã quyền còn thiếu |
+
 ## Cách chạy bộ kiểm thử tự động
 
 ```bash
 cd backend
-dotnet test                 # 280 unit test + 223 integration test
+dotnet test                 # 304 unit test + 247 integration test
 ```
 
 Integration test tự khởi tạo một container PostgreSQL 16 và một container MinIO riêng, chạy
@@ -415,7 +452,7 @@ duyệt dùng — không có thành phần nào bị giả lập.
 
 ```bash
 cd frontend-admin
-npm test                    # 85 test giao diện
+npm test                    # 97 test giao diện
 ```
 
 ---
@@ -428,7 +465,7 @@ trên; phần Z39.50 và OAI-PMH sẽ bổ sung khi bàn giao Phase 11.
 Nhóm kiểm thử 2.5 (chuyển đổi dữ liệu) đã có phần nhập ISO 2709 và nhập Excel ở nhóm kịch bản
 Biên mục; phần đối chiếu số lượng bạn đọc và giao dịch sẽ bổ sung khi bàn giao các phân hệ tương ứng.
 
-Nhóm kiểm thử 2.8 (báo cáo) đã có phần báo cáo bổ sung ở nhóm kịch bản Phân hệ III và bảy báo cáo lưu thông ở nhóm Phân hệ VII; các báo cáo của
+Nhóm kiểm thử 2.8 (báo cáo) đã có phần báo cáo bổ sung ở nhóm kịch bản Phân hệ III, bảy báo cáo lưu thông ở nhóm Phân hệ VII và bốn báo cáo tài liệu số ở nhóm Phân hệ V; các báo cáo của
 những phân hệ còn lại sẽ bổ sung khi bàn giao phân hệ tương ứng.
 
 Nhóm kiểm thử 2.7 (ứng dụng di động) trong đợt web này được thay bằng kiểm thử tích hợp nhóm `/api/reader/*`; phần lưu thông của nhóm này nằm ở các kịch bản LT.26–LT.29.

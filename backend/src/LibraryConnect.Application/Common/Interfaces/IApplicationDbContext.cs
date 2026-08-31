@@ -109,6 +109,7 @@ public interface IApplicationDbContext
     DbSet<DigitalDocumentFile> DigitalDocumentFiles { get; }
     DbSet<DigitalAccessRequest> DigitalAccessRequests { get; }
     DbSet<DigitalAccessLog> DigitalAccessLogs { get; }
+    DbSet<DigitalUploadSession> DigitalUploadSessions { get; }
 
     // ---- rdr ----
     DbSet<Reader> Readers { get; }

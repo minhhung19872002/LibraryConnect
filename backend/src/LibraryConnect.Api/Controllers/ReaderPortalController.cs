@@ -1,6 +1,7 @@
 using LibraryConnect.Application.Common.Models;
 using LibraryConnect.Application.Features.Auth;
 using LibraryConnect.Application.Features.Circulation;
+using LibraryConnect.Application.Features.Digital;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -129,6 +130,99 @@ public class ReaderPortalController : ApiControllerBase
         [FromQuery] PagedRequestDefault request, CancellationToken ct)
     {
         var result = await Mediator.Send(new GetMyFinesQuery(request), ct);
+        return Ok(Success(result));
+    }
+
+    // ---------------------------------------------------------------
+    // Tài liệu số (Phân hệ V, nhóm /api/reader/digital/*)
+    // ---------------------------------------------------------------
+
+    /// <summary>Danh sách tài liệu số bạn đọc xem được.</summary>
+    [HttpPost("digital/search")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(ApiResponse<PagedResult<DigitalDocumentRowDto>>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<PagedResult<DigitalDocumentRowDto>>>> DigitalDocuments(
+        [FromBody] DigitalDocumentQueryRequest request, CancellationToken ct)
+    {
+        var result = await Mediator.Send(new GetMyDigitalDocumentsQuery(request), ct);
+        return Ok(Success(result));
+    }
+
+    /// <summary>Chi tiết một tài liệu số kèm quyền đọc của chính bạn đọc.</summary>
+    [HttpGet("digital/{id:guid}")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(ApiResponse<DigitalDocumentDetailDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<DigitalDocumentDetailDto>>> DigitalDocument(
+        Guid id, CancellationToken ct)
+    {
+        var result = await Mediator.Send(new GetDigitalDocumentQuery(id), ct);
+        return Ok(Success(result));
+    }
+
+    /// <summary>Mở trình đọc trực tuyến.</summary>
+    [HttpGet("digital/{id:guid}/read")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(ApiResponse<DigitalReaderSessionDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<DigitalReaderSessionDto>>> ReadDigital(
+        Guid id, CancellationToken ct)
+    {
+        var result = await Mediator.Send(new OpenDigitalReaderQuery(id), ct);
+        return Ok(Success(result));
+    }
+
+    /// <summary>Một trang tài liệu dưới dạng ảnh, đã đóng chữ chìm tên bạn đọc và thời điểm xem.</summary>
+    [HttpGet("digital/{id:guid}/pages/{page:int}")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> ReadDigitalPage(Guid id, int page, CancellationToken ct)
+    {
+        var file = await Mediator.Send(new ReadDigitalPageQuery(id, page), ct);
+        return File(file.Content, file.ContentType);
+    }
+
+    /// <summary>Tải tài liệu số về, nếu được phép.</summary>
+    [HttpGet("digital/{id:guid}/download")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> DownloadDigital(Guid id, CancellationToken ct)
+    {
+        var file = await Mediator.Send(new DownloadDigitalDocumentQuery(id), ct);
+        return File(file.Content, file.ContentType, file.FileName);
+    }
+
+    /// <summary>Gửi yêu cầu đọc một tài liệu hạn chế.</summary>
+    [HttpPost("digital/{id:guid}/request")]
+    [ProducesResponseType(typeof(ApiResponse<DigitalAccessRequestRowDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<ApiResponse<DigitalAccessRequestRowDto>>> RequestDigitalAccess(
+        Guid id, [FromBody] DigitalReasonRequest body, CancellationToken ct)
+    {
+        var result = await Mediator.Send(new RequestDigitalAccessCommand
+        {
+            DocumentId = id,
+            Reason = body.Reason ?? string.Empty,
+        }, ct);
+
+        return Ok(Success(result, "Đã gửi yêu cầu, thư viện sẽ phản hồi sớm."));
+    }
+
+    /// <summary>Trạng thái các yêu cầu đọc đã gửi.</summary>
+    [HttpGet("digital/requests")]
+    [ProducesResponseType(typeof(ApiResponse<PagedResult<DigitalAccessRequestRowDto>>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<PagedResult<DigitalAccessRequestRowDto>>>> MyDigitalRequests(
+        [FromQuery] PagedRequestDefault request, CancellationToken ct)
+    {
+        var result = await Mediator.Send(new GetMyDigitalRequestsQuery(request), ct);
+        return Ok(Success(result));
+    }
+
+    /// <summary>Lịch sử xem và tải tài liệu số.</summary>
+    [HttpGet("digital/history")]
+    [ProducesResponseType(typeof(ApiResponse<PagedResult<DigitalAccessLogRowDto>>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<PagedResult<DigitalAccessLogRowDto>>>> MyDigitalHistory(
+        [FromQuery] PagedRequestDefault request, CancellationToken ct)
+    {
+        var result = await Mediator.Send(new GetMyDigitalHistoryQuery(request), ct);
         return Ok(Success(result));
     }
 }

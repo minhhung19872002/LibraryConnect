@@ -1,5 +1,5 @@
 # ---------- Giai đoạn build ----------
-FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0-bookworm-slim AS build
 WORKDIR /src
 
 # Copy file dự án trước để tận dụng cache lớp restore.
@@ -19,21 +19,35 @@ RUN dotnet publish src/LibraryConnect.Api/LibraryConnect.Api.csproj \
     -c Release -o /app/publish --no-restore /p:UseAppHost=false
 
 # ---------- Giai đoạn chạy ----------
-FROM mcr.microsoft.com/dotnet/aspnet:8.0-alpine AS runtime
+# Nền Debian chứ không phải Alpine: thư viện kết xuất PDF (PDFium) và bộ nhận dạng ký tự Tesseract
+# chỉ có bản dựng cho glibc. Xem docs/00-quyet-dinh-ky-thuat.md, quyết định của Phase 10.
+FROM mcr.microsoft.com/dotnet/aspnet:8.0-bookworm-slim AS runtime
 WORKDIR /app
 
-# postgresql-client: cần cho pg_dump / pg_restore của chức năng sao lưu (I.5).
-# icu-libs + tzdata: sắp xếp và hiển thị đúng tiếng Việt, múi giờ Việt Nam.
-# fontconfig + ttf-dejavu: QuestPDF cần font để kết xuất PDF.
-RUN apk add --no-cache \
-        postgresql16-client \
-        icu-libs \
-        icu-data-full \
-        tzdata \
-        fontconfig \
-        ttf-dejavu \
-        curl \
-    && mkdir -p /var/lib/libraryconnect/backups /app/logs
+# postgresql-client-16: pg_dump / pg_restore của chức năng sao lưu (I.5). Phải đúng phiên bản 16 vì
+#   pg_dump đời cũ từ chối kết xuất máy chủ đời mới hơn, nên lấy từ kho chính thức của PostgreSQL.
+# tesseract-ocr + tesseract-ocr-vie: nhận dạng ký tự tiếng Việt cho tài liệu số bản quét (V.1).
+# libfontconfig1 + fonts-dejavu-core: QuestPDF và SkiaSharp cần font để kết xuất PDF và đóng chữ chìm.
+# locales + tzdata: sắp xếp, hiển thị đúng tiếng Việt và múi giờ Việt Nam.
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends ca-certificates curl gnupg; \
+    install -d /usr/share/postgresql-common/pgdg; \
+    curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
+        https://www.postgresql.org/media/keys/ACCC4CF8.asc; \
+    echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] http://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" \
+        > /etc/apt/sources.list.d/pgdg.list; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
+        postgresql-client-16 \
+        tesseract-ocr \
+        tesseract-ocr-vie \
+        libfontconfig1 \
+        fonts-dejavu-core \
+        tzdata; \
+    apt-get purge -y --auto-remove gnupg; \
+    rm -rf /var/lib/apt/lists/*; \
+    mkdir -p /var/lib/libraryconnect/backups /app/logs
 
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false \
     ASPNETCORE_URLS=http://+:8080 \
@@ -42,7 +56,8 @@ ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false \
 COPY --from=build /app/publish .
 
 # Chạy bằng người dùng không phải root.
-RUN addgroup -S lc && adduser -S lc -G lc \
+RUN groupadd --system lc \
+    && useradd --system --gid lc --home-dir /app --shell /usr/sbin/nologin lc \
     && chown -R lc:lc /app /var/lib/libraryconnect
 USER lc
 

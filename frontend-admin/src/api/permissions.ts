@@ -118,9 +118,16 @@ export const PERMISSIONS = {
   digital: {
     view: 'DIGITAL.DOCUMENT.VIEW',
     upload: 'DIGITAL.DOCUMENT.UPLOAD',
+    update: 'DIGITAL.DOCUMENT.UPDATE',
+    delete: 'DIGITAL.DOCUMENT.DELETE',
+    download: 'DIGITAL.DOCUMENT.DOWNLOAD',
     collection: 'DIGITAL.COLLECTION.MANAGE',
     requestView: 'DIGITAL.REQUEST.VIEW',
+    requestApprove: 'DIGITAL.REQUEST.APPROVE',
+    import: 'DIGITAL.DOCUMENT.IMPORT',
+    export: 'DIGITAL.DOCUMENT.EXPORT',
     reportView: 'DIGITAL.REPORT.VIEW',
+    accessLogView: 'DIGITAL.ACCESS_LOG.VIEW',
   },
   reader: {
     view: 'READER.PROFILE.VIEW',

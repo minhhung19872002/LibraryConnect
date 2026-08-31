@@ -42,6 +42,11 @@ public static class DependencyInjection
         services.AddScoped<Features.Circulation.ICirculationDeskService, Features.Circulation.CirculationDeskService>();
         services.AddScoped<Features.Circulation.ICirculationDailyJobs, Features.Circulation.CirculationDailyJobs>();
         services.AddScoped<Features.Readers.IReaderImportRunner, Features.Readers.ReaderImportRunner>();
+        services.AddScoped<Features.Digital.IDigitalAccessEvaluator, Features.Digital.DigitalAccessEvaluator>();
+        services.AddScoped<Features.Digital.DigitalAccessRecorder>();
+        services.AddScoped<Features.Digital.DigitalDocumentWriter>();
+        services.AddScoped<Features.Digital.IDigitalProcessingJob, Features.Digital.DigitalProcessingJob>();
+        services.AddScoped<Features.Digital.IDigitalMaintenanceJob, Features.Digital.DigitalMaintenanceJob>();
 
         return services;
     }

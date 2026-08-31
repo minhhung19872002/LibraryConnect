@@ -102,7 +102,7 @@ services:
       - backup-data:/var/lib/libraryconnect/backups
       - api-logs:/app/logs
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O - http://localhost:8080/health || exit 1"]
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/health || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 10

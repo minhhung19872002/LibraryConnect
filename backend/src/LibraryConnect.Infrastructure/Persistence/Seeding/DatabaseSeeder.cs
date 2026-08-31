@@ -43,6 +43,7 @@ public partial class DatabaseSeeder
         await SeedFormTemplatesAsync(ct);
         await SeedReaderCardTemplateAsync(ct);
         await SeedCirculationAsync(ct);
+        await SeedDigitalCollectionsAsync(ct);
 
         _logger.LogInformation("Khởi tạo dữ liệu nền hoàn tất");
     }

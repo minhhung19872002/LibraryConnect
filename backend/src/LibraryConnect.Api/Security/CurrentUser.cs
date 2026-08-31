@@ -106,7 +106,22 @@ public class CurrentUser : ICurrentUser
                 return forwarded.Split(',')[0].Trim();
             }
 
-            return context.Connection.RemoteIpAddress?.ToString();
+            var address = context.Connection.RemoteIpAddress;
+
+            if (address is null)
+            {
+                return null;
+            }
+
+            // Kestrel nghe trên chồng địa chỉ kép nên địa chỉ IPv4 tới nơi dưới dạng ánh xạ IPv6
+            // (::ffff:192.168.0.1). Trả về dạng IPv4 quen thuộc để nhật ký và chữ chìm trên trang
+            // tài liệu số đọc được ngay, khỏi phải dịch trong đầu.
+            if (address.IsIPv4MappedToIPv6)
+            {
+                address = address.MapToIPv4();
+            }
+
+            return address.ToString();
         }
     }
 

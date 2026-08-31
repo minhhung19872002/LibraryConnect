@@ -130,6 +130,17 @@ public class DigitalAccessRequestConfiguration : IEntityTypeConfiguration<Digita
     }
 }
 
+public class DigitalUploadSessionConfiguration : IEntityTypeConfiguration<DigitalUploadSession>
+{
+    public void Configure(EntityTypeBuilder<DigitalUploadSession> builder)
+    {
+        builder.Property(x => x.FileName).HasMaxLength(500).IsRequired();
+        builder.Property(x => x.MimeType).HasMaxLength(200).IsRequired();
+        builder.Property(x => x.Title).HasMaxLength(2000);
+        builder.HasIndex(x => x.ExpiresAt).HasDatabaseName("ix_digital_upload_sessions_expires");
+    }
+}
+
 public class DigitalAccessLogConfiguration : IEntityTypeConfiguration<DigitalAccessLog>
 {
     public void Configure(EntityTypeBuilder<DigitalAccessLog> builder)
