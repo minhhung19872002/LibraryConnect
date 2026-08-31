@@ -73,3 +73,25 @@ describe('findMenuByPath', () => {
     expect(findMenuByPath('/khong-ton-tai')).toEqual([]);
   });
 });
+
+describe('Nhánh Quản trị nội dung', () => {
+  it('mở đúng những màn hình mà cán bộ nội dung được cấp quyền', () => {
+    // Cán bộ chỉ được giao việc soạn tin thì thấy mục Tin tức, nhưng không thấy Thông tin trang
+    // thư viện hay Nhận xét bạn đọc — hai chỗ ảnh hưởng tới cả trang công khai.
+    const visible = filterMenuByPermission(menuTree, grantedBy([PERMISSIONS.cms.newsView]));
+    const keys = keysOf(visible);
+
+    expect(keys).toContain('cms');
+    expect(keys).toContain('cms-news');
+    expect(keys).not.toContain('cms-site');
+    expect(keys).not.toContain('cms-reviews');
+  });
+
+  it('dẫn tới đúng đường dẫn của từng màn hình nội dung', () => {
+    expect(findMenuByPath('/noi-dung/thong-tin').at(-1)?.key).toBe('cms-site');
+    expect(findMenuByPath('/noi-dung/trang').at(-1)?.key).toBe('cms-pages');
+    expect(findMenuByPath('/noi-dung/tin-tuc').at(-1)?.key).toBe('cms-news');
+    expect(findMenuByPath('/noi-dung/thu-vien-anh').at(-1)?.key).toBe('cms-galleries');
+    expect(findMenuByPath('/noi-dung/nhan-xet').at(-1)?.key).toBe('cms-reviews');
+  });
+});

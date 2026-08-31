@@ -352,7 +352,61 @@ Cập nhật lần cuối: sau khi hoàn thành Phase 11.
 | II.7 | Kết quả hiển thị theo từng server | **Có** | Mỗi máy chủ một khối riêng kèm số kết quả và thời gian trả lời; nơi nào hỏng thì báo riêng chỗ đó, các nơi còn lại vẫn có kết quả |
 | II.7 | So sánh với biểu ghi đã có trong hệ thống | **Có** | Đối chiếu theo ISBN rồi tới nhan đề, biểu ghi đã có được đánh dấu ngay trên danh sách để khỏi nhập trùng |
 | II.7 | Nhập vào hệ thống rồi mở trình soạn MARC để hiệu đính | **Có** | Bỏ số kiểm soát của thư viện bạn, ghi nguồn vào trường 035, rồi mở trình soạn MARC — chưa lưu gì vào kho cho tới khi cán bộ bấm lưu |
-| IX.5 | Bạn đọc tra sang thư viện khác từ trang tra cứu | **Có** | Máy chủ khai được cờ "cho bạn đọc tra sang"; trang OPAC dùng cờ này ở Phase 12 |
+| IX.5 | Bạn đọc tra sang thư viện khác từ trang tra cứu | **Có** | Máy chủ khai được cờ "cho bạn đọc tra sang"; trang OPAC dùng đúng cờ này, xem mục B12 |
+
+---
+
+## B11. Phân hệ VIII — Quản trị nội dung
+
+| # | Yêu cầu của E-HSMT | Đáp ứng | Thực hiện |
+|---|---|---|---|
+| VIII.1 | Cấu hình chung: tên thư viện, logo, favicon, ảnh banner, slogan, địa chỉ, điện thoại, email, giờ mở cửa, mạng xã hội | **Có** | Một màn hình "Thông tin trang thư viện" gom cả hai kho cấu hình: tên/địa chỉ/logo nằm ở tham số hệ thống vì cả phần mềm dùng chung, còn khẩu hiệu, giờ mở cửa, mạng xã hội nằm ở bảng riêng của trang tra cứu. Mỗi ô ghi rõ nó được lưu ở đâu |
+| VIII.1 | Quản lý trang tĩnh (Giới thiệu, Nội quy, Hướng dẫn, Liên hệ, Hỏi đáp) | **Có** | Năm trang nạp sẵn khi cài đặt với nội dung viết theo lệ chung của thư viện đại học Việt Nam; thêm, sửa, xóa, đăng/gỡ từ giao diện |
+| VIII.1 | Trình soạn thảo WYSIWYG, chèn ảnh/file/bảng/video | **Có** | Thanh công cụ đủ chữ đậm, nghiêng, gạch chân, hai cấp tiêu đề, hai kiểu danh sách, liên kết, ảnh, bảng, khung video nhúng, hoàn tác, và một nút xem thẳng mã HTML. Ảnh tải lên kho đối tượng ngay lúc chọn nên bài viết chỉ chứa đường dẫn |
+| VIII.1 | Nội dung soạn thảo phải an toàn (yêu cầu 6.4) | **Có** | HTML được lọc ngay khi lưu, không phải lúc hiển thị: thẻ script, thuộc tính sự kiện, giao thức `javascript:`, thuộc tính style đều bị bỏ; khung video chỉ giữ từ YouTube và Vimeo |
+| VIII.1 | Quản lý menu điều hướng: cây menu, link nội bộ/ngoài, icon, hiển thị/ẩn | **Có** | Cây nhiều cấp, đặt được mục cha, thứ tự, cửa sổ mở, bật tắt. Tắt mục cha thì cả nhánh bên dưới ẩn theo; đặt cha nằm dưới chính nó bị chặn để cây không thành vòng |
+| VIII.1 | Quản lý banner/slider trang chủ: ảnh, link, thứ tự, thời gian hiển thị | **Có** | Ba vị trí (trình chiếu trang chủ, cột bên, chân trang), khoảng ngày hiển thị, thứ tự, bật tắt; trang chủ chỉ lấy banner đang trong khoảng ngày |
+| VIII.1 | Quản lý liên kết website (thư viện bạn, CSDL trực tuyến) | **Có** | Có nhóm hiển thị, mô tả, thứ tự; nạp sẵn bốn liên kết công khai khi cài đặt |
+| VIII.2 | CRUD tin: tiêu đề, slug, tóm tắt, nội dung, ảnh đại diện, chuyên mục, thẻ, tin nổi bật, lên lịch xuất bản | **Có** | Đủ; đường dẫn bỏ trống thì tự sinh từ tiêu đề và tự tránh trùng, tóm tắt bỏ trống thì lấy đoạn đầu của bài |
+| VIII.2 | Lên lịch xuất bản | **Có** | Đặt mốc tương lai thì bài chỉ hiện trên trang tra cứu khi tới giờ; danh sách quản trị ghi rõ "Hẹn ngày giờ" |
+| VIII.2 | Quản lý chuyên mục tin | **Có** | Dùng chung màn hình danh mục của hệ thống (`news-categories`), nên có sẵn nhập xuất Excel và gộp trùng |
+| VIII.2 | Quản lý thư viện ảnh (album sự kiện) | **Có** | Album có ngày diễn ra, ảnh bìa, danh sách ảnh sắp xếp được kèm chú thích; ảnh bìa bỏ trống thì lấy ảnh đầu tiên |
+| VIII.2 | Thống kê lượt xem tin | **Có** | Tổng số bài, số đã đăng, số bản nháp, tổng lượt xem, phân bổ theo chuyên mục và danh sách bài xem nhiều nhất |
+| — | Kiểm duyệt nhận xét bạn đọc | **Có** | Nhận xét gửi từ trang tra cứu vào hàng chờ; duyệt, bỏ duyệt hoặc xóa. Sửa lại nhận xét đã duyệt thì phải duyệt lại |
+
+---
+
+## B12. Phân hệ IX — Tra cứu (OPAC)
+
+| # | Yêu cầu của E-HSMT | Đáp ứng | Thực hiện |
+|---|---|---|---|
+| IX.1 | Trang thông tin điện tử là SPA riêng, công khai, responsive | **Có** | `frontend-opac` chạy trong container riêng sau Nginx ở đường dẫn gốc; giao diện co giãn từ điện thoại tới màn hình rộng |
+| IX.1 | Trang chủ: ô tìm kiếm lớn, banner, sách mới, sách mượn nhiều, tin tức, liên kết nhanh | **Có** | Đủ các khối; ba khối sách mới, sách mượn nhiều và mục tìm ở thư viện khác bật tắt được bằng cấu hình |
+| IX.1 | Trang tin tức, trang tĩnh, trang liên hệ | **Có** | Tin tức có lọc theo chuyên mục và tìm kiếm; trang Liên hệ ghép thêm thông tin liên hệ, giờ mở cửa và bản đồ nhúng từ cấu hình |
+| IX.1 | SEO: thẻ meta, sitemap.xml, robots.txt | **Có** | `/sitemap.xml` do máy chủ sinh động, liệt kê trang tĩnh, bản tin và tài liệu đã xuất bản; `/robots.txt` mở phần tra cứu và chặn khu quản trị cùng các trang cá nhân của bạn đọc |
+| IX.2 | Tìm kiếm cơ bản, chọn phạm vi | **Có** | Tám phạm vi: tất cả, nhan đề, tác giả, chủ đề, từ khóa, nhà xuất bản, ISBN/ISSN, ký hiệu xếp giá |
+| IX.2 | Gợi ý tự động khi gõ | **Có** | Gợi ý nhan đề, tác giả và chủ đề; chờ tới ký tự thứ hai và có nhịp dừng để một câu mười chữ không thành mười lượt truy vấn |
+| IX.2 | **Tìm được cả khi gõ không dấu** | **Có** | Toàn bộ tra cứu đi qua hàm bỏ dấu của cơ sở dữ liệu; "co so du lieu" ra "Cơ sở dữ liệu" |
+| IX.2 | Tìm kiếm nâng cao: nhiều điều kiện AND/OR/NOT, chọn trường cho từng điều kiện | **Có** | Tối đa mười mệnh đề, mỗi mệnh đề chọn phạm vi riêng; ghép thành một biểu thức duy nhất để dịch xuống một câu lệnh |
+| IX.2 | Lọc theo năm xuất bản, ngôn ngữ, dạng tài liệu, kho, có tài liệu số | **Có** | Đủ, dùng chung bộ lọc với tìm kiếm cơ bản và với bộ đếm facet |
+| IX.2 | Duyệt theo Chủ đề / Đề mục / Tác giả / Phân loại / Bộ sưu tập / Ngành / Môn học | **Có** | Chủ đề và phân loại duyệt theo cây; tác giả duyệt theo chữ cái đầu; ngành mở xuống môn học rồi tới tài liệu của môn. Số đếm ở nhánh cha cộng dồn cả nhánh con |
+| IX.2 | Kết quả: phân trang, sắp xếp, bộ lọc facet đếm số lượng | **Có** | Năm cách sắp xếp; bảy nhóm facet đếm trên đúng tập kết quả hiện tại, không phải trên toàn kho |
+| IX.2 | Chi tiết: ảnh bìa, ISBD, tóm tắt, chủ đề bấm được, **danh sách ĐKCB kèm trạng thái và vị trí kho** | **Có** | Bảng bản in đặt cột tình trạng lên đầu, kèm ký hiệu xếp giá, kho, giá, thư viện; bản đang có người mượn hiện cả hạn trả dự kiến |
+| IX.2 | Nút đặt giữ, xem tài liệu số, xem MARC | **Có** | Đủ ba; biểu ghi MARC hiện dưới dạng đọc được ngay trên trang |
+| IX.2 | Xuất trích dẫn APA/MLA/Chicago/BibTeX/RIS/EndNote | **Có** | Đủ sáu kiểu, chép được vào bộ nhớ tạm hoặc tải thành tệp để nạp vào phần mềm quản lý tài liệu tham khảo |
+| IX.2 | Tài liệu liên quan | **Có** | Cùng chủ đề trước, không đủ thì lấy thêm cùng nhánh phân loại; chỉ gợi ý tài liệu thư viện phục vụ được |
+| IX.2 | Lưu tìm kiếm, đánh dấu yêu thích, giỏ tài liệu, gửi email danh sách | **Có** | Giỏ tài liệu giữ ở máy người dùng nên chưa đăng nhập vẫn gom được; gửi email thì cần tài khoản và thư đi tới đúng địa chỉ trong hồ sơ bạn đọc |
+| IX.3 | Bạn đọc đăng nhập bằng số thẻ và mật khẩu | **Có** | Dùng chung `/api/reader/auth/login` với ứng dụng di động đợt sau |
+| IX.3 | Trang cá nhân: sách đang mượn kèm hạn trả và nút gia hạn, lịch sử, đặt giữ, tiền phạt, tài liệu số, thông báo | **Có** | Tám thẻ trên một màn hình; mọi con số đều do máy chủ tính, giao diện chỉ hiển thị |
+| IX.3 | Đăng ký mượn (đặt giữ) có kiểm tra hạn mức | **Có** | Máy chủ kiểm chính sách lưu thông và trả về vị trí trong hàng đợi |
+| IX.3 | Gửi yêu cầu gia hạn sách | **Có** | Nút gia hạn ngay trên dòng sách đang mượn, hết lượt thì nút tự khóa và ghi rõ đã dùng mấy trên mấy lượt |
+| IX.3 | Đổi mật khẩu, cập nhật thông tin liên hệ | **Có** | Chỉ ba trường liên hệ; họ tên, mã sinh viên, khoa là dữ liệu nhà trường quản lý nên không cho tự sửa |
+| IX.3 | Gia hạn thẻ thư viện | **Có** | Gửi yêu cầu kèm lý do và xem trạng thái xử lý; đang có yêu cầu chờ thì không gửi thêm được |
+| IX.4 | Bộ lọc riêng cho tài liệu số | **Có** | Trang riêng liệt kê chính các tài liệu số, kể cả tài liệu không gắn với biểu ghi thư mục nào |
+| IX.4 | Xem trước, đọc trực tuyến, tải về theo quyền | **Có** | Trình đọc lật từng trang, mỗi trang là ảnh do máy chủ dựng và đóng chữ chìm tên bạn đọc, thời điểm và địa chỉ máy; tài liệu không cho tải thì không có nút tải |
+| IX.4 | Gửi yêu cầu truy cập tài liệu hạn chế | **Có** | Ngay trên trình đọc, kèm ô ghi lý do sử dụng |
+| IX.5 | Tab "Tìm ở thư viện khác", tra song song Z39.50/SRU | **Có** | Chỉ tra ở máy chủ cán bộ đã bật cờ cho bạn đọc; đã tra thật tới Thư viện Quốc hội Mỹ qua cả hai lối |
+| IX.5 | Kết quả gộp có ghi rõ nguồn | **Có** | Mỗi nơi một khối riêng kèm số kết quả và thời gian trả lời; cuốn nào thư viện mình đã có thì có liên kết mở thẳng sang trang chi tiết |
 
 ---
 
@@ -369,7 +423,7 @@ Cập nhật lần cuối: sau khi hoàn thành Phase 11.
 | D7 | Phân hệ V — Tài liệu số | **Có** | Chi tiết ở mục B9 |
 | D8 | Phân hệ VI — Bạn đọc | **Có** | Chi tiết ở mục B7 |
 | D9 | Phân hệ VII — Lưu thông | **Có** | Chi tiết ở mục B8 |
-| D10 | Phân hệ VIII — Quản trị nội dung | **Đang thực hiện** | Phase 12 |
-| D11 | Phân hệ IX — Tra cứu OPAC | **Đang thực hiện** | Phase 12. Hạ tầng tra cứu tiếng Việt không dấu (`bib.vn_unaccent`, chỉ mục GIN/pg_trgm) đã hoàn thành ở Phase 1 |
+| D10 | Phân hệ VIII — Quản trị nội dung | **Có** | Chi tiết ở mục B11 |
+| D11 | Phân hệ IX — Tra cứu OPAC | **Có** | Chi tiết ở mục B12. Trang tra cứu là ứng dụng riêng, chạy ở đường dẫn gốc |
 | D12 | Phân hệ X — Tài liệu môn học | **Đang thực hiện** | Phase 13 |
 | D13 | Phân hệ XI — Ứng dụng di động | **Đợt sau** | Nhóm endpoint `/api/reader/*` được hoàn thiện và kiểm thử trong đợt web này để ứng dụng cắm vào không phải sửa backend |

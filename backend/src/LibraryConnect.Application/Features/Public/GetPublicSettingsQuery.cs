@@ -1,4 +1,5 @@
 using LibraryConnect.Application.Common.Interfaces;
+using LibraryConnect.Application.Features.Cms;
 using MediatR;
 
 namespace LibraryConnect.Application.Features.Public;
@@ -25,6 +26,23 @@ public class PublicSettingsDto
     public int OpacPageSize { get; set; }
     public bool AllowHold { get; set; }
     public bool AllowReview { get; set; }
+
+    // ---- Cấu hình riêng của trang tra cứu, lấy từ web.cms_settings (VIII.1) ----
+    public string? Slogan { get; set; }
+    public string? FaviconUrl { get; set; }
+    public string? HeroImageUrl { get; set; }
+    public string? FooterText { get; set; }
+    /// <summary>Giờ mở cửa, mỗi cơ sở một dòng.</summary>
+    public string? OpeningHours { get; set; }
+    public string? ContactNote { get; set; }
+    public string? MapEmbedUrl { get; set; }
+    public string? Facebook { get; set; }
+    public string? Youtube { get; set; }
+    public string? Zalo { get; set; }
+    public int NewsPerPage { get; set; } = 9;
+    public bool ShowNewBooks { get; set; } = true;
+    public bool ShowPopularBooks { get; set; } = true;
+    public bool ShowInterlibrary { get; set; } = true;
 }
 
 public class GetPublicSettingsQueryHandler : IRequestHandler<GetPublicSettingsQuery, PublicSettingsDto>
@@ -32,12 +50,24 @@ public class GetPublicSettingsQueryHandler : IRequestHandler<GetPublicSettingsQu
     private const string DefaultLibraryName = "Thư viện";
 
     private readonly ISystemParameterService _parameters;
+    private readonly ICmsSettingReader _site;
 
-    public GetPublicSettingsQueryHandler(ISystemParameterService parameters) => _parameters = parameters;
+    public GetPublicSettingsQueryHandler(ISystemParameterService parameters, ICmsSettingReader site)
+    {
+        _parameters = parameters;
+        _site = site;
+    }
 
     public async Task<PublicSettingsDto> Handle(GetPublicSettingsQuery request, CancellationToken ct)
     {
         var name = await _parameters.GetAsync(ParameterKeysBridge.LibraryName, ct);
+        var site = await _site.GetAllAsync(ct);
+
+        string? Text(string key) =>
+            site.TryGetValue(key, out var value) && !string.IsNullOrWhiteSpace(value) ? value : null;
+
+        bool Flag(string key, bool fallback) =>
+            bool.TryParse(Text(key), out var parsed) ? parsed : fallback;
 
         return new PublicSettingsDto
         {
@@ -51,7 +81,23 @@ public class GetPublicSettingsQueryHandler : IRequestHandler<GetPublicSettingsQu
             ShowPoweredBy = await _parameters.GetAsync(ParameterKeysBridge.OpacShowPoweredBy, true, ct),
             OpacPageSize = await _parameters.GetAsync(ParameterKeysBridge.OpacPageSize, 20, ct),
             AllowHold = await _parameters.GetAsync(ParameterKeysBridge.OpacAllowHold, true, ct),
-            AllowReview = await _parameters.GetAsync(ParameterKeysBridge.OpacAllowReview, false, ct)
+            AllowReview = await _parameters.GetAsync(ParameterKeysBridge.OpacAllowReview, false, ct),
+            Slogan = Text(CmsSettingCatalog.Slogan),
+            FaviconUrl = Text(CmsSettingCatalog.FaviconUrl),
+            HeroImageUrl = Text(CmsSettingCatalog.HeroImageUrl),
+            FooterText = Text(CmsSettingCatalog.FooterText),
+            OpeningHours = Text(CmsSettingCatalog.OpeningHours),
+            ContactNote = Text(CmsSettingCatalog.ContactNote),
+            MapEmbedUrl = Text(CmsSettingCatalog.MapEmbedUrl),
+            Facebook = Text(CmsSettingCatalog.FacebookUrl),
+            Youtube = Text(CmsSettingCatalog.YoutubeUrl),
+            Zalo = Text(CmsSettingCatalog.ZaloUrl),
+            NewsPerPage = int.TryParse(Text(CmsSettingCatalog.NewsPerPage), out var perPage)
+                ? Math.Clamp(perPage, 3, 60)
+                : 9,
+            ShowNewBooks = Flag(CmsSettingCatalog.ShowNewBooks, true),
+            ShowPopularBooks = Flag(CmsSettingCatalog.ShowPopularBooks, true),
+            ShowInterlibrary = Flag(CmsSettingCatalog.ShowInterlibrary, true)
         };
     }
 }

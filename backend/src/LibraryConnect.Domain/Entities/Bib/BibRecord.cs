@@ -65,6 +65,15 @@ public class BibRecord : BaseEntity
     public int LoanCount { get; set; }
     public int ViewCount { get; set; }
 
+    /// <summary>
+    /// Các bản in của biểu ghi này.
+    ///
+    /// Trang tra cứu cần đi từ biểu ghi xuống bản in để lọc theo kho và tìm theo ký hiệu xếp giá,
+    /// nên quan hệ được khai cả hai chiều. Số lượng bản in vẫn nằm ở các cột đếm bên trên — danh
+    /// sách này chỉ dùng khi thật sự cần từng bản.
+    /// </summary>
+    public ICollection<Domain.Entities.Acq.Item> Items { get; set; } = new List<Domain.Entities.Acq.Item>();
+
     public ICollection<BibAuthor> Authors { get; set; } = new List<BibAuthor>();
     public ICollection<BibSubject> Subjects { get; set; } = new List<BibSubject>();
     public ICollection<BibKeyword> Keywords { get; set; } = new List<BibKeyword>();

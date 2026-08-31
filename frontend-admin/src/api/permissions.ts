@@ -170,10 +170,14 @@ export const PERMISSIONS = {
   cms: {
     pageManage: 'CMS.PAGE.MANAGE',
     newsView: 'CMS.NEWS.VIEW',
+    newsManage: 'CMS.NEWS.MANAGE',
+    newsPublish: 'CMS.NEWS.PUBLISH',
     menuManage: 'CMS.MENU.MANAGE',
     bannerManage: 'CMS.BANNER.MANAGE',
     settingManage: 'CMS.SETTING.MANAGE',
     galleryManage: 'CMS.GALLERY.MANAGE',
+    linkManage: 'CMS.LINK.MANAGE',
+    reviewModerate: 'CMS.REVIEW.MODERATE',
   },
   course: {
     majorManage: 'COURSE.MAJOR.MANAGE',

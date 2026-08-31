@@ -2,6 +2,7 @@ using LibraryConnect.Application.Common.Models;
 using LibraryConnect.Application.Features.Auth;
 using LibraryConnect.Application.Features.Circulation;
 using LibraryConnect.Application.Features.Digital;
+using LibraryConnect.Application.Features.Opac;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -28,6 +29,22 @@ public class ReaderPortalController : ApiControllerBase
     {
         var result = await Mediator.Send(command, ct);
         return Ok(Success(result, $"Xin chào {result.User.FullName}."));
+    }
+
+    /// <summary>Cấp lại mã truy cập từ mã làm mới còn hiệu lực.</summary>
+    /// <remarks>
+    /// Cùng cơ chế với đăng nhập của cán bộ, nhưng có địa chỉ riêng dưới nhóm bạn đọc để ứng dụng
+    /// di động chỉ cần biết một tiền tố duy nhất (mục XI.4).
+    /// </remarks>
+    [HttpPost("auth/refresh")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(ApiResponse<AuthResultDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<ApiResponse<AuthResultDto>>> Refresh(
+        [FromBody] RefreshTokenCommand command, CancellationToken ct)
+    {
+        var result = await Mediator.Send(command, ct);
+        return Ok(Success(result));
     }
 
     /// <summary>Đổi mật khẩu.</summary>
@@ -224,5 +241,187 @@ public class ReaderPortalController : ApiControllerBase
     {
         var result = await Mediator.Send(new GetMyDigitalHistoryQuery(request), ct);
         return Ok(Success(result));
+    }
+
+    // ---------------------------------------------------------------
+    // Hồ sơ và thẻ
+    // ---------------------------------------------------------------
+
+    /// <summary>Hồ sơ bạn đọc đang đăng nhập.</summary>
+    [HttpGet("profile")]
+    [ProducesResponseType(typeof(ApiResponse<ReaderProfileDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<ReaderProfileDto>>> Profile(CancellationToken ct)
+    {
+        var result = await Mediator.Send(new GetMyProfileQuery(), ct);
+        return Ok(Success(result));
+    }
+
+    /// <summary>Bạn đọc tự cập nhật thông tin liên hệ.</summary>
+    [HttpPut("profile")]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse>> UpdateProfile(
+        [FromBody] UpdateMyProfileCommand command, CancellationToken ct)
+    {
+        await Mediator.Send(command, ct);
+        return Ok(SuccessMessage("Đã cập nhật thông tin liên hệ."));
+    }
+
+    /// <summary>Gửi yêu cầu gia hạn thẻ thư viện.</summary>
+    [HttpPost("card/renew-request")]
+    [ProducesResponseType(typeof(ApiResponse<Guid>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<Guid>>> RequestCardRenewal(
+        [FromBody] CardRenewalRequestBody body, CancellationToken ct)
+    {
+        var id = await Mediator.Send(new RequestCardRenewalCommand(body?.Reason), ct);
+        return Ok(Success(id, "Đã gửi yêu cầu gia hạn thẻ."));
+    }
+
+    /// <summary>Trạng thái các yêu cầu gia hạn thẻ đã gửi.</summary>
+    [HttpGet("card/renew-requests")]
+    [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<CardRenewalRowDto>>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<IReadOnlyList<CardRenewalRowDto>>>> CardRenewals(
+        CancellationToken ct)
+    {
+        var result = await Mediator.Send(new GetMyCardRenewalsQuery(), ct);
+        return Ok(Success(result));
+    }
+
+    /// <summary>Lý do xin gia hạn thẻ.</summary>
+    public class CardRenewalRequestBody
+    {
+        public string? Reason { get; set; }
+    }
+
+    // ---------------------------------------------------------------
+    // Thông báo và thiết bị
+    // ---------------------------------------------------------------
+
+    /// <summary>Danh sách thông báo gửi tới bạn đọc.</summary>
+    [HttpGet("notifications")]
+    [ProducesResponseType(typeof(ApiResponse<PagedResult<ReaderNotificationDto>>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<PagedResult<ReaderNotificationDto>>>> Notifications(
+        [FromQuery] PagedRequestDefault request, [FromQuery] bool unreadOnly, CancellationToken ct)
+    {
+        var result = await Mediator.Send(new GetMyNotificationsQuery(request, unreadOnly), ct);
+        return Ok(Success(result));
+    }
+
+    /// <summary>Đánh dấu một thông báo đã đọc.</summary>
+    [HttpPost("notifications/{id:guid}/read")]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse>> MarkNotificationRead(Guid id, CancellationToken ct)
+    {
+        await Mediator.Send(new MarkNotificationReadCommand(id), ct);
+        return Ok(SuccessMessage("Đã đánh dấu đã đọc."));
+    }
+
+    /// <summary>Đánh dấu tất cả thông báo đã đọc.</summary>
+    [HttpPost("notifications/read-all")]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse>> MarkAllNotificationsRead(CancellationToken ct)
+    {
+        await Mediator.Send(new MarkNotificationReadCommand(null), ct);
+        return Ok(SuccessMessage("Đã đánh dấu tất cả là đã đọc."));
+    }
+
+    /// <summary>Đăng ký thiết bị nhận thông báo đẩy (chuẩn bị cho ứng dụng di động đợt sau).</summary>
+    [HttpPost("devices")]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse>> RegisterDevice(
+        [FromBody] RegisterDeviceTokenCommand command, CancellationToken ct)
+    {
+        await Mediator.Send(command, ct);
+        return Ok(SuccessMessage("Đã đăng ký thiết bị nhận thông báo."));
+    }
+
+    /// <summary>Gỡ đăng ký thiết bị khi đăng xuất khỏi ứng dụng.</summary>
+    [HttpDelete("devices")]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse>> RemoveDevice(
+        [FromQuery] string token, CancellationToken ct)
+    {
+        await Mediator.Send(new RemoveDeviceTokenCommand(token), ct);
+        return Ok(SuccessMessage("Đã gỡ thiết bị."));
+    }
+
+    // ---------------------------------------------------------------
+    // Yêu thích, tìm kiếm đã lưu, nhận xét, giỏ tài liệu
+    // ---------------------------------------------------------------
+
+    /// <summary>Tài liệu bạn đọc đã đánh dấu yêu thích.</summary>
+    [HttpGet("favorites")]
+    [ProducesResponseType(typeof(ApiResponse<PagedResult<OpacResultDto>>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<PagedResult<OpacResultDto>>>> Favorites(
+        [FromQuery] PagedRequestDefault request, CancellationToken ct)
+    {
+        var result = await Mediator.Send(new GetMyFavoritesQuery(request), ct);
+        return Ok(Success(result));
+    }
+
+    /// <summary>Bật hoặc tắt đánh dấu yêu thích cho một tài liệu.</summary>
+    [HttpPost("favorites/{bibId:guid}")]
+    [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<bool>>> ToggleFavorite(Guid bibId, CancellationToken ct)
+    {
+        var added = await Mediator.Send(new ToggleFavoriteCommand(bibId), ct);
+        return Ok(Success(added, added ? "Đã thêm vào yêu thích." : "Đã bỏ khỏi yêu thích."));
+    }
+
+    /// <summary>Các lần tra cứu bạn đọc đã lưu lại.</summary>
+    [HttpGet("saved-searches")]
+    [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<SavedSearchDto>>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<IReadOnlyList<SavedSearchDto>>>> SavedSearches(
+        CancellationToken ct)
+    {
+        var result = await Mediator.Send(new GetMySavedSearchesQuery(), ct);
+        return Ok(Success(result));
+    }
+
+    /// <summary>Lưu lại một lần tra cứu để chạy lại sau.</summary>
+    [HttpPost("saved-searches")]
+    [ProducesResponseType(typeof(ApiResponse<Guid>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<Guid>>> SaveSearch(
+        [FromBody] SaveSearchCommand command, CancellationToken ct)
+    {
+        var id = await Mediator.Send(command, ct);
+        return Ok(Success(id, "Đã lưu tìm kiếm."));
+    }
+
+    /// <summary>Xóa một tìm kiếm đã lưu.</summary>
+    [HttpDelete("saved-searches/{id:guid}")]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse>> DeleteSavedSearch(Guid id, CancellationToken ct)
+    {
+        await Mediator.Send(new DeleteSavedSearchCommand(id), ct);
+        return Ok(SuccessMessage("Đã xóa tìm kiếm đã lưu."));
+    }
+
+    /// <summary>Gửi nhận xét về một tài liệu; nhận xét chờ cán bộ duyệt mới hiện công khai.</summary>
+    [HttpPost("reviews")]
+    [ProducesResponseType(typeof(ApiResponse<Guid>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<Guid>>> SubmitReview(
+        [FromBody] SubmitReviewCommand command, CancellationToken ct)
+    {
+        var id = await Mediator.Send(command, ct);
+        return Ok(Success(id, "Đã gửi nhận xét, thư viện sẽ duyệt trước khi hiển thị."));
+    }
+
+    /// <summary>Gửi danh sách tài liệu trong giỏ về email đã ghi trong hồ sơ bạn đọc.</summary>
+    [HttpPost("cart/email")]
+    [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<string>>> EmailCart(
+        [FromBody] EmailCartBody body, CancellationToken ct)
+    {
+        var email = await Mediator.Send(
+            new EmailBibListCommand(body.BibIds ?? new List<Guid>(), body.Note), ct);
+
+        return Ok(Success(email, $"Đã gửi danh sách tới {email}."));
+    }
+
+    /// <summary>Danh sách tài liệu cần gửi và lời nhắn kèm theo.</summary>
+    public class EmailCartBody
+    {
+        public List<Guid>? BibIds { get; set; }
+        public string? Note { get; set; }
     }
 }

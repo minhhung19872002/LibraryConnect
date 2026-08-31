@@ -113,6 +113,39 @@ public static class VietnameseText
     }
 
     /// <summary>
+    /// Đường dẫn thân thiện cho một tiêu đề tiếng Việt: "Nội quy thư viện" thành "noi-quy-thu-vien".
+    ///
+    /// Khác với <see cref="Slugify"/> — thứ dùng để sinh mã danh mục — chuỗi này đi vào địa chỉ
+    /// trang nên phải viết thường và ngăn bằng dấu nối, đúng quy ước của web và của công cụ tìm kiếm.
+    /// </summary>
+    public static string UrlSlug(string value, int maxLength = 120)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        var stripped = RemoveDiacritics(value);
+        var builder = new StringBuilder(stripped.Length);
+
+        foreach (var character in stripped)
+        {
+            if (char.IsLetterOrDigit(character))
+            {
+                builder.Append(char.ToLowerInvariant(character));
+            }
+            else if (builder.Length > 0 && builder[^1] != '-')
+            {
+                builder.Append('-');
+            }
+        }
+
+        var slug = builder.ToString().Trim('-');
+
+        return slug.Length > maxLength ? slug[..maxLength].TrimEnd('-') : slug;
+    }
+
+    /// <summary>
     /// Initials used when generating a shelf mark: the first letters of an author's name, e.g.
     /// "Nguyễn Văn A" gives "NGU" for a three-letter rule.
     /// </summary>

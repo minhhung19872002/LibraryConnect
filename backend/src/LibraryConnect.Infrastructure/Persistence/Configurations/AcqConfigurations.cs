@@ -144,7 +144,7 @@ public class ItemConfiguration : IEntityTypeConfiguration<Item>
         builder.Property(x => x.LockReason).HasMaxLength(500);
         builder.Property(x => x.VolumeNumber).HasMaxLength(100);
 
-        builder.HasOne(x => x.Bib).WithMany().HasForeignKey(x => x.BibId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(x => x.Bib).WithMany(x => x.Items).HasForeignKey(x => x.BibId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(x => x.Warehouse).WithMany().HasForeignKey(x => x.WarehouseId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(x => x.Shelf).WithMany().HasForeignKey(x => x.ShelfId).OnDelete(DeleteBehavior.SetNull);
         builder.HasOne(x => x.FundingSource).WithMany().HasForeignKey(x => x.FundingSourceId).OnDelete(DeleteBehavior.Restrict);

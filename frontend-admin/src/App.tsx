@@ -50,6 +50,11 @@ import { DigitalReportsPage } from '@/modules/digital/DigitalReportsPage';
 import { RemoteSearchPage } from '@/modules/interlibrary/RemoteSearchPage';
 import { Z3950TargetsPage } from '@/modules/interlibrary/Z3950TargetsPage';
 import { OaiRepositoriesPage } from '@/modules/interlibrary/OaiRepositoriesPage';
+import { SiteSettingsPage } from '@/modules/cms/SiteSettingsPage';
+import { CmsPagesPage } from '@/modules/cms/PagesPage';
+import { CmsNewsPage } from '@/modules/cms/NewsPage';
+import { CmsGalleriesPage } from '@/modules/cms/GalleriesPage';
+import { CmsReviewsPage } from '@/modules/cms/ReviewsPage';
 import { SerialReportsPage } from '@/modules/serials/SerialReportsPage';
 import { CustomIndexPage } from '@/modules/cataloging/CustomIndexPage';
 import { CatalogQueuePage } from '@/modules/cataloging/CatalogQueuePage';
@@ -471,6 +476,48 @@ function AppRoutes() {
           element={
             <RequirePermissionRoute permission={PERMISSIONS.cataloging.bibView}>
               <MarcToolPage />
+            </RequirePermissionRoute>
+          }
+        />
+
+        {/* Phân hệ VIII — Quản trị nội dung. */}
+        <Route
+          path="/noi-dung/thong-tin"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.cms.settingManage}>
+              <SiteSettingsPage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/noi-dung/trang"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.cms.pageManage}>
+              <CmsPagesPage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/noi-dung/tin-tuc"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.cms.newsView}>
+              <CmsNewsPage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/noi-dung/thu-vien-anh"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.cms.galleryManage}>
+              <CmsGalleriesPage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/noi-dung/nhan-xet"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.cms.reviewModerate}>
+              <CmsReviewsPage />
             </RequirePermissionRoute>
           }
         />

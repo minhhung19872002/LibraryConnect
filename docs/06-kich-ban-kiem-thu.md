@@ -477,11 +477,93 @@ Ký hiệu bám theo **Mục 5 phần 2 của E-HSMT**.
 | LTV.32 | Giới hạn IP tra vào | Khai `ILL.Z3950_ALLOWED_IPS` một dải không chứa máy của mình rồi tra lại | Kết nối bị từ chối |
 | LTV.33 | Phân quyền | Đăng nhập tài khoản không có quyền rồi mở phần khai báo máy chủ | Trả 403 kèm tên mã quyền còn thiếu |
 
+## Nhóm chức năng — Phân hệ VIII: Quản trị nội dung
+
+| Mã | Kịch bản | Các bước | Kết quả mong đợi |
+|---|---|---|---|
+| QTND.1 | Màn hình cấu hình gom đủ hai kho | Quản trị nội dung → Thông tin trang thư viện | Thấy cả tên thư viện (tham số hệ thống) lẫn giờ mở cửa (cấu hình riêng của trang tra cứu) trên cùng một màn hình |
+| QTND.2 | Sửa tên thư viện | Đổi tên rồi Lưu, mở trang tra cứu | Đầu trang, chân trang và tiêu đề thẻ trình duyệt đều đổi theo, không phải khởi động lại |
+| QTND.3 | Sửa khẩu hiệu | Đổi khẩu hiệu rồi Lưu, tải lại trang tra cứu | Khẩu hiệu mới hiện dưới tên thư viện |
+| QTND.4 | Tải logo lên | Bấm Tải ảnh ở ô Logo, chọn một tệp PNG | Ảnh hiện ngay ở ô xem trước và đường dẫn được điền vào |
+| QTND.5 | Tải tệp không phải ảnh | Chọn một tệp .txt đổi đuôi thành .png | Bị từ chối kèm lý do, vì kiểu tệp xác định bằng chữ ký nhị phân chứ không bằng phần mở rộng |
+| QTND.6 | Thêm mục menu | Menu điều hướng → Thêm mục menu, nhập tên và đường dẫn | Mục mới hiện trên thanh điều hướng của trang tra cứu |
+| QTND.7 | Menu nhiều cấp | Thêm một mục có mục cha | Hiện thành nhánh con trên cây quản trị và thành menu thả xuống ở trang tra cứu |
+| QTND.8 | Tắt mục cha | Tắt một mục có nhánh con rồi mở trang tra cứu | Cả nhánh biến mất, mục con không bị đẩy lên hàng đầu |
+| QTND.9 | Chặn vòng trong cây menu | Đặt mục cha của A là B, trong khi B đang là con của A | Bị chặn kèm thông báo rõ nghĩa |
+| QTND.10 | Xóa mục còn nhánh con | Xóa một mục đang có mục con | Bị chặn, nhắc xóa hoặc chuyển mục con trước |
+| QTND.11 | Thêm banner có khoảng ngày | Banner trang chủ → Thêm, đặt ngày kết thúc trong quá khứ | Banner không hiện ở trang chủ nhưng vẫn nằm trong danh sách quản trị để sửa |
+| QTND.12 | Ngày kết thúc trước ngày bắt đầu | Nhập ngược khoảng ngày | Bị chặn kèm thông báo |
+| QTND.13 | Thêm liên kết website | Liên kết website → Thêm, nhập địa chỉ không có http | Bị chặn; nhập đúng địa chỉ thì liên kết hiện ở khối Liên kết hữu ích trang chủ |
+| QTND.14 | Tạo trang tĩnh, để bản nháp | Trang tĩnh → Thêm trang, tắt Đăng ngay | Mở đường dẫn công khai của trang đó trả về không tìm thấy |
+| QTND.15 | Đăng trang tĩnh | Bật Đăng rồi lưu | Trang đọc được ở `/trang/<đường-dẫn>` |
+| QTND.16 | Đường dẫn tự sinh | Tạo trang "Nội quy thư viện" và bỏ trống ô đường dẫn | Đường dẫn thành `noi-quy-thu-vien` |
+| QTND.17 | Đường dẫn trùng | Tạo hai trang cùng tiêu đề | Trang thứ hai được nối thêm số thứ tự, không báo lỗi bắt cán bộ tự nghĩ tên khác |
+| QTND.18 | Lọc mã độc trong nội dung | Dán vào nội dung một thẻ `<script>`, một thuộc tính `onerror` và một liên kết `javascript:` rồi lưu | Mở lại bài thấy phần chữ còn nguyên nhưng cả ba thứ trên đã bị bỏ |
+| QTND.19 | Chèn ảnh vào bài | Trong trình soạn thảo bấm nút ảnh và chọn một tệp | Ảnh được tải lên kho và chèn vào bài dưới dạng đường dẫn, không nhét ảnh vào giữa nội dung |
+| QTND.20 | Chèn bảng và tiêu đề | Bấm Tiêu đề lớn rồi bấm chèn bảng | Nội dung thành thẻ `h2` và một bảng 3×3 có dòng tiêu đề |
+| QTND.21 | Nhúng video | Dán địa chỉ xem YouTube vào hộp nhúng video | Được đổi sang địa chỉ nhúng; dán địa chỉ nơi khác thì bị từ chối kèm lý do |
+| QTND.22 | Xem mã HTML | Bấm nút mã nguồn | Chuyển sang ô sửa HTML thô và sửa được trực tiếp |
+| QTND.23 | Soạn và đăng bản tin | Tin tức → Soạn bản tin, bật Đăng | Bản tin hiện ở trang chủ và trang tin tức |
+| QTND.24 | Hẹn giờ đăng | Đặt thời điểm đăng vào tương lai | Danh sách quản trị ghi "Hẹn ngày giờ"; trang tra cứu chưa hiện bài đó |
+| QTND.25 | Tóm tắt tự sinh | Soạn bài và bỏ trống ô tóm tắt | Tóm tắt lấy đoạn đầu của bài, cắt theo ranh giới từ |
+| QTND.26 | Gỡ bản tin | Bấm Gỡ ở một bài đã đăng | Bài biến mất khỏi trang tra cứu nhưng vẫn còn trong danh sách quản trị |
+| QTND.27 | Thống kê lượt xem tin | Tin tức → Thống kê lượt xem | Có tổng số bài, số đã đăng, tổng lượt xem, phân bổ theo chuyên mục và danh sách bài xem nhiều nhất |
+| QTND.28 | Tạo album ảnh | Thư viện ảnh → Tạo album, thêm vài ảnh, để trống ảnh bìa | Album lấy ảnh đầu tiên làm bìa |
+| QTND.29 | Kiểm duyệt nhận xét | Nhận xét bạn đọc → thẻ Chờ duyệt → Duyệt một nhận xét | Nhận xét hiện ở trang chi tiết tài liệu; bỏ duyệt thì ẩn đi |
+| QTND.30 | Phân quyền quản trị nội dung | Đăng nhập tài khoản chỉ có quyền xem tin rồi mở Thông tin trang thư viện | Menu không hiện mục đó; gọi thẳng địa chỉ trả về 403 |
+
+## Nhóm chức năng — Phân hệ IX: Tra cứu (OPAC)
+
+| Mã | Kịch bản | Các bước | Kết quả mong đợi |
+|---|---|---|---|
+| TC.1 | Mở trang chủ | Mở địa chỉ gốc của hệ thống | Hiện tên và khẩu hiệu của thư viện, ô tìm kiếm lớn, các con số quy mô kho, sách mới, tin tức và liên kết |
+| TC.2 | Thương hiệu lấy từ cấu hình | Đổi tên thư viện ở màn hình quản trị rồi tải lại trang chủ | Tên mới hiện ngay; không có tên trường nào nằm cứng trong mã nguồn |
+| TC.3 | Tra cứu gõ không dấu | Gõ "co so du lieu" vào ô tìm kiếm | Ra tài liệu có nhan đề "Cơ sở dữ liệu" |
+| TC.4 | Chọn phạm vi tìm | Chọn phạm vi Tác giả rồi tìm tên một tác giả | Chỉ ra tài liệu của tác giả đó |
+| TC.5 | Gợi ý khi gõ | Gõ hai ký tự đầu của một nhan đề | Hiện danh sách gợi ý phân biệt rõ nhan đề, tác giả, chủ đề |
+| TC.6 | Bộ lọc facet đếm đúng | Tra một từ khóa rồi đối chiếu con số ở mỗi dòng lọc | Tổng số đếm không vượt quá số kết quả; bấm vào một dòng lọc thì ra đúng chừng ấy tài liệu |
+| TC.7 | Bấm bộ lọc rồi quay lại | Bấm một giá trị facet, sau đó bấm nút quay lại của trình duyệt | Trở về đúng kết quả trước đó, vì trạng thái tra cứu nằm trên địa chỉ |
+| TC.8 | Sắp xếp kết quả | Đổi cách sắp xếp sang Mới nhất rồi sang Được mượn nhiều | Thứ tự đổi theo, phân trang giữ nguyên số kết quả |
+| TC.9 | Tra cứu nâng cao với VÀ | Nhan đề chứa X VÀ tác giả chứa Y | Chỉ ra tài liệu thỏa mãn cả hai |
+| TC.10 | Tra cứu nâng cao với HOẶC | Nhan đề chứa X HOẶC nhan đề chứa Y | Ra hợp của hai tập |
+| TC.11 | Tra cứu nâng cao với KHÔNG | Nhan đề chứa X KHÔNG nhan đề chứa Y | Loại đúng phần cần bỏ |
+| TC.12 | Giới hạn năm xuất bản | Đặt khoảng năm rồi tra | Chỉ ra tài liệu trong khoảng |
+| TC.13 | Chi tiết tài liệu | Mở một tài liệu từ kết quả | Có mô tả thư mục, mô tả ISBD, chủ đề bấm được, tài liệu liên quan |
+| TC.14 | Bản in trong kho | Mở thẻ Bản in trong kho | Mỗi bản ghi rõ tình trạng, ký hiệu xếp giá, kho, giá và thư viện; bản đang có người mượn hiện hạn trả dự kiến |
+| TC.15 | Biểu ghi MARC | Mở thẻ Biểu ghi MARC | Hiện biểu ghi MARC 21 đầy đủ dạng đọc được |
+| TC.16 | Xuất trích dẫn | Bấm Xuất trích dẫn rồi đổi lần lượt sáu kiểu | Cả sáu kiểu đều sinh ra nội dung đúng dạng; tệp RIS tải về mở đầu bằng `TY  - BOOK` |
+| TC.17 | Biểu ghi chưa xuất bản | Mở địa chỉ chi tiết của một biểu ghi còn ở trạng thái nháp | Trả về không tìm thấy, và tra cứu cũng không ra nó |
+| TC.18 | Duyệt theo phân loại | Duyệt theo khung phân loại, mở một nhánh | Số đếm ở nhánh cha bằng tổng cả nhánh con; chỉ hiện mục có tài liệu hoặc có nhánh con |
+| TC.19 | Duyệt theo tác giả | Duyệt theo tác giả, chọn một chữ cái | Chỉ hiện tác giả bắt đầu bằng chữ đó, so trên tên đã bỏ dấu |
+| TC.20 | Duyệt theo ngành và môn học | Duyệt theo ngành → chọn ngành → chọn môn | Hiện tài liệu của môn kèm nhãn giáo trình chính hay tài liệu tham khảo |
+| TC.21 | Danh mục luận văn – luận án | Mở mục Luận văn – Luận án | Chỉ liệt kê tài liệu thuộc dạng luận văn, luận án |
+| TC.22 | Danh mục báo – tạp chí | Mở mục Báo – Tạp chí | Liệt kê đầu báo kèm ISSN, kỳ hạn, kho lưu, số đã nhận và số mới nhất |
+| TC.23 | Giỏ tài liệu khi chưa đăng nhập | Thêm vài tài liệu vào giỏ rồi tải lại trang | Giỏ vẫn còn, vì giỏ giữ ở máy người dùng |
+| TC.24 | Gửi giỏ tài liệu qua email | Bấm gửi khi chưa đăng nhập | Được chuyển sang trang đăng nhập; sau khi đăng nhập thì thư đi tới địa chỉ trong hồ sơ bạn đọc |
+| TC.25 | Đăng nhập bạn đọc | Nhập số thẻ và mật khẩu | Vào trang cá nhân, đầu trang hiện tên bạn đọc |
+| TC.26 | Sai mật khẩu | Nhập sai mật khẩu | Báo lỗi không nói rõ sai phần nào |
+| TC.27 | Trang cá nhân | Mở lần lượt tám thẻ | Sách đang mượn, lịch sử, đặt giữ, tiền phạt, thông báo, yêu thích, tìm kiếm đã lưu, thông tin cá nhân — không thẻ nào hiện tên trạng thái bằng tiếng Anh |
+| TC.28 | Gia hạn sách | Bấm Gia hạn ở một cuốn đang mượn | Hạn trả mới do máy chủ tính; hết lượt thì nút khóa và ghi rõ đã dùng mấy trên mấy lượt |
+| TC.29 | Đặt giữ chỗ | Mở một tài liệu rồi bấm Đặt giữ chỗ | Báo vị trí trong hàng đợi; phiếu hiện ở thẻ Đặt giữ và hủy được |
+| TC.30 | Cập nhật thông tin liên hệ | Sửa email và điện thoại rồi lưu | Lưu được; các trường do nhà trường quản lý không có ô để sửa |
+| TC.31 | Yêu cầu gia hạn thẻ | Gửi yêu cầu rồi gửi tiếp lần hai | Lần hai bị chặn vì đang có yêu cầu chờ xử lý |
+| TC.32 | Nhận xét tài liệu | Gửi nhận xét rồi mở lại trang chi tiết bằng cửa sổ ẩn danh | Chưa thấy nhận xét; sau khi cán bộ duyệt thì thấy |
+| TC.33 | Danh sách tài liệu số | Mở mục Tài liệu số | Liệt kê tài liệu số kèm mức truy cập, số trang và dung lượng |
+| TC.34 | Đọc trực tuyến | Mở một tài liệu công khai | Trang tài liệu hiện dưới dạng ảnh có chữ chìm ghi số thẻ, thời điểm và địa chỉ máy; lật trang được |
+| TC.35 | Tài liệu không cho tải | Mở một tài liệu bị cấm tải | Không có nút tải về, kèm dòng giải thích |
+| TC.36 | Tài liệu hạn chế | Mở một tài liệu mức hạn chế khi chưa được duyệt | Chỉ xem được số trang thử đã cấu hình, có nút gửi yêu cầu kèm ô ghi lý do |
+| TC.37 | Tìm ở thư viện khác | Mở mục Tìm ở thư viện khác, tra một từ khóa | Mỗi thư viện một khối kết quả riêng kèm số kết quả và thời gian trả lời |
+| TC.38 | Đối chiếu với kho của mình | Tra một nhan đề thư viện đã có | Cột "Ở thư viện mình" có liên kết mở thẳng sang trang chi tiết |
+| TC.39 | Sơ đồ trang | Mở `/sitemap.xml` | Liệt kê trang tĩnh, bản tin và tài liệu đã xuất bản |
+| TC.40 | Tệp robots.txt | Mở `/robots.txt` | Mở phần tra cứu, chặn `/admin` và các trang cá nhân, có dòng trỏ tới sơ đồ trang |
+| TC.41 | Gọi API bạn đọc khi chưa đăng nhập | Gọi `/api/reader/profile` không kèm mã đăng nhập | Trả 401 |
+| TC.42 | Tài khoản bạn đọc gọi API quản trị | Dùng mã đăng nhập của bạn đọc gọi `/api/content/settings` | Trả 403 |
+
 ## Cách chạy bộ kiểm thử tự động
 
 ```bash
 cd backend
-dotnet test                 # 370 unit test + 278 integration test
+dotnet test                 # 399 unit test + 304 integration test
 ```
 
 Integration test tự khởi tạo một container PostgreSQL 16 và một container MinIO riêng, chạy

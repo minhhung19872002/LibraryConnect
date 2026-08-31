@@ -138,6 +138,11 @@ public class QuickCatalogCommandHandler : IRequestHandler<QuickCatalogCommand, Q
 
             var marc = BuildMarc(command);
 
+            // Biểu ghi sơ lược vẫn phải có 008 hợp lệ: thiếu nó thì cán bộ biên mục mở ra ở trình
+            // soạn MARC, bổ sung xong lại không lưu được vì bộ kiểm tra chặn ngay từ đầu.
+            await Cataloging.Marc008Builder.EnsureAsync(
+                marc, _parameters, _clock.Today, command.PublishYear, ct);
+
             await _writer.PrepareAsync(entity, marc, ct);
             _db.BibRecords.Add(entity);
 

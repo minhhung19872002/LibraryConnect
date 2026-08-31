@@ -48,6 +48,7 @@ public static class DependencyInjection
         services.AddScoped<INotificationSender, EmailNotificationSender>();
         services.AddScoped<IBackgroundJobService, HangfireBackgroundJobService>();
         services.AddScoped<IBackupService, PostgresBackupService>();
+        services.AddSingleton<IHtmlSanitizer, HtmlSanitizerService>();
         services.AddScoped<Application.Features.Cataloging.ICustomIndexHarvester, CustomIndexHarvester>();
 
         services.AddReporting();

@@ -116,3 +116,19 @@ public interface IBackgroundJobService
     void AddOrUpdateRecurring<T>(string jobId, System.Linq.Expressions.Expression<Func<T, Task>> methodCall, string cronExpression);
     void RemoveRecurring(string jobId);
 }
+
+/// <summary>
+/// Làm sạch HTML do cán bộ soạn trong trình soạn thảo trước khi lưu (yêu cầu 6.4).
+///
+/// Nội dung này được trang OPAC hiển thị nguyên vẹn cho mọi khách vào xem, nên một thẻ script lọt
+/// vào bài viết là chạy trên máy của tất cả bạn đọc. Lọc ở tầng lưu chứ không ở tầng hiển thị: chỉ
+/// cần một chỗ quên lọc khi hiển thị là hỏng, còn lọc lúc lưu thì trong kho không bao giờ có mã độc.
+/// </summary>
+public interface IHtmlSanitizer
+{
+    /// <summary>Trả về HTML chỉ còn các thẻ và thuộc tính an toàn.</summary>
+    string Sanitize(string? html);
+
+    /// <summary>Bóc hết thẻ, lấy phần chữ — dùng cho mô tả tóm tắt và thẻ meta.</summary>
+    string ToPlainText(string? html);
+}

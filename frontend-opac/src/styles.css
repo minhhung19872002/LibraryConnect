@@ -1,0 +1,266 @@
+/* Kiểu dáng chung của trang tra cứu. Phần lớn giao diện dùng thành phần dựng sẵn, ở đây chỉ là
+   những chỗ Ant Design không lo: khối tìm kiếm ở trang chủ, lưới bìa sách và nội dung bài viết. */
+
+:root {
+  --lc-green: #0b6b4f;
+  --lc-green-dark: #0f2a22;
+  --lc-ink: #1f2d29;
+  --lc-muted: #6b7c77;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: 'Be Vietnam Pro', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    sans-serif;
+  color: var(--lc-ink);
+  background: #f5f7f6;
+}
+
+.lc-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+/* ---- Đầu trang ---- */
+
+.lc-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  border-bottom: 1px solid #e4eae8;
+  padding: 0;
+  height: auto;
+  line-height: normal;
+}
+
+.lc-header__top {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 0;
+}
+
+.lc-header__brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: inherit;
+  min-width: 0;
+}
+
+.lc-header__logo {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  border-radius: 8px;
+  flex: none;
+}
+
+.lc-header__name {
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 1.2;
+  color: var(--lc-green-dark);
+}
+
+.lc-header__slogan {
+  font-size: 13px;
+  color: var(--lc-muted);
+}
+
+.lc-header__spacer {
+  flex: 1;
+}
+
+.lc-header__nav {
+  border-top: 1px solid #eef2f1;
+}
+
+/* ---- Khối tìm kiếm trang chủ ---- */
+
+.lc-hero {
+  background: linear-gradient(135deg, #0b6b4f 0%, #0f2a22 100%);
+  background-size: cover;
+  background-position: center;
+  color: #ffffff;
+  padding: 56px 0;
+}
+
+.lc-hero__title {
+  font-size: 30px;
+  font-weight: 700;
+  margin: 0 0 8px;
+  color: #ffffff;
+}
+
+.lc-hero__subtitle {
+  margin: 0 0 24px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.lc-hero__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px;
+  margin-top: 24px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.lc-hero__stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+/* ---- Lưới kết quả ---- */
+
+.lc-cover {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  border-radius: 6px;
+  background: #e9efed;
+}
+
+.lc-cover--placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--lc-muted);
+  font-size: 12px;
+  text-align: center;
+  padding: 8px;
+}
+
+.lc-result {
+  display: flex;
+  gap: 16px;
+}
+
+.lc-result__cover {
+  width: 92px;
+  flex: none;
+}
+
+.lc-result__body {
+  min-width: 0;
+  flex: 1;
+}
+
+.lc-result__title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 4px;
+}
+
+.lc-result__meta {
+  color: var(--lc-muted);
+  font-size: 13px;
+  margin: 0 0 8px;
+}
+
+/* ---- Nội dung bài viết soạn bằng trình soạn thảo ---- */
+
+.lc-richtext {
+  line-height: 1.75;
+  font-size: 15.5px;
+}
+
+.lc-richtext img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+}
+
+.lc-richtext table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+}
+
+.lc-richtext th,
+.lc-richtext td {
+  border: 1px solid #dfe6e4;
+  padding: 8px 10px;
+  text-align: left;
+}
+
+.lc-richtext h2 {
+  font-size: 20px;
+  margin: 24px 0 8px;
+}
+
+.lc-richtext h3 {
+  font-size: 17px;
+  margin: 20px 0 8px;
+}
+
+.lc-richtext iframe {
+  max-width: 100%;
+}
+
+/* ---- Chân trang ---- */
+
+.lc-footer {
+  color: rgba(255, 255, 255, 0.82);
+  padding: 32px 0 20px;
+}
+
+.lc-footer a {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.lc-footer a:hover {
+  color: #ffffff;
+}
+
+.lc-footer__title {
+  color: #ffffff;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.lc-footer__bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  margin-top: 24px;
+  padding-top: 14px;
+  font-size: 13px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+/* ---- Màn hình hẹp ---- */
+
+@media (max-width: 768px) {
+  .lc-hero {
+    padding: 36px 0;
+  }
+
+  .lc-hero__title {
+    font-size: 24px;
+  }
+
+  .lc-result {
+    gap: 12px;
+  }
+
+  .lc-result__cover {
+    width: 72px;
+  }
+}

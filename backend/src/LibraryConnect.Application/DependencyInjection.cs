@@ -47,6 +47,8 @@ public static class DependencyInjection
         services.AddScoped<Features.Digital.DigitalDocumentWriter>();
         services.AddScoped<Features.Digital.IDigitalProcessingJob, Features.Digital.DigitalProcessingJob>();
         services.AddScoped<Features.Digital.IDigitalMaintenanceJob, Features.Digital.DigitalMaintenanceJob>();
+        services.AddScoped<Features.Cms.ICmsSettingReader, Features.Cms.CmsSettingReader>();
+        services.AddScoped<Features.Opac.IOpacSearchLogger, Features.Opac.OpacSearchLogger>();
 
         return services;
     }

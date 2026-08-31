@@ -51,7 +51,7 @@ Sau khi các container báo `healthy`:
 | Địa chỉ | Nội dung |
 |---|---|
 | http://localhost/admin | Giao diện quản trị |
-| http://localhost | Trang tra cứu OPAC — bàn giao ở Phase 12; hiện chuyển hướng sang `/admin` |
+| http://localhost | Trang tra cứu OPAC dành cho bạn đọc |
 | http://localhost/swagger | Tài liệu API (Swagger UI) |
 | http://localhost/health | Health check (liveness) |
 | http://localhost/health/ready | Health check (readiness: PostgreSQL, Redis) |
@@ -87,7 +87,7 @@ dotnet run --project src/LibraryConnect.Api
 # 3. Giao diện quản trị (http://localhost:5174)
 cd frontend-admin && npm install && npm run dev
 
-# 4. OPAC (http://localhost:5173)
+# 4. Trang tra cứu OPAC (http://localhost:5175)
 cd frontend-opac && npm install && npm run dev
 ```
 
@@ -109,8 +109,9 @@ Không sửa migration đã commit — luôn tạo migration mới.
 ### Kiểm thử
 
 ```bash
-cd backend && dotnet test          # 370 unit test + 278 integration test
-cd frontend-admin && npm test      # 107 test giao diện
+cd backend && dotnet test          # 399 unit test + 304 integration test
+cd frontend-admin && npm test      # 114 test giao diện quản trị
+cd frontend-opac && npm test       # 15 test giao diện tra cứu
 ```
 
 Integration test tự khởi tạo một container PostgreSQL 16 riêng, chạy migration, nạp dữ liệu nền rồi
@@ -165,6 +166,6 @@ vào mà không phải sửa lại — xem `mobile/README.md`.
 | 9 | Phân hệ VII — Lưu thông (chính sách và lịch nghỉ, quầy ghi mượn/ghi trả bằng bàn phím, đặt giữ chỗ, tiền phạt, cổng ra vào, tủ gửi đồ, 7 báo cáo, nhóm `/api/reader/*`) | ✅ Hoàn thành |
 | 10 | Phân hệ V — Tài liệu số (bộ sưu tập, tải tệp lớn theo mảnh, nhận dạng ký tự tiếng Việt, trình đọc có chữ chìm, duyệt yêu cầu đọc, nhập xuất, 4 báo cáo) | ✅ Hoàn thành |
 | 11 | Liên thư viện: Z39.50 hai chiều, SRU, OAI-PMH provider và harvester, nhập biểu ghi từ thư viện bạn | ✅ Hoàn thành |
-| 12 | Phân hệ VIII, IX — OPAC và quản trị nội dung | 🔄 Đang thực hiện |
-| 13 | Phân hệ X — Tài liệu môn học | ⏳ |
+| 12 | Phân hệ VIII, IX — Quản trị nội dung và trang tra cứu OPAC (tra cứu không dấu, facet, duyệt danh mục, trích dẫn, trang cá nhân bạn đọc, trình đọc tài liệu số, tìm ở thư viện khác, SEO) | ✅ Hoàn thành |
+| 13 | Phân hệ X — Tài liệu môn học | 🔄 Đang thực hiện |
 | 14 | Hoàn thiện, tài liệu bàn giao, kịch bản kiểm thử | ⏳ |

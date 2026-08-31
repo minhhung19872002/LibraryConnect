@@ -183,41 +183,8 @@ public class GetNewBibRecordQueryHandler : IRequestHandler<GetNewBibRecordQuery,
     /// Bảo đảm biểu ghi có trường 008 đủ 40 ký tự, đã điền ngày tạo, năm, mã nước và mã ngôn ngữ
     /// theo tham số hệ thống.
     /// </summary>
-    private async Task EnsureFixedFieldAsync(MarcRecord record, CancellationToken ct)
-    {
-        var today = _clock.Today;
-        var value = (record.GetControlField("008") ?? string.Empty).PadRight(40, ' ')[..40].ToCharArray();
-
-        Write(0, $"{today.Year % 100:00}{today.Month:00}{today.Day:00}");
-
-        if (value[6] == ' ')
-        {
-            value[6] = 's';
-        }
-
-        Write(7, today.Year.ToString(CultureInfo.InvariantCulture));
-
-        var country = await _parameters.GetAsync("CATALOG.DEFAULT_COUNTRY", "vm", ct);
-        var language = await _parameters.GetAsync("CATALOG.DEFAULT_LANGUAGE", "vie", ct);
-
-        Write(15, country.PadRight(3)[..3]);
-        Write(35, language.PadRight(3)[..3]);
-
-        if (value[39] == ' ')
-        {
-            value[39] = 'd';
-        }
-
-        record.SetControlField("008", new string(value));
-
-        void Write(int start, string text)
-        {
-            for (var index = 0; index < text.Length && start + index < value.Length; index++)
-            {
-                value[start + index] = text[index];
-            }
-        }
-    }
+    private Task EnsureFixedFieldAsync(MarcRecord record, CancellationToken ct) =>
+        Marc008Builder.EnsureAsync(record, _parameters, _clock.Today, ct: ct);
 
     /// <summary>
     /// Áp bảng giá trị ngầm định lên biểu ghi. Giá trị của dạng tài liệu cụ thể ghi đè lên giá trị
