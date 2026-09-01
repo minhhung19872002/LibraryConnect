@@ -110,6 +110,8 @@ services:
       # Bộ dữ liệu minh họa (200 biểu ghi, 500 ĐKCB, 50 bạn đọc, 100 lượt mượn trả). Đặt false trong
       # .env khi cài cho thư viện dùng thật.
       LC_SEED_DEMO: ${LC_SEED_DEMO:-true}
+      # Để trống thì máy chủ sinh mật khẩu quản trị ngẫu nhiên và in ra nhật ký khởi động.
+      LC_SEED_ADMIN_PASSWORD: ${LC_SEED_ADMIN_PASSWORD:-}
       # Ngưỡng chặn tần suất. Khai ở đây thì giá trị đặt trong .env mới tới được máy chủ — biến môi
       # trường của máy chạy docker không tự chảy vào container.
       LC_RateLimit__LoginPerMinute: ${LC_RateLimit__LoginPerMinute:-20}

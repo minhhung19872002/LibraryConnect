@@ -34,7 +34,7 @@ không xác nhận em **nghĩ đúng**.
 ## ƯU TIÊN 1 — BẢO MẬT (LÀM ĐẦU TIÊN, TRONG HÔM NAY)
 
 ### 1.1. Mật khẩu mặc định đang công khai
-`README.md` in thẳng mật khẩu quản trị `LibraryConnect@2025` ở trang đầu, mà repo đang để
+`README.md` in thẳng mật khẩu quản trị mặc định ở trang đầu, mà repo đang để
 **public** trên GitHub. Ai đọc README cũng biết mật khẩu admin của mọi bản cài.
 
 - Xóa mật khẩu khỏi `README.md` và mọi tài liệu trong `docs/`.

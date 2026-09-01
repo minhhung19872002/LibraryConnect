@@ -48,9 +48,16 @@ public class LibraryConnectFactory : WebApplicationFactory<Program>, IAsyncLifet
         Converters = { new JsonStringEnumConverter() }
     };
 
-    /// <summary>Temporary password of the seeded administrator, as created by the seeder.</summary>
+    /// <summary>
+    /// Tài khoản quản trị nạp sẵn của cơ sở dữ liệu kiểm thử.
+    ///
+    /// Bản cài thật sinh mật khẩu ngẫu nhiên và chỉ in ra nhật ký khởi động — bộ kiểm thử không đọc
+    /// được nhật ký ấy, nên nó khai trước bằng đúng biến môi trường mà người cài tự động cũng dùng
+    /// (<c>LC_SEED_ADMIN_PASSWORD</c>). Chuỗi này chỉ sống trong một container PostgreSQL dùng một
+    /// lần rồi xoá.
+    /// </summary>
     public const string AdminUsername = "admin";
-    public const string AdminPassword = "LibraryConnect@2025";
+    public const string AdminPassword = "KiemThu@LibraryConnect2026";
 
     private string? _backupDirectory;
 
@@ -107,6 +114,10 @@ public class LibraryConnectFactory : WebApplicationFactory<Program>, IAsyncLifet
         // dữ liệu nó cần rồi đếm lại, nên 200 biểu ghi và 500 ĐKCB nạp sẵn chỉ làm sai các phép đếm
         // ấy. Bộ dữ liệu minh họa được kiểm chứng khi cài đặt thật, xem kịch bản CD.1–CD.6.
         Environment.SetEnvironmentVariable("LC_SEED_DEMO", "false");
+
+        // Khai trước mật khẩu quản trị: bản cài thật sinh ngẫu nhiên rồi in ra nhật ký khởi động,
+        // mà bộ kiểm thử thì không đọc nhật ký ấy được.
+        Environment.SetEnvironmentVariable("LC_SEED_ADMIN_PASSWORD", AdminPassword);
 
         // Quan sát trạng thái ban đầu của tài khoản quản trị nạp sẵn trước khi bất kỳ bài kiểm thử
         // nào đụng vào: ngay lượt đăng nhập đầu tiên, bộ dựng client sẽ đổi mật khẩu tạm để các bài

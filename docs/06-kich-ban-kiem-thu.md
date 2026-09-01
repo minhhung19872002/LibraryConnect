@@ -22,7 +22,7 @@ Ký hiệu bám theo **Mục 5 phần 2 của E-HSMT**.
 | 2.1.5 | Bảng mã quyền | Đăng nhập, vào Nhóm người dùng | Nhóm `SYS_ADMIN` có 161 quyền | Integration — `InstallationTests` | | |
 | 2.1.6 | Nhóm người dùng mẫu | Màn hình Nhóm người dùng | Đủ 5 nhóm: Quản trị hệ thống, Cán bộ biên mục, Cán bộ bổ sung, Cán bộ lưu thông, Thủ thư | Integration — `InstallationTests` | | |
 | 2.1.7 | Tham số hệ thống | Màn hình Tham số hệ thống | Ít nhất 10 nhóm tham số, trên 50 tham số | Integration — `InstallationTests` | | |
-| 2.1.8 | Tài khoản quản trị mặc định | Đăng nhập `admin` / `LibraryConnect@2025` | Đăng nhập được và **bị bắt buộc đổi mật khẩu ngay** | Integration — `InstallationTests` | | |
+| 2.1.8 | Tài khoản quản trị đầu tiên | Đọc mật khẩu tạm trong nhật ký khởi động (`docker compose logs api`), đăng nhập bằng `admin` và chuỗi đó | Đăng nhập được và **bị bắt buộc đổi mật khẩu ngay**; mật khẩu khác nhau ở mỗi bản cài, không có giá trị mặc định chung | Integration — `InstallationTests`; Unit — `SeededAdminPasswordTests`, `SecretsInRepositoryTests` | | |
 | 2.1.9 | Mã hóa tiếng Việt | Nhập tên thư viện có dấu, lưu, tải lại trang | Hiển thị đúng dấu tiếng Việt; CSDL dùng UTF-8, collation ICU `vi-VN` | | | |
 | 2.1.10 | Tra cứu tiếng Việt không dấu | Chạy `SELECT bib.vn_unaccent('Giáo trình Cơ sở dữ liệu');` | Trả `giao trinh co so du lieu` | | | |
 | 2.1.11 | Danh mục chuẩn được nạp sẵn | Vào Danh mục → Ngôn ngữ / Nước xuất bản / Khung phân loại | 21 ngôn ngữ ISO 639-2, 24 mã nước MARC, DDC 10 lớp chính và 89 phân lớp, 14 dạng tài liệu, 6 loại bạn đọc, 2 thư viện và 4 kho | Integration — `CatalogTests` | | |

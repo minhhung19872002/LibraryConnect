@@ -57,14 +57,19 @@ Sau khi các container báo `healthy`:
 | http://localhost/health/ready | Health check (readiness: PostgreSQL, Redis) |
 | http://localhost:9001 | MinIO Console |
 
-Tài khoản quản trị được tạo tự động ở lần khởi động đầu tiên:
+Tài khoản quản trị được tạo tự động ở lần khởi động đầu tiên, tên đăng nhập `admin`. **Mật khẩu tạm
+sinh ngẫu nhiên riêng cho từng bản cài** và chỉ hiện đúng một lần trong nhật ký khởi động của máy
+chủ:
 
-```
-Tên đăng nhập: admin
-Mật khẩu tạm : LibraryConnect@2025
+```bash
+docker compose logs api | grep -A 6 "TÀI KHOẢN QUẢN TRỊ"
 ```
 
-Hệ thống **bắt buộc đổi mật khẩu ngay ở lần đăng nhập đầu tiên**.
+Hệ thống **bắt buộc đổi mật khẩu ngay ở lần đăng nhập đầu tiên**; đổi xong thì chuỗi in trong nhật
+ký không dùng lại được nữa.
+
+> Cài đặt tự động bằng kịch bản thì đặt trước `LC_SEED_ADMIN_PASSWORD` trong `.env` — lúc ấy máy chủ
+> dùng đúng giá trị ấy và không in gì ra nhật ký.
 
 > Nếu một cổng đã bị chiếm trên máy chủ, đổi biến tương ứng trong `.env`
 > (`POSTGRES_PORT`, `REDIS_PORT`, `MINIO_API_PORT`, `API_PORT`, `HTTP_PORT`) rồi chạy lại

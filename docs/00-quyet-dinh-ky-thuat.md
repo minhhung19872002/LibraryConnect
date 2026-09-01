@@ -102,3 +102,15 @@ Cột "Đổi được không" cho biết khách hàng có tự đổi được 
 | 14 | Quyền vào màn hình báo cáo chung | Ai xem được báo cáo của bất kỳ phân hệ nào | Trang này chỉ gộp lại chính những con số ấy, nên thêm một mã quyền riêng là bắt quản trị viên cấp thêm quyền cho một thứ họ đã cho phép xem | Không |
 | 14 | Giao diện quản trị trên điện thoại | Dưới 992px: menu thành ngăn kéo, cột khai cứng xếp dọc, bảng cuộn trong khung của nó | Đặc tả chỉ đòi tối thiểu 1366×768, nhưng cán bộ vẫn mở giao diện quản trị trên điện thoại giữa kho sách. Sửa ở tầng bố cục dùng chung thay vì sửa từng màn hình: 145 chỗ khai cột cứng mà sửa tay từng chỗ thì vừa lâu vừa dễ sót | Được — khối media query trong styles.css |
 | 14 | Cột khai cứng xử lý thế nào trên màn hình hẹp | Cột ≤ 6/24 xếp hai cái một hàng, từ 7/24 trở lên chiếm trọn hàng | Cột rất nhỏ hầu hết là thẻ một con số, hai cái một hàng vẫn đọc được; cột lớn hơn là khối nội dung thật, để nửa màn hình trống bên cạnh thì phí chỗ. Màn hình nào đã tự khai theo điểm dừng thì luật này không đụng tới | Không |
+
+---
+
+## Đợt hoàn thiện — Ưu tiên 1: Bảo mật
+
+| Phase | Vấn đề | Phương án đã chọn | Lý do | Đổi được không |
+|---|---|---|---|---|
+| HT.1 | Mật khẩu quản trị đầu tiên lấy ở đâu | Máy chủ sinh ngẫu nhiên 16 ký tự đủ bốn lớp ký tự, in đúng một lần ra nhật ký khởi động trong một khối có khung | Bản trước đặt một chuỗi cố định trong mã nguồn rồi in ra `README.md` của một kho mã công khai — chuỗi ấy mở cửa mọi bản cài chưa ai đăng nhập lần nào, không riêng máy người viết. In dạng khối có khung vì nhật ký container trôi rất nhanh, người cài phải nhìn ra ngay | Có — `LC_SEED_ADMIN_PASSWORD` |
+| HT.1 | Cài đặt tự động bằng kịch bản thì đọc mật khẩu ở đâu | Khai trước bằng `LC_SEED_ADMIN_PASSWORD`; khi có biến này máy chủ dùng đúng giá trị ấy và **không in gì ra nhật ký** | Kịch bản bàn giao không đọc được nhật ký container. Khi người cài đã tự khai thì in thêm chỉ để lại dấu vết thừa trong nhật ký máy chủ | Có — biến môi trường |
+| HT.1 | Quy tắc mật khẩu cho tài khoản này lấy từ bảng tham số? | Không — dùng một quy tắc riêng chặt hơn (16 ký tự, đủ hoa–thường–số–ký tự đặc biệt) | Tài khoản quản trị được tạo **trước** khi bảng tham số có dữ liệu. Mà cũng không nên đọc: đây là chuỗi do máy sinh và người chỉ chép lại một lần, dài thêm không phiền ai, trong khi nó là chìa khoá của cả hệ thống | Không |
+| HT.1 | Tài liệu bàn giao viết mật khẩu thế nào | Chỉ nói **cách lấy** (`docker compose logs api \| grep -A 6 "TÀI KHOẢN QUẢN TRỊ"`), không in giá trị; có phép thử quét cả kho mã chặn việc in lại | Chặn đúng một chuỗi thì lần sau đặt mật khẩu mặc định khác là lại lọt. Luật phải là "tài liệu không in giá trị mật khẩu nào" | Không |
+

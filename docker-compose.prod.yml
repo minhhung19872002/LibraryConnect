@@ -91,6 +91,8 @@ services:
       LC_Swagger__Enabled: ${LC_Swagger__Enabled:-false}
       # Máy chủ thật là kho dữ liệu của thư viện, không phải nơi chứa 200 cuốn sách mẫu.
       LC_SEED_DEMO: ${LC_SEED_DEMO:-false}
+      # Để trống thì máy chủ sinh mật khẩu quản trị ngẫu nhiên và in ra nhật ký khởi động.
+      LC_SEED_ADMIN_PASSWORD: ${LC_SEED_ADMIN_PASSWORD:-}
       LC_CORS_ORIGINS: ${LC_CORS_ORIGINS:?Thiếu LC_CORS_ORIGINS - ghi đúng tên miền của thư viện}
     deploy:
       resources:

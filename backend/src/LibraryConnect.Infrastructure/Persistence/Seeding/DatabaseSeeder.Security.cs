@@ -11,11 +11,6 @@ public partial class DatabaseSeeder
     /// <summary>Default administrator account created on an empty database (section 8).</summary>
     public const string DefaultAdminUsername = "admin";
 
-    /// <summary>
-    /// Temporary password for the seeded administrator. The account is flagged
-    /// <c>MustChangePassword</c>, so this value only ever survives until the first sign-in.
-    /// </summary>
-    public const string DefaultAdminPassword = "LibraryConnect@2025";
 
     /// <summary>
     /// The staff groups every deployment starts with. The permission selector is a predicate over
@@ -155,10 +150,12 @@ public partial class DatabaseSeeder
             return;
         }
 
+        var matKhau = SeededAdminPassword.Resolve(_configuration);
+
         var admin = new User
         {
             Username = DefaultAdminUsername,
-            PasswordHash = _hasher.Hash(DefaultAdminPassword),
+            PasswordHash = _hasher.Hash(matKhau.Password),
             FullName = "Quản trị hệ thống",
             Email = null,
             IsActive = true,
@@ -182,10 +179,41 @@ public partial class DatabaseSeeder
 
         await _db.SaveChangesAsync(ct);
 
+        BaoMatKhau(matKhau);
+    }
+
+    /// <summary>
+    /// In mật khẩu tạm ra nhật ký khởi động — chỗ duy nhất nó xuất hiện.
+    ///
+    /// In dạng khối có khung vì nhật ký container trôi rất nhanh; người cài phải nhìn ra ngay giữa
+    /// hàng trăm dòng khởi động khác. Mật khẩu do người cài tự khai thì không in: họ biết rồi, in
+    /// thêm chỉ để lại dấu vết thừa trong nhật ký.
+    /// </summary>
+    private void BaoMatKhau(SeededAdminPassword.Ket matKhau)
+    {
+        if (matKhau.FromConfiguration)
+        {
+            _logger.LogInformation(
+                "Đã tạo tài khoản quản trị '{Username}' với mật khẩu khai trong biến môi trường "
+                + "LC_SEED_ADMIN_PASSWORD. Hệ thống bắt buộc đổi ở lần đăng nhập đầu tiên.",
+                DefaultAdminUsername);
+
+            return;
+        }
+
         _logger.LogWarning(
-            "Đã tạo tài khoản quản trị mặc định '{Username}' với mật khẩu tạm thời. " +
-            "Hệ thống sẽ bắt buộc đổi mật khẩu ở lần đăng nhập đầu tiên.",
-            DefaultAdminUsername);
+            "\n"
+            + "==================================================================\n"
+            + "  TÀI KHOẢN QUẢN TRỊ ĐẦU TIÊN — CHÉP LẠI NGAY\n"
+            + "    Tên đăng nhập : {Username}\n"
+            + "    Mật khẩu tạm  : {Password}\n"
+            + "\n"
+            + "  Mật khẩu này sinh ngẫu nhiên riêng cho bản cài này và chỉ hiện\n"
+            + "  đúng một lần ở đây. Hệ thống bắt buộc đổi ngay ở lần đăng nhập\n"
+            + "  đầu tiên; đổi xong thì chuỗi trên không dùng lại được nữa.\n"
+            + "==================================================================",
+            DefaultAdminUsername,
+            matKhau.Password);
     }
 
     /// <summary>One seeded staff group and the rule deciding which permissions it receives.</summary>

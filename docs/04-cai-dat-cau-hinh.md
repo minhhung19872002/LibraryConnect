@@ -93,17 +93,36 @@ Quá trình mất khoảng 30–60 giây. Khi `docker compose ps` báo `lc-api` 
 
 ### 2.5. Đăng nhập lần đầu
 
-```
-Tên đăng nhập: admin
-Mật khẩu:      LibraryConnect@2025
+Tên đăng nhập là `admin`. Mật khẩu tạm **sinh ngẫu nhiên riêng cho từng bản cài**, không có giá trị
+mặc định nào chung cho mọi nơi, và chỉ hiện đúng một lần trong nhật ký khởi động của máy chủ:
+
+```bash
+docker compose logs api | grep -A 6 "TÀI KHOẢN QUẢN TRỊ"
 ```
 
-Hệ thống **bắt buộc đổi mật khẩu ngay** trước khi cho vào bất kỳ chức năng nào. Sau khi đổi, mọi
-phiên đăng nhập cũ bị thu hồi và cần đăng nhập lại bằng mật khẩu mới.
+Khối in ra có dạng:
+
+```
+==================================================================
+  TÀI KHOẢN QUẢN TRỊ ĐẦU TIÊN — CHÉP LẠI NGAY
+    Tên đăng nhập : admin
+    Mật khẩu tạm  : <chuỗi ngẫu nhiên 16 ký tự>
+...
+```
+
+Chép lại rồi đăng nhập ngay. Hệ thống **bắt buộc đổi mật khẩu** trước khi cho vào bất kỳ chức năng
+nào; sau khi đổi, mọi phiên đăng nhập cũ bị thu hồi và chuỗi trong nhật ký không dùng lại được.
 
 Ràng buộc này do máy chủ giữ chứ không chỉ do giao diện: tài khoản chưa đổi mật khẩu tạm gọi thẳng
-API cũng bị từ chối, chỉ còn đúng đường đăng nhập, đổi mật khẩu và đăng xuất là mở. Mật khẩu mặc định
-in trong tài liệu này nên nó chỉ được sống tới lần đăng nhập đầu tiên.
+API cũng bị từ chối, chỉ còn đúng đường đăng nhập, đổi mật khẩu và đăng xuất là mở.
+
+**Cài đặt tự động.** Kịch bản bàn giao không đọc được nhật ký container thì đặt trước biến
+`LC_SEED_ADMIN_PASSWORD` trong `.env`. Máy chủ dùng đúng giá trị ấy, không in gì ra nhật ký, và vẫn
+bắt buộc đổi ở lần đăng nhập đầu.
+
+> **Vì sao không còn mật khẩu mặc định in trong tài liệu.** Bản trước đặt một mật khẩu cố định trong
+> mã nguồn và in ra `README.md`. Kho mã để công khai, nên chuỗi ấy mở được cửa của mọi bản cài chưa
+> ai đăng nhập lần nào — không riêng máy của người viết.
 
 Quy tắc áp cho mọi tài khoản có mật khẩu tạm, kể cả tài khoản cán bộ do quản trị viên tạo và tài
 khoản bạn đọc vừa được đặt lại mật khẩu.
