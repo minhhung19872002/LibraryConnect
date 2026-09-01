@@ -89,11 +89,11 @@ trống và lỗi JavaScript.
 
 | # | Màn hình | Mô tả lỗi | Cách tái hiện | Mức độ | Loại | Trạng thái |
 |---|---|---|---|---|---|---|
-| E1 | Danh mục → Tác giả (và mọi danh mục dùng chung bảng ấy) | Hai cột **Tên** và **Tên tiếng Anh** rộng đúng **0 px**. Mười một ô tiêu đề bị bóp cao 91 px và chữ chồng lên nhau: hàng tiêu đề đọc thành "T / Đọ và tên đầy đủ / n" và "Th / Thao tác". Bảng chung khai 5 cột, riêng danh mục tác giả khai thêm 6 cột nữa, tổng 11 cột trong 1.290 px mà hai cột không khai bề rộng — đúng lỗi C6 nhưng ở màn hình khác | Danh mục → Tác giả, khổ 1440×900 | Nặng | Giao diện | Mới |
-| E2 | 18 bảng của giao diện quản trị | Bảng rộng hơn khung chứa nên cột cuối — thường là **Thao tác**, chỗ đặt nút Sửa và Xoá — nằm hẳn ngoài màn hình, mà không có dấu hiệu nào cho biết cuộn ngang được. Đo được: Tiền phạt 1.500 px trong 1.136 px, Đặt giữ 1.500/1.136, Kho OAI-PMH 1.500/1.136, Yêu cầu đọc hạn chế 1.700/1.136, Biểu ghi thư mục 1.484/1.136, Tin tức 1.480/1.102… Đây chính là lỗi B10 đã sửa cho một bảng của OPAC nhưng chưa đụng tới giao diện quản trị | Lưu thông → Tiền phạt: cột "Thao tác" không thấy đâu | Nặng | Giao diện | Mới |
-| E3 | Tài liệu số → Kho tài liệu số | Bảng rộng 1.700 px nhồi vào khung **848 px** trong khi cây bộ sưu tập bên trái chỉ chiếm một phần tư màn hình. Bốn cột cuối (Chính sách, Chữ chìm, Tải về, Thao tác) bị cắt giữa chừng | Tài liệu số → Kho tài liệu số | Nặng | Giao diện | Mới |
-| E4 | OPAC → Duyệt theo tác giả; Danh mục → Tác giả | Hồ sơ thẩm quyền tác giả nhận cả những giá trị không thể là tên người: **hai công thức bảng tính** (`+AA2994AA2967:AA2997AA29AA2967:AA2994`), một dòng `6th edition`, và một nhan đề dài 91 ký tự đặt nhầm vào ô tác giả. Hai công thức đứng **đầu tiên** trên trang công khai vì sắp theo bảng chữ cái, nên đó là hai thứ đầu tiên bạn đọc nhìn thấy. Dữ liệu bẩn tới từ `dc:creator` của kho nguồn, nhưng hệ thống nhận vào mà không kiểm gì | OPAC → Duyệt theo tác giả → Tất cả | Vừa | Dữ liệu | Mới |
-| E5 | Toàn hệ thống | Nạp xong bộ dữ liệu trình diễn lớn mà tham số tên thư viện vẫn để mặc định, nên đầu trang OPAC và giao diện quản trị đều hiện đúng chữ "Thư viện". Bộ mặc định đã đặt sẵn một tên mẫu (lỗi D9) nhưng bộ lớn thì chưa | Nạp `LC_SEED_DEMO=rich` rồi mở trang chủ OPAC | Nhẹ | Dữ liệu | Mới |
+| E1 | Danh mục → Tác giả (và mọi danh mục dùng chung bảng ấy) | Hai cột **Tên** và **Tên tiếng Anh** rộng đúng **0 px**. Mười một ô tiêu đề bị bóp cao 91 px và chữ chồng lên nhau: hàng tiêu đề đọc thành "T / Đọ và tên đầy đủ / n" và "Th / Thao tác". Bảng chung khai 5 cột, riêng danh mục tác giả khai thêm 6 cột nữa, tổng 11 cột trong 1.290 px mà hai cột không khai bề rộng — đúng lỗi C6 nhưng ở màn hình khác | Danh mục → Tác giả, khổ 1440×900 | Nặng | Giao diện | Đã sửa — mọi cột khai bề rộng, bảng cuộn ngang thay vì bóp cột; kèm phép thử chặn kiểu viết cũ |
+| E2 | 18 bảng của giao diện quản trị | Bảng rộng hơn khung chứa nên cột cuối — thường là **Thao tác**, chỗ đặt nút Sửa và Xoá — nằm hẳn ngoài màn hình, mà không có dấu hiệu nào cho biết cuộn ngang được. Đo được: Tiền phạt 1.500 px trong 1.136 px, Đặt giữ 1.500/1.136, Kho OAI-PMH 1.500/1.136, Yêu cầu đọc hạn chế 1.700/1.136, Biểu ghi thư mục 1.484/1.136, Tin tức 1.480/1.102… Đây chính là lỗi B10 đã sửa cho một bảng của OPAC nhưng chưa đụng tới giao diện quản trị | Lưu thông → Tiền phạt: cột "Thao tác" không thấy đâu | Nặng | Giao diện | Đã sửa — dải mờ và mũi tên ở mép phải, gắn một lần ở tầng bố cục nên che cả bảng viết sau |
+| E3 | Tài liệu số → Kho tài liệu số | Bảng rộng 1.700 px nhồi vào khung **848 px** trong khi cây bộ sưu tập bên trái chỉ chiếm một phần tư màn hình. Bốn cột cuối (Chính sách, Chữ chìm, Tải về, Thao tác) bị cắt giữa chừng | Tài liệu số → Kho tài liệu số | Nặng | Giao diện | Đã sửa — cây bộ sưu tập thu hẹp, khung bảng nới từ 848 px lên 1.136 px |
+| E4 | OPAC → Duyệt theo tác giả; Danh mục → Tác giả | Hồ sơ thẩm quyền tác giả nhận cả những giá trị không thể là tên người: **hai công thức bảng tính** (`+AA2994AA2967:AA2997AA29AA2967:AA2994`), một dòng `6th edition`, và một nhan đề dài 91 ký tự đặt nhầm vào ô tác giả. Hai công thức đứng **đầu tiên** trên trang công khai vì sắp theo bảng chữ cái, nên đó là hai thứ đầu tiên bạn đọc nhìn thấy. Dữ liệu bẩn tới từ `dc:creator` của kho nguồn, nhưng hệ thống nhận vào mà không kiểm gì | OPAC → Duyệt theo tác giả → Tất cả | Vừa | Dữ liệu | Đã sửa — lọc giá trị không thể là tên trước khi lập hồ sơ thẩm quyền, kèm migration gỡ 7 mục đã lọt |
+| E5 | Toàn hệ thống | Nạp xong bộ dữ liệu trình diễn lớn mà tham số tên thư viện vẫn để mặc định, nên đầu trang OPAC và giao diện quản trị đều hiện đúng chữ "Thư viện". Bộ mặc định đã đặt sẵn một tên mẫu (lỗi D9) nhưng bộ lớn thì chưa | Nạp `LC_SEED_DEMO=rich` rồi mở trang chủ OPAC | Nhẹ | Dữ liệu | Đã sửa — bộ trình diễn lớn đặt tên thư viện và mã cơ quan MARC nếu tham số còn để mặc định |
 
 ### Đã nghi là lỗ hổng nhưng kiểm ra thì không phải
 
@@ -125,6 +125,27 @@ lỗi chất lượng dữ liệu, ghi ở E4.
 **Chưa đi tới trong đợt này:** trình soạn MARC thao tác bằng chuột, thiết kế mẫu phích / mẫu thẻ /
 mẫu tem, luồng kiểm kê từ đầu đến cuối, đóng tập ấn phẩm định kỳ, trình đọc tài liệu số có đóng dấu
 chìm, và sao lưu – phục hồi. Đây vẫn đúng những chỗ chưa đi tới của đợt đầu.
+
+---
+
+### Tình hình sửa — đợt rà thứ hai
+
+Cả 5 lỗi đã sửa, mỗi lỗi kèm một phép thử **chạy đỏ trước khi sửa và xanh sau khi sửa**.
+
+| # | Đã làm | Bằng chứng |
+|---|---|---|
+| E1 | Mọi cột của bảng danh mục khai bề rộng, bảng cuộn ngang theo đúng tổng bề rộng ấy | Phép thử `catalogColumns.test.ts` chạy đỏ với hai chỗ vi phạm. Đo lại trên hệ thống: không còn cột nào rộng 0 px, ô tiêu đề từ 91 px xuống một dòng, bảng cuộn 1.810 px trong 1.136 px |
+| E2 | Dải mờ và mũi tên ở mép phải mọi bảng còn cột nằm ngoài khung. Gắn **một lần** ở tầng bố cục dùng chung (`useTableScrollHint`) chứ không sửa 18 màn hình — cách này che cả bảng viết sau | Ảnh chụp màn hình Danh mục → Tác giả: mũi tên ở mép phải. Ant Design tự khai `left: 0` cho hai phần tử giả ấy nên lần đầu dấu hiệu rơi về mép trái — phải khai `left: auto` mới đúng chỗ |
+| E3 | Cây bộ sưu tập của Kho tài liệu số thu hẹp lại, và chỉ giữ hai cột từ 1600 px trở lên | Đo lại: khung bảng nới từ 848 px lên 1.136 px |
+| E4 | Lọc giá trị không thể là tên người hay tên cơ quan trước khi lập hồ sơ thẩm quyền: công thức bảng tính, dòng lần xuất bản, chuỗi không có chữ cái nào, và câu có dấu hai chấm giữa dòng. Trường MARC giữ nguyên — chỉ không dựng điểm truy cập từ nó | 23 phép thử đơn vị, trong đó 10 phép thử giữ cho tên thật không bị loại nhầm. Migration gỡ **7 mục** khỏi 9.361; trang Duyệt theo tác giả nay mở đầu bằng "Ahmad Binti Nurbarirah" thay vì hai công thức |
+| E5 | Bộ trình diễn lớn đặt tên thư viện và mã cơ quan MARC nếu tham số còn để mặc định | Đặt xong trên máy đang chạy: trang chủ OPAC hiện "Thư viện Trường Đại học Mẫu" |
+
+**Bộ lọc tên ở E4 cố ý dè dặt.** Loại nhầm một cái tên thật thì biểu ghi mất điểm truy cập, tệ hơn
+là để lọt vài dòng rác — nên chỉ loại những gì chắc chắn không phải tên. Riêng chỗ phân biệt nhan đề
+với tên cơ quan thì đếm số từ không đủ: nhan đề *"Adoption of fintech payment services in vietnam:
+Empirical evidence from an emerging country"* có 13 từ, đúng bằng số từ của tên cơ quan *"Trường Đại
+học Tài nguyên và Môi trường Thành phố Hồ Chí Minh"*. Dấu hai chấm giữa dòng mới là chỗ phân biệt
+được: đó là dấu ngăn nhan đề chính với nhan đề phụ theo quy tắc mô tả ISBD, còn tên thì không dùng.
 
 ---
 

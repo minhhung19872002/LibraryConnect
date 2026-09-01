@@ -38,6 +38,7 @@ import { CatalogImportModal } from './CatalogImportModal';
 import { CatalogMergeDrawer } from './CatalogMergeDrawer';
 import { buildTreeSelectData } from './treeUtils';
 import { ReferenceLabel } from './ReferenceSelect';
+import { CATALOG_COLUMN_WIDTHS, catalogScrollX } from './catalogColumns';
 import type { CatalogItem, CatalogMetadata, CatalogTreeNode } from './types';
 
 /**
@@ -108,6 +109,18 @@ export function CatalogPage() {
     }
   };
 
+  const beNgangBang = useMemo(() => {
+    const definition = metadata.data;
+
+    return definition
+      ? catalogScrollX({
+          coCotMa: definition.showCode,
+          coCotTenTiengAnh: definition.showNameEn,
+          soCotRieng: definition.fields.filter((item) => item.showInList).length,
+        })
+      : 1100;
+  }, [metadata.data]);
+
   const columns = useMemo<ColumnsType<CatalogItem>>(() => {
     const definition = metadata.data;
     if (!definition) {
@@ -117,12 +130,20 @@ export function CatalogPage() {
     const result: ColumnsType<CatalogItem> = [];
 
     if (definition.showCode) {
-      result.push({ title: 'Mã', dataIndex: 'code', width: 170, sorter: true });
+      result.push({
+        title: 'Mã',
+        dataIndex: 'code',
+        width: CATALOG_COLUMN_WIDTHS.ma,
+        sorter: true,
+      });
     }
 
     result.push({
       title: 'Tên',
       dataIndex: 'name',
+      // Khai bề rộng chứ không để trống. Danh mục tác giả khai thêm sáu cột riêng, nên nếu cột này
+      // chỉ nhận phần còn thừa thì phần thừa bằng không và cột co lại đúng 0 px (lỗi E1).
+      width: CATALOG_COLUMN_WIDTHS.ten,
       sorter: true,
       render: (name: string, record) => (
         <Space direction="vertical" size={0}>
@@ -137,7 +158,13 @@ export function CatalogPage() {
     });
 
     if (definition.showNameEn) {
-      result.push({ title: 'Tên tiếng Anh', dataIndex: 'nameEn', responsive: ['lg'], ellipsis: true });
+      result.push({
+        title: 'Tên tiếng Anh',
+        dataIndex: 'nameEn',
+        width: CATALOG_COLUMN_WIDTHS.tenTiengAnh,
+        responsive: ['lg'],
+        ellipsis: true,
+      });
     }
 
     // Each catalogue contributes its own columns, exactly the ones it declared for the list view.
@@ -145,7 +172,10 @@ export function CatalogPage() {
       result.push({
         title: field.label,
         key: field.key,
-        width: field.type === 'Boolean' ? 130 : 170,
+        width:
+          field.type === 'Boolean'
+            ? CATALOG_COLUMN_WIDTHS.cotRiengKieuDungSai
+            : CATALOG_COLUMN_WIDTHS.cotRieng,
         ellipsis: true,
         render: (_, record) =>
           field.type === 'Reference' ? (
@@ -157,17 +187,23 @@ export function CatalogPage() {
     }
 
     result.push(
-      { title: 'Thứ tự', dataIndex: 'sortOrder', width: 90, align: 'right', responsive: ['xl'] },
+      {
+        title: 'Thứ tự',
+        dataIndex: 'sortOrder',
+        width: CATALOG_COLUMN_WIDTHS.thuTu,
+        align: 'right',
+        responsive: ['xl'],
+      },
       {
         title: 'Trạng thái',
         dataIndex: 'isActive',
-        width: 120,
+        width: CATALOG_COLUMN_WIDTHS.trangThai,
         render: (active: boolean) => (active ? <Tag color="green">Đang dùng</Tag> : <Tag>Ngưng dùng</Tag>),
       },
       {
         title: 'Thao tác',
         key: 'actions',
-        width: 100,
+        width: CATALOG_COLUMN_WIDTHS.thaoTac,
         fixed: 'right',
         render: (_, record) => (
           <Space size={2}>
@@ -301,7 +337,8 @@ export function CatalogPage() {
           loading={list.isLoading || metadata.isLoading}
           pagination={list.pagination}
           onChange={list.handleTableChange}
-          scroll={{ x: 1100 }}
+          // Cuộn ngang theo đúng tổng bề rộng đã khai, không bóp cột nào.
+          scroll={{ x: beNgangBang }}
           size="middle"
           locale={{ emptyText: messages.table.empty }}
         />

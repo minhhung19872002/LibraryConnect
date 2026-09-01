@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { useTableScrollHint } from './useTableScrollHint';
 import { Avatar, Breadcrumb, Drawer, Dropdown, Grid, Layout, Menu, Spin, Tag, Typography } from 'antd';
 import type { MenuProps } from 'antd';
 import { KeyOutlined, LogoutOutlined, MenuFoldOutlined, MenuUnfoldOutlined, UserOutlined } from '@ant-design/icons';
@@ -19,6 +20,10 @@ const { useBreakpoint } = Grid;
  * customer's library name is the headline, and both come from configuration rather than the code.
  */
 export function MainLayout() {
+  // Đánh dấu bảng còn cột nằm ngoài khung để giao diện vẽ dấu hiệu cuộn ngang — làm một lần ở đây
+  // thay vì sửa 18 màn hình, và che luôn cả bảng thêm về sau.
+  useTableScrollHint();
+
   const [collapsed, setCollapsed] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const location = useLocation();

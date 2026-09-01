@@ -47,6 +47,11 @@ public partial class DatabaseSeeder
 
         _logger.LogInformation("Bắt đầu nạp bộ dữ liệu trình diễn lớn (LC_SEED_DEMO=rich)…");
 
+        // Đặt tên thư viện và mã cơ quan nếu tham số còn để mặc định: bản trình diễn mà đầu trang
+        // vẫn hiện đúng chữ "Thư viện" thì người xem nghĩ là phần mềm chưa cài xong (lỗi E5, cùng
+        // họ với D9 nhưng ở bộ dữ liệu lớn).
+        await SeedDemoLibraryIdentityAsync(ct);
+
         var items = await SinhDkcbChoKhoThatAsync(ct);
         var readers = await SeedDemoReadersAsync(ct, SoBanDoc);
 

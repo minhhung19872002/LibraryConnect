@@ -35,7 +35,11 @@ public partial class DatabaseSeeder
             [ParameterKeys.LibraryPhone] = "(028) 3822 0000",
             [ParameterKeys.LibraryEmail] = "thuvien@example.edu.vn",
             [ParameterKeys.LibraryWebsite] = "https://thuvien.example.edu.vn",
-            [ParameterKeys.MarcCatalogingSource] = "Thư viện Trường Đại học Mẫu"
+            [ParameterKeys.MarcCatalogingSource] = "Thư viện Trường Đại học Mẫu",
+            // Mã cơ quan MARC: đặt tạm tên miền của thư viện, đúng như phần mô tả của tham số
+            // hướng dẫn khi chưa đăng ký được mã thật với Thư viện Quốc hội Mỹ. Không bịa một chuỗi
+            // dạng VN-XXXXX trông như mã đã đăng ký.
+            [ParameterKeys.LibraryMarcOrgCode] = "thuvien.example.edu.vn"
         };
 
         var thamSo = await _db.SystemParameters

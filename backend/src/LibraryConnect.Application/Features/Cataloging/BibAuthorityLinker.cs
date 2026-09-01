@@ -85,6 +85,16 @@ public class BibAuthorityLinker : IBibAuthorityLinker
         for (var index = 0; index < projection.Authors.Count; index++)
         {
             var projected = projection.Authors[index];
+
+            // Không lập hồ sơ thẩm quyền cho thứ không thể là tên người hay tên cơ quan. Biểu ghi
+            // thu hoạch về mang theo cả công thức bảng tính và nhan đề đặt nhầm ô — chúng thành mục
+            // trong hồ sơ tác giả rồi đứng đầu trang "Duyệt theo tác giả" của bạn đọc (lỗi E4).
+            // Trường MARC vẫn giữ nguyên chữ ấy; chỉ không dựng điểm truy cập từ nó.
+            if (!TenThamQuyen.LaTenHopLe(projected.Name))
+            {
+                continue;
+            }
+
             var author = await ResolveAsync(_db.Authors, projected.Name, onCreated, ct, entity =>
             {
                 entity.FullName = projected.Name;

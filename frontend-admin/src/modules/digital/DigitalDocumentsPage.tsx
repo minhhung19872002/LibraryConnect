@@ -309,7 +309,12 @@ export function DigitalDocumentsPage() {
       />
 
       <Row gutter={16}>
-        <Col span={6}>
+        {/*
+          Cây bộ sưu tập chỉ là danh sách vài dòng chữ ngắn, cho nó một phần tư màn hình là phí:
+          bảng bên phải rộng 1.700 px bị nhồi vào 848 px và mất bốn cột cuối. Từ 1600 px trở lên
+          màn hình đủ rộng cho cả hai, hẹp hơn thì cây xếp lên trên và bảng chiếm trọn bề ngang.
+        */}
+        <Col xs={24} xxl={5}>
           <Card
             size="small"
             title="Bộ sưu tập"
@@ -343,7 +348,7 @@ export function DigitalDocumentsPage() {
           </Card>
         </Col>
 
-        <Col span={18}>
+        <Col xs={24} xxl={19}>
           <Space direction="vertical" size={12} style={{ width: '100%' }}>
             <FilterBar
               loading={documents.isFetching}
