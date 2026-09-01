@@ -18,6 +18,7 @@ import { api } from '@/api/client';
 import type { PagedResult } from '@/types/api';
 import type { CatalogItem } from '@/modules/catalogs/types';
 import { coursesApi } from './api';
+import { downloadFile } from '@/api/download';
 
 /**
  * X.3 — Ba báo cáo của phân hệ tài liệu môn học.
@@ -47,8 +48,11 @@ export function CourseReportsPage() {
     percent: row.coveragePercent,
   }));
 
-  const exportUrl = (format: string) =>
-    `/api/courses/reports/export?format=${format}${majorId ? `&majorId=${majorId}` : ''}`;
+  const xuatBaoCao = (format: 'excel' | 'pdf') =>
+    downloadFile(
+      `/courses/reports/export?format=${format}${majorId ? `&majorId=${majorId}` : ''}`,
+      `bao-cao-tai-lieu-mon-hoc.${format === 'excel' ? 'xlsx' : 'pdf'}`,
+    );
 
   return (
     <>
@@ -57,10 +61,10 @@ export function CourseReportsPage() {
         description="Môn học chưa có tài liệu, tài liệu dùng chung nhiều môn và mức độ đáp ứng theo ngành đào tạo."
         actions={
           <Space>
-            <Button icon={<DownloadOutlined />} href={exportUrl('excel')} target="_blank" rel="noopener noreferrer">
+            <Button icon={<DownloadOutlined />} onClick={() => xuatBaoCao('excel')}>
               Xuất Excel
             </Button>
-            <Button icon={<FilePdfOutlined />} href={exportUrl('pdf')} target="_blank" rel="noopener noreferrer">
+            <Button icon={<FilePdfOutlined />} onClick={() => xuatBaoCao('pdf')}>
               Xuất PDF
             </Button>
           </Space>

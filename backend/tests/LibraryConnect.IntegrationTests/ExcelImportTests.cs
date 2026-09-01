@@ -315,4 +315,57 @@ public class ExcelImportTests
         (await client.DeleteAsync($"/api/cataloging/excel/mapping-profiles/{id}")).StatusCode
             .Should().Be(HttpStatusCode.OK);
     }
+    /// <summary>
+    /// Chọn nhầm tệp thì phải nghe một câu làm được gì đó, không phải "lỗi hệ thống".
+    ///
+    /// Cán bộ thư viện hay đưa nhầm tệp .csv hoặc .xls đời cũ, hoặc một tệp bất kỳ đã đổi đuôi
+    /// thành .xlsx. Trả về lỗi hệ thống khiến người dùng tưởng phần mềm hỏng, trong khi việc cần
+    /// làm chỉ là lưu lại đúng định dạng.
+    /// </summary>
+    [Fact]
+    public async Task Xem_truoc_tep_khong_phai_Excel_thi_bao_loi_ro_rang()
+    {
+        var client = await ClientAsync();
+
+        var khongPhaiExcel = System.Text.Encoding.UTF8.GetBytes(
+            "Nhan de;Tac gia\nGiao trinh;Nguyen Van A\n");
+
+        var response = await client.PostAsync(
+            "/api/cataloging/excel/preview", FileContent(khongPhaiExcel));
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest,
+            "tệp sai định dạng là lỗi của dữ liệu vào, không phải lỗi của máy chủ");
+
+        var payload = await response.Content.ReadFromJsonAsync<ApiResponse>(
+            LibraryConnectFactory.JsonOptions);
+
+        var loi = string.Join(" ", (payload!.Errors ?? Array.Empty<ApiError>())
+            .Select(error => error.Message)
+            .Append(payload.Message));
+
+        loi.Should().Contain("Excel");
+        loi.Should().Contain("xlsx");
+        loi.Should().NotContain("lỗi hệ thống");
+    }
+
+    /// <summary>
+    /// Nhập thật cũng vậy: tác vụ nền phải chốt lại với lý do đọc được, không phải vết lỗi kỹ thuật.
+    /// </summary>
+    [Fact]
+    public async Task Nhap_tep_khong_phai_Excel_thi_tac_vu_bao_ly_do_doc_duoc()
+    {
+        var client = await ClientAsync();
+
+        var khongPhaiExcel = System.Text.Encoding.UTF8.GetBytes("khong phai bang tinh");
+
+        var job = await RunAsync(client, khongPhaiExcel,
+            new { createItems = false, mapping = StandardMapping() });
+
+        job.Status.Should().Be(Domain.Enums.JobStatus.Failed);
+
+        var loi = string.Join(" ", job.Errors.Select(error => error.Message));
+
+        loi.Should().Contain("Excel");
+        loi.Should().NotContain("Exception");
+    }
 }

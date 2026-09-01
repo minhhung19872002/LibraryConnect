@@ -77,9 +77,15 @@ public class SaveOaiRepositoryCommandValidator : AbstractValidator<SaveOaiReposi
                 && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
             .WithMessage("Địa chỉ kho phải là một địa chỉ HTTP hoặc HTTPS đầy đủ.");
 
+        // Chuẩn OAI-PMH để mỗi kho tự đặt tên định dạng của mình, chỉ quy định bộ ký tự được dùng.
+        // DSpace khai "marc", VJOL khai "marcxml" và "oai_marc", có kho khai "mods" hay "qdc". Nhận
+        // đúng hai tên là tự chặn mình khỏi những kho có sẵn MARC đầy đủ, phải hạ xuống Dublin Core.
+        // Bộ thu hoạch nhận ra dạng biểu ghi theo không gian tên XML chứ không theo tên định dạng.
         RuleFor(command => command.MetadataPrefix)
-            .Must(prefix => prefix is "oai_dc" or "marc21")
-            .WithMessage("Định dạng chỉ nhận oai_dc hoặc marc21.");
+            .NotEmpty().WithMessage("Chưa nhập tên định dạng biểu ghi.")
+            .Matches("^[A-Za-z0-9._!~*'()-]+$")
+            .WithMessage("Tên định dạng chỉ gồm chữ, số và các dấu . _ - ~ ' ( ) * ! — "
+                         + "xem kho khai những định dạng nào ở nút Kiểm tra kết nối.");
     }
 }
 
@@ -165,7 +171,7 @@ public class RunOaiHarvestCommandHandler : IRequestHandler<RunOaiHarvestCommand,
     public RunOaiHarvestCommandHandler(IOaiHarvester harvester) => _harvester = harvester;
 
     public Task<OaiHarvestLogDto> Handle(RunOaiHarvestCommand command, CancellationToken ct) =>
-        _harvester.HarvestAsync(command.RepositoryId, command.FullReload, ct);
+        _harvester.StartAsync(command.RepositoryId, command.FullReload, ct);
 }
 
 /// <summary>Nhật ký các lần thu hoạch.</summary>
@@ -221,7 +227,16 @@ public interface IOaiHarvester
 {
     Task<OaiIdentifyDto> IdentifyAsync(string baseUrl, CancellationToken ct);
 
-    Task<OaiHarvestLogDto> HarvestAsync(Guid repositoryId, bool fullReload, CancellationToken ct);
+    /// <summary>
+    /// Mở một lượt thu hoạch: ghi dòng nhật ký rồi xếp việc vào hàng đợi nền, trả về ngay.
+    ///
+    /// Một kho lớn mất hàng chục phút để lấy hết. Chạy trong lượt HTTP thì proxy hết giờ chờ trước,
+    /// cán bộ tưởng hỏng, và việc bị bỏ dở giữa chừng.
+    /// </summary>
+    Task<OaiHarvestLogDto> StartAsync(Guid repositoryId, bool fullReload, CancellationToken ct);
+
+    /// <summary>Chạy một lượt thu hoạch đã mở. Tác vụ nền gọi hàm này.</summary>
+    Task RunAsync(Guid logId, CancellationToken ct);
 
     /// <summary>Chạy mọi kho tới hạn — tác vụ nền gọi hằng ngày.</summary>
     Task HarvestDueAsync(CancellationToken ct);

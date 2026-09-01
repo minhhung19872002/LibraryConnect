@@ -16,7 +16,7 @@ public class ExcelService : IExcelService
 
     public ExcelSheet Read(Stream stream, string? sheetName = null)
     {
-        using var workbook = new XLWorkbook(stream);
+        using var workbook = MoTepAsExcel(stream);
 
         var worksheet = sheetName is null
             ? workbook.Worksheets.FirstOrDefault()
@@ -72,6 +72,28 @@ public class ExcelService : IExcelService
             Headers = headers.Where(h => !string.IsNullOrWhiteSpace(h)).ToList(),
             Rows = rows
         };
+    }
+
+
+    /// <summary>
+    /// Mở tệp như một sổ Excel, đổi lỗi của thư viện đọc thành một câu người dùng làm được gì đó.
+    ///
+    /// Cán bộ thư viện chọn nhầm tệp là chuyện thường: một tệp .csv, một tệp .xls đời cũ, hay một
+    /// tệp đã đổi đuôi thành .xlsx. Để lỗi thô lọt ra ngoài thì người dùng nhận về "Đã xảy ra lỗi
+    /// hệ thống" và tưởng phần mềm hỏng, trong khi việc cần làm chỉ là lưu lại đúng định dạng.
+    /// </summary>
+    private static XLWorkbook MoTepAsExcel(Stream stream)
+    {
+        try
+        {
+            return new XLWorkbook(stream);
+        }
+        catch (Exception exception) when (exception is not OutOfMemoryException)
+        {
+            throw new Application.Common.Exceptions.ValidationException("file",
+                "Không đọc được tệp này như một tệp Excel. Hãy dùng tệp định dạng .xlsx — nếu tệp "
+                + "đang ở dạng .xls hoặc .csv thì mở bằng Excel rồi lưu lại thành .xlsx.");
+        }
     }
 
     public byte[] Write<T>(string sheetName, IReadOnlyList<ExcelColumn<T>> columns, IEnumerable<T> rows, string? title = null)

@@ -5,6 +5,11 @@ import type {
   ReaderTimeGrouping,
 } from './types';
 
+// Cách viết ngày giờ nằm ở lib/datetime để mọi màn hình ra cùng một dạng dd/MM/yyyy;
+// trước đây mỗi phân hệ tự viết một hàm nên có chỗ in 5/9/2029, chỗ in 05/09/2029.
+export { formatDate, formatDateTime } from '@/lib/datetime';
+
+
 /** Nhãn tiếng Việt của Phân hệ VI, đặt một chỗ để không màn hình nào lỡ hiện tiếng Anh. */
 
 export const readerStatusLabels: Record<ReaderStatus, string> = {
@@ -65,19 +70,6 @@ export const duplicateActionOptions = [
 ];
 
 /** Ngày dạng người Việt đọc; chuỗi rỗng khi không có giá trị, để ô bảng không hiện "Invalid Date". */
-export function formatDate(value: string | null | undefined): string {
-  if (!value) return '';
-
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString('vi-VN');
-}
-
-export function formatDateTime(value: string | null | undefined): string {
-  if (!value) return '';
-
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? '' : date.toLocaleString('vi-VN');
-}
 
 export function money(value: number | null | undefined): string {
   return (value ?? 0).toLocaleString('vi-VN');

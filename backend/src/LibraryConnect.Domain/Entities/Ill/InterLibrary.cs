@@ -68,6 +68,13 @@ public class OaiHarvestLog : BaseEntity
     public int RecordsSkipped { get; set; }
     public JobStatus Status { get; set; } = JobStatus.Running;
     public string? Errors { get; set; }
+
+    /// <summary>
+    /// Lấy lại từ đầu hay chỉ lấy phần mới kể từ mốc lần trước.
+    ///
+    /// Phải nhớ ở đây vì lượt thu hoạch chạy ở tiến trình nền, tách khỏi lượt HTTP đã mở nó.
+    /// </summary>
+    public bool FullReload { get; set; }
 }
 
 /// <summary>Tracks every bulk import/export run so its progress and error log stay retrievable.</summary>

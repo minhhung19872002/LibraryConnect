@@ -112,6 +112,22 @@ public class ExceptionHandlingMiddleware
             return "Không lưu được dữ liệu. Vui lòng kiểm tra lại thông tin nhập.";
         }
 
+        // Có những ràng buộc mà người dùng phải hiểu bằng lời của nghiệp vụ, không phải bằng tên chỉ
+        // mục: cán bộ ở quầy cần biết cuốn sách vừa bị người khác mượn mất, chứ không cần biết tên
+        // ràng buộc trong cơ sở dữ liệu.
+        var loiNghiepVu = postgres.ConstraintName switch
+        {
+            "ux_loans_item_dang_muon" =>
+                "Bản in này vừa được ghi mượn ở một quầy khác. Hãy quét lại mã vạch để xem tình "
+                + "trạng mới nhất.",
+            _ => null
+        };
+
+        if (loiNghiepVu is not null)
+        {
+            return loiNghiepVu;
+        }
+
         return postgres.SqlState switch
         {
             PostgresErrorCodes.UniqueViolation =>

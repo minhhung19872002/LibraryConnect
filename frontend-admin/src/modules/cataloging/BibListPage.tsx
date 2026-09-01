@@ -30,6 +30,7 @@ import {
   type BibListItem,
   type RecordStatus,
 } from './types';
+import { BIB_LIST_COLUMN_WIDTHS, BIB_LIST_SCROLL_X } from './bibListColumns';
 
 const MONOSPACE = { fontFamily: 'ui-monospace, Consolas, monospace' } as const;
 
@@ -243,6 +244,7 @@ export function BibListPage() {
         pagination={list.pagination}
         onChange={list.handleTableChange}
         size="small"
+        scroll={{ x: BIB_LIST_SCROLL_X }}
         rowSelection={{
           selectedRowKeys: selected,
           onChange: (keys) => setSelected(keys as string[]),
@@ -251,7 +253,7 @@ export function BibListPage() {
           {
             title: 'Số kiểm soát',
             dataIndex: 'controlNumber',
-            width: 140,
+            width: BIB_LIST_COLUMN_WIDTHS.soKiemSoat,
             sorter: true,
             render: (value: string, record) => (
               <Link to={`/bien-muc/${record.id}`} style={MONOSPACE}>
@@ -262,6 +264,7 @@ export function BibListPage() {
           {
             title: 'Nhan đề',
             dataIndex: 'title',
+            width: BIB_LIST_COLUMN_WIDTHS.nhanDe,
             sorter: true,
             render: (value: string, record) => (
               <Space direction="vertical" size={0}>
@@ -276,10 +279,10 @@ export function BibListPage() {
               </Space>
             ),
           },
-          { title: 'Tác giả', dataIndex: 'authorMain', width: 180, sorter: true },
+          { title: 'Tác giả', dataIndex: 'authorMain', width: BIB_LIST_COLUMN_WIDTHS.tacGia, sorter: true },
           {
             title: 'Xuất bản',
-            width: 220,
+            width: BIB_LIST_COLUMN_WIDTHS.xuatBan,
             render: (_, record) => (
               <Space direction="vertical" size={0}>
                 <Typography.Text style={{ fontSize: 13 }}>{record.publisherName}</Typography.Text>
@@ -289,12 +292,12 @@ export function BibListPage() {
               </Space>
             ),
           },
-          { title: 'DDC', dataIndex: 'ddc', width: 90, sorter: true },
-          { title: 'Dạng', dataIndex: 'documentTypeName', width: 130 },
+          { title: 'DDC', dataIndex: 'ddc', width: BIB_LIST_COLUMN_WIDTHS.ddc, sorter: true },
+          { title: 'Dạng', dataIndex: 'documentTypeName', width: BIB_LIST_COLUMN_WIDTHS.dang },
           {
             title: 'Bản',
             dataIndex: 'itemCount',
-            width: 90,
+            width: BIB_LIST_COLUMN_WIDTHS.ban,
             align: 'right',
             sorter: true,
             render: (value: number, record) =>
@@ -313,7 +316,7 @@ export function BibListPage() {
           {
             title: 'Nguồn',
             dataIndex: 'source',
-            width: 140,
+            width: BIB_LIST_COLUMN_WIDTHS.nguon,
             render: (value: keyof typeof BIB_SOURCE_LABELS) => (
               <Typography.Text type="secondary" style={{ fontSize: 12 }}>
                 {BIB_SOURCE_LABELS[value] ?? value}
@@ -322,7 +325,8 @@ export function BibListPage() {
           },
           {
             title: '',
-            width: 120,
+            width: BIB_LIST_COLUMN_WIDTHS.thaoTac,
+            fixed: 'right',
             align: 'right',
             render: (_, record) => (
               <Space size={0}>

@@ -14,6 +14,7 @@ import {
   Table,
   Tabs,
   Tag,
+  Tooltip,
   Typography,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
@@ -31,6 +32,7 @@ import { usePagedQuery } from '@/hooks/usePagedQuery';
 import { messages } from '@/i18n/messages';
 import { downloadFile, formatDateTime, formatJson } from './helpers';
 import type { AuditFilterOptions, AuditLogDetail, AuditLogItem, AuditSetting } from './types';
+import { moTaBanGhi } from './auditDisplay';
 
 interface AuditFilterState {
   action?: string;
@@ -134,7 +136,11 @@ function AuditLogTab() {
       title: 'Bản ghi',
       dataIndex: 'entityDisplay',
       ellipsis: true,
-      render: (display: string | undefined, record) => display ?? record.entityId ?? '—',
+      render: (display: string | undefined, record) => (
+        <Tooltip title={record.entityId ? `Mã bản ghi: ${record.entityId}` : undefined}>
+          <span>{moTaBanGhi(display, record.entityLabel)}</span>
+        </Tooltip>
+      ),
     },
     {
       title: 'Kết quả',
@@ -306,7 +312,16 @@ function AuditDetailDrawer({ id, onClose }: { id: string; onClose: () => void })
               <Tag color={actionColor(log.action)}>{log.actionLabel}</Tag>
             </Descriptions.Item>
             <Descriptions.Item label="Đối tượng">{log.entityLabel}</Descriptions.Item>
-            <Descriptions.Item label="Bản ghi">{log.entityDisplay ?? log.entityId ?? '—'}</Descriptions.Item>
+            <Descriptions.Item label="Bản ghi">
+              {moTaBanGhi(log.entityDisplay, log.entityLabel)}
+            </Descriptions.Item>
+            {log.entityId && (
+              <Descriptions.Item label="Mã bản ghi">
+                <span style={{ fontFamily: 'ui-monospace, Consolas, monospace', fontSize: 12 }}>
+                  {log.entityId}
+                </span>
+              </Descriptions.Item>
+            )}
             <Descriptions.Item label="Kết quả">
               {log.result ? <Tag color="green">Thành công</Tag> : <Tag color="red">Thất bại</Tag>}
             </Descriptions.Item>

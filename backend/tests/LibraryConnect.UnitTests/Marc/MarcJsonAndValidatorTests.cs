@@ -292,4 +292,43 @@ public class MarcValidatorTests
         issues.Should().Contain(issue =>
             issue.Severity == MarcIssueSeverity.Warning && issue.SubfieldCode == 'b');
     }
+    /// <summary>
+    /// Năm xuất bản gõ nhầm phải được nhắc.
+    ///
+    /// 3025 thay vì 2025, 1092 thay vì 1992 — bàn phím số rất dễ gõ nhầm một chữ số. Không nhắc thì
+    /// biểu ghi sai nằm im trong kho, lên cả trang tra cứu, và bộ lọc theo năm xuất bản của bạn đọc
+    /// có một giá trị vô nghĩa nằm chình ình.
+    ///
+    /// Chỉ nhắc chứ không chặn: thư viện vẫn biên mục sách sắp phát hành sang năm, và tài liệu cổ
+    /// đôi khi ghi năm ước đoán.
+    /// </summary>
+    [Theory]
+    [InlineData("3025")]
+    [InlineData("1092")]
+    [InlineData("0")]
+    public void Nam_xuat_ban_vo_ly_thi_duoc_nhac(string nam)
+    {
+        var record = ValidRecord();
+        record.AddField("260", ' ', ' ').AddSubfield('c', nam);
+
+        var issues = Validator().Validate(record);
+
+        issues.Should().Contain(issue =>
+            issue.Severity == MarcIssueSeverity.Warning && issue.Message.Contains("Năm xuất bản"));
+
+        MarcValidator.IsValid(issues).Should().BeTrue("chỉ nhắc chứ không chặn cán bộ lưu biểu ghi");
+    }
+
+    [Theory]
+    [InlineData("2023")]
+    [InlineData("c2019")]
+    [InlineData("[1975]")]
+    [InlineData("không rõ")]
+    public void Nam_xuat_ban_binh_thuong_thi_khong_nhac_gi(string nam)
+    {
+        var record = ValidRecord();
+        record.AddField("260", ' ', ' ').AddSubfield('c', nam);
+
+        Validator().Validate(record).Should().NotContain(issue => issue.Message.Contains("Năm xuất bản"));
+    }
 }

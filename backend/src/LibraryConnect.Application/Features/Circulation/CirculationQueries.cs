@@ -29,7 +29,10 @@ internal static class LoanQuery
         ClassName = loan.Reader!.ClassName,
         ItemId = loan.ItemId,
         Barcode = loan.Barcode,
-        Title = loan.BibTitle,
+        // Nhan đề chép sẵn vào phiếu để danh sách khỏi nối bảng, nhưng phiếu tạo bằng đường khác có
+        // thể để trống cột ấy. Không có phương án dự phòng thì bạn đọc mở "Sách đang mượn" chỉ thấy
+        // một dấu gạch ngang, không biết mình đang giữ cuốn gì.
+        Title = loan.BibTitle ?? loan.Item!.Bib!.Title,
         CallNumber = loan.Item!.CallNumber,
         WarehouseName = loan.Item!.Warehouse!.Name,
         LoanDate = loan.LoanDate,
@@ -87,7 +90,7 @@ internal static class FineQuery
         ReaderName = fine.Reader!.FullName,
         LoanId = fine.LoanId,
         LoanCode = fine.Loan!.Code,
-        Title = fine.Loan!.BibTitle,
+        Title = fine.Loan!.BibTitle ?? fine.Loan!.Item!.Bib!.Title,
         Barcode = fine.Loan!.Barcode,
         Type = fine.Type,
         Amount = fine.Amount,

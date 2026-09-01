@@ -35,6 +35,8 @@ public class OaiHarvester : IOaiHarvester
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IBibRecordWriter _writer;
     private readonly IDateTimeProvider _clock;
+    private readonly ISystemParameterService _parameters;
+    private readonly IBackgroundJobService _jobs;
     private readonly ILogger<OaiHarvester> _logger;
 
     public OaiHarvester(
@@ -42,12 +44,16 @@ public class OaiHarvester : IOaiHarvester
         IHttpClientFactory httpClientFactory,
         IBibRecordWriter writer,
         IDateTimeProvider clock,
+        ISystemParameterService parameters,
+        IBackgroundJobService jobs,
         ILogger<OaiHarvester> logger)
     {
         _db = db;
         _httpClientFactory = httpClientFactory;
         _writer = writer;
         _clock = clock;
+        _parameters = parameters;
+        _jobs = jobs;
         _logger = logger;
     }
 
@@ -83,7 +89,7 @@ public class OaiHarvester : IOaiHarvester
         }
 
         return new OaiIdentifyDto(
-            root.Element(Oai + "repositoryName")?.Value ?? baseUrl,
+            GiaiMaKyTuThoat(root.Element(Oai + "repositoryName")?.Value) ?? baseUrl,
             root.Element(Oai + "baseURL")?.Value ?? baseUrl,
             root.Element(Oai + "protocolVersion")?.Value ?? "2.0",
             root.Element(Oai + "earliestDatestamp")?.Value,
@@ -92,23 +98,136 @@ public class OaiHarvester : IOaiHarvester
             sets);
     }
 
-    public async Task<OaiHarvestLogDto> HarvestAsync(
+    /// <summary>Quá thời gian này mà một lượt vẫn "Đang chạy" thì coi như đã chết giữa chừng.</summary>
+    private static readonly TimeSpan ThoiGianCoiNhuChet = TimeSpan.FromHours(6);
+
+    /// <summary>
+    /// Giải mã ký tự thoát HTML còn sót trong dữ liệu của kho nguồn.
+    ///
+    /// Nhiều kho DSpace lưu tên mình đã mã hóa sẵn thành dạng số (`Th&#432; Vi&#7879;n`), rồi lại
+    /// đưa nguyên vào XML. Bộ đọc XML chỉ giải mã một lớp nên cán bộ nhìn thấy một chuỗi ký hiệu vô
+    /// nghĩa thay vì "Thư Viện Số Đại Học Thủy Lợi".
+    /// </summary>
+    private static string? GiaiMaKyTuThoat(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value) || !value.Contains('&'))
+        {
+            return value;
+        }
+
+        return System.Net.WebUtility.HtmlDecode(value);
+    }
+
+    public async Task<OaiHarvestLogDto> StartAsync(
         Guid repositoryId, bool fullReload, CancellationToken ct)
     {
         var repository = await _db.OaiRepositories
             .FirstOrDefaultAsync(row => row.Id == repositoryId, ct)
             ?? throw new NotFoundException("kho OAI-PMH", repositoryId);
 
+        var log = await MoLuotAsync(repository, fullReload, ct);
+
+        // Xếp việc vào hàng đợi nền rồi trả lời ngay: kho lớn mất hàng chục phút, giữ lượt HTTP mở
+        // suốt thời gian ấy thì proxy cắt trước và việc bị bỏ dở giữa chừng.
+        _jobs.Enqueue<IOaiHarvester>(harvester => harvester.RunAsync(log.Id, CancellationToken.None));
+
+        return Chieu(log, repository);
+    }
+
+    /// <summary>
+    /// Ghi dòng nhật ký mở đầu một lượt, sau khi dọn những lượt chết và kiểm tra khoá chống trùng.
+    /// </summary>
+    private async Task<OaiHarvestLog> MoLuotAsync(
+        OaiRepository repository, bool fullReload, CancellationToken ct)
+    {
+        await DonNhungLuotChetAsync(repository.Id, ct);
+
+        // Một kho chỉ thu hoạch một lượt tại một thời điểm. Không có khoá này thì cán bộ bấm lại vì
+        // sốt ruột là hai lượt cùng chạy trên một kho, mỗi lượt đếm số riêng, và không ai biết rốt
+        // cuộc kho ấy lấy được bao nhiêu biểu ghi.
+        var dangChay = await _db.OaiHarvestLogs
+            .AnyAsync(row => row.RepositoryId == repository.Id
+                             && (row.Status == JobStatus.Running || row.Status == JobStatus.Pending), ct);
+
+        if (dangChay)
+        {
+            throw new ConflictException(
+                "Kho " + repository.Name + " đang được thu hoạch. Hãy đợi lượt hiện tại kết thúc; "
+                + "tiến độ xem ở phần Nhật ký thu hoạch.");
+        }
+
         var log = new OaiHarvestLog
         {
+            Id = Guid.NewGuid(),
             RepositoryId = repository.Id,
             StartedAt = _clock.Now,
             Status = JobStatus.Running,
+            FullReload = fullReload,
         };
 
         _db.OaiHarvestLogs.Add(log);
         await _db.SaveChangesAsync(ct);
 
+        return log;
+    }
+
+    /// <summary>
+    /// Đóng những lượt "Đang chạy" đã quá lâu.
+    ///
+    /// Tiến trình nền có thể chết giữa chừng — máy chủ khởi động lại, container bị thay. Không dọn
+    /// thì dòng nhật ký ấy nằm mãi ở "Đang chạy" và khoá luôn kho đó, không ai thu hoạch được nữa.
+    /// </summary>
+    private async Task DonNhungLuotChetAsync(Guid repositoryId, CancellationToken ct)
+    {
+        var han = _clock.Now - ThoiGianCoiNhuChet;
+
+        var chet = await _db.OaiHarvestLogs
+            .Where(row => row.RepositoryId == repositoryId
+                          && (row.Status == JobStatus.Running || row.Status == JobStatus.Pending)
+                          && row.StartedAt < han)
+            .ToListAsync(ct);
+
+        foreach (var log in chet)
+        {
+            log.Status = JobStatus.Failed;
+            log.FinishedAt = _clock.Now;
+            log.Errors = "Lượt thu hoạch bị bỏ dở giữa chừng (máy chủ dừng hoặc khởi động lại). "
+                         + "Số liệu của lượt này chỉ tính tới lúc dừng.";
+        }
+
+        if (chet.Count > 0)
+        {
+            await _db.SaveChangesAsync(ct);
+        }
+    }
+
+    public async Task RunAsync(Guid logId, CancellationToken ct)
+    {
+        var log = await _db.OaiHarvestLogs.FirstOrDefaultAsync(row => row.Id == logId, ct);
+
+        if (log is null || log.Status != JobStatus.Running)
+        {
+            return;
+        }
+
+        var repository = await _db.OaiRepositories
+            .FirstOrDefaultAsync(row => row.Id == log.RepositoryId, ct);
+
+        if (repository is null)
+        {
+            log.Status = JobStatus.Failed;
+            log.FinishedAt = _clock.Now;
+            log.Errors = "Kho OAI-PMH đã bị xóa trước khi lượt thu hoạch chạy.";
+            await _db.SaveChangesAsync(ct);
+            return;
+        }
+
+        await ThuHoachAsync(log, repository, log.FullReload, ct);
+    }
+
+    private async Task ThuHoachAsync(
+        OaiHarvestLog log, OaiRepository repository, bool fullReload, CancellationToken ct)
+    {
         var errors = new List<string>();
 
         try
@@ -206,9 +325,10 @@ public class OaiHarvester : IOaiHarvester
         log.Errors = errors.Count == 0 ? null : string.Join('\n', errors);
 
         await _db.SaveChangesAsync(ct);
+    }
 
-        return new OaiHarvestLogDto(
-            log.Id,
+    private static OaiHarvestLogDto Chieu(OaiHarvestLog log, OaiRepository repository) =>
+        new(log.Id,
             repository.Id,
             repository.Name,
             log.StartedAt,
@@ -218,26 +338,27 @@ public class OaiHarvester : IOaiHarvester
             log.RecordsSkipped,
             log.Status.ToString(),
             log.Errors);
-    }
 
     public async Task HarvestDueAsync(CancellationToken ct)
     {
         var repositories = await _db.OaiRepositories
-            .AsNoTracking()
             .Where(repository => repository.IsActive)
-            .Select(repository => repository.Id)
             .ToListAsync(ct);
 
-        foreach (var id in repositories)
+        foreach (var repository in repositories)
         {
             try
             {
-                await HarvestAsync(id, fullReload: false, ct);
+                // Tác vụ nền hằng ngày vốn đã chạy ngoài lượt HTTP nên chạy thẳng, không xếp thêm
+                // một lần vào hàng đợi; vẫn đi qua MoLuotAsync để dùng chung khoá chống chạy trùng.
+                var log = await MoLuotAsync(repository, fullReload: false, ct);
+
+                await ThuHoachAsync(log, repository, fullReload: false, ct);
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 // Một kho hỏng không được chặn các kho còn lại.
-                _logger.LogError(ex, "Thu hoạch kho {Repository} thất bại.", id);
+                _logger.LogError(ex, "Thu hoạch kho {Repository} thất bại.", repository.Name);
             }
         }
     }
@@ -291,6 +412,12 @@ public class OaiHarvester : IOaiHarvester
         // biểu ghi khác nhau có thể trùng số.
         marc.ControlNumber = null;
 
+        // Dublin Core không có trường 008, mà MARC 21 bắt buộc phải có và bộ kiểm tra của hệ thống
+        // chặn mọi biểu ghi thiếu nó. Không dựng 008 ở đây thì cán bộ mở biểu ghi vừa thu về ra
+        // hiệu đính, sửa xong lại không lưu lại được — biểu ghi kẹt vĩnh viễn ở trạng thái thô.
+        await Marc008Builder.EnsureAsync(
+            marc, _parameters, _clock.Today, MarcProjection.Project(marc).PublishYear, ct);
+
         var entity = new Domain.Entities.Bib.BibRecord
         {
             Id = Guid.NewGuid(),
@@ -305,6 +432,19 @@ public class OaiHarvester : IOaiHarvester
 
         await _writer.PrepareAsync(entity, marc, ct);
         await _writer.ApplyAsync(entity, marc, isNew: true, $"Thu hoạch từ {repository.Name}", ct);
+
+        // Đặt trạng thái "Chờ biên mục" thôi thì không ai nhìn thấy: màn hình Hàng đợi biên mục đọc
+        // từ bảng công việc chứ không quét cột trạng thái. Thiếu dòng này, cả kho thu về nằm im
+        // không lên trang tra cứu mà cũng không ai biết là có việc phải làm.
+        _db.CatalogQueue.Add(new Domain.Entities.Bib.CatalogQueueItem
+        {
+            Id = Guid.NewGuid(),
+            BibId = entity.Id,
+            Status = CatalogQueueStatus.Pending,
+            Priority = 3,
+            Note = $"Thu hoạch từ {repository.Name}, cần hiệu đính trước khi công bố"
+        });
+
         await _db.SaveChangesAsync(ct);
 
         return true;

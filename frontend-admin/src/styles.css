@@ -84,6 +84,24 @@ body {
   scrollbar-color: #d0d5dd transparent;
 }
 
+/*
+ * Nhãn chức năng phải đọc được trọn vẹn.
+ *
+ * AntD thụt lề mục con 24 điểm ảnh và cắt nhãn dài bằng dấu ba chấm, nên những tên như
+ * "Nhập xuất dữ liệu bạn đọc" hay "Định nghĩa trường MARC" bị cụt và người dùng tưởng mục đó hỏng.
+ * Thu bớt thụt lề và lề trong của mục con để nhãn có đủ chỗ, thay vì cắt chữ.
+ */
+.lc-sider-menu .ant-menu-sub .ant-menu-item {
+  padding-inline-start: 32px !important;
+  padding-inline-end: 8px;
+}
+
+.lc-sider-menu .ant-menu-item .ant-menu-title-content,
+.lc-sider-menu .ant-menu-submenu-title .ant-menu-title-content {
+  overflow: visible;
+  text-overflow: clip;
+}
+
 .lc-brand {
   display: flex;
   align-items: center;

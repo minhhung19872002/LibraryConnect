@@ -22,6 +22,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { reportsApi } from './api';
 import { REPORT_CATALOGUE } from './reportCatalogue';
 import { formatMetric, type OverviewBreakdownRow, type OverviewMetric } from './types';
+import { downloadFile } from '@/api/download';
 
 const { RangePicker } = DatePicker;
 
@@ -44,8 +45,11 @@ export function ReportCentrePage() {
     queryFn: () => reportsApi.overview(from, to),
   });
 
-  const exportUrl = (format: string) =>
-    `/api/reports/overview/export?format=${format}&from=${from}&to=${to}`;
+  const xuatBaoCao = (format: 'excel' | 'pdf') =>
+    downloadFile(
+      `/reports/overview/export?format=${format}&from=${from}&to=${to}`,
+      `bao-cao-tong-quan.${format === 'excel' ? 'xlsx' : 'pdf'}`,
+    );
 
   const breakdownColumns: ColumnsType<OverviewBreakdownRow> = [
     { title: 'Nhóm', dataIndex: 'label' },
@@ -74,10 +78,10 @@ export function ReportCentrePage() {
         description="Toàn cảnh hoạt động của thư viện và lối vào mọi báo cáo chi tiết của từng phân hệ."
         actions={
           <Space wrap>
-            <Button icon={<DownloadOutlined />} href={exportUrl('excel')} target="_blank" rel="noopener noreferrer">
+            <Button icon={<DownloadOutlined />} onClick={() => xuatBaoCao('excel')}>
               Xuất Excel
             </Button>
-            <Button icon={<FilePdfOutlined />} href={exportUrl('pdf')} target="_blank" rel="noopener noreferrer">
+            <Button icon={<FilePdfOutlined />} onClick={() => xuatBaoCao('pdf')}>
               Xuất PDF
             </Button>
           </Space>

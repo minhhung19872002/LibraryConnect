@@ -5490,6 +5490,11 @@ namespace LibraryConnect.Infrastructure.Persistence.Migrations
                     b.HasIndex("DueDate")
                         .HasDatabaseName("ix_loan_due");
 
+                    b.HasIndex("ItemId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_loans_item_dang_muon")
+                        .HasFilter("return_date IS NULL AND deleted_at IS NULL");
+
                     b.HasIndex("LoanDate")
                         .HasDatabaseName("ix_loan_date");
 
@@ -6614,6 +6619,10 @@ namespace LibraryConnect.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset?>("FinishedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("finished_at");
+
+                    b.Property<bool>("FullReload")
+                        .HasColumnType("boolean")
+                        .HasColumnName("full_reload");
 
                     b.Property<int>("RecordsFetched")
                         .HasColumnType("integer")

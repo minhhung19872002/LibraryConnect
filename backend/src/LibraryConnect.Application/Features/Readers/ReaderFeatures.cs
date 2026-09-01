@@ -217,6 +217,14 @@ public class SaveReaderCommandValidator : AbstractValidator<SaveReaderCommand>
                              || command.CardExpireDate >= command.CardIssueDate)
             .WithMessage("Ngày hết hạn thẻ phải sau ngày cấp thẻ.")
             .OverridePropertyName(nameof(SaveReaderCommand.CardExpireDate));
+
+        // Ngày sinh gõ nhầm là chuyện thường: 2099 thay vì 1999, 2005 thay vì 1905. Không chặn thì
+        // hồ sơ sai nằm im trong kho, và mọi báo cáo theo độ tuổi đều lệch theo.
+        RuleFor(command => command.DateOfBirth)
+            .Must(date => date is null || date.Value < DateOnly.FromDateTime(DateTime.Today))
+            .WithMessage("Ngày sinh phải là một ngày đã qua.")
+            .Must(date => date is null || date.Value.Year >= 1900)
+            .WithMessage("Ngày sinh trước năm 1900 nhiều khả năng là gõ nhầm.");
     }
 }
 

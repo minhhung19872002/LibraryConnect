@@ -237,6 +237,10 @@ export const queueApi = {
   changeStatus: (id: string, status: CatalogQueueStatus, reason?: string) =>
     api.post<null>(`/cataloging/queue/${id}/status`, { status, reason }),
 
+  /** Đổi trạng thái nhiều việc cùng lúc — duyệt cả một lượt thu hoạch. */
+  changeStatusBatch: (ids: string[], status: CatalogQueueStatus, reason?: string) =>
+    api.post<number>('/cataloging/queue/status', { ids, status, reason }),
+
   remove: (id: string) => api.delete<null>(`/cataloging/queue/${id}`),
 };
 

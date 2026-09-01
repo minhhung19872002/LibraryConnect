@@ -42,6 +42,7 @@ import {
   type CourseRelationType,
   type CourseRow,
 } from './types';
+import { downloadFile } from '@/api/download';
 
 const { Paragraph } = Typography;
 
@@ -253,9 +254,7 @@ export function CourseDocumentsPage() {
           <Space>
             <Button
               icon={<DownloadOutlined />}
-              href="/api/courses/documents/import/template"
-              target="_blank"
-              rel="noopener noreferrer"
+              onClick={() => downloadFile('/courses/documents/import/template', 'mau-tai-lieu-mon-hoc.xlsx')}
             >
               Tải tệp mẫu
             </Button>

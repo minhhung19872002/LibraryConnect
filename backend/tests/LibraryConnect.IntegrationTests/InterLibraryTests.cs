@@ -4,6 +4,7 @@ using System.Xml.Linq;
 using FluentAssertions;
 using LibraryConnect.Application.Common.Models;
 using LibraryConnect.Application.Features.Acquisition;
+using LibraryConnect.Application.Features.Cataloging;
 using LibraryConnect.Application.Features.InterLibrary;
 using LibraryConnect.Application.Features.Locations;
 using LibraryConnect.Marc;
@@ -602,16 +603,21 @@ public class InterLibraryTests
                 setSpec = "doctype:SACH"
             }));
 
-        var log = await ReadAsync<OaiHarvestLogDto>(await client.PostAsync(
+        // Lượt thu hoạch chạy ở tiến trình nền nên phải chờ nó chốt lại rồi mới đọc số liệu.
+        await ReadAsync<OaiHarvestLogDto>(await client.PostAsync(
             $"/api/interlibrary/oai/repositories/{repositoryId}/harvest?fullReload=true", null));
+
+        var log = await DoiThuHoachXongAsync(client, repositoryId);
 
         log.Status.Should().Be("Completed", log.Errors ?? "không có lỗi");
         log.RecordsFetched.Should().BeGreaterThan(0);
         log.RecordsImported.Should().BeGreaterThan(0, log.Errors ?? "khong co loi ghi lai");
 
         // Chạy lại lần nữa: biểu ghi đã thu về không được nhân đôi.
-        var again = await ReadAsync<OaiHarvestLogDto>(await client.PostAsync(
+        await ReadAsync<OaiHarvestLogDto>(await client.PostAsync(
             $"/api/interlibrary/oai/repositories/{repositoryId}/harvest?fullReload=true", null));
+
+        var again = await DoiThuHoachXongAsync(client, repositoryId);
 
         again.RecordsImported.Should().Be(0,
             "biểu ghi đã thu về lần trước thì phải bỏ qua chứ không tạo bản trùng");
@@ -643,6 +649,8 @@ public class InterLibraryTests
         await ReadAsync<OaiHarvestLogDto>(await client.PostAsync(
             $"/api/interlibrary/oai/repositories/{repositoryId}/harvest?fullReload=true", null));
 
+        await DoiThuHoachXongAsync(client, repositoryId);
+
         var found = await ReadAsync<PagedResult<Application.Features.Cataloging.BibListItemDto>>(
             await client.GetAsync(
                 $"/api/cataloging/bibs?page=1&pageSize=50&keyword={Uri.EscapeDataString(title)}"));
@@ -652,7 +660,218 @@ public class InterLibraryTests
             "thu hoạch tạo thêm một bản dựng từ Dublin Core bên cạnh bản gốc");
 
         // Bản thu hoạch phải nằm ở hàng đợi biên mục, vì Dublin Core còn nghèo, cán bộ phải hiệu đính.
-        found.Items.Should().Contain(item => item.Status == Domain.Enums.RecordStatus.Queued);
+        var harvested = found.Items.Should()
+            .ContainSingle(item => item.Status == Domain.Enums.RecordStatus.Queued).Subject;
+
+        // Đặt trạng thái "Chờ biên mục" thôi chưa đủ: phải có một dòng việc thật trong hàng đợi thì
+        // cán bộ mới nhìn thấy. Trước đây chỉ kiểm cột trạng thái nên hàng đợi rỗng mà test vẫn xanh.
+        var queue = await ReadAsync<PagedResult<CatalogQueueItemDto>>(
+            await client.GetAsync("/api/cataloging/queue?pageSize=200"));
+
+        queue.Items.Should().Contain(item => item.BibId == harvested.Id,
+            "biểu ghi thu hoạch về phải hiện ra ở màn hình Hàng đợi biên mục, không thì không ai "
+            + "biết là có việc phải làm");
+    }
+
+    /// <summary>
+    /// Biểu ghi thu hoạch về phải mở ra sửa rồi lưu lại được.
+    ///
+    /// Đây mới là phép thử đúng nghĩa của việc "thu hoạch xong thì biên mục": Dublin Core không có
+    /// trường 008, mà bộ kiểm tra MARC của hệ thống bắt buộc phải có. Thiếu bước dựng 008 khi thu
+    /// hoạch thì cán bộ mở biểu ghi lên, sửa gì cũng không lưu lại được.
+    /// </summary>
+    [Fact]
+    public async Task Bieu_ghi_thu_hoach_ve_mo_ra_sua_roi_luu_lai_duoc()
+    {
+        var client = await ClientAsync();
+        var (_, title) = await NewBibAsync(client, "Sách kiểm trường 008", "SACH");
+
+        var baseUrl = new Uri(_factory.Server.BaseAddress!, "/oai").ToString();
+
+        var repositoryId = await ReadAsync<Guid>(await client.PostAsJsonAsync(
+            "/api/interlibrary/oai/repositories", new
+            {
+                name = $"Nguồn kiểm 008 {Unique()}",
+                baseUrl,
+                metadataPrefix = "oai_dc",
+                setSpec = "doctype:SACH"
+            }));
+
+        await ReadAsync<OaiHarvestLogDto>(await client.PostAsync(
+            $"/api/interlibrary/oai/repositories/{repositoryId}/harvest?fullReload=true", null));
+
+        await DoiThuHoachXongAsync(client, repositoryId);
+
+        var found = await ReadAsync<PagedResult<Application.Features.Cataloging.BibListItemDto>>(
+            await client.GetAsync(
+                $"/api/cataloging/bibs?page=1&pageSize=50&keyword={Uri.EscapeDataString(title)}"));
+
+        var harvested = found.Items.Single(item => item.Status == Domain.Enums.RecordStatus.Queued);
+
+        var detail = await ReadAsync<BibDetailDto>(
+            await client.GetAsync($"/api/cataloging/bibs/{harvested.Id}"));
+
+        var marc = MarcJson.Deserialize(detail.MarcJson);
+
+        marc.GetControlField("008").Should().NotBeNull("MARC 21 bắt buộc có trường 008")
+            .And.HaveLength(40, "trường 008 đúng chuẩn dài 40 ký tự");
+
+        // Lưu lại nguyên văn — đúng thao tác cán bộ mở ra xem rồi bấm Lưu.
+        var saved = await client.PutAsJsonAsync($"/api/cataloging/bibs/{harvested.Id}", new
+        {
+            id = harvested.Id,
+            marcJson = detail.MarcJson,
+            documentTypeId = detail.DocumentTypeId,
+            status = "Published",
+            changeNote = "Hiệu đính sau khi thu hoạch"
+        }, LibraryConnectFactory.JsonOptions);
+
+        saved.StatusCode.Should().Be(HttpStatusCode.OK, await ErrorTextAsync(saved));
+    }
+
+    /// <summary>
+    /// Bấm "Thu hoạch ngay" hai lần thì lần thứ hai bị chặn.
+    ///
+    /// Không có khoá thì hai lượt cùng chạy trên một kho, cùng ghi vào kho dữ liệu, mỗi lượt đếm số
+    /// riêng, và nhật ký hiện hai dòng "Đang chạy" của cùng một kho — không ai biết kho ấy rốt cuộc
+    /// đã lấy được bao nhiêu. Chuyện này xảy ra rất dễ: proxy hết giờ chờ, cán bộ tưởng hỏng nên bấm
+    /// lại.
+    /// </summary>
+    [Fact]
+    public async Task Kho_dang_thu_hoach_thi_khong_bam_chay_lan_hai_duoc()
+    {
+        var client = await ClientAsync();
+        await NewBibAsync(client, "Sách kiểm khoá thu hoạch", "SACH");
+
+        var baseUrl = new Uri(_factory.Server.BaseAddress!, "/oai").ToString();
+
+        var repositoryId = await ReadAsync<Guid>(await client.PostAsJsonAsync(
+            "/api/interlibrary/oai/repositories", new
+            {
+                name = $"Nguồn kiểm khoá {Unique()}",
+                baseUrl,
+                metadataPrefix = "oai_dc",
+                setSpec = "doctype:SACH"
+            }));
+
+        var dau = await client.PostAsync(
+            $"/api/interlibrary/oai/repositories/{repositoryId}/harvest?fullReload=true", null);
+
+        dau.StatusCode.Should().Be(HttpStatusCode.OK, await ErrorTextAsync(dau));
+
+        var lanHai = await client.PostAsync(
+            $"/api/interlibrary/oai/repositories/{repositoryId}/harvest?fullReload=true", null);
+
+        lanHai.StatusCode.Should().Be(HttpStatusCode.Conflict,
+            "một kho chỉ được thu hoạch một lượt tại một thời điểm");
+
+        (await ErrorTextAsync(lanHai)).Should().Contain("đang");
+
+        await DoiThuHoachXongAsync(client, repositoryId);
+    }
+
+    /// <summary>
+    /// Thu hoạch xong thì nhật ký phải chốt lại, không nằm mãi ở "Đang chạy".
+    ///
+    /// Trước đây lượt thu hoạch chạy ngay trong lượt HTTP: cán bộ đóng tab hay proxy hết giờ chờ là
+    /// việc bị bỏ dở, dòng nhật ký kẹt ở "Đang chạy" vĩnh viễn và cũng không có cách nào biết kho
+    /// ấy đã lấy xong hay chưa.
+    /// </summary>
+    [Fact]
+    public async Task Thu_hoach_chay_nen_va_chot_lai_nhat_ky()
+    {
+        var client = await ClientAsync();
+        await NewBibAsync(client, "Sách kiểm nhật ký thu hoạch", "SACH");
+
+        var baseUrl = new Uri(_factory.Server.BaseAddress!, "/oai").ToString();
+
+        var repositoryId = await ReadAsync<Guid>(await client.PostAsJsonAsync(
+            "/api/interlibrary/oai/repositories", new
+            {
+                name = $"Nguồn kiểm nhật ký {Unique()}",
+                baseUrl,
+                metadataPrefix = "oai_dc",
+                setSpec = "doctype:SACH"
+            }));
+
+        var batDau = await ReadAsync<OaiHarvestLogDto>(await client.PostAsync(
+            $"/api/interlibrary/oai/repositories/{repositoryId}/harvest?fullReload=true", null));
+
+        // Trả lời ngay chứ không bắt cán bộ ngồi chờ hết lượt thu hoạch.
+        batDau.Status.Should().Be("Running");
+
+        var xong = await DoiThuHoachXongAsync(client, repositoryId);
+
+        xong.Status.Should().Be("Completed", xong.Errors ?? "không có lỗi");
+        xong.FinishedAt.Should().NotBeNull("lượt thu hoạch nào cũng phải được chốt lại");
+        xong.RecordsImported.Should().BeGreaterThan(0);
+    }
+
+    /// <summary>Chờ lượt thu hoạch của một kho kết thúc và trả về dòng nhật ký cuối cùng.</summary>
+    private static async Task<OaiHarvestLogDto> DoiThuHoachXongAsync(
+        HttpClient client, Guid repositoryId)
+    {
+        for (var lan = 0; lan < 60; lan++)
+        {
+            var logs = await ReadAsync<PagedResult<OaiHarvestLogDto>>(await client.GetAsync(
+                $"/api/interlibrary/oai/harvest-logs?repositoryId={repositoryId}&page=1&pageSize=10"));
+
+            var moiNhat = logs.Items.FirstOrDefault();
+
+            if (moiNhat is not null && moiNhat.Status != "Running" && moiNhat.Status != "Pending")
+            {
+                return moiNhat;
+            }
+
+            await Task.Delay(500);
+        }
+
+        throw new TimeoutException("Lượt thu hoạch không kết thúc trong thời gian chờ.");
+    }
+
+    /// <summary>
+    /// Nhận đúng tên định dạng mà kho thật khai ra.
+    ///
+    /// Chuẩn OAI-PMH để mỗi kho tự đặt tên định dạng của mình: DSpace khai `marc`, tạp chí khoa học
+    /// Việt Nam trực tuyến khai `marcxml` và `oai_marc`, có kho khai `mods` hay `qdc`. Chỉ nhận đúng
+    /// hai tên `oai_dc` và `marc21` là tự chặn mình khỏi những kho có sẵn MARC đầy đủ, phải hạ xuống
+    /// Dublin Core nghèo hơn nhiều.
+    /// </summary>
+    [Theory]
+    [InlineData("marc")]
+    [InlineData("marcxml")]
+    [InlineData("oai_marc")]
+    [InlineData("mods")]
+    public async Task Kho_OAI_nhan_ten_dinh_dang_ma_kho_that_khai(string prefix)
+    {
+        var client = await ClientAsync();
+
+        var response = await client.PostAsJsonAsync("/api/interlibrary/oai/repositories", new
+        {
+            name = $"Kho khai {prefix} {Unique()}",
+            baseUrl = "https://vjol.info.vn/index.php/index/oai",
+            metadataPrefix = prefix
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK, await ErrorTextAsync(response));
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("khong hop le")]
+    [InlineData("co/dau/gach")]
+    public async Task Ten_dinh_dang_sai_cu_phap_thi_van_bi_chan(string prefix)
+    {
+        var client = await ClientAsync();
+
+        var response = await client.PostAsJsonAsync("/api/interlibrary/oai/repositories", new
+        {
+            name = $"Kho khai sai {Unique()}",
+            baseUrl = "https://vjol.info.vn/index.php/index/oai",
+            metadataPrefix = prefix
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]

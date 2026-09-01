@@ -333,9 +333,9 @@ public partial class DatabaseSeeder
         var calendar = await _calendars.GetAsync(null, ct);
         var today = _clock.Today;
 
-        var bibTypes = await _db.BibRecords
-            .Select(record => new { record.Id, record.DocumentTypeId })
-            .ToDictionaryAsync(entry => entry.Id, entry => entry.DocumentTypeId, ct);
+        var bibs = await _db.BibRecords
+            .Select(record => new { record.Id, record.DocumentTypeId, record.Title })
+            .ToDictionaryAsync(entry => entry.Id, entry => entry, ct);
 
         var loanCodes = await _codes.NextBatchAsync("LOAN", 100, ct);
         var fineCodes = await _codes.NextBatchAsync("FINE", 30, ct);
@@ -349,7 +349,8 @@ public partial class DatabaseSeeder
             var reader = borrowers[index % borrowers.Count];
             var item = items[(index * 7) % items.Count];
 
-            var documentTypeId = bibTypes.TryGetValue(item.BibId, out var typeId) ? typeId : null;
+            var bib = bibs.GetValueOrDefault(item.BibId);
+            var documentTypeId = bib?.DocumentTypeId;
 
             var policy = await _policies.ResolveAsync(
                 reader.ReaderTypeId, documentTypeId, item.WarehouseId, ct);
@@ -374,6 +375,9 @@ public partial class DatabaseSeeder
                 ReaderId = reader.Id,
                 ItemId = item.Id,
                 BibId = item.BibId,
+                // Chép nhan đề đúng như lối ghi mượn thật ở quầy: thiếu nó thì danh sách sách đang
+                // mượn của bản demo hiện toàn dấu gạch ngang.
+                BibTitle = bib?.Title,
                 Barcode = item.Barcode,
                 LoanDate = ToMoment(loanDate, 9),
                 DueDate = dueDate,

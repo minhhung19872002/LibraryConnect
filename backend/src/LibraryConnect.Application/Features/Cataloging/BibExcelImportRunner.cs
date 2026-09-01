@@ -148,7 +148,11 @@ public class BibExcelImportRunner : IBibExcelImportRunner
         catch (Exception exception)
         {
             job.Status = JobStatus.Failed;
-            Record(errors, 0, null, exception.Message);
+
+            // Lỗi kiểm tra dữ liệu mang câu giải thích ở danh sách lỗi từng trường, còn Message chỉ
+            // là "Dữ liệu không hợp lệ." Ghi câu chung chung ấy vào nhật ký thì người dùng mở ra
+            // xem cũng không biết tệp của mình sai chỗ nào.
+            Record(errors, 0, null, MoTaLoi(exception));
             _logger.LogError(exception, "Tác vụ nhập Excel {JobId} thất bại", jobId);
         }
 
@@ -381,4 +385,10 @@ public class BibExcelImportRunner : IBibExcelImportRunner
 
         errors.Add(new ImportJobErrorDto { Row = row, Identifier = identifier, Message = message });
     }
+
+    /// <summary>Câu giải thích đọc được của một lỗi, ưu tiên lỗi kiểm tra dữ liệu từng trường.</summary>
+    private static string MoTaLoi(Exception exception) =>
+        exception is Common.Exceptions.ValidationException validation && validation.Errors.Count > 0
+            ? string.Join(" ", validation.Errors.Select(error => error.Message))
+            : exception.Message;
 }

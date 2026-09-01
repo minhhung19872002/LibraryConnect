@@ -99,6 +99,17 @@ export function CatalogQueuePage() {
     onError: (error: unknown) => message.error(errorMessage(error)),
   });
 
+  const changeStatusBatch = useMutation({
+    mutationFn: ({ ids, next, reason }: { ids: string[]; next: CatalogQueueStatus; reason?: string }) =>
+      queueApi.changeStatusBatch(ids, next, reason),
+    onSuccess: async (count) => {
+      message.success(`Đã cập nhật trạng thái ${count} việc.`);
+      setSelected([]);
+      await refresh();
+    },
+    onError: (error: unknown) => message.error(errorMessage(error)),
+  });
+
   const remove = useMutation({
     mutationFn: (id: string) => queueApi.remove(id),
     onSuccess: async () => {
@@ -157,6 +168,29 @@ export function CatalogQueuePage() {
                 onClick={() => setAssignOpen(true)}
               >
                 Phân công {selected.length > 0 ? `(${selected.length})` : ''}
+              </Button>
+            </Can>
+
+            <Can permission={PERMISSIONS.cataloging.queueProcess}>
+              <Button
+                type="primary"
+                icon={<CheckOutlined />}
+                disabled={selected.length === 0}
+                loading={changeStatusBatch.isPending}
+                onClick={() =>
+                  modal.confirm({
+                    title: `Duyệt ${selected.length} biểu ghi?`,
+                    content:
+                      'Biểu ghi được duyệt sẽ hiện ngay trên trang tra cứu của bạn đọc. '
+                      + 'Dùng khi cả nhóm cùng một nguồn và đã đạt yêu cầu.',
+                    okText: 'Duyệt',
+                    cancelText: 'Để sau',
+                    onOk: () =>
+                      changeStatusBatch.mutateAsync({ ids: selected, next: 'Completed' }),
+                  })
+                }
+              >
+                Duyệt {selected.length > 0 ? `(${selected.length})` : ''}
               </Button>
             </Can>
           </Space>

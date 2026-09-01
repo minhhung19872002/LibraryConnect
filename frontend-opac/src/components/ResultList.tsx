@@ -3,16 +3,32 @@ import { App, Button, Card, Empty, List, Space, Tag, Tooltip } from 'antd';
 import { FileTextOutlined, ShoppingCartOutlined } from '@ant-design/icons';
 import { useCartStore } from '@/stores/cartStore';
 import type { SearchResult } from '@/types/api';
+import { coverPlaceholder } from '@/lib/cover';
 
-/** Ảnh bìa, hoặc một ô chữ thay thế khi biểu ghi chưa có ảnh. */
+/**
+ * Ảnh bìa của tài liệu.
+ *
+ * Phần lớn biểu ghi của một thư viện Việt Nam không có ảnh bìa — sách cũ, luận văn, đề tài nghiên
+ * cứu đều không có ảnh trên mạng. Thay vì để một ô xám trống, dựng bìa mang nhan đề và tác giả:
+ * trang kết quả đọc được, và bạn đọc nhớ mặt được cuốn mình vừa xem khi quay lại danh sách.
+ */
 export function Cover({ item }: { item: SearchResult }) {
   if (item.coverImageUrl) {
     return <img className="lc-cover" src={item.coverImageUrl} alt={item.title} loading="lazy" />;
   }
 
+  const bia = coverPlaceholder(item);
+
   return (
-    <div className="lc-cover lc-cover--placeholder">
-      {item.documentTypeName ?? 'Chưa có ảnh bìa'}
+    <div
+      className="lc-cover lc-cover--generated"
+      style={{ background: bia.background }}
+      role="img"
+      aria-label={`Bìa thay thế của tài liệu ${bia.title}`}
+    >
+      <div className="lc-cover__title">{bia.title}</div>
+      {bia.author && <div className="lc-cover__author">{bia.author}</div>}
+      <div className="lc-cover__label">{bia.label}</div>
     </div>
   );
 }
@@ -103,16 +119,43 @@ export function ResultList({
   items,
   loading,
   emptyText = 'Không tìm thấy tài liệu nào phù hợp.',
+  showTips = true,
 }: {
   items: SearchResult[];
   loading?: boolean;
   emptyText?: string;
+  showTips?: boolean;
 }) {
   return (
     <List
       loading={loading}
       dataSource={items}
-      locale={{ emptyText: <Empty description={emptyText} /> }}
+      locale={{
+        emptyText: (
+          <Empty
+            description={
+              <div style={{ textAlign: 'left', maxWidth: 460, margin: '0 auto' }}>
+                <div style={{ fontWeight: 600, marginBottom: 8, textAlign: 'center' }}>
+                  {emptyText}
+                </div>
+                {showTips && (
+                  <ul style={{ paddingLeft: 20, margin: 0, lineHeight: 1.8 }}>
+                    <li>Thử bớt từ khóa, giữ lại một hai từ chính.</li>
+                    <li>Gõ không dấu vẫn tìm được, nhưng hãy kiểm tra lại chính tả.</li>
+                    <li>
+                      Dùng <Link to="/tra-cuu-nang-cao">tra cứu nâng cao</Link> để tìm theo tác giả,
+                      chủ đề hoặc năm xuất bản.
+                    </li>
+                    <li>
+                      Chưa thấy ở đây thì <Link to="/thu-vien-khac">tìm ở thư viện khác</Link>.
+                    </li>
+                  </ul>
+                )}
+              </div>
+            }
+          />
+        ),
+      }}
       renderItem={(item) => (
         <List.Item key={item.id} style={{ padding: '16px 0' }}>
           <ResultRow item={item} />

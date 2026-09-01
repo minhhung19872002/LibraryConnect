@@ -34,6 +34,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useCartStore } from '@/stores/cartStore';
 import { useSiteSettings } from '@/hooks/useSite';
 import type { BibDetail, BibItem } from '@/types/api';
+import { MarcRecordTable } from '../components/MarcRecordTable';
 
 const { Paragraph, Title } = Typography;
 
@@ -399,20 +400,7 @@ export function BibDetailPage() {
                 {
                   key: 'marc',
                   label: 'Biểu ghi MARC',
-                  children: (
-                    <pre
-                      style={{
-                        background: '#f6f8f7',
-                        padding: 16,
-                        borderRadius: 8,
-                        overflow: 'auto',
-                        maxHeight: 480,
-                        fontSize: 12,
-                      }}
-                    >
-                      {JSON.stringify(JSON.parse(data.marcJson), null, 2)}
-                    </pre>
-                  ),
+                  children: <MarcRecordTable marcJson={data.marcJson} />,
                 },
                 {
                   key: 'reviews',

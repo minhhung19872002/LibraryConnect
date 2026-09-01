@@ -94,7 +94,18 @@ public class OpacBrowseQueryHandler
             link => link.AuthorId,
             ct);
 
-        var authors = _db.Authors.AsNoTracking().Where(author => author.IsActive);
+        // Chỉ tác giả đã có tài liệu công bố mới vào danh sách, và phải lọc ngay trong câu hỏi gửi
+        // xuống cơ sở dữ liệu chứ không lọc sau khi đã cắt.
+        //
+        // Hồ sơ thẩm quyền của một thư viện thật dài hàng nghìn tên, phần lớn chưa gắn tài liệu nào
+        // đã công bố — tên lấy từ biểu ghi đang biên mục dở, từ những lần thu hoạch chờ hiệu đính.
+        // Cắt lấy năm trăm tên đầu bảng chữ cái rồi mới bỏ tên rỗng thì nắm ấy toàn tên rỗng, và
+        // trang duyệt của bạn đọc trắng trơn dù trong kho đầy sách.
+        var authors = _db.Authors
+            .AsNoTracking()
+            .Where(author => author.IsActive)
+            .Where(author => _db.BibAuthors.Any(link =>
+                link.AuthorId == author.Id && link.Bib!.Status == RecordStatus.Published));
 
         // Duyệt theo chữ cái: danh sách tác giả rất dài, chia theo chữ đầu là cách tra quen thuộc
         // nhất với người dùng thư viện. So trên tên đã bỏ dấu để "Đ" và "D" nằm đúng chỗ.

@@ -47,6 +47,7 @@ public class MarcValidator
         ValidateControlFields(record, issues);
         ValidateDataFields(record, issues);
         ValidateRepeatability(record, issues);
+        ValidatePublishYear(record, issues);
         ValidateExchangeLimits(record, issues);
 
         return issues;
@@ -323,6 +324,51 @@ public class MarcValidator
     /// Kiểm tra các giới hạn của định dạng trao đổi ngay khi biên mục, thay vì để đến lúc xuất tệp
     /// mới phát hiện biểu ghi không xuất được. Độ dài tính theo byte UTF-8.
     /// </summary>
+    /// <summary>Năm sớm nhất còn coi là hợp lý; sách in ra đời từ thế kỷ 15.</summary>
+    private const int NamSomNhat = 1400;
+
+    /// <summary>
+    /// Nhắc khi năm xuất bản nằm ngoài khoảng hợp lý.
+    ///
+    /// 3025 thay vì 2025, 1092 thay vì 1992 — gõ nhầm một chữ số trên bàn phím số là chuyện thường.
+    /// Biểu ghi sai năm vẫn lên trang tra cứu và làm bộ lọc theo năm của bạn đọc có một giá trị vô
+    /// nghĩa. Chỉ nhắc chứ không chặn: thư viện vẫn biên mục sách sắp phát hành sang năm, và tài
+    /// liệu cổ đôi khi ghi năm ước đoán.
+    /// </summary>
+    private static void ValidatePublishYear(MarcRecord record, List<MarcValidationIssue> issues)
+    {
+        var namToiDa = DateTime.Today.Year + 5;
+
+        foreach (var tag in new[] { "260", "264" })
+        {
+            foreach (var field in record.DataFields.Where(field => field.Tag == tag))
+            {
+                foreach (var subfield in field.Subfields.Where(subfield => subfield.Code == 'c'))
+                {
+                    // Vùng năm xuất bản hay có dấu ngoặc, chữ "c" bản quyền hay chữ "không rõ";
+                    // chỉ xét khi rút ra được một số bốn chữ số liền nhau hoặc chuỗi toàn chữ số.
+                    var so = new string(subfield.Value.Where(char.IsAsciiDigit).ToArray());
+
+                    if (so.Length == 0 || so.Length > 4)
+                    {
+                        continue;
+                    }
+
+                    if (!int.TryParse(so, out var nam) || (nam >= NamSomNhat && nam <= namToiDa))
+                    {
+                        continue;
+                    }
+
+                    issues.Add(new MarcValidationIssue(
+                        MarcIssueSeverity.Warning,
+                        $"Năm xuất bản \"{subfield.Value}\" nằm ngoài khoảng {NamSomNhat}–{namToiDa}. "
+                        + "Hãy kiểm tra lại, rất có thể gõ nhầm một chữ số.",
+                        tag));
+                }
+            }
+        }
+    }
+
     private static void ValidateExchangeLimits(MarcRecord record, List<MarcValidationIssue> issues)
     {
         var total = MarcLeader.Length + 1 + 1;

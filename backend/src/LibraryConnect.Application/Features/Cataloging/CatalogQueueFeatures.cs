@@ -418,7 +418,9 @@ public class ChangeCatalogQueueStatusCommandHandler : IRequestHandler<ChangeCata
 
     public async Task Handle(ChangeCatalogQueueStatusCommand request, CancellationToken ct)
     {
-        var item = await _db.CatalogQueue.FirstOrDefaultAsync(entry => entry.Id == request.Id, ct)
+        var item = await _db.CatalogQueue
+                       .Include(entry => entry.Bib)
+                       .FirstOrDefaultAsync(entry => entry.Id == request.Id, ct)
                    ?? throw new NotFoundException("Không tìm thấy việc trong hàng đợi.");
 
         if (request.Status == CatalogQueueStatus.Returned && string.IsNullOrWhiteSpace(request.Reason))
@@ -456,7 +458,87 @@ public class ChangeCatalogQueueStatusCommandHandler : IRequestHandler<ChangeCata
 
         item.Status = request.Status;
 
+        // Trạng thái của việc kéo theo trạng thái của chính biểu ghi. Không có bước này thì cả hàng
+        // đợi chỉ là một bảng ghi chú: cán bộ duyệt xong mà bạn đọc vẫn không tra ra được biểu ghi,
+        // và trong hệ thống cũng không còn chỗ nào khác để đưa biểu ghi lên trang tra cứu.
+        if (item.Bib is not null)
+        {
+            item.Bib.Status = request.Status switch
+            {
+                // Duyệt xong nghĩa là biểu ghi đã dùng được: cho lên trang tra cứu.
+                CatalogQueueStatus.Completed => RecordStatus.Published,
+
+                // Biên mục xong, đang chờ người khác duyệt — đã qua tay cán bộ nhưng chưa công bố.
+                CatalogQueueStatus.WaitingApproval => RecordStatus.Approved,
+
+                // Trả lại để sửa thì phải rút khỏi trang tra cứu, không để bạn đọc thấy bản sai.
+                CatalogQueueStatus.Returned => RecordStatus.Queued,
+                CatalogQueueStatus.Pending => RecordStatus.Queued,
+                CatalogQueueStatus.InProgress => RecordStatus.Queued,
+
+                _ => item.Bib.Status
+            };
+        }
+
         await _db.SaveChangesAsync(ct);
+    }
+}
+
+/// <summary>
+/// Đổi trạng thái nhiều việc cùng lúc.
+///
+/// Một lượt thu hoạch từ thư viện bạn đưa về hàng nghìn biểu ghi cùng nguồn, cùng chất lượng. Bắt
+/// cán bộ bấm duyệt từng biểu ghi một thì chức năng có cũng như không.
+/// </summary>
+public class ChangeCatalogQueueStatusBatchCommand : IRequest<int>
+{
+    public List<Guid> Ids { get; set; } = new();
+    public CatalogQueueStatus Status { get; set; }
+    /// <summary>Bắt buộc khi trả lại việc.</summary>
+    public string? Reason { get; set; }
+}
+
+public class ChangeCatalogQueueStatusBatchCommandValidator
+    : AbstractValidator<ChangeCatalogQueueStatusBatchCommand>
+{
+    public ChangeCatalogQueueStatusBatchCommandValidator()
+    {
+        RuleFor(command => command.Ids)
+            .NotEmpty().WithMessage("Chưa chọn việc nào.");
+
+        RuleFor(command => command.Reason)
+            .NotEmpty()
+            .When(command => command.Status == CatalogQueueStatus.Returned)
+            .WithMessage("Phải nêu lý do khi trả lại việc, để cán bộ biên mục biết cần sửa gì.");
+    }
+}
+
+public class ChangeCatalogQueueStatusBatchCommandHandler
+    : IRequestHandler<ChangeCatalogQueueStatusBatchCommand, int>
+{
+    private readonly IMediator _mediator;
+
+    public ChangeCatalogQueueStatusBatchCommandHandler(IMediator mediator) => _mediator = mediator;
+
+    public async Task<int> Handle(ChangeCatalogQueueStatusBatchCommand request, CancellationToken ct)
+    {
+        // Đi qua đúng lệnh đổi trạng thái của một việc: luật gán người nhận, ghi thời điểm hoàn
+        // thành và cập nhật trạng thái biểu ghi chỉ được viết một chỗ.
+        var xong = 0;
+
+        foreach (var id in request.Ids.Distinct())
+        {
+            await _mediator.Send(new ChangeCatalogQueueStatusCommand
+            {
+                Id = id,
+                Status = request.Status,
+                Reason = request.Reason
+            }, ct);
+
+            xong++;
+        }
+
+        return xong;
     }
 }
 

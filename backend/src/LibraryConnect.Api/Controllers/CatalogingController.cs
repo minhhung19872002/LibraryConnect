@@ -517,6 +517,21 @@ public class CatalogingController : ApiControllerBase
             : $"Đã phân công {result} việc."));
     }
 
+    /// <summary>
+    /// Chuyển trạng thái nhiều việc cùng lúc — dùng khi duyệt cả một lượt thu hoạch.
+    /// </summary>
+    [HttpPost("queue/status")]
+    [RequirePermission(PermissionCodes.CatalogQueueProcess)]
+    [ProducesResponseType(typeof(ApiResponse<int>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<ApiResponse<int>>> ChangeQueueStatusBatch(
+        [FromBody] ChangeCatalogQueueStatusBatchCommand command, CancellationToken ct)
+    {
+        var result = await Mediator.Send(command, ct);
+
+        return Ok(Success(result, $"Đã cập nhật trạng thái {result} việc."));
+    }
+
     /// <summary>Chuyển trạng thái một việc: nhận việc, gửi duyệt, duyệt xong hoặc trả lại.</summary>
     [HttpPost("queue/{id:guid}/status")]
     [RequirePermission(PermissionCodes.CatalogQueueProcess)]

@@ -111,7 +111,7 @@ public class GetReaderLoansQueryHandler : IRequestHandler<GetReaderLoansQuery, P
                 Id = loan.Id,
                 Code = loan.Code,
                 Barcode = loan.Barcode,
-                Title = loan.BibTitle,
+                Title = loan.BibTitle ?? loan.Item!.Bib!.Title,
                 LoanDate = loan.LoanDate,
                 DueDate = loan.DueDate,
                 ReturnDate = loan.ReturnDate,

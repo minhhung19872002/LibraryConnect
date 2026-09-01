@@ -127,7 +127,7 @@ export function MainLayout() {
           {menu}
         </Drawer>
       ) : (
-        <Sider collapsible collapsed={collapsed} trigger={null} width={248} theme="light" className="lc-sider">
+        <Sider collapsible collapsed={collapsed} trigger={null} width={264} theme="light" className="lc-sider">
           {brand(!collapsed)}
           {menu}
         </Sider>

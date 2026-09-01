@@ -1,16 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  bib1UseCodes,
-  charsetOptions,
-  describeTarget,
-  formatDateTime,
-  formatDuration,
-  harvestStatusColors,
-  harvestStatusLabels,
-  metadataPrefixOptions,
-  recordSyntaxOptions,
-  searchFieldLabels,
-} from './labels';
+import { bib1UseCodes, charsetOptions, describeTarget, formatDateTime, formatDuration, harvestPollInterval, harvestStatusColors, harvestStatusLabels, metadataPrefixOptions, recordSyntaxOptions, searchFieldLabels } from './labels';
 import type { RemoteSearchField } from './types';
 
 describe('Nhãn tiếng Việt của phân hệ liên thư viện', () => {
@@ -101,5 +90,18 @@ describe('Hiển thị thời điểm', () => {
   it('để trống thay vì hiện Invalid Date', () => {
     expect(formatDateTime(null)).toBe('');
     expect(formatDateTime('không phải ngày')).toBe('');
+  });
+});
+
+describe('Tự hỏi lại nhật ký thu hoạch', () => {
+  it('có lượt đang chạy thì hỏi lại vài giây một lần', () => {
+    expect(harvestPollInterval([{ status: 'Completed' }, { status: 'Running' }])).toBe(3000);
+    expect(harvestPollInterval([{ status: 'Pending' }])).toBe(3000);
+  });
+
+  it('không còn lượt nào chạy thì thôi hỏi', () => {
+    expect(harvestPollInterval([{ status: 'Completed' }, { status: 'Failed' }])).toBe(false);
+    expect(harvestPollInterval([])).toBe(false);
+    expect(harvestPollInterval(undefined)).toBe(false);
   });
 });

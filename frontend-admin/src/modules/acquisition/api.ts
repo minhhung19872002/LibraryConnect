@@ -139,9 +139,6 @@ export const stockApi = {
   printLabels: (payload: Record<string, unknown>) =>
     api.downloadPost('/stock/print/labels', payload, 'nhan-gay.pdf'),
 
-  /** Đường dẫn ảnh mã vạch để đặt thẳng vào thẻ img của ô xem trước. */
-  barcodeImageUrl: (value: string, type: string) =>
-    `/api/stock/barcode-image?value=${encodeURIComponent(value)}&type=${type}`,
 };
 
 /** III.1 — Yêu cầu đặt mua, đơn đặt, biên bản bàn giao, biên mục sơ lược. */

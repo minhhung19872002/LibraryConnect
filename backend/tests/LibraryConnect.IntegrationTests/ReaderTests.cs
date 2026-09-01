@@ -1197,4 +1197,34 @@ public class ReaderTests
     {
         public string TemporaryPassword { get; set; } = string.Empty;
     }
+    /// <summary>
+    /// Ngày sinh gõ nhầm phải bị chặn ngay.
+    ///
+    /// 2099 thay vì 1999 là lỗi gõ phổ biến nhất trên bàn phím số. Không chặn thì hồ sơ sai nằm im
+    /// trong kho, và mọi báo cáo theo độ tuổi đều lệch theo mà không ai biết vì sao.
+    /// </summary>
+    [Theory]
+    [InlineData("2099-01-01")]
+    [InlineData("1830-05-20")]
+    public async Task Ngay_sinh_vo_ly_thi_bi_chan(string ngaySinh)
+    {
+        var client = await ClientAsync();
+        var types = await ReadAsync<PagedResult<Application.Features.Catalogs.CatalogItemDto>>(
+            await client.GetAsync("/api/catalogs/reader-types/items?pageSize=50"));
+
+        var response = await client.PostAsJsonAsync("/api/readers", new
+        {
+            fullName = "Bạn đọc ngày sinh vô lý",
+            studentCode = $"SV{Guid.NewGuid():N}"[..12],
+            readerTypeId = types.Items.First().Id,
+            dateOfBirth = ngaySinh
+        }, LibraryConnectFactory.JsonOptions);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+        var payload = await response.Content.ReadFromJsonAsync<ApiResponse>(
+            LibraryConnectFactory.JsonOptions);
+
+        payload!.Errors.Should().Contain(error => error.Message.Contains("Ngày sinh"));
+    }
 }

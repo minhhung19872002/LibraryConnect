@@ -272,6 +272,16 @@ public class LoanConfiguration : IEntityTypeConfiguration<Loan>
         builder.HasOne(x => x.Item).WithMany().HasForeignKey(x => x.ItemId).OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(x => x.Code).IsUnique().HasFilter("deleted_at IS NULL").HasDatabaseName("ux_loans_code");
+
+        // Một bản in chỉ có một phiếu mượn đang mở. Luật này phải nằm ở cơ sở dữ liệu chứ không chỉ
+        // ở tầng nghiệp vụ: tầng nghiệp vụ đọc "sách còn rảnh không" rồi mới ghi, nên hai quầy làm
+        // việc cùng lúc đều đọc thấy rảnh và cùng ghi một phiếu. Chỉ ràng buộc duy nhất mới chặn
+        // được, vì nó do chính máy chủ dữ liệu quyết định lúc ghi.
+        // Phiếu đã trả, đã mất, đã hỏng đều có return_date nên không lọt vào chỉ mục này.
+        builder.HasIndex(x => x.ItemId)
+            .IsUnique()
+            .HasFilter("return_date IS NULL AND deleted_at IS NULL")
+            .HasDatabaseName("ux_loans_item_dang_muon");
         builder.HasIndex(x => new { x.ReaderId, x.Status }).HasDatabaseName("ix_loan_reader_status");
         builder.HasIndex(x => new { x.ItemId, x.Status }).HasDatabaseName("ix_loan_item_status");
         builder.HasIndex(x => x.DueDate).HasDatabaseName("ix_loan_due");

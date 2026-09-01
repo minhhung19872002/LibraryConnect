@@ -151,6 +151,77 @@ public class CatalogQueueTests
         done.CompletedAt.Should().NotBeNull();
     }
 
+    /// <summary>
+    /// Duyệt xong việc thì biểu ghi phải lên OPAC.
+    ///
+    /// Cả hàng đợi sinh ra là để đưa một biểu ghi thô thành biểu ghi tra cứu được. Nếu trạng thái
+    /// việc chạy hết vòng mà biểu ghi vẫn nằm ở "Chờ biên mục" thì bạn đọc không bao giờ thấy nó,
+    /// và cán bộ không có chỗ nào khác để xuất bản biểu ghi — cả quy trình thành ngõ cụt.
+    /// </summary>
+    [Fact]
+    public async Task Duyet_xong_thi_bieu_ghi_len_OPAC()
+    {
+        var client = await ClientAsync();
+        var title = $"Biểu ghi duyệt xong lên OPAC {Guid.NewGuid():N}";
+        var bibId = await CreateRecordAsync(client, title);
+        var queueId = await EnqueueAsync(client, bibId);
+
+        var anonymous = _factory.CreateClient();
+        anonymous.DefaultRequestHeaders.Authorization = null;
+
+        var before = await SearchAsync(anonymous, title);
+        before.Should().Be(0, "biểu ghi chưa biên mục xong thì chưa được lên trang tra cứu");
+
+        await ChangeStatusAsync(client, queueId, "InProgress");
+        await ChangeStatusAsync(client, queueId, "WaitingApproval");
+        await ChangeStatusAsync(client, queueId, "Completed");
+
+        var detail = await client.GetFromJsonAsync<ApiResponse<BibDetailDto>>(
+            $"/api/cataloging/bibs/{bibId}", LibraryConnectFactory.JsonOptions);
+
+        detail!.Data!.Status.Should().Be(Domain.Enums.RecordStatus.Published,
+            "duyệt xong việc biên mục nghĩa là biểu ghi đã dùng được");
+
+        var after = await SearchAsync(anonymous, title);
+        after.Should().Be(1, "bạn đọc phải tra ra biểu ghi vừa được duyệt");
+    }
+
+    /// <summary>
+    /// Trả việc lại thì biểu ghi phải rút khỏi OPAC.
+    ///
+    /// Một biểu ghi đã duyệt rồi bị phát hiện sai, cán bộ trả lại để sửa: nếu nó vẫn nằm trên trang
+    /// tra cứu thì bạn đọc vẫn thấy bản sai suốt thời gian sửa.
+    /// </summary>
+    [Fact]
+    public async Task Tra_lai_viec_thi_bieu_ghi_rut_khoi_OPAC()
+    {
+        var client = await ClientAsync();
+        var title = $"Biểu ghi bị rút khỏi OPAC {Guid.NewGuid():N}";
+        var bibId = await CreateRecordAsync(client, title);
+        var queueId = await EnqueueAsync(client, bibId);
+
+        var anonymous = _factory.CreateClient();
+        anonymous.DefaultRequestHeaders.Authorization = null;
+
+        await ChangeStatusAsync(client, queueId, "InProgress");
+        await ChangeStatusAsync(client, queueId, "Completed");
+        (await SearchAsync(anonymous, title)).Should().Be(1);
+
+        await ChangeStatusAsync(client, queueId, "Returned", "Sai chỉ số phân loại");
+
+        (await SearchAsync(anonymous, title)).Should().Be(0,
+            "biểu ghi đang phải sửa lại thì không để bạn đọc tra ra bản sai");
+    }
+
+    private static async Task<int> SearchAsync(HttpClient anonymous, string title)
+    {
+        var page = await anonymous.GetFromJsonAsync<ApiResponse<PagedResult<Application.Features.Opac.OpacResultDto>>>(
+            $"/api/search?keyword={Uri.EscapeDataString(title)}&page=1&pageSize=5",
+            LibraryConnectFactory.JsonOptions);
+
+        return page!.Data!.TotalCount;
+    }
+
     [Fact]
     public async Task Sending_a_job_back_requires_a_reason_and_the_reason_is_shown_to_the_cataloguer()
     {
@@ -224,5 +295,64 @@ public class CatalogQueueTests
     private class CurrentUserProbe
     {
         public Guid Id { get; set; }
+    }
+    /// <summary>
+    /// Duyệt hàng loạt.
+    ///
+    /// Một lượt thu hoạch từ thư viện bạn đưa về hàng nghìn biểu ghi cùng một nguồn, cùng một chất
+    /// lượng. Bắt cán bộ bấm duyệt từng biểu ghi một là chức năng có cũng như không — họ sẽ tìm cách
+    /// khác, hoặc bỏ luôn cả kho ấy ngoài trang tra cứu.
+    /// </summary>
+    [Fact]
+    public async Task Duyet_hang_loat_dua_ca_nhom_bieu_ghi_len_OPAC()
+    {
+        var client = await ClientAsync();
+        var marker = Guid.NewGuid().ToString("N")[..8];
+
+        var queueIds = new List<Guid>();
+
+        for (var index = 0; index < 3; index++)
+        {
+            var bibId = await CreateRecordAsync(client, $"Biểu ghi duyệt hàng loạt {marker} {index}");
+            queueIds.Add(await EnqueueAsync(client, bibId));
+        }
+
+        var anonymous = _factory.CreateClient();
+        anonymous.DefaultRequestHeaders.Authorization = null;
+
+        (await SearchAsync(anonymous, marker)).Should().Be(0);
+
+        var response = await client.PostAsJsonAsync("/api/cataloging/queue/status", new
+        {
+            ids = queueIds,
+            status = "Completed"
+        }, LibraryConnectFactory.JsonOptions);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var payload = await response.Content.ReadFromJsonAsync<ApiResponse<int>>(
+            LibraryConnectFactory.JsonOptions);
+
+        payload!.Data.Should().Be(3);
+
+        (await SearchAsync(anonymous, marker)).Should().Be(3,
+            "cả nhóm vừa duyệt phải tra ra được ngay");
+    }
+
+    [Fact]
+    public async Task Tra_lai_hang_loat_van_bat_buoc_neu_ly_do()
+    {
+        var client = await ClientAsync();
+        var bibId = await CreateRecordAsync(client, $"Biểu ghi trả hàng loạt {Guid.NewGuid():N}");
+        var queueId = await EnqueueAsync(client, bibId);
+
+        var thieuLyDo = await client.PostAsJsonAsync("/api/cataloging/queue/status", new
+        {
+            ids = new[] { queueId },
+            status = "Returned"
+        }, LibraryConnectFactory.JsonOptions);
+
+        thieuLyDo.StatusCode.Should().Be(HttpStatusCode.BadRequest,
+            "trả việc lại mà không nói vì sao thì cán bộ biên mục không biết sửa gì");
     }
 }

@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using FluentAssertions;
+using LibraryConnect.Application.Common.Interfaces;
 using LibraryConnect.Application.Common.Models;
 using LibraryConnect.Application.Features.Acquisition;
 using LibraryConnect.Application.Features.Catalogs;
@@ -11,6 +12,7 @@ using LibraryConnect.Application.Features.Locations;
 using LibraryConnect.Application.Features.Opac;
 using LibraryConnect.Application.Features.Public;
 using LibraryConnect.Application.Features.Readers;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace LibraryConnect.IntegrationTests;
 
@@ -543,6 +545,81 @@ public class ContentAndOpacTests
 
         classifications.Should().OnlyContain(entry => entry.BibCount > 0 || entry.HasChildren);
         classifications.Should().NotBeEmpty();
+    }
+
+    /// <summary>
+    /// Duyệt theo tác giả không được rỗng chỉ vì hồ sơ thẩm quyền dài.
+    ///
+    /// Hồ sơ thẩm quyền của một thư viện thật có hàng nghìn tên, phần lớn chưa gắn tài liệu nào đã
+    /// công bố — tên lấy từ biểu ghi đang biên mục dở, từ những lần thu hoạch về chờ hiệu đính. Nếu
+    /// cắt lấy một nắm tên đầu bảng chữ cái rồi mới bỏ những người chưa có tài liệu thì nắm ấy toàn
+    /// tên rỗng, và trang duyệt của bạn đọc trắng trơn dù trong kho có sách.
+    /// </summary>
+    [Fact]
+    public async Task Duyet_theo_tac_gia_van_ra_du_khi_ho_so_tham_quyen_rat_dai()
+    {
+        var staff = await StaffAsync();
+        var marker = Unique();
+
+        // Một tác giả có sách thật, tên xếp cuối bảng chữ cái trong nhóm chữ Q.
+        var warehouses = await ReadAsync<IReadOnlyList<WarehouseDto>>(
+            await staff.GetAsync("/api/locations/warehouses"));
+
+        var tenTacGia = $"Quyzz {marker}";
+
+        var quick = await ReadAsync<QuickCatalogResultDto>(await staff.PostAsJsonAsync(
+            "/api/acquisition/quick-catalog", new
+            {
+                title = $"Sách của tác giả xếp cuối {marker}",
+                author = tenTacGia,
+                price = 100000m,
+                ddc = "005",
+                itemQuantity = 1,
+                warehouseId = warehouses[0].Id
+            }));
+
+        await PublishAsync(staff, quick.BibId);
+
+        // Và 600 tên trong hồ sơ thẩm quyền chưa gắn tài liệu nào, xếp trước tên trên.
+        await ThemTacGiaRongAsync(marker, 600);
+
+        var anonymous = _factory.CreateClient();
+
+        var authors = await ReadAsync<IReadOnlyList<OpacBrowseEntryDto>>(
+            await anonymous.GetAsync("/api/browse/authors?letter=Q"));
+
+        authors.Should().Contain(entry => entry.Name == tenTacGia,
+            "tác giả có sách phải hiện ra, dù đứng sau hàng trăm tên chưa có tài liệu");
+
+        authors.Should().OnlyContain(entry => entry.BibCount > 0,
+            "trang duyệt chỉ nêu tên nào bạn đọc bấm vào còn ra sách");
+    }
+
+    /// <summary>
+    /// Đổ thẳng vào cơ sở dữ liệu một loạt bản ghi thẩm quyền rỗng.
+    ///
+    /// Không đi qua API vì đây là dựng bối cảnh chứ không phải thao tác nghiệp vụ: cái cần dựng là
+    /// một hồ sơ thẩm quyền dài như của thư viện thật, sáu trăm lượt gọi API chỉ để có bối cảnh ấy
+    /// thì phép thử chạy mất vài phút.
+    /// </summary>
+    private async Task ThemTacGiaRongAsync(string marker, int soLuong)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
+
+        for (var index = 0; index < soLuong; index++)
+        {
+            db.Authors.Add(new Domain.Entities.Cat.Author
+            {
+                Id = Guid.NewGuid(),
+                Code = $"QA_{marker}_{index:0000}",
+                Name = $"Quaa {marker} {index:0000}",
+                FullName = $"Quaa {marker} {index:0000}",
+                IsActive = true
+            });
+        }
+
+        await db.SaveChangesAsync(CancellationToken.None);
     }
 
     [Fact]

@@ -380,6 +380,85 @@ public class CirculationTests
         refused.StatusCode.Should().Be(HttpStatusCode.Conflict);
     }
 
+    /// <summary>
+    /// Hai quầy ghi mượn cùng một cuốn trong cùng một khoảnh khắc.
+    ///
+    /// Kiểm tra "bản in này đang có người mượn" đọc trước rồi mới ghi, nên hai lượt chạy song song
+    /// đều đọc thấy sách còn rảnh và cùng ghi một phiếu mượn. Kết quả là sổ sách ghi hai người đang
+    /// giữ một cuốn sách vật lý — chỉ cơ sở dữ liệu mới chặn được, tầng nghiệp vụ thì không.
+    ///
+    /// Tình huống này có thật: hai máy quầy, hoặc bạn đọc tự mượn bằng điện thoại đúng lúc cán bộ
+    /// đang ghi mượn ở quầy.
+    /// </summary>
+    [Fact]
+    public async Task Hai_quay_ghi_muon_cung_luc_thi_chi_mot_ben_muon_duoc()
+    {
+        var client = await ClientAsync();
+        var first = await NewReaderAsync(client, "Bạn đọc quầy một");
+        var second = await NewReaderAsync(client, "Bạn đọc quầy hai");
+        var barcodes = await NewCirculatableItemsAsync(client, "Sách tranh nhau mượn");
+
+        var quayMot = await ClientAsync();
+        var quayHai = await ClientAsync();
+
+        // Gửi đi cùng lúc, không chờ bên nào xong trước.
+        var responses = await Task.WhenAll(
+            quayMot.PostAsJsonAsync("/api/circulation/desk/checkout",
+                new { readerId = first, barcodes }, LibraryConnectFactory.JsonOptions),
+            quayHai.PostAsJsonAsync("/api/circulation/desk/checkout",
+                new { readerId = second, barcodes }, LibraryConnectFactory.JsonOptions));
+
+        responses.Count(response => response.IsSuccessStatusCode).Should().Be(1,
+            "một cuốn sách chỉ có thể ở trong tay một người");
+
+        var loans = await ReadAsync<PagedResult<LoanRowDto>>(
+            await client.GetAsync($"/api/circulation/loans?keyword={barcodes[0]}&pageSize=20"));
+
+        loans.Items.Count(loan => loan.Status == LoanStatus.Active || loan.Status == LoanStatus.Overdue)
+            .Should().Be(1, "chỉ được có đúng một phiếu mượn đang mở cho một bản in");
+    }
+
+    /// <summary>
+    /// Phiếu mượn luôn nói được đang mượn cuốn gì.
+    ///
+    /// Nhan đề được chép sẵn vào phiếu mượn để danh sách không phải nối bảng, nhưng phiếu tạo bằng
+    /// đường khác — bộ gieo dữ liệu, nhập dữ liệu cũ, một lối ghi mượn quên chép — thì cột ấy rỗng.
+    /// Khi đó bạn đọc mở "Sách đang mượn" chỉ thấy một dấu gạch ngang, còn cán bộ ở quầy cũng không
+    /// biết cuốn nào. Danh sách phải tự lấy nhan đề từ biểu ghi khi cột chép sẵn còn trống.
+    /// </summary>
+    [Fact]
+    public async Task Phieu_muon_khong_co_nhan_de_chep_san_van_hien_ten_sach()
+    {
+        var client = await ClientAsync();
+        var readerId = await NewReaderAsync(client, "Bạn đọc xem nhan đề");
+        var barcodes = await NewCirculatableItemsAsync(client, "Sách kiểm nhan đề phiếu mượn");
+
+        var result = await ReadAsync<CheckoutResultDto>(await client.PostAsJsonAsync(
+            "/api/circulation/desk/checkout", new { readerId, barcodes }));
+
+        var loanId = result.Loans[0].Id;
+
+        // Dựng lại đúng tình huống dữ liệu cũ: phiếu mượn không có nhan đề chép sẵn.
+        await XoaNhanDeChepSanAsync(loanId);
+
+        var loans = await ReadAsync<PagedResult<LoanRowDto>>(
+            await client.GetAsync($"/api/circulation/loans?readerId={readerId}&pageSize=20"));
+
+        loans.Items.Single(loan => loan.Id == loanId).Title
+            .Should().NotBeNullOrWhiteSpace("phải lấy nhan đề từ biểu ghi khi cột chép sẵn còn trống");
+    }
+
+    private async Task XoaNhanDeChepSanAsync(Guid loanId)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
+
+        var loan = await db.Loans.FirstAsync(entity => entity.Id == loanId);
+        loan.BibTitle = null;
+
+        await db.SaveChangesAsync(CancellationToken.None);
+    }
+
     [Fact]
     public async Task The_policy_quota_stops_the_fourth_book_for_a_student()
     {

@@ -1,5 +1,9 @@
 import type { RemoteSearchField } from './types';
 
+// Cách viết ngày giờ nằm ở lib/datetime để mọi màn hình ra cùng một dạng dd/MM/yyyy;
+// trước đây mỗi phân hệ tự viết một hàm nên có chỗ in 5/9/2029, chỗ in 05/09/2029.
+export { formatDate, formatDateTime } from '@/lib/datetime';
+
 /** Nhãn tiếng Việt của phân hệ liên thư viện. */
 
 export const searchFieldLabels: Record<RemoteSearchField, string> = {
@@ -59,12 +63,6 @@ export const harvestStatusColors: Record<string, string> = {
   Cancelled: 'default',
 };
 
-export function formatDateTime(value: string | null | undefined): string {
-  if (!value) return '';
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? '' : date.toLocaleString('vi-VN');
-}
-
 /** Mô tả một máy chủ đích bằng một dòng, đúng cách cán bộ đọc trong tài liệu của thư viện bạn. */
 export function describeTarget(target: {
   useSru: boolean;
@@ -82,4 +80,20 @@ export function describeTarget(target: {
 export function formatDuration(ms: number | null | undefined): string {
   if (ms === null || ms === undefined) return '';
   return ms < 1000 ? `${ms} ms` : `${(ms / 1000).toFixed(1)} giây`;
+}
+
+/**
+ * Bao lâu hỏi lại nhật ký thu hoạch một lần.
+ *
+ * Thu hoạch chạy ở tiến trình nền nên màn hình phải tự hỏi lại mới thấy tiến độ; hết việc thì thôi
+ * hỏi, tránh gõ cửa máy chủ suốt ngày khi không có gì chạy.
+ */
+export function harvestPollInterval(
+  logs: { status: string }[] | undefined,
+): number | false {
+  const dangChay = (logs ?? []).some(
+    (log) => log.status === 'Running' || log.status === 'Pending',
+  );
+
+  return dangChay ? 3000 : false;
 }

@@ -32,6 +32,7 @@ import { useCatalogOptions, toOptions } from '@/modules/cataloging/useCatalogOpt
 import { interLibraryApi } from './api';
 import {
   formatDateTime,
+  harvestPollInterval,
   harvestStatusColors,
   harvestStatusLabels,
   metadataPrefixOptions,
@@ -66,6 +67,8 @@ export function OaiRepositoriesPage() {
     queryKey: ['oai-harvest-logs', logPage],
     queryFn: () => interLibraryApi.harvestLogs(logPage),
     placeholderData: keepPreviousData,
+    // Thu hoạch chạy ở tiến trình nền, nên màn hình tự hỏi lại chừng nào còn lượt đang chạy.
+    refetchInterval: (query) => harvestPollInterval(query.state.data?.items),
   });
 
   const save = useMutation({
@@ -103,14 +106,9 @@ export function OaiRepositoriesPage() {
   const harvest = useMutation({
     mutationFn: ({ id, fullReload }: { id: string; fullReload: boolean }) =>
       interLibraryApi.harvest(id, fullReload),
-    onSuccess: (log) => {
-      if (log.status === 'Failed') {
-        message.error(`Thu hoạch thất bại: ${log.errors ?? 'không rõ lý do'}`);
-      } else {
-        message.success(
-          `Lấy về ${log.recordsFetched} biểu ghi, nhập ${log.recordsImported}, bỏ qua ${log.recordsSkipped}.`,
-        );
-      }
+    onSuccess: () => {
+      // Lượt thu hoạch chạy nền: chỉ báo là đã bắt đầu, số liệu xem dần ở bảng nhật ký bên dưới.
+      message.success('Đã bắt đầu thu hoạch. Tiến độ hiện dần ở bảng Nhật ký thu hoạch bên dưới.');
 
       void queryClient.invalidateQueries({ queryKey: ['oai-repositories'] });
       void queryClient.invalidateQueries({ queryKey: ['oai-harvest-logs'] });
