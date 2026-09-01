@@ -92,6 +92,83 @@ public class CatalogingTests
     }
 
     [Fact]
+    public async Task Tac_gia_viet_khong_dau_khong_tao_them_ban_ghi_tham_quyen_trung()
+    {
+        var client = await ClientAsync();
+        var marker = Guid.NewGuid().ToString("N")[..6];
+
+        // Kho đã có tác giả viết đủ dấu.
+        var first = await SaveAsync(client, $"Công trình thủy lợi {marker}", $"Phạm Việt Hòa {marker}");
+
+        // Biểu ghi thu hoạch từ kho ngoài thường ghi tên không dấu. Đây là cùng một người, nên phải
+        // dùng lại bản ghi thẩm quyền cũ; tạo thêm một bản nữa thì mã sinh ra trùng và cả lượt nhập
+        // đổ ở ràng buộc duy nhất — mất nguyên tệp đang nhập chứ không phải một dòng.
+        var second = await SaveAsync(client, $"Cong trinh thuy loi {marker}", $"Pham Viet Hoa {marker}");
+
+        first.Should().NotBeEmpty();
+        second.Should().NotBeEmpty();
+
+        var authors = await client.GetFromJsonAsync<ApiResponse<PagedResult<CatalogItemDto>>>(
+            $"/api/catalogs/authors/items?keyword={Uri.EscapeDataString(marker)}&pageSize=20",
+            LibraryConnectFactory.JsonOptions);
+
+        authors!.Data!.Items.Should().ContainSingle("hai cách viết của cùng một tên là một tác giả");
+    }
+
+    [Fact]
+    public async Task Hai_ten_khac_nhau_sinh_ra_cung_mot_ma_thi_van_luu_duoc()
+    {
+        var client = await ClientAsync();
+        var marker = Guid.NewGuid().ToString("N")[..6];
+
+        // Mã danh mục cắt ở 40 ký tự, nên hai tên tập thể dài chung phần đầu cho ra cùng một mã.
+        var prefix = "Truong Dai hoc Tai nguyen va Moi truong TP";
+
+        var first = await SaveAsync(client, $"Kỷ yếu A {marker}", $"{prefix} Ho Chi Minh {marker}");
+        var second = await SaveAsync(client, $"Kỷ yếu B {marker}", $"{prefix} Ha Noi {marker}");
+
+        first.Should().NotBeEmpty();
+        second.Should().NotBeEmpty("trùng mã không được phép làm hỏng lượt lưu");
+    }
+
+    /// <summary>Lưu một biểu ghi tối thiểu có nhan đề và tác giả, trả về mã định danh.</summary>
+    private async Task<Guid> SaveAsync(HttpClient client, string title, string author)
+    {
+        var marc = JsonSerializer.Serialize(new
+        {
+            leader = "00000nam a2200000 a 4500",
+            controlFields = new[] { new { tag = "008", value = "260101s2024    vm a     b    000 0 vie d" } },
+            dataFields = new object[]
+            {
+                new
+                {
+                    tag = "245",
+                    ind1 = "1",
+                    ind2 = "0",
+                    subfields = new[] { new { code = "a", value = title } }
+                },
+                new
+                {
+                    tag = "100",
+                    ind1 = "1",
+                    ind2 = " ",
+                    subfields = new[] { new { code = "a", value = author } }
+                }
+            }
+        });
+
+        var response = await client.PostAsJsonAsync("/api/cataloging/bibs", new { marcJson = marc, status = "Draft" });
+
+        response.IsSuccessStatusCode.Should().BeTrue(
+            "lưu biểu ghi phải thành công, máy chủ trả về: " + await response.Content.ReadAsStringAsync());
+
+        var payload = await response.Content.ReadFromJsonAsync<ApiResponse<SaveBibResultDto>>(
+            LibraryConnectFactory.JsonOptions);
+
+        return payload!.Data!.Id;
+    }
+
+    [Fact]
     public async Task A_new_record_arrives_prefilled_from_the_template_and_the_default_values()
     {
         var client = await ClientAsync();

@@ -1,3 +1,4 @@
+using LibraryConnect.Application.Common.Extensions;
 using LibraryConnect.Application.Common.Interfaces;
 using LibraryConnect.Application.Common.Text;
 using LibraryConnect.Domain.Common;
@@ -300,15 +301,19 @@ public class BibAuthorityLinker : IBibAuthorityLinker
     {
         var normalised = VietnameseText.NormaliseForComparison(name);
 
-        // The comparison runs in memory over the candidates whose name shares the first word, so a
-        // large authority file does not have to be loaded, and the accent-insensitive match still
-        // happens in .NET where it behaves identically to the rest of the product.
+        // Lọc sơ bộ trong cơ sở dữ liệu rồi so chính xác trong bộ nhớ, để không phải nạp cả tệp
+        // thẩm quyền về chỉ để tìm một tên.
+        //
+        // Bước lọc sơ bộ phải bỏ dấu ở CẢ HAI PHÍA. Trước đây nó so chuỗi còn nguyên dấu, nên biểu
+        // ghi ghi "Pham Viet Hoa" không tìm ra "Phạm Việt Hòa" đã có trong kho: hệ thống tạo thêm
+        // một tác giả nữa, mã sinh ra trùng và cả lượt nhập đổ ở ràng buộc duy nhất. Đúng thứ mà
+        // tệp thẩm quyền sinh ra để tránh.
         var firstWord = name.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? name;
 
-        var probe = firstWord.ToLowerInvariant();
+        var probe = VietnameseText.RemoveDiacritics(firstWord).ToLowerInvariant();
 
         var candidates = await set
-            .Where(entity => entity.Name.ToLower().Contains(probe))
+            .Where(entity => DatabaseFunctions.Unaccent(entity.Name).Contains(probe))
             .Take(200)
             .ToListAsync(ct);
 
@@ -334,7 +339,7 @@ public class BibAuthorityLinker : IBibAuthorityLinker
         {
             Id = Guid.NewGuid(),
             Name = name,
-            Code = VietnameseText.Slugify(name).ToUpperInvariant(),
+            Code = await UniqueCodeAsync(set, VietnameseText.Slugify(name).ToUpperInvariant(), ct),
             IsActive = true
         };
 
@@ -343,6 +348,43 @@ public class BibAuthorityLinker : IBibAuthorityLinker
         onCreated();
 
         return created;
+    }
+
+    /// <summary>
+    /// Mã danh mục chưa ai dùng, sinh từ tên đã bỏ dấu.
+    ///
+    /// Hai tên khác nhau vẫn có thể ra cùng một mã — mã cắt ở 40 ký tự nên hai tên tập thể dài chung
+    /// phần đầu là trùng. Cột mã có ràng buộc duy nhất, mà một lượt nhập gồm hàng nghìn biểu ghi lưu
+    /// chung một giao dịch: để nguyên thì một cái trùng làm hỏng cả tệp đang nhập chứ không phải một
+    /// dòng. Thêm số thứ tự vào đuôi là đủ, và cán bộ vẫn đọc ra mã ấy thuộc về ai.
+    /// </summary>
+    private static async Task<string> UniqueCodeAsync<TEntity>(
+        DbSet<TEntity> set, string baseCode, CancellationToken ct)
+        where TEntity : CatalogEntity
+    {
+        const int maxLength = 40;
+
+        var root = string.IsNullOrWhiteSpace(baseCode) ? "KHONG_TEN" : baseCode;
+        var candidate = root;
+
+        for (var suffix = 2; suffix <= 99; suffix++)
+        {
+            var taken = set.Local.Any(entity => entity.Code == candidate)
+                        || await set.AnyAsync(entity => entity.Code == candidate, ct);
+
+            if (!taken)
+            {
+                return candidate;
+            }
+
+            var tail = $"_{suffix}";
+            var room = Math.Min(root.Length, maxLength - tail.Length);
+            candidate = root[..room].TrimEnd('_') + tail;
+        }
+
+        // Trăm cái trùng một mã là chuyện không xảy ra với dữ liệu thật; đến nước ấy thì lấy mã ngẫu
+        // nhiên còn hơn để cả lượt nhập đổ.
+        return $"{root[..Math.Min(root.Length, 26)].TrimEnd('_')}_{Guid.NewGuid():N}"[..maxLength];
     }
 
     private async Task<Guid?> FindByCodeAsync<TEntity>(DbSet<TEntity> set, string? code, CancellationToken ct)
