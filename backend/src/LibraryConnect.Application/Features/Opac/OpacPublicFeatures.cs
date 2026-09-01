@@ -38,7 +38,12 @@ public class GetOpacHomeQueryHandler : IRequestHandler<GetOpacHomeQuery, OpacHom
         var today = DateOnly.FromDateTime(now.Date);
         var records = OpacQueryBuilder.Published(_db.BibRecords.AsNoTracking());
 
+        // Chỉ nêu tài liệu bạn đọc mượn hoặc đọc được. Biểu ghi mới nhất về mặt thời gian thường
+        // là đầu báo, đầu tạp chí hay biểu ghi vừa thu hoạch về — chưa có bản in nào trong kho,
+        // cũng chưa có bản số. Đưa chúng lên khối đầu trang chủ thì bạn đọc mở trang ra là thấy
+        // ngay một dãy tài liệu không mượn được và hiểu là thư viện trống.
         var newBooks = await records
+            .Where(bib => bib.ItemCount > 0 || bib.DigitalDocumentCount > 0)
             .OrderByDescending(bib => bib.CreatedAt)
             .Take(ShelfSize)
             .Select(OpacQueryBuilder.ToResult())
@@ -88,8 +93,11 @@ public class GetOpacHomeQueryHandler : IRequestHandler<GetOpacHomeQuery, OpacHom
         var statistics = new OpacStatisticsDto(
             await records.CountAsync(ct),
             await _db.Items.AsNoTracking().CountAsync(ct),
+            // Đếm đúng phần khách vãng lai mở được, cùng luật với danh sách ở trang Tài liệu số:
+            // hứa nhiều hơn thứ bạn đọc thấy khi bấm vào là một lời hứa hỏng.
             await _db.DigitalDocuments.AsNoTracking()
-                .CountAsync(document => document.AccessLevel != DigitalAccessLevel.Forbidden, ct),
+                .CountAsync(document => document.AccessLevel != DigitalAccessLevel.Forbidden
+                                        && document.AccessLevel != DigitalAccessLevel.Internal, ct),
             await _db.Readers.AsNoTracking().CountAsync(ct));
 
         return new OpacHomeDto(newBooks, popular, news, banners, links, statistics);

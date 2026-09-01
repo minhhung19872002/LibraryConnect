@@ -559,3 +559,21 @@ export interface RemoteSearchResult {
   totalHits: number;
   fetchedCount: number;
 }
+
+/** Bộ lọc của trang Tài liệu số (IX.4). */
+export interface DigitalFilter {
+  collectionId?: string;
+  formatGroup?: string;
+  accessLevel?: string;
+  fullText?: boolean;
+}
+
+/** Một nhánh của cây bộ sưu tập tài liệu số. */
+export interface DigitalCollectionNode {
+  id: string;
+  code: string;
+  name: string;
+  parentId: string | null;
+  documentCount: number;
+  children: DigitalCollectionNode[];
+}

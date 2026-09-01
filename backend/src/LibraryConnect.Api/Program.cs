@@ -54,6 +54,34 @@ builder.Services
     .AddControllers(options =>
     {
         options.SuppressAsyncSuffixInActionNames = true;
+
+        // Khung nền tự sinh thông báo lỗi bằng tiếng Anh khi thiếu tham số hay sai kiểu dữ liệu, và
+        // câu ấy đi thẳng ra giao diện. Cả sản phẩm phải bằng tiếng Việt nên thay hết ở đây, một
+        // chỗ, thay vì bắt từng controller tự bắt lỗi.
+        var thongBao = options.ModelBindingMessageProvider;
+
+        thongBao.SetValueIsInvalidAccessor(giaTri =>
+            $"Giá trị {giaTri} không hợp lệ.");
+        thongBao.SetValueMustNotBeNullAccessor(_ =>
+            "Trường này không được để trống.");
+        thongBao.SetMissingBindRequiredValueAccessor(truong =>
+            $"Thiếu trường bắt buộc \"{truong}\".");
+        thongBao.SetMissingKeyOrValueAccessor(() =>
+            "Thiếu khóa hoặc giá trị.");
+        thongBao.SetMissingRequestBodyRequiredValueAccessor(() =>
+            "Yêu cầu thiếu phần nội dung.");
+        thongBao.SetAttemptedValueIsInvalidAccessor((giaTri, truong) =>
+            $"Giá trị \"{giaTri}\" không hợp lệ cho trường \"{truong}\".");
+        thongBao.SetNonPropertyAttemptedValueIsInvalidAccessor(giaTri =>
+            $"Giá trị \"{giaTri}\" không hợp lệ.");
+        thongBao.SetUnknownValueIsInvalidAccessor(truong =>
+            $"Giá trị của trường \"{truong}\" không hợp lệ.");
+        thongBao.SetNonPropertyUnknownValueIsInvalidAccessor(() =>
+            "Giá trị gửi lên không hợp lệ.");
+        thongBao.SetValueMustBeANumberAccessor(truong =>
+            $"Trường \"{truong}\" phải là một con số.");
+        thongBao.SetNonPropertyValueMustBeANumberAccessor(() =>
+            "Giá trị gửi lên phải là một con số.");
     })
     .AddJsonOptions(options =>
     {
@@ -69,9 +97,7 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
         var errors = context.ModelState
             .Where(entry => entry.Value?.Errors.Count > 0)
             .SelectMany(entry => entry.Value!.Errors.Select(error =>
-                new ApiError(entry.Key, string.IsNullOrWhiteSpace(error.ErrorMessage)
-                    ? "Giá trị không hợp lệ."
-                    : error.ErrorMessage)))
+                new ApiError(entry.Key, ThongBaoTiengViet(entry.Key, error.ErrorMessage))))
             .ToList();
 
         return new BadRequestObjectResult(ApiResponse.Fail("Dữ liệu không hợp lệ.", errors));
@@ -361,4 +387,47 @@ static async Task InitialiseDatabaseAsync(WebApplication app)
 }
 
 /// <summary>Exposed so the integration test project can spin the API up with WebApplicationFactory.</summary>
+
+/// <summary>
+/// Đổi thông báo lỗi còn sót tiếng Anh của khung nền thành câu tiếng Việt.
+///
+/// Đa số câu đã thay được bằng <c>ModelBindingMessageProvider</c>, nhưng bộ đọc JSON của .NET dựng
+/// câu riêng cho lỗi kiểu dữ liệu (<c>The JSON value could not be converted to…</c>) và không có
+/// chỗ nào cấu hình. Bắt ở đây là chốt chặn cuối trước khi câu ấy ra tới giao diện.
+/// </summary>
+static string ThongBaoTiengViet(string truong, string? thongBao)
+{
+    if (string.IsNullOrWhiteSpace(thongBao))
+    {
+        return "Giá trị không hợp lệ.";
+    }
+
+    var ten = string.IsNullOrWhiteSpace(truong) ? "gửi lên" : $"\"{truong}\"";
+
+    if (thongBao.Contains("JSON value could not be converted", StringComparison.OrdinalIgnoreCase)
+        || thongBao.Contains("could not be converted", StringComparison.OrdinalIgnoreCase))
+    {
+        return $"Giá trị của trường {ten} sai kiểu dữ liệu.";
+    }
+
+    if (thongBao.Contains("is required", StringComparison.OrdinalIgnoreCase))
+    {
+        return $"Thiếu trường bắt buộc {ten}.";
+    }
+
+    if (thongBao.Contains("is invalid", StringComparison.OrdinalIgnoreCase))
+    {
+        return $"Giá trị của trường {ten} không hợp lệ.";
+    }
+
+    if (thongBao.Contains("unexpected character", StringComparison.OrdinalIgnoreCase)
+        || thongBao.Contains("invalid start of a value", StringComparison.OrdinalIgnoreCase))
+    {
+        return "Nội dung gửi lên không phải JSON hợp lệ.";
+    }
+
+    // Câu do chính hệ thống đặt ra thì giữ nguyên; chỉ những câu còn chữ Anh mới phải thay.
+    return thongBao;
+}
+
 public partial class Program { }

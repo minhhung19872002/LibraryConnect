@@ -183,6 +183,22 @@ public class ReaderPortalController : ApiControllerBase
         return Ok(Success(result));
     }
 
+    /// <summary>
+    /// Cây bộ sưu tập tài liệu số, để bạn đọc thu hẹp danh sách theo mảng tài liệu.
+    ///
+    /// Cùng dữ liệu với màn hình quản trị nhưng mở cho khách vãng lai: đây là bộ lọc chính của trang
+    /// Tài liệu số, không có nó thì bạn đọc chỉ còn cách gõ đúng nhan đề mới tìm ra.
+    /// </summary>
+    [HttpGet("digital/collections")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<DigitalCollectionDto>>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<IReadOnlyList<DigitalCollectionDto>>>> DigitalCollections(
+        CancellationToken ct)
+    {
+        var result = await Mediator.Send(new GetDigitalCollectionsQuery(false), ct);
+        return Ok(Success(result));
+    }
+
     /// <summary>Danh sách tài liệu số bạn đọc xem được, kèm bộ lọc đầy đủ.</summary>
     [HttpPost("digital/search")]
     [AllowAnonymous]

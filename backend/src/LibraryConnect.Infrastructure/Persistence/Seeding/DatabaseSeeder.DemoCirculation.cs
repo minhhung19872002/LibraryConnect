@@ -195,22 +195,6 @@ public partial class DatabaseSeeder
     // Bạn đọc
     // ---------------------------------------------------------------------------------------------
 
-    private static readonly string[] DemoFamilyNames =
-    {
-        "Nguyễn", "Trần", "Lê", "Phạm", "Hoàng", "Vũ", "Đặng", "Bùi", "Đỗ", "Ngô"
-    };
-
-    private static readonly string[] DemoMiddleNames =
-    {
-        "Thị Minh", "Văn", "Thị", "Hoàng", "Quang", "Thị Thu", "Đức", "Thị Ngọc", "Hữu", "Thanh"
-    };
-
-    private static readonly string[] DemoGivenNames =
-    {
-        "An", "Bình", "Chi", "Dũng", "Giang", "Hà", "Hùng", "Khánh", "Linh", "Mai",
-        "Nam", "Oanh", "Phúc", "Quân", "Sơn", "Trang", "Tuấn", "Uyên", "Vy", "Yến"
-    };
-
     /// <summary>
     /// 50 bạn đọc trải trên các loại và các khoa, thẻ còn hạn để mượn được ngay.
     ///
@@ -250,10 +234,7 @@ public partial class DatabaseSeeder
                 ? faculties.FirstOrDefault(entity => entity.Id == major.FacultyId)
                 : faculties.Count > 0 ? faculties[index % faculties.Count] : null;
 
-            var name = string.Join(' ',
-                DemoFamilyNames[index % DemoFamilyNames.Length],
-                DemoMiddleNames[(index / 2) % DemoMiddleNames.Length],
-                DemoGivenNames[index % DemoGivenNames.Length]);
+            var name = DemoNames.Person(index);
 
             var enrolmentYear = 2021 + (index % 4);
 

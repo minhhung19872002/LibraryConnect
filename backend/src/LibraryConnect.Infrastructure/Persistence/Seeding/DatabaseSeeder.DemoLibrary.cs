@@ -22,6 +22,7 @@ public partial class DatabaseSeeder
     private sealed record DemoSerial(
         string Title,
         string Issn,
+        string Publisher,
         SerialFrequency Frequency,
         int? DayOfWeek,
         int? DayOfMonth,
@@ -37,12 +38,60 @@ public partial class DatabaseSeeder
     /// </summary>
     private static readonly DemoSerial[] DemoSerials =
     {
-        new("Báo Nhân Dân", "0866-7128", SerialFrequency.Daily, null, null, 6_000),
-        new("Báo Tuổi Trẻ Cuối Tuần", "1859-1477", SerialFrequency.Weekly, 5, null, 12_000),
-        new("Tạp chí Thông tin và Tư liệu", "1859-2929", SerialFrequency.Monthly, null, 15, 45_000),
-        new("Tạp chí Khoa học và Công nghệ Việt Nam", "1859-4794", SerialFrequency.Monthly, null, 5, 50_000),
-        new("Tạp chí Nghiên cứu Kinh tế", "0866-7489", SerialFrequency.Quarterly, null, 20, 80_000)
+        new("Báo Nhân Dân", "0866-7128", "Báo Nhân Dân",
+            SerialFrequency.Daily, null, null, 6_000),
+        new("Báo Tuổi Trẻ Cuối Tuần", "1859-1477", "Báo Tuổi Trẻ",
+            SerialFrequency.Weekly, 5, null, 12_000),
+        new("Tạp chí Thông tin và Tư liệu", "1859-2929", "Cục Thông tin Khoa học và Công nghệ Quốc gia",
+            SerialFrequency.Monthly, null, 15, 45_000),
+        new("Tạp chí Khoa học và Công nghệ Việt Nam", "1859-4794", "Bộ Khoa học và Công nghệ",
+            SerialFrequency.Monthly, null, 5, 50_000),
+        new("Tạp chí Nghiên cứu Kinh tế", "0866-7489", "Viện Kinh tế Việt Nam",
+            SerialFrequency.Quarterly, null, 20, 80_000)
     };
+
+    /// <summary>
+    /// Tìm nhà xuất bản theo tên, chưa có thì thêm vào danh mục.
+    ///
+    /// Cơ quan xuất bản báo và tạp chí thường không trùng với nhà xuất bản sách, nên phải bổ sung
+    /// chứ không dùng lại danh sách sẵn có.
+    /// </summary>
+    private async Task<Guid> NhaXuatBanAsync(string ten, CancellationToken ct)
+    {
+        var co = await _db.Publishers.FirstOrDefaultAsync(row => row.Name == ten, ct);
+
+        if (co is not null)
+        {
+            return co.Id;
+        }
+
+        var moi = new Domain.Entities.Cat.Publisher
+        {
+            Id = Guid.NewGuid(),
+            Code = await MaNhaXuatBanAsync(ten, ct),
+            Name = ten,
+            IsActive = true,
+            CreatedAt = _clock.Now
+        };
+
+        _db.Publishers.Add(moi);
+        await _db.SaveChangesAsync(ct);
+
+        return moi.Id;
+    }
+
+    private async Task<string> MaNhaXuatBanAsync(string ten, CancellationToken ct)
+    {
+        var goc = Application.Common.Text.VietnameseText.Slugify(ten).ToUpperInvariant();
+        var ma = goc;
+
+        for (var lan = 2; await _db.Publishers.AnyAsync(row => row.Code == ma, ct); lan++)
+        {
+            ma = $"{goc}_{lan}";
+        }
+
+        return ma;
+    }
 
     private async Task SeedDemoSerialsAsync(CancellationToken ct)
     {
@@ -87,6 +136,9 @@ public partial class DatabaseSeeder
                 Title = entry.Title,
                 Issn = entry.Issn,
                 LanguageId = language?.Id,
+                // Cơ quan xuất bản là cột đầu tiên bạn đọc nhìn sau tên báo; thiếu nó thì bảng
+                // Báo – Tạp chí trên trang tra cứu có một cột trống trơn suốt cả trang.
+                PublisherId = await NhaXuatBanAsync(entry.Publisher, ct),
                 SupplierId = supplier?.Id,
                 Frequency = entry.Frequency,
                 FrequencyConfig = SerialPatternDto.Write(pattern),

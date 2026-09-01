@@ -6,6 +6,7 @@ import {
   App,
   Button,
   Card,
+  Checkbox,
   Descriptions,
   Empty,
   Input,
@@ -13,6 +14,7 @@ import {
   Modal,
   Pagination,
   Result,
+  Select,
   Skeleton,
   Space,
   Tag,
@@ -22,6 +24,13 @@ import { DownloadOutlined, FileTextOutlined, ReadOutlined } from '@ant-design/ic
 import { readerApi } from '@/api/opac';
 import { useAuthStore } from '@/stores/authStore';
 import type { DigitalDocumentRow } from '@/types/api';
+import type { DigitalFilter } from '@/types/api';
+import {
+  MUC_TRUY_CAP,
+  NHOM_DINH_DANG,
+  dangLoc,
+  traiCayBoSuuTap,
+} from '@/lib/digitalFilters';
 
 const { Paragraph, Title } = Typography;
 
@@ -48,11 +57,23 @@ function sizeOf(bytes: number): string {
 export function DigitalPage() {
   const [keyword, setKeyword] = useState('');
   const [page, setPage] = useState(1);
+  const [filter, setFilter] = useState<DigitalFilter>({});
+
+  const collections = useQuery({
+    queryKey: ['digital-collections'],
+    queryFn: () => readerApi.digitalCollections(),
+    staleTime: 5 * 60 * 1000,
+  });
 
   const { data, isLoading } = useQuery({
-    queryKey: ['digital-documents', page, keyword],
-    queryFn: () => readerApi.digitalDocuments(page, keyword || undefined),
+    queryKey: ['digital-documents', page, keyword, filter],
+    queryFn: () => readerApi.digitalDocuments(page, keyword || undefined, filter),
   });
+
+  const doiLoc = (thayDoi: Partial<DigitalFilter>) => {
+    setFilter((truoc) => ({ ...truoc, ...thayDoi }));
+    setPage(1);
+  };
 
   return (
     <div className="lc-container" style={{ padding: '24px 16px 48px' }}>
@@ -62,16 +83,71 @@ export function DigitalPage() {
           chế phải gửi yêu cầu và chờ thư viện duyệt.
         </Paragraph>
 
-        <Input.Search
-          placeholder="Tìm theo nhan đề tài liệu số"
-          allowClear
-          enterButton
-          style={{ maxWidth: 520, marginBottom: 16 }}
-          onSearch={(value) => {
-            setKeyword(value);
-            setPage(1);
-          }}
-        />
+        <Space direction="vertical" size={12} style={{ width: '100%', marginBottom: 16 }}>
+          <Input.Search
+            placeholder={
+              filter.fullText
+                ? 'Tìm trong nội dung tài liệu'
+                : 'Tìm theo nhan đề tài liệu số'
+            }
+            allowClear
+            enterButton
+            style={{ maxWidth: 520 }}
+            onSearch={(value) => {
+              setKeyword(value);
+              setPage(1);
+            }}
+          />
+
+          <Space size={[8, 8]} wrap>
+            <Select
+              allowClear
+              style={{ minWidth: 240 }}
+              placeholder="Bộ sưu tập"
+              value={filter.collectionId}
+              options={traiCayBoSuuTap(collections.data)}
+              loading={collections.isLoading}
+              onChange={(value) => doiLoc({ collectionId: value })}
+            />
+
+            <Select
+              allowClear
+              style={{ minWidth: 180 }}
+              placeholder="Định dạng"
+              value={filter.formatGroup}
+              options={NHOM_DINH_DANG}
+              onChange={(value) => doiLoc({ formatGroup: value })}
+            />
+
+            <Select
+              allowClear
+              style={{ minWidth: 210 }}
+              placeholder="Mức truy cập"
+              value={filter.accessLevel}
+              options={MUC_TRUY_CAP}
+              onChange={(value) => doiLoc({ accessLevel: value })}
+            />
+
+            <Checkbox
+              checked={filter.fullText ?? false}
+              onChange={(event) => doiLoc({ fullText: event.target.checked })}
+            >
+              Tìm trong nội dung
+            </Checkbox>
+
+            {dangLoc(filter) ? (
+              <Button
+                type="link"
+                onClick={() => {
+                  setFilter({});
+                  setPage(1);
+                }}
+              >
+                Bỏ lọc
+              </Button>
+            ) : null}
+          </Space>
+        </Space>
 
         <List
           loading={isLoading}

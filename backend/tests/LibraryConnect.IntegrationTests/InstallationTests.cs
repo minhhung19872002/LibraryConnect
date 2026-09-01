@@ -142,4 +142,24 @@ public class InstallationTests
         body.Should().Contain("\"success\"").And.Contain("\"data\"")
             .And.Contain("\"message\"").And.Contain("\"errors\"");
     }
+    /// <summary>
+    /// Bộ sưu tập phải có sẵn từ lần cài đầu tiên.
+    ///
+    /// Trang chủ dẫn thẳng vào mục "Duyệt theo bộ sưu tập", nên bảng để trống là bạn đọc bấm vào
+    /// một lối cụt. Đây là danh mục nghiệp vụ chung của thư viện đại học, không phải dữ liệu riêng
+    /// của khách, nên thuộc về bộ gieo dữ liệu nền chứ không phải bộ dữ liệu minh họa.
+    /// </summary>
+    [Fact]
+    public async Task Bo_suu_tap_duoc_gieo_san_tu_lan_cai_dau()
+    {
+        var client = await _factory.CreateAuthenticatedClientAsync(
+            LibraryConnectFactory.AdminUsername, LibraryConnectFactory.AdminPassword);
+
+        var page = await client.GetFromJsonAsync<ApiResponse<PagedResult<Application.Features.Catalogs.CatalogItemDto>>>(
+            "/api/catalogs/collections/items?page=1&pageSize=50", LibraryConnectFactory.JsonOptions);
+
+        page!.Data!.TotalCount.Should().BeGreaterThan(5);
+        page.Data.Items.Should().Contain(item => item.Name == "Giáo trình");
+        page.Data.Items.Should().Contain(item => item.Name == "Luận văn – luận án");
+    }
 }

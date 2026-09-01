@@ -58,6 +58,7 @@ public partial class DatabaseSeeder
         await SeedDemoCourseDocumentsAsync(bibs, ct);
         await SeedDemoSerialsAsync(ct);
         await SeedDemoDigitalAsync(ct);
+        await SeedDemoContentAsync(ct);
 
         // Đếm lại ĐKCB từ kho: danh sách trả về ở trên chỉ gồm bản sẵn sàng cho mượn, còn con số
         // cần báo là tổng số bản đã tạo.

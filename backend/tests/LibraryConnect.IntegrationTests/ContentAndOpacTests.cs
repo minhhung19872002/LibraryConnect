@@ -13,6 +13,9 @@ using LibraryConnect.Application.Features.Opac;
 using LibraryConnect.Application.Features.Public;
 using LibraryConnect.Application.Features.Readers;
 using Microsoft.Extensions.DependencyInjection;
+using QuestPDF.Infrastructure;
+using QuestPDF.Fluent;
+using LibraryConnect.Marc;
 
 namespace LibraryConnect.IntegrationTests;
 
@@ -891,4 +894,101 @@ public class ContentAndOpacTests
 
         return (client, readerId);
     }
+    /// <summary>
+    /// Khối "Sách mới bổ sung" chỉ nêu tài liệu bạn đọc mượn hay đọc được.
+    ///
+    /// Biểu ghi mới nhất về mặt thời gian thường là đầu báo, đầu tạp chí hay biểu ghi vừa thu hoạch
+    /// về — chưa có bản in nào trong kho, cũng chưa có bản số. Đưa chúng lên khối đầu trang chủ thì
+    /// bạn đọc mở trang ra thấy ngay một dãy tài liệu không mượn được, và hiểu là thư viện trống.
+    /// </summary>
+    [Fact]
+    public async Task Sach_moi_bo_sung_khong_neu_bieu_ghi_chua_co_ban_nao()
+    {
+        var staff = await StaffAsync();
+        var marker = Unique();
+
+        // Một biểu ghi đã công bố nhưng chưa có bản in nào — đúng như một đầu tạp chí vừa khai báo
+        // hoặc một biểu ghi vừa thu hoạch về. Tạo sau cùng để nó đứng đầu danh sách mới nhất.
+        await NewBibAsync(staff, $"Sách có bản in {marker}");
+        var khongBan = await BibKhongCoBanAsync(staff, $"Tạp chí chưa có bản in {marker}");
+
+        var anonymous = _factory.CreateClient();
+
+        var home = await ReadAsync<OpacHomeDto>(await anonymous.GetAsync("/api/public/home"));
+
+        home.NewBooks.Should().NotBeEmpty();
+        home.NewBooks.Should().NotContain(book => book.Id == khongBan,
+            "trang chủ không nêu tài liệu chưa có bản in mà cũng chưa có bản số");
+        home.NewBooks.Should().OnlyContain(
+            book => book.ItemCount > 0 || book.DigitalDocumentCount > 0);
+    }
+
+    /// <summary>Biểu ghi đã công bố nhưng không kèm ĐKCB nào.</summary>
+    private static async Task<Guid> BibKhongCoBanAsync(HttpClient staff, string title)
+    {
+        var record = new MarcRecord();
+        record.Leader.RecordType = 'a';
+        record.Leader.BibliographicLevel = 's';
+        record.SetControlField("008", "240115s2024    vm a     b    000 0 vie d");
+        record.AddField("245", '1', '0').AddSubfield('a', title);
+
+        var saved = await ReadAsync<SaveBibResultDto>(await staff.PostAsJsonAsync(
+            "/api/cataloging/bibs",
+            new { marcJson = MarcJson.Serialize(record), status = "Published" },
+            LibraryConnectFactory.JsonOptions));
+
+        return saved.Id;
+    }
+
+    /// <summary>
+    /// Dải số liệu trang chủ đếm đúng phần khách vãng lai mở được.
+    ///
+    /// Khách chưa đăng nhập chỉ thấy tài liệu mức Công khai và mức Hạn chế; tài liệu Nội bộ phải
+    /// đăng nhập mới thấy. Đếm cả tài liệu nội bộ vào con số ngoài trang chủ thì trang chủ hứa
+    /// nhiều hơn thứ bạn đọc thấy khi bấm vào.
+    /// </summary>
+    [Fact]
+    public async Task Dai_so_lieu_dem_dung_so_tai_lieu_so_khach_mo_duoc()
+    {
+        var staff = await StaffAsync();
+
+        // Dựng đúng tình huống gây lệch: một tài liệu chỉ dành cho người đã đăng nhập.
+        await TaiLieuNoiBoAsync(staff, $"Tài liệu nội bộ {Unique()}");
+
+        var anonymous = _factory.CreateClient();
+
+        var home = await ReadAsync<OpacHomeDto>(await anonymous.GetAsync("/api/public/home"));
+
+        var danhSach = await ReadAsync<PagedResult<Application.Features.Digital.DigitalDocumentRowDto>>(
+            await anonymous.GetAsync("/api/reader/digital?page=1&pageSize=1"));
+
+        home.Statistics.DigitalCount.Should().Be(danhSach.TotalCount,
+            "con số trên trang chủ phải khớp với danh sách bạn đọc bấm vào xem");
+    }
+
+    private static async Task TaiLieuNoiBoAsync(HttpClient staff, string title)
+    {
+        using var form = new MultipartFormDataContent();
+        var file = new ByteArrayContent(TepPdfToiThieu());
+
+        file.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/pdf");
+        form.Add(file, "file", $"{Unique()}.pdf");
+        form.Add(new StringContent(title, System.Text.Encoding.UTF8), "title");
+        form.Add(new StringContent("Internal"), "accessLevel");
+
+        var response = await staff.PostAsync("/api/digital/documents/upload", form);
+
+        response.IsSuccessStatusCode.Should().BeTrue(
+            "tải tài liệu số lên thất bại: {0}", await response.Content.ReadAsStringAsync());
+    }
+
+    /// <summary>Tệp PDF hợp lệ nhỏ nhất — chỉ cần qua được bước kiểm chữ ký tệp.</summary>
+    private static byte[] TepPdfToiThieu() =>
+        QuestPDF.Fluent.Document.Create(container =>
+        {
+            container.Page(page =>
+            {
+                page.Content().Text("Tài liệu kiểm thử LibraryConnect");
+            });
+        }).GeneratePdf();
 }

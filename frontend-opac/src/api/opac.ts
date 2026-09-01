@@ -31,6 +31,8 @@ import type {
   SortOrder,
   StaticPage,
   Suggestion,
+  DigitalFilter,
+  DigitalCollectionNode,
 } from '@/types/api';
 
 /** Tham số của một lần tra cứu cơ bản. */
@@ -213,12 +215,21 @@ export const readerApi = {
   emailCart: (bibIds: string[], note?: string) =>
     api.post<string>('/reader/cart/email', { bibIds, note }),
 
-  digitalDocuments: (page = 1, keyword?: string) =>
+  digitalDocuments: (page = 1, keyword?: string, filter?: DigitalFilter) =>
     api.post<PagedResult<DigitalDocumentRow>>('/reader/digital/search', {
       page,
       pageSize: 20,
       ...(keyword ? { keyword } : {}),
+      filter: {
+        ...(filter?.collectionId ? { collectionId: filter.collectionId } : {}),
+        ...(filter?.formatGroup ? { formatGroup: filter.formatGroup } : {}),
+        ...(filter?.accessLevel ? { accessLevel: filter.accessLevel } : {}),
+        ...(filter?.fullText ? { fullText: true } : {}),
+      },
     }),
+
+  digitalCollections: () =>
+    api.get<DigitalCollectionNode[]>('/reader/digital/collections'),
 
   digitalDocument: (id: string) => api.get<DigitalDocumentDetail>(`/reader/digital/${id}`),
 

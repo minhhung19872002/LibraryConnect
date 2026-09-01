@@ -22,6 +22,7 @@ public partial class DatabaseSeeder
         await SeedAsync(_db.CarrierTypes, CarrierTypeSeeds, ct, "vật mang tin");
         await SeedAsync(_db.ReaderTypes, ReaderTypeSeeds, ct, "loại bạn đọc");
         await SeedAsync(_db.ViolationTypes, ViolationTypeSeeds, ct, "loại vi phạm");
+        await SeedAsync(_db.Collections, CollectionSeeds, ct, "bộ sưu tập");
         await SeedClassificationsAsync(ct);
     }
 
@@ -53,6 +54,30 @@ public partial class DatabaseSeeder
 
         _logger.LogInformation("Đã bổ sung {Count} giá trị danh mục {Label}", missing.Count, label);
     }
+
+    // ---------------- Bộ sưu tập ----------------
+
+    /// <summary>
+    /// Bộ sưu tập là lối duyệt quen thuộc nhất của bạn đọc đại học: vào thẳng "Giáo trình" hay
+    /// "Luận văn – luận án" thay vì gõ từ khóa. Trang chủ OPAC dẫn sẵn vào mục này, nên bảng để
+    /// trống là bạn đọc bấm vào một lối cụt.
+    ///
+    /// Danh sách dưới đây là khung chung của thư viện đại học Việt Nam; thư viện sửa lại được từ
+    /// màn hình Danh mục.
+    /// </summary>
+    private static readonly IReadOnlyList<Collection> CollectionSeeds = new List<Collection>
+    {
+        new() { Code = "GIAOTRINH", Name = "Giáo trình", NameEn = "Textbooks", SortOrder = 1 },
+        new() { Code = "THAMKHAO", Name = "Sách tham khảo", NameEn = "Reference books", SortOrder = 2 },
+        new() { Code = "LUANVAN", Name = "Luận văn – luận án", NameEn = "Theses and dissertations", SortOrder = 3 },
+        new() { Code = "DETAI", Name = "Đề tài nghiên cứu khoa học", NameEn = "Research projects", SortOrder = 4 },
+        new() { Code = "BAIGIANG", Name = "Bài giảng điện tử", NameEn = "Lecture materials", SortOrder = 5 },
+        new() { Code = "KYYEU", Name = "Kỷ yếu hội thảo", NameEn = "Conference proceedings", SortOrder = 6 },
+        new() { Code = "TAPCHI", Name = "Báo – tạp chí", NameEn = "Periodicals", SortOrder = 7 },
+        new() { Code = "DIASO", Name = "Tài liệu số", NameEn = "Digital resources", SortOrder = 8 },
+        new() { Code = "DIACHI", Name = "Địa chí – tài liệu địa phương", NameEn = "Local studies", SortOrder = 9 },
+        new() { Code = "NGOAIVAN", Name = "Sách ngoại văn", NameEn = "Foreign language books", SortOrder = 10 }
+    };
 
     // ---------------- Ngôn ngữ (ISO 639-2/B) ----------------
 

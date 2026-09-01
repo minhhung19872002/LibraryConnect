@@ -332,4 +332,51 @@ public class PermissionAndAuditTests
 
         return payload!.Data!;
     }
+    /// <summary>
+    /// Thông báo lỗi phải bằng tiếng Việt, kể cả khi lỗi do khung nền sinh ra.
+    ///
+    /// Hồ sơ mời thầu đòi toàn bộ sản phẩm bằng tiếng Việt. Khi người dùng gửi thiếu một tham số
+    /// hay gửi sai kiểu, ASP.NET tự sinh câu tiếng Anh dạng "The options field is required." và câu
+    /// ấy đi thẳng ra giao diện — không cán bộ thư viện nào đọc được.
+    /// </summary>
+    [Fact]
+    public async Task Thieu_tham_so_bieu_mau_thi_bao_loi_bang_tieng_Viet()
+    {
+        var client = await AdminClientAsync();
+
+        // Gửi tệp mà quên phần tùy chọn — đúng tình huống một máy khách viết thiếu.
+        using var form = new MultipartFormDataContent();
+        var file = new ByteArrayContent(new byte[] { 1, 2, 3 });
+        file.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+        form.Add(file, "file", "thieu-tuy-chon.mrc");
+
+        var response = await client.PostAsync("/api/cataloging/import", form);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+        var text = await response.Content.ReadAsStringAsync();
+
+        text.Should().NotContain("is required");
+        text.Should().NotContain("The value");
+        text.Should().NotContain("could not be converted");
+    }
+
+    [Fact]
+    public async Task Gui_sai_kieu_du_lieu_cung_bao_bang_tieng_Viet()
+    {
+        var client = await AdminClientAsync();
+
+        var response = await client.PostAsync(
+            "/api/cataloging/queue",
+            new StringContent("""{"bibId":"khong-phai-guid","priority":"ba"}""",
+                System.Text.Encoding.UTF8, "application/json"));
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+        var text = await response.Content.ReadAsStringAsync();
+
+        text.Should().NotContain("could not be converted");
+        text.Should().NotContain("is invalid");
+        text.Should().NotContain("JSON value");
+    }
 }
