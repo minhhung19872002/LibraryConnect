@@ -4,10 +4,13 @@ Bảng đối chiếu theo thứ tự các yêu cầu của **Chương V — Yê
 "Mua sắm Phần mềm thư viện số chuẩn kết nối liên Thư viện".
 
 Cột **Đáp ứng** chỉ được đánh **Có** khi chức năng đã chạy được thật trên hệ thống và kiểm chứng
-được bằng thao tác demo hoặc bằng bộ kiểm thử tự động. Những hạng mục thuộc phân hệ chưa bàn giao
-được ghi rõ là **Đang thực hiện** kèm phase dự kiến, không đánh dấu đáp ứng.
+được bằng thao tác demo hoặc bằng bộ kiểm thử tự động. Hạng mục duy nhất chưa bàn giao là Phân hệ XI
+(ứng dụng di động, dòng D13) — ghi rõ **Đợt sau**, không đánh dấu đáp ứng.
 
-Cập nhật lần cuối: sau khi hoàn thành Phase 11.
+Mỗi ô đánh **Có** chỉ đúng màn hình thao tác được và đúng mã kịch bản kiểm thử trong
+`06-kich-ban-kiem-thu.md`; không có ô nào đánh **Có** dựa trên mã nguồn đã viết mà chưa chạy thật.
+
+Cập nhật lần cuối: 02/09/2026, sau đợt hoàn thiện (bảo mật, bộ ánh xạ Dublin Core → MARC 21, ảnh bìa, dữ liệu thật).
 
 ---
 
@@ -21,8 +24,8 @@ Cập nhật lần cuối: sau khi hoàn thành Phase 11.
 | A4 | Tương thích đa trình duyệt (2 phiên bản gần nhất của Chrome, Edge, Firefox, Safari) | **Có** | SPA React 18 + Ant Design 5, build ES2022 | Kiểm thử thủ công trên trình duyệt |
 | A5 | Hỗ trợ vận hành 24/7, có health check | **Có** | `/health` (liveness) và `/health/ready` (readiness: PostgreSQL, Redis) | Kịch bản 2.1.3, 2.1.4 |
 | A6 | Dữ liệu lưu trữ vĩnh viễn, không tự động xóa cứng | **Có** | Xóa mềm (`deleted_at`) trên toàn bộ 113 bảng nghiệp vụ; nhật ký mặc định giữ vĩnh viễn | `docs/02-tai-lieu-quan-tri.md` mục 1.3, 3.3; kịch bản 2.3.13 |
-| A7 | Phân quyền chi tiết đến từng chức năng và từng phạm vi dữ liệu | **Có** (chức năng) / **Có** (khung phạm vi dữ liệu) | 161 mã quyền `MODULE.ĐỐI_TƯỢNG.HÀNH_ĐỘNG`; bảng `sys.user_data_scopes` theo thư viện/kho/dạng tài liệu | Kịch bản 2.3.2 → 2.3.6. Việc gán phạm vi dữ liệu cụ thể mở khi có dữ liệu kho (Phase 6) |
-| A8 | Báo cáo có 3 dạng đầu ra: bảng, đồ họa, xuất tệp PDF/Excel | **Một phần** | Hạ tầng dùng chung đã xong: `ExcelService` (ClosedXML), `PdfReportService` (QuestPDF); áp dụng đầu tiên cho xuất nhật ký | Kịch bản 2.3.14. Các báo cáo nghiệp vụ theo từng phân hệ |
+| A7 | Phân quyền chi tiết đến từng chức năng và từng phạm vi dữ liệu | **Có** | 161 mã quyền `MODULE.ĐỐI_TƯỢNG.HÀNH_ĐỘNG`; phạm vi dữ liệu theo thư viện / kho / dạng tài liệu gán được trên màn hình Người dùng và được máy chủ áp bằng bộ lọc toàn cục của EF Core | Kịch bản 2.3.2 → 2.3.6. Kiểm bằng curl ngoài giao diện: tài khoản chưa đổi mật khẩu tạm bị chặn 403 ở cả sáu endpoint nghiệp vụ thử |
+| A8 | Báo cáo có 3 dạng đầu ra: bảng, đồ họa, xuất tệp PDF/Excel | **Có** | Đủ ba dạng ở mọi báo cáo nghiệp vụ của bảy phân hệ: Bổ sung (4 báo cáo), Ấn phẩm định kỳ (4), Bạn đọc (4), Lưu thông (7), Tài liệu số (4), Tài liệu môn học (3), cùng trang Báo cáo thống kê tổng hợp. Bảng dựng bằng AntD Table, đồ họa bằng Recharts, xuất tệp bằng `ExcelService` (ClosedXML) và `PdfReportService` (QuestPDF) | Kịch bản 2.3.14 và các kịch bản báo cáo của từng phân hệ |
 | A9 | Không hardcode danh mục nghiệp vụ, cấu hình được từ giao diện | **Có** | 20 danh mục nghiệp vụ đều thêm/sửa/xóa/nhập/xuất được tại màn hình Danh mục; toàn bộ giá trị cấu hình nằm trong `sys.system_parameters`, sửa tại màn hình I.3 | Kịch bản I.3.2, I.3.6, DM.1 → DM.12 |
 
 ---
@@ -85,6 +88,8 @@ Cập nhật lần cuối: sau khi hoàn thành Phase 11.
 | MC.3 | Parser và serializer ISO 2709 tự viết, không dùng thư viện ngoài | **Có** | Dự án `LibraryConnect.Marc` không phụ thuộc gói ngoài nào; đọc và ghi đầy đủ đầu biểu, danh mục, vùng dữ liệu và ba ký tự phân cách | Kịch bản MARC.12 → MARC.14 |
 | MC.4 | **Độ dài tính theo byte UTF-8, không theo ký tự** | **Có** | Mọi độ dài trong danh mục và trong đầu biểu đều đếm byte của chuỗi UTF-8; có kiểm thử riêng đối chiếu số byte với số ký tự của chuỗi tiếng Việt | Kịch bản MARC.14; Unit — `Iso2709Tests` |
 | MC.5 | Round-trip ISO 2709 với dữ liệu tiếng Việt có dấu | **Có** | Xuất rồi đọc lại cho ra biểu ghi giống hệt: đầu biểu, thứ tự trường, chỉ thị và mọi dấu tiếng Việt | Kịch bản MARC.13; Unit — `Iso2709Tests`; Integration — `MarcTests` |
+| MC.5b | Kiểm tính hợp lệ bằng **công cụ độc lập**, không dùng bộ đọc của chính sản phẩm | **Có** | Xuất toàn kho ra ISO 2709 và MARCXML rồi cho `pymarc` 5.4 (bộ đọc MARC của giới thư viện, viết độc lập) đọc và đối chiếu luật MARC 21 | **7.675/7.675 biểu ghi hợp lệ, 0 lỗi**; nhan đề khớp 100% giữa hai định dạng; 6.292 nhan đề tiếng Việt có dấu qua vòng xuất–nhập không vỡ. Đây là bằng chứng cho mục 2.4 của E-HSMT |
+| MC.5c | Trường dài quá giới hạn của ISO 2709 không làm hỏng cả lô xuất | **Có** | Trường lặp được thì chia thành nhiều lần lặp, cắt ở chỗ giáp từ nên không đứt giữa chữ tiếng Việt; trường không lặp được thì bỏ đúng biểu ghi ấy và báo lý do trên tiêu đề phản hồi | Unit — `Iso2709LongFieldTests` |
 | MC.6 | Chịu được tệp do phần mềm khác xuất sai | **Có** | Chấp nhận dấu xuống dòng giữa các biểu ghi, dấu BOM, độ dài sai trong đầu biểu; khôi phục được biểu ghi có vị trí sai trong danh mục; báo riêng từng biểu ghi hỏng kèm số thứ tự và vị trí byte | Kịch bản MARC.18, MARC.19 |
 | MC.7 | Đọc biểu ghi MARC-8 từ máy chủ nước ngoài | **Có** | Giải mã bộ Basic Latin và Extended Latin (ANSEL) — đủ cho tiếng Việt và mọi ngôn ngữ chữ Latinh — đưa dấu phụ về sau chữ cái rồi chuẩn hóa NFC. Các bộ chữ Hy Lạp, Kirin, Ả Rập, Hán–Nhật–Hàn bị từ chối kèm hướng dẫn yêu cầu máy chủ nguồn trả UTF-8, thay vì đọc sai thành ký tự vô nghĩa | Kịch bản MARC.20 |
 | MC.8 | Nhận đúng bảng mã kể cả khi biểu ghi khai sai | **Có** | Kiểm tra lại chính dữ liệu thay vì tin đầu biểu vị trí 09: tệp giải mã được theo UTF-8 nghiêm ngặt thì hiểu là UTF-8 | Kịch bản MARC.21 |
@@ -108,9 +113,10 @@ Cập nhật lần cuối: sau khi hoàn thành Phase 11.
 | II.5 | Cập nhật mẫu và trường biên mục | **Có** | Bộ định nghĩa 220 trường MARC 21 (mục B3) và mẫu biên mục theo dạng tài liệu, có mẫu mặc định | Kịch bản BM.3, và mục B3 |
 | II.6 | Nhập dữ liệu từ biểu ghi ISO 2709 | **Có** | Luồng bốn bước: chọn tệp, xem trước kèm đối chiếu trùng, chọn cách xử lý trùng và nơi để bản sách, chạy nền có tiến trình và nhật ký lỗi từng biểu ghi. Bốn cách xử lý trùng và ba cách đối chiếu | Kịch bản BM.21 → BM.27 |
 | II.6b | Xuất ISO 2709 | **Có** | Xuất theo danh sách tick chọn hoặc theo đúng bộ lọc đang xem, ra .mrc hoặc MARCXML | Kịch bản BM.28, BM.29 |
-| II.7 | Nhập dữ liệu từ chuẩn Z39.50 | **Đang thực hiện** | Phase 11 — cần máy khách Z39.50. Bảng `ill.z3950_targets` đã sẵn sàng; trình soạn MARC và đường ghi biểu ghi dùng chung với luồng nhập tệp nên khi có máy khách chỉ cần nối vào |
+| II.7 | Nhập dữ liệu từ chuẩn Z39.50 | **Có** | Máy khách Z39.50 tự viết (BER/ASN.1, Init/Search/Present/Close, truy vấn RPN theo bộ thuộc tính Bib-1); tra song song nhiều máy chủ, đối chiếu với kho của mình rồi mở trình soạn MARC để hiệu đính trước khi lưu. Máy chủ nào từ chối bước Present thì hệ thống tự chuyển sang lối SRU của cùng thư viện | Kịch bản BM.42 → BM.45 và mục B10. Đã tra cứu thật tới Thư viện Quốc hội Mỹ: 11.528 kết quả cho "Nhan đề = Vietnam", lấy về được biểu ghi MARC21 |
 | II.8 | Nhập dữ liệu từ Excel | **Có** | Tệp mẫu có sheet hướng dẫn; hệ thống đoán ánh xạ từ tên cột; ánh xạ sửa được và lưu lại thành hồ sơ dùng lại; một ô nhiều giá trị tách thành nhiều lần lặp của trường; chạy nền, báo lỗi theo số dòng bảng tính | Kịch bản BM.30 → BM.34 |
 | II.9 | Quản lý danh mục (chỉ mục) | **Có** | Danh mục có sẵn ở mục B2; danh mục tự tạo từ trường MARC ở dòng DM.9 | Kịch bản BM.35 → BM.37 |
+| II.11 | Ảnh bìa tài liệu | **Có** | Bốn lớp tra ảnh thật, dừng ở lớp đầu tiên có kết quả: ảnh cán bộ tải lên → trường 856 của biểu ghi → Google Books theo ISBN → Open Library theo ISBN; ảnh tải về kho đối tượng của mình, không dẫn thẳng sang máy chủ nguồn. Biểu ghi không tra được ảnh thì máy chủ dựng bìa SVG từ nhan đề, tác giả, năm và dạng tài liệu, mỗi dạng một tông màu riêng | Unit — `CoverImageBuilderTests`. Đo trên kho thật: 444/7.675 biểu ghi có ISBN (5,8%), nên bìa dựng sẵn là ảnh bìa chính của phần lớn kho |
 | II.10 | Xử lý phích (thẻ mục lục) | **Có** | Trình thiết kế kéo thả theo milimét, khổ chuẩn 12,5 × 7,5 cm hoặc tùy chỉnh, mỗi ô ánh xạ tới trường MARC hoặc trường tổng hợp; bốn loại phích; in hàng loạt ra PDF, xếp nhiều phích trên A4 hoặc mỗi phích một trang | Kịch bản BM.38 → BM.41 |
 
 ---

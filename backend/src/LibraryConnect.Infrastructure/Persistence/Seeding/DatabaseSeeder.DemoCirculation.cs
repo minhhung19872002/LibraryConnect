@@ -202,7 +202,8 @@ public partial class DatabaseSeeder
     /// người demo cần đăng nhập vào trang cá nhân để xem sách đang mượn, mà bắt đổi mật khẩu ngay thì
     /// bước đầu tiên của buổi demo đã là một màn hình đổi mật khẩu.
     /// </summary>
-    private async Task<IReadOnlyList<Reader>> SeedDemoReadersAsync(CancellationToken ct)
+    private async Task<IReadOnlyList<Reader>> SeedDemoReadersAsync(
+        CancellationToken ct, int soLuong = 50)
     {
         var readerTypes = await _db.ReaderTypes
             .OrderBy(type => type.SortOrder)
@@ -213,18 +214,23 @@ public partial class DatabaseSeeder
 
         var today = _clock.Today;
         var passwordHash = _hasher.Hash(DemoReaderPassword);
-        var cardNumbers = await _codes.NextBatchAsync("CARD", 50, ct);
+        var cardNumbers = await _codes.NextBatchAsync("CARD", soLuong, ct);
 
         var readers = new List<Reader>();
 
-        for (var index = 0; index < 50; index++)
+        for (var index = 0; index < soLuong; index++)
         {
-            var typeCode = index switch
+            // Tỉ lệ giữ nguyên dù bộ dữ liệu to hay nhỏ: 70% sinh viên, 10% học viên cao học, 6%
+            // nghiên cứu sinh, 8% giảng viên, còn lại là cán bộ — đúng hình dáng bạn đọc của một
+            // trường đại học.
+            var phanTram = index * 100 / soLuong;
+
+            var typeCode = phanTram switch
             {
-                < 35 => "SV",
-                < 40 => "HV",
-                < 43 => "NCS",
-                < 47 => "GV",
+                < 70 => "SV",
+                < 80 => "HV",
+                < 86 => "NCS",
+                < 94 => "GV",
                 _ => "CBNV"
             };
 
@@ -240,8 +246,8 @@ public partial class DatabaseSeeder
 
             // Thẻ hết hạn và thẻ tạm khóa: mỗi loại một người, để cán bộ demo được cảnh báo ở quầy
             // ghi mượn mà không phải tự tay sửa dữ liệu trước buổi nghiệm thu.
-            var expired = index == 48;
-            var suspended = index == 49;
+            var expired = index == soLuong - 2;
+            var suspended = index == soLuong - 1;
 
             var reader = new Reader
             {
@@ -303,7 +309,11 @@ public partial class DatabaseSeeder
     /// sách lưu thông của thư viện khác mặc định, dữ liệu mẫu cũng đổi theo.
     /// </summary>
     private async Task SeedDemoCirculationAsync(
-        IReadOnlyList<Reader> readers, IReadOnlyList<Item> items, CancellationToken ct)
+        IReadOnlyList<Reader> readers,
+        IReadOnlyList<Item> items,
+        CancellationToken ct,
+        int soLuot = 100,
+        int soThangTraiDeu = 6)
     {
         if (readers.Count == 0 || items.Count == 0)
         {
@@ -318,14 +328,20 @@ public partial class DatabaseSeeder
             .Select(record => new { record.Id, record.DocumentTypeId, record.Title })
             .ToDictionaryAsync(entry => entry.Id, entry => entry, ct);
 
-        var loanCodes = await _codes.NextBatchAsync("LOAN", 100, ct);
-        var fineCodes = await _codes.NextBatchAsync("FINE", 30, ct);
+        var loanCodes = await _codes.NextBatchAsync("LOAN", soLuot, ct);
+        var fineCodes = await _codes.NextBatchAsync("FINE", Math.Max(30, soLuot / 3), ct);
+
+        // Bốn nhóm giữ nguyên tỉ lệ 60/20/15/5 dù bộ dữ liệu to hay nhỏ.
+        var moc1 = soLuot * 60 / 100;
+        var moc2 = soLuot * 80 / 100;
+        var moc3 = soLuot * 95 / 100;
+        var soNgayTrai = soThangTraiDeu * 30;
 
         var loans = new List<Loan>();
         var fines = new List<Fine>();
         var fineIndex = 0;
 
-        for (var index = 0; index < 100; index++)
+        for (var index = 0; index < soLuot; index++)
         {
             var reader = borrowers[index % borrowers.Count];
             var item = items[(index * 7) % items.Count];
@@ -338,13 +354,14 @@ public partial class DatabaseSeeder
 
             // Bốn nhóm: 60 lượt đã trả đúng hạn, 20 lượt trả muộn có phạt, 15 lượt đang mượn còn
             // hạn, 5 lượt đang quá hạn — đúng hình dáng dữ liệu của một thư viện đang hoạt động.
-            var loanDate = index switch
-            {
-                < 60 => today.AddDays(-180 + index * 2),
-                < 80 => today.AddDays(-150 + (index - 60) * 5),
-                < 95 => today.AddDays(-(policy.LoanDays / 2) - (index - 80) % 5),
-                _ => today.AddDays(-policy.LoanDays - 12 - (index - 95) * 3)
-            };
+            var loanDate = index < moc1
+                ? today.AddDays(-soNgayTrai + index * soNgayTrai / Math.Max(1, moc1))
+                : index < moc2
+                    ? today.AddDays(-soNgayTrai * 5 / 6
+                                    + (index - moc1) * soNgayTrai / Math.Max(1, moc2 - moc1))
+                    : index < moc3
+                        ? today.AddDays(-(policy.LoanDays / 2) - (index - moc2) % 5)
+                        : today.AddDays(-policy.LoanDays - 12 - (index - moc3) % 20 * 3);
 
             var dueDate = CirculationRules.DueDate(
                 loanDate, policy.LoanDays, calendar, reader.CardExpireDate);
@@ -368,12 +385,12 @@ public partial class DatabaseSeeder
                 CreatedAt = _clock.Now
             };
 
-            if (index < 80)
+            if (index < moc2)
             {
                 // Trả muộn 3–12 ngày với nhóm thứ hai, đủ vượt số ngày ân hạn để sinh phạt thật.
-                var returnDate = index < 60
+                var returnDate = index < moc1
                     ? dueDate.AddDays(-(index % 4))
-                    : dueDate.AddDays(3 + (index - 60) % 10);
+                    : dueDate.AddDays(3 + (index - moc1) % 10);
 
                 if (returnDate > today)
                 {

@@ -36,6 +36,11 @@ public partial class DatabaseSeeder
         // ---- Biên mục ----
         new(ParameterKeys.MarcCatalogingSource, "CATALOG", "Cấu hình biên mục", "Nguồn biên mục (MARC 040$a)",
             "Giá trị tự động điền vào trường 040$a khi tạo biểu ghi mới.", ParameterDataType.Text, "Thư viện"),
+        new(ParameterKeys.GoogleBooksApiKey, "CATALOG", "Cấu hình biên mục", "Khóa API Google Books",
+            "Dùng khi tra ảnh bìa theo ISBN. Bỏ trống thì Google tính vào hạn mức dùng chung của mọi "
+            + "người và hầu như lúc nào cũng trả lỗi 429 (hết hạn mức) — khi đó hệ thống chỉ còn tra "
+            + "được ở Open Library. Lấy khóa miễn phí tại console.cloud.google.com, bật Books API.",
+            ParameterDataType.Password, "", IsSecret: true),
         new(ParameterKeys.MarcDefaultLanguage, "CATALOG", "Cấu hình biên mục", "Mã ngôn ngữ mặc định",
             "Mã ISO 639-2 điền vào 041$a và 008/35-37.", ParameterDataType.Text, "vie"),
         new(ParameterKeys.MarcDefaultCountry, "CATALOG", "Cấu hình biên mục", "Mã nước xuất bản mặc định",

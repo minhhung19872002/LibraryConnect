@@ -18,6 +18,46 @@ public partial class DatabaseSeeder
     /// <summary>Mật khẩu của mọi tài khoản bạn đọc minh họa — chỉ dùng để demo và kiểm thử.</summary>
     public const string DemoReaderPassword = "BanDoc@2025";
 
+    /// <summary>Ba mức của công tắc dữ liệu minh họa.</summary>
+    private enum CheDoDuLieuMinhHoa
+    {
+        /// <summary>Không nạp gì — dùng khi bàn giao cho thư viện chạy thật.</summary>
+        Tat,
+
+        /// <summary>Bộ mặc định theo mục 8 của đặc tả: 200 biểu ghi, 500 ĐKCB, 50 bạn đọc.</summary>
+        Chuan,
+
+        /// <summary>Bộ trình diễn lớn, dựng thêm trên chính kho dữ liệu thật đang có.</summary>
+        Lon,
+    }
+
+    /// <summary>
+    /// Đọc công tắc <c>LC_SEED_DEMO</c>, chấp nhận cả giá trị đúng/sai lẫn chữ "rich".
+    ///
+    /// Đọc thẳng bằng <c>GetValue&lt;bool&gt;</c> thì giá trị "rich" làm máy chủ đổ ngay lúc khởi
+    /// động với một câu tiếng Anh của khung nền — người cài không hiểu mình gõ sai chỗ nào.
+    /// </summary>
+    private CheDoDuLieuMinhHoa CheDoMinhHoa()
+    {
+        var value = _configuration[DemoSwitch]?.Trim();
+
+        if (string.IsNullOrEmpty(value))
+        {
+            return CheDoDuLieuMinhHoa.Chuan;
+        }
+
+        if (string.Equals(value, "rich", StringComparison.OrdinalIgnoreCase))
+        {
+            return CheDoDuLieuMinhHoa.Lon;
+        }
+
+        return bool.TryParse(value, out var bat) && !bat
+            ? CheDoDuLieuMinhHoa.Tat
+            : value is "0" or "off" or "no"
+                ? CheDoDuLieuMinhHoa.Tat
+                : CheDoDuLieuMinhHoa.Chuan;
+    }
+
     /// <summary>
     /// Bộ dữ liệu minh họa: 200 biểu ghi, 500 ĐKCB, 50 bạn đọc, 100 lượt mượn trả (mục 8).
     ///
@@ -36,7 +76,7 @@ public partial class DatabaseSeeder
     /// </summary>
     private async Task SeedDemoDataAsync(CancellationToken ct)
     {
-        if (!_configuration.GetValue(DemoSwitch, true))
+        if (CheDoMinhHoa() == CheDoDuLieuMinhHoa.Tat)
         {
             _logger.LogInformation("Bỏ qua dữ liệu minh họa theo cấu hình {Switch}", DemoSwitch);
             return;

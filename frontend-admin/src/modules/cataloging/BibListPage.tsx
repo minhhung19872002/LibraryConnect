@@ -13,7 +13,14 @@ import {
   Tooltip,
   Typography,
 } from 'antd';
-import { DeleteOutlined, DownloadOutlined, EditOutlined, EyeOutlined, PlusOutlined } from '@ant-design/icons';
+import {
+  DeleteOutlined,
+  DownloadOutlined,
+  EditOutlined,
+  EyeOutlined,
+  PictureOutlined,
+  PlusOutlined,
+} from '@ant-design/icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { PageHeader } from '@/components/PageHeader';
 import { FilterBar } from '@/components/FilterBar';
@@ -64,6 +71,15 @@ export function BibListPage() {
       message.success('Đã xóa biểu ghi.');
       await queryClient.invalidateQueries({ queryKey: ['bib-records'] });
     },
+    onError: (error: unknown) => message.error(errorMessage(error)),
+  });
+
+  const traAnhBia = useMutation({
+    mutationFn: (maxRecords: number) => catalogingApi.lookupCoversBatch(maxRecords),
+    onSuccess: () =>
+      message.success(
+        'Đã xếp lượt tra ảnh bìa vào hàng đợi. Tiến độ xem ở Biên mục → Nhập xuất dữ liệu.',
+      ),
     onError: (error: unknown) => message.error(errorMessage(error)),
   });
 
@@ -138,6 +154,27 @@ export function BibListPage() {
                 onClick={() => exportRecords.mutate('marcxml')}
               >
                 MARCXML
+              </Button>
+            </Can>
+            <Can permission={PERMISSIONS.cataloging.bibUpdate}>
+              <Button
+                icon={<PictureOutlined />}
+                loading={traAnhBia.isPending}
+                onClick={() =>
+                  modal.confirm({
+                    title: 'Tra ảnh bìa hàng loạt?',
+                    content:
+                      'Hệ thống hỏi Google Books và Open Library theo ISBN của những biểu ghi chưa '
+                      + 'có ảnh, tối đa 500 biểu ghi mỗi lượt. Mỗi lượt gọi cách nhau hơn một giây '
+                      + 'để tôn trọng giới hạn của nguồn, nên việc chạy ở tiến trình nền; tiến độ '
+                      + 'xem ở Nhập xuất dữ liệu. Ảnh cán bộ tự tải lên không bị ghi đè.',
+                    okText: 'Bắt đầu tra',
+                    cancelText: 'Hủy',
+                    onOk: () => traAnhBia.mutateAsync(500),
+                  })
+                }
+              >
+                Tra ảnh bìa
               </Button>
             </Can>
             <Can permission={PERMISSIONS.cataloging.bibCreate}>

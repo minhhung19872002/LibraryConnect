@@ -132,3 +132,33 @@ Cột "Đổi được không" cho biết khách hàng có tự đổi được 
 | HT.2 | Biểu ghi có `856$u` nhưng không có tệp trong kho mình | Trang chi tiết OPAC hiện liên kết ngoài, đếm vào thẻ "Tài liệu số"; **không** tải tệp về | Mình được phép mô tả tài liệu của thư viện bạn, không đương nhiên được phép giữ bản sao. Trước đây thẻ hiện "(0)" trong khi bản toàn văn chỉ cách một cú bấm | Không |
 | HT.2 | Ký tự xuống dòng trong giá trị trường MARC | Gộp mọi khoảng trắng thành một dấu cách khi dựng biểu ghi từ Dublin Core | Một trường MARC là một dòng chữ liền. Giữ ký tự xuống dòng thì nhan đề hiện vỡ, so trùng theo nhan đề trượt, và cùng một biểu ghi xuất ra ISO 2709 với MARCXML lại khác nhau vì chuẩn XML bắt đổi CR LF thành LF | Không |
 
+---
+
+## Đợt hoàn thiện — Ưu tiên 3: Ảnh bìa
+
+Số đo quyết định mọi lựa chọn dưới đây: **444 trên 7.675 biểu ghi có ISBN (5,8%)**. Tra thật cả 444
+biểu ghi ấy ở hai nguồn ngoài chỉ ra được **3 ảnh**. Nghĩa là với **99,96% kho**, bìa dựng sẵn *là*
+ảnh bìa chính thức, không phải thứ dùng tạm.
+
+| Phase | Vấn đề | Phương án đã chọn | Lý do | Đổi được không |
+|---|---|---|---|---|
+| HT.3 | Dựng bìa ở đâu | Máy chủ dựng ra SVG, đặt dấu bản (ETag) và cho trình duyệt giữ một tuần | Bản cũ dựng bằng JavaScript ở trình duyệt: một trang kết quả có hai chục ô bìa nên là hai chục lần tính toán thừa mỗi lần tải trang, mà ảnh ấy lại không đặt được bộ nhớ đệm. Kiểm thật: gọi lại kèm ETag trả về 304 | Không |
+| HT.3 | Định dạng ảnh bìa | SVG, không phải ảnh điểm ảnh | Nét ở mọi kích thước, nặng khoảng 1 KB (ảnh PNG cùng nội dung nặng gấp hàng chục lần), và dựng lại được y hệt nên đặt được bộ nhớ đệm dài hạn | Không |
+| HT.3 | Màu bìa lấy theo gì | Theo **dạng tài liệu**, mỗi dạng một tông riêng | Bản cũ lấy màu theo nhan đề nên màu ngẫu nhiên, không mang thông tin gì. Theo dạng tài liệu thì bạn đọc lướt trang kết quả là nhận ra ngay đâu là luận văn, đâu là giáo trình, không phải đọc nhãn | Không |
+| HT.3 | Ngắt dòng nhan đề | Cắt ở chỗ giáp từ, tự thu cỡ chữ theo số dòng, quá dài thì kết bằng dấu ba chấm | Cắt theo số ký tự thì nhan đề tiếng Việt đứt giữa từ và đọc thành chuỗi vô nghĩa | Không |
+| HT.3 | Thứ tự bốn lớp tra ảnh thật | Ảnh cán bộ tải lên → trường 856 của biểu ghi → Google Books → Open Library | Cán bộ cầm cuốn sách thật trong tay, nguồn ngoài chỉ đoán theo ISBN — nên ảnh cán bộ tải lên **không bao giờ** bị lượt tra tự động ghi đè. Google Books trước vì phủ sách tiếng Việt tốt hơn | Không |
+| HT.3 | Ảnh tra được thì giữ ở đâu | Tải về kho đối tượng MinIO của mình | Dẫn thẳng sang máy chủ nguồn thì họ đổi địa chỉ hay tắt dịch vụ là cả trang tra cứu đầy ô ảnh hỏng, mà bạn đọc không hiểu vì sao | Không |
+| HT.3 | Nhận ra ảnh "chưa có bìa" của nguồn | Bỏ mọi tệp nhỏ hơn 2 KB | Open Library trả HTTP 200 kèm một ảnh trắng 1×1 cho ISBN nó không có. Tin vào mã trạng thái là nhận về một kho toàn ảnh trắng | Không |
+| HT.3 | Khóa API Google Books | Tham số `CATALOG.GOOGLE_BOOKS_API_KEY`, bỏ trống thì vẫn gọi nhưng ghi cảnh báo rõ khi bị từ chối | Gọi không kèm khóa thì Google tính vào hạn mức dùng chung của mọi người dùng ẩn danh. Đo thật trong đợt này: **HTTP 429 "Quota exceeded"** — nghĩa là lớp Google Books chỉ thật sự chạy khi thư viện khai khóa riêng. Im lặng trả "không tìm thấy" thì không ai biết mà đi khai khóa | Có — Tham số hệ thống → Cấu hình biên mục |
+| HT.3 | Luật "không trỏ thẳng vào API" có ngoại lệ nào không | Có đúng một: nhóm `/api/public/` | Nhóm ấy không đòi đăng nhập, nên đặt vào `src` của thẻ ảnh là cách dùng đúng — không cần mã đăng nhập mà lại để trình duyệt tự đặt bộ nhớ đệm. Tải qua lớp gọi API rồi dựng địa chỉ tạm thì mất hẳn bộ nhớ đệm, mà một trang danh sách có hai chục ảnh bìa | Không |
+
+## Đợt hoàn thiện — Ưu tiên 4: Bộ dữ liệu trình diễn lớn
+
+| Phase | Vấn đề | Phương án đã chọn | Lý do | Đổi được không |
+|---|---|---|---|---|
+| HT.4 | Công tắc `LC_SEED_DEMO` nhận thêm giá trị thứ ba | Ba mức: `false` (không nạp gì) · để trống hoặc `true` (bộ mặc định) · `rich` (bộ trình diễn lớn) | Đọc thẳng bằng `GetValue<bool>` thì giá trị `rich` làm máy chủ đổ ngay lúc khởi động với một câu tiếng Anh của khung nền — người cài không hiểu mình gõ sai chỗ nào | Có — biến `LC_SEED_DEMO` |
+| HT.4 | Bộ lớn chạy khi nào | Khi công tắc là `rich` **và** chưa nạp lần nào (dấu `SYS.DEMO_RICH_APPLIED`) | Khác bộ mặc định ở chỗ nó **phải chạy được trên kho đã có dữ liệu**: nó sinh ĐKCB cho chính những biểu ghi thu hoạch thật, chứ không dựng biểu ghi giả. Nên không dùng được điều kiện "kho còn trống" | Không |
+| HT.4 | Chọn biểu ghi nào để sinh ĐKCB | 60% đầu của mỗi trăm biểu ghi, xếp theo số kiểm soát | Sinh cố định chứ không ngẫu nhiên: hai lần nạp trên hai máy phải ra cùng một bộ dữ liệu thì kịch bản nghiệm thu mới viết một lần dùng được ở mọi nơi. 40% còn lại không có bản in — đúng hình dáng một thư viện số, nơi phần lớn luận văn chỉ có bản điện tử | Không — sửa hằng `TiLeCoBanIn` |
+| HT.4 | Sinh ĐKCB bằng đường nào | Qua đúng `ItemCreator` mà cán bộ bổ sung dùng | Không có đường tắt riêng cho dữ liệu trình diễn: mã vạch, số đăng ký cá biệt và ký hiệu xếp giá phải theo đúng quy tắc đang khai trong tham số, nếu không thì dữ liệu demo không chứng minh được gì về quy tắc ấy | Không |
+| HT.4 | Tỉ lệ bạn đọc theo loại khi bộ dữ liệu to lên | Tính theo phần trăm (70% sinh viên, 10% học viên, 6% NCS, 8% giảng viên, còn lại cán bộ) thay vì mốc cứng | Mốc cứng viết cho 50 bạn đọc thì với 300 bạn đọc sẽ ra 265 sinh viên và đúng 5 người cho bốn loại còn lại | Không |
+

@@ -15,6 +15,7 @@ import type {
   BibDetail,
   BibListItem,
   BibVersion,
+  CoverLookupOutcome,
   CreateItemsResult,
   Item,
   MarcDiffLine,
@@ -107,6 +108,30 @@ export const catalogingApi = {
 
   updateItem: (itemId: string, payload: Partial<Item>) =>
     api.put<null>(`/cataloging/items/${itemId}`, payload),
+
+  // ---- Ảnh bìa ----------------------------------------------------------------------------
+
+  /** Địa chỉ ảnh bìa để hiện: ảnh thật nếu có, còn lại là bìa máy chủ dựng từ dữ liệu thư mục. */
+  coverUrl: (bibId: string, coverImageUrl?: string | null) =>
+    coverImageUrl || `/api/public/covers/${bibId}.svg`,
+
+  /** Tra ảnh bìa thật ở nguồn ngoài cho một biểu ghi. */
+  lookupCover: (id: string) =>
+    api.post<CoverLookupOutcome>(`/cataloging/bibs/${id}/cover/lookup`),
+
+  /** Cán bộ tự tải ảnh bìa lên; ảnh này không bao giờ bị lượt tra tự động ghi đè. */
+  async uploadCover(id: string, file: File): Promise<string> {
+    const form = new FormData();
+    form.append('file', file);
+
+    return api.post<string>(`/cataloging/bibs/${id}/cover`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+
+  /** Mở một lượt tra ảnh bìa hàng loạt cho biểu ghi chưa có ảnh. */
+  lookupCoversBatch: (maxRecords: number) =>
+    api.post<string>(`/cataloging/covers/lookup-batch?maxRecords=${maxRecords}`),
 
   deleteItem: (itemId: string, reason: string) =>
     api.delete<null>(`/cataloging/items/${itemId}`, { data: { reason } }),

@@ -191,6 +191,7 @@ public class GetBibRecordQueryHandler : IRequestHandler<GetBibRecordQuery, BibDe
             LoanCount = bib.LoanCount,
             ViewCount = bib.ViewCount,
             CoverImageUrl = bib.CoverImageUrl,
+            CoverImageSource = bib.CoverImageSource,
             CreatedAt = bib.CreatedAt,
             UpdatedAt = bib.UpdatedAt,
             CreatedByName = Name(bib.CreatedBy),

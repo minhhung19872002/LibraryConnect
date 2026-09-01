@@ -3,34 +3,22 @@ import { App, Button, Card, Empty, List, Space, Tag, Tooltip } from 'antd';
 import { FileTextOutlined, ShoppingCartOutlined } from '@ant-design/icons';
 import { useCartStore } from '@/stores/cartStore';
 import type { SearchResult } from '@/types/api';
-import { coverPlaceholder } from '@/lib/cover';
 
 /**
  * Ảnh bìa của tài liệu.
  *
- * Phần lớn biểu ghi của một thư viện Việt Nam không có ảnh bìa — sách cũ, luận văn, đề tài nghiên
- * cứu đều không có ảnh trên mạng. Thay vì để một ô xám trống, dựng bìa mang nhan đề và tác giả:
- * trang kết quả đọc được, và bạn đọc nhớ mặt được cuốn mình vừa xem khi quay lại danh sách.
+ * Đo trên kho thật: 444 trên 7.675 biểu ghi có ISBN (5,8%). Không có ISBN thì không nguồn nào tra ra
+ * ảnh bìa, mà luận văn, đề tài nghiên cứu và bài giảng điện tử — hơn hai phần ba kho — thì không bao
+ * giờ có ảnh trên mạng. Nghĩa là với phần lớn biểu ghi, bìa dựng sẵn **là** ảnh bìa chính thức.
+ *
+ * Bìa ấy do máy chủ dựng chứ không phải trình duyệt: một trang kết quả có hai chục ô bìa, dựng lại
+ * bằng JavaScript mỗi lần tải trang là hai chục lần tính toán thừa mà lại không đặt được bộ nhớ đệm.
+ * Máy chủ trả SVG kèm dấu bản, trình duyệt giữ lại cả tuần.
  */
 export function Cover({ item }: { item: SearchResult }) {
-  if (item.coverImageUrl) {
-    return <img className="lc-cover" src={item.coverImageUrl} alt={item.title} loading="lazy" />;
-  }
+  const src = item.coverImageUrl || `/api/public/covers/${item.id}.svg`;
 
-  const bia = coverPlaceholder(item);
-
-  return (
-    <div
-      className="lc-cover lc-cover--generated"
-      style={{ background: bia.background }}
-      role="img"
-      aria-label={`Bìa thay thế của tài liệu ${bia.title}`}
-    >
-      <div className="lc-cover__title">{bia.title}</div>
-      {bia.author && <div className="lc-cover__author">{bia.author}</div>}
-      <div className="lc-cover__label">{bia.label}</div>
-    </div>
-  );
+  return <img className="lc-cover" src={src} alt={`Bìa của ${item.title}`} loading="lazy" />;
 }
 
 /**

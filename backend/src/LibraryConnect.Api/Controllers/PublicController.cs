@@ -1,4 +1,5 @@
 using LibraryConnect.Application.Common.Models;
+using LibraryConnect.Application.Features.Cataloging;
 using LibraryConnect.Application.Features.Cms;
 using LibraryConnect.Application.Features.Opac;
 using LibraryConnect.Application.Features.Public;
@@ -162,6 +163,31 @@ public class PublicController : ApiControllerBase
     {
         var result = await Mediator.Send(query, ct);
         return Ok(Success(result));
+    }
+
+    /// <summary>
+    /// Ảnh bìa dựng sẵn cho một biểu ghi chưa có ảnh thật.
+    ///
+    /// Trả về SVG dựng từ chính dữ liệu thư mục: nhan đề, tác giả, năm, dạng tài liệu. Ảnh dựng lại
+    /// được y hệt nên đặt bộ nhớ đệm dài hạn ở trình duyệt — trang kết quả tra cứu có hai chục ô bìa
+    /// nên đây là chỗ đáng tiết kiệm nhất.
+    /// </summary>
+    [HttpGet("covers/{bibId:guid}.svg")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Cover(Guid bibId, CancellationToken ct)
+    {
+        var cover = await Mediator.Send(new GetBibCoverQuery(bibId), ct);
+
+        if (Request.Headers.IfNoneMatch.Contains(cover.ETag))
+        {
+            return StatusCode(StatusCodes.Status304NotModified);
+        }
+
+        Response.Headers.ETag = cover.ETag;
+        Response.Headers.CacheControl = "public, max-age=604800";
+
+        return Content(cover.Svg, "image/svg+xml; charset=utf-8");
     }
 
     /// <summary>Ảnh dùng trong nội dung: logo, banner, ảnh tin, ảnh album.</summary>

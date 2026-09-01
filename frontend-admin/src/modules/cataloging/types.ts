@@ -66,6 +66,8 @@ export interface BibDetail extends BibListItem {
   keywords: string[];
   classifications: BibClassificationLink[];
   collectionIds: string[];
+  coverImageUrl?: string | null;
+  coverImageSource?: string | null;
   versionCount: number;
   loanCount: number;
   viewCount: number;
@@ -241,3 +243,20 @@ export const ACQUISITION_TYPE_LABELS: Record<AcquisitionType, string> = {
   Transfer: 'Điều chuyển',
   Other: 'Khác',
 };
+
+/** Kết quả tra ảnh bìa ở nguồn ngoài. */
+export interface CoverLookupOutcome {
+  found: boolean;
+  source?: string | null;
+  url?: string | null;
+  reason?: string | null;
+}
+
+/** Tên nguồn ảnh bìa hiện cho cán bộ đọc. */
+export const COVER_SOURCE_LABELS: Record<string, string> = {
+  Manual: 'Cán bộ tải lên',
+  Marc856: 'Trường 856 của biểu ghi',
+  GoogleBooks: 'Google Books',
+  OpenLibrary: 'Open Library',
+};
+

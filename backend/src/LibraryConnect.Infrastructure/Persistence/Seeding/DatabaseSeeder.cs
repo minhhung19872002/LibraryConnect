@@ -75,6 +75,7 @@ public partial class DatabaseSeeder
         await SeedContentAsync(ct);
         await SeedCoursesAsync(ct);
         await SeedDemoDataAsync(ct);
+        await SeedDemoRichAsync(ct);
 
         await CanhBaoThieuMaCoQuanAsync(ct);
 

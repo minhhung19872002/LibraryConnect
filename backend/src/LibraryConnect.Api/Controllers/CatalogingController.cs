@@ -382,6 +382,69 @@ public class CatalogingController : ApiControllerBase
     }
 
     // ---------------------------------------------------------------
+    // Ảnh bìa
+    // ---------------------------------------------------------------
+
+    /// <summary>
+    /// Tra ảnh bìa thật cho một biểu ghi ở nguồn ngoài.
+    /// </summary>
+    /// <remarks>
+    /// Bốn lớp, dừng ở lớp đầu tiên có kết quả: ảnh cán bộ đã tải lên → địa chỉ ảnh trong trường
+    /// 856 → Google Books theo ISBN → Open Library theo ISBN. Không lớp nào có thì biểu ghi vẫn
+    /// hiện bìa dựng sẵn từ dữ liệu thư mục.
+    /// </remarks>
+    [HttpPost("bibs/{id:guid}/cover/lookup")]
+    [RequirePermission(PermissionCodes.CatalogBibUpdate)]
+    [ProducesResponseType(typeof(ApiResponse<CoverLookupOutcome>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<CoverLookupOutcome>>> LookupCover(
+        Guid id, CancellationToken ct)
+    {
+        var result = await Mediator.Send(new LookupBibCoverCommand(id), ct);
+
+        return Ok(Success(result, result.Found
+            ? $"Đã lấy được ảnh bìa từ {result.Source}."
+            : result.Reason ?? "Không tìm thấy ảnh bìa."));
+    }
+
+    /// <summary>Cán bộ tự tải ảnh bìa lên. Ảnh này không bao giờ bị lượt tra tự động ghi đè.</summary>
+    [HttpPost("bibs/{id:guid}/cover")]
+    [RequirePermission(PermissionCodes.CatalogBibUpdate)]
+    [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+    [RequestSizeLimit(8 * 1024 * 1024)]
+    public async Task<ActionResult<ApiResponse<string>>> UploadCover(
+        Guid id, IFormFile file, CancellationToken ct)
+    {
+        if (file is null || file.Length == 0)
+        {
+            return BadRequest(ApiResponse.Fail("Chưa chọn tệp ảnh."));
+        }
+
+        using var buffer = new MemoryStream();
+        await file.CopyToAsync(buffer, ct);
+
+        var url = await Mediator.Send(
+            new UploadBibCoverCommand(id, buffer.ToArray(), file.FileName, file.ContentType), ct);
+
+        return Ok(Success(url, "Đã cập nhật ảnh bìa."));
+    }
+
+    /// <summary>Mở một lượt tra ảnh bìa hàng loạt cho những biểu ghi chưa có ảnh.</summary>
+    [HttpPost("covers/lookup-batch")]
+    [RequirePermission(PermissionCodes.CatalogBibUpdate)]
+    [ProducesResponseType(typeof(ApiResponse<Guid>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<ApiResponse<Guid>>> LookupCoversBatch(
+        [FromQuery] int maxRecords, CancellationToken ct)
+    {
+        var jobId = await Mediator.Send(
+            new StartCoverLookupCommand(maxRecords <= 0 ? 500 : maxRecords), ct);
+
+        return Ok(Success(jobId,
+            "Đã xếp lượt tra ảnh bìa vào hàng đợi. Tiến độ xem ở phần Nhập xuất dữ liệu."));
+    }
+
+    // ---------------------------------------------------------------
     // Danh mục tự tạo từ trường MARC (II.9)
     // ---------------------------------------------------------------
 

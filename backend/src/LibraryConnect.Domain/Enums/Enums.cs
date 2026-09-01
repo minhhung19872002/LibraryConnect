@@ -91,7 +91,7 @@ public enum DataScopeType { Library, Warehouse, DocumentType }
 
 public enum ParameterDataType { Text, Number, Boolean, Date, Json, File, Password, Cron }
 
-public enum ImportExportJobType { Iso2709In, Iso2709Out, ExcelIn, ExcelOut, MarcXmlIn, MarcXmlOut, ReaderExcelIn, DigitalBulkIn, FullSystemExport }
+public enum ImportExportJobType { Iso2709In, Iso2709Out, ExcelIn, ExcelOut, MarcXmlIn, MarcXmlOut, ReaderExcelIn, DigitalBulkIn, FullSystemExport, CoverLookup }
 
 public enum JobStatus { Pending, Running, Completed, Failed, Cancelled }
 

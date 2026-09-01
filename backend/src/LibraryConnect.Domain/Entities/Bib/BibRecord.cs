@@ -63,6 +63,14 @@ public class BibRecord : BaseEntity
     public string? CoverImageUrl { get; set; }
 
     /// <summary>
+    /// Ảnh bìa lấy từ đâu ra: Manual, Marc856, GoogleBooks, OpenLibrary.
+    ///
+    /// Cần biết để hai việc: ảnh cán bộ tự tải lên thì lượt tra tự động không được ghi đè, và khi
+    /// một nguồn ngoài hóa ra trả ảnh sai thì gỡ lại được đúng những ảnh lấy từ nguồn ấy.
+    /// </summary>
+    public string? CoverImageSource { get; set; }
+
+    /// <summary>
     /// Lý do xóa, bắt buộc nhập khi xóa biểu ghi (II.3).
     ///
     /// Soft deletion keeps the row forever, so the reason has to live beside it: a librarian looking

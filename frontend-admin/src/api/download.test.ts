@@ -27,6 +27,12 @@ function allSourceFiles(directory: string): string[] {
  *
  * Chặn bằng phép thử quét mã nguồn vì viết `href` nhanh hơn viết một lượt tải có xác thực — lỗi này
  * rất dễ quay lại.
+ *
+ * **Một ngoại lệ, hẹp và có lý do:** nhóm `/api/public/` không đòi đăng nhập — đó là nhóm endpoint
+ * dành cho trang tra cứu công khai và cho ảnh (logo, ảnh bìa, ảnh tin). Đặt địa chỉ ấy vào `src` của
+ * thẻ ảnh là cách dùng đúng: không cần mã đăng nhập, mà lại để trình duyệt tự đặt bộ nhớ đệm. Tải
+ * qua lớp gọi API rồi dựng địa chỉ tạm thì mất hẳn bộ nhớ đệm, mà một trang danh sách có hai chục
+ * ảnh bìa.
  */
 describe('Không có chỗ nào trỏ thẳng vào API ngoài lớp gọi API', () => {
   it('mọi lượt gọi đều đi qua lớp gọi API có mã đăng nhập', () => {
@@ -41,7 +47,10 @@ describe('Không có chỗ nào trỏ thẳng vào API ngoài lớp gọi API', 
       for (const [index, line] of readFileSync(file, 'utf8').split('\n').entries()) {
         const laChuThich = /^\s*(?:\/\/|\*|\/\*)/.test(line);
 
-        if (!laChuThich && /["'`]\/api\//.test(line)) {
+        // Nhóm công khai không đòi đăng nhập nên đặt thẳng vào thẻ ảnh được — xem chú thích trên.
+        const congKhai = /["'`]\/api\/public\//.test(line);
+
+        if (!laChuThich && !congKhai && /["'`]\/api\//.test(line)) {
           viPham.push(`${file.slice(sourceRoot.length + 1)}:${index + 1} — ${line.trim()}`);
         }
       }

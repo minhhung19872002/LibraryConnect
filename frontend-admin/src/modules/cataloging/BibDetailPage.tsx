@@ -22,6 +22,7 @@ import { errorMessage } from '@/api/formErrors';
 import { formatRecordAsText } from '@/modules/marc/marcRecord';
 import { catalogingApi, parseMarc } from './api';
 import { ItemsPanel } from './ItemsPanel';
+import { CoverPanel } from './CoverPanel';
 import {
   BIB_SOURCE_LABELS,
   RECORD_STATUS_LABELS,
@@ -106,6 +107,15 @@ export function BibDetailPage() {
             label: 'Thông tin thư mục',
             children: (
               <Space direction="vertical" size={16} style={{ width: '100%' }}>
+                <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+                  <div style={{ width: 232, flex: 'none' }}>
+                    <CoverPanel
+                      bibId={record.id}
+                      coverImageUrl={record.coverImageUrl}
+                      coverImageSource={record.coverImageSource}
+                    />
+                  </div>
+                  <div style={{ flex: '1 1 420px', minWidth: 0 }}>
                 <Card size="small" title="Mô tả theo ISBD">
                   <Descriptions column={1} size="small" bordered>
                     {record.isbd.map((area) => (
@@ -115,6 +125,8 @@ export function BibDetailPage() {
                     ))}
                   </Descriptions>
                 </Card>
+                  </div>
+                </div>
 
                 <Card size="small" title="Điểm truy cập">
                   <Descriptions column={{ xs: 1, md: 2 }} size="small">

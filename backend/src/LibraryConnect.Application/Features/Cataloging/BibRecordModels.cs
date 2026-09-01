@@ -24,6 +24,9 @@ public class BibListItemDto
     public int AvailableItemCount { get; set; }
     public int DigitalDocumentCount { get; set; }
     public string? CoverImageUrl { get; set; }
+
+    /// <summary>Ảnh bìa lấy từ đâu: Manual, Marc856, GoogleBooks, OpenLibrary.</summary>
+    public string? CoverImageSource { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset? UpdatedAt { get; set; }
 }

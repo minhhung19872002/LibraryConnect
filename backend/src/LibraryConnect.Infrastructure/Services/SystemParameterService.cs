@@ -187,6 +187,15 @@ public static class ParameterKeys
 
     /// <summary>Written to MARC 040$a as the cataloguing source. Never hardcoded.</summary>
     public const string MarcCatalogingSource = "CATALOG.MARC_040A";
+
+    /// <summary>
+    /// Khóa API Google Books, dùng khi tra ảnh bìa theo ISBN.
+    ///
+    /// Gọi không kèm khóa thì Google tính vào một hạn mức dùng chung cho mọi người, và hạn mức ấy
+    /// gần như lúc nào cũng đã cạn — đo thật: HTTP 429 "Quota exceeded". Nghĩa là lớp Google Books
+    /// chỉ thật sự chạy khi thư viện khai khóa riêng của mình.
+    /// </summary>
+    public const string GoogleBooksApiKey = "CATALOG.GOOGLE_BOOKS_API_KEY";
     public const string MarcDefaultLanguage = "CATALOG.DEFAULT_LANGUAGE";
     public const string MarcDefaultCountry = "CATALOG.DEFAULT_COUNTRY";
     public const string MarcControlNumberPrefix = "CATALOG.CONTROL_NUMBER_PREFIX";
