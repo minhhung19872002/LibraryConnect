@@ -40,27 +40,54 @@ public static class CoverImageBuilder
     private const int SoDongToiDa = 6;
 
     /// <summary>
-    /// Tông màu theo dạng tài liệu.
+    /// Tông màu theo dạng tài liệu, trải đều trên vòng tròn màu.
     ///
-    /// Nền tối, chữ trắng: tỉ lệ tương phản đều trên 7:1, vượt mức AA của WCAG cho cả cỡ chữ nhỏ.
+    /// Bảng màu đầu tiên chọn toàn tông tối cùng độ sáng và dồn cả chín dạng vào vùng xanh lam – tím:
+    /// đúng là mỗi dạng một mã màu khác nhau, nhưng nhìn cả trang kết quả chỉ thấy một dải navy. Sách
+    /// cách bài giảng 19 độ sắc, luận văn cách luận án đúng **3 độ** — mắt không phân biệt được.
+    ///
+    /// Bảng này trải chín dạng có thật trong kho ra khắp vòng tròn màu, mỗi cặp cách nhau ít nhất 25
+    /// độ sắc: lam lục (sách) → lục (giáo trình) → lam (bài giảng) → chàm (luận án) → tím (luận văn)
+    /// → hồng sen (tạp chí) → đỏ (báo) → cam đất (đề tài) → vàng đất (kỷ yếu) → ô liu (từ điển).
+    /// Riêng bài trích để xám: nó là một phần của tài liệu khác chứ không phải một ấn phẩm riêng, và
+    /// màu xám bão hòa thấp thì đứng cạnh màu nào cũng phân biệt được.
+    ///
+    /// Nền tối, chữ trắng: tỉ lệ tương phản đều trên 7:1 — mức AAA của WCAG cho chữ thường, không
+    /// chỉ mức AA. Nhan đề trên bìa hiện ở cỡ nhỏ trong lưới kết quả nên cần mức ấy.
+    ///
+    /// Màu điểm nhấn (dải gáy sách bên trái) luôn sáng hơn nền, nếu không thì không thấy nó đâu.
     /// </summary>
     private static readonly Dictionary<string, CoverPalette> BangMau =
         new(StringComparer.OrdinalIgnoreCase)
         {
-            ["SACH"] = new("#1f4e5f", "#2e7d8f", "#ffffff"),
-            ["GIAOTRINH"] = new("#1f5f3a", "#2f8f57", "#ffffff"),
-            ["LUANVAN"] = new("#4a3b6b", "#6f5aa0", "#ffffff"),
-            ["LUANAN"] = new("#3b2f5e", "#5d4a91", "#ffffff"),
-            ["DETAI"] = new("#6b3a2e", "#9c5744", "#ffffff"),
-            ["KYYEU"] = new("#5f4a1f", "#8f722e", "#ffffff"),
-            ["BAIGIANG"] = new("#1f3f6b", "#2f5f9c", "#ffffff"),
-            ["BAITRICH"] = new("#4a4a4a", "#6f6f6f", "#ffffff"),
-            ["TAPCHI"] = new("#6b2f4a", "#9c456f", "#ffffff"),
-            ["BAO"] = new("#2f2f4a", "#47476f", "#ffffff"),
-            ["TUDIEN"] = new("#3f5f1f", "#5f8f2f", "#ffffff"),
-            ["BANDO"] = new("#1f5f5f", "#2f8f8f", "#ffffff"),
-            ["AUDIO"] = new("#5f1f4a", "#8f2f70", "#ffffff"),
-            ["VIDEO"] = new("#1f2f5f", "#2f478f", "#ffffff"),
+            // sắc 180 — lam lục
+            ["SACH"] = new("#0a5f5f", "#149999", "#ffffff"),
+            // sắc 138 — lục
+            ["GIAOTRINH"] = new("#17592b", "#26993f", "#ffffff"),
+            // sắc 210 — lam
+            ["BAIGIANG"] = new("#0a4c8f", "#1478cc", "#ffffff"),
+            // sắc 238 — chàm
+            ["LUANAN"] = new("#2a2e9e", "#484cd1", "#ffffff"),
+            // sắc 276 — tím
+            ["LUANVAN"] = new("#6a2599", "#9b44d1", "#ffffff"),
+            // sắc 328 — hồng sen
+            ["TAPCHI"] = new("#8a1a55", "#c42b80", "#ffffff"),
+            // sắc 348 — đỏ
+            ["BAO"] = new("#93122b", "#c92846", "#ffffff"),
+            // sắc 13 — cam đất
+            ["DETAI"] = new("#96351a", "#cc5a2e", "#ffffff"),
+            // sắc 43 — vàng đất
+            ["KYYEU"] = new("#6b4f07", "#a87c14", "#ffffff"),
+            // sắc 74 — ô liu
+            ["TUDIEN"] = new("#45560e", "#6e871c", "#ffffff"),
+            // sắc 170 — lục lam
+            ["BANDO"] = new("#095a4c", "#12907a", "#ffffff"),
+            // sắc 306 — đỏ tía
+            ["AUDIO"] = new("#7a1470", "#b222a3", "#ffffff"),
+            // sắc 220 — lam đậm
+            ["VIDEO"] = new("#123a8a", "#1f5fcc", "#ffffff"),
+            // xám, bão hòa 0,24 — bài trích không phải ấn phẩm riêng
+            ["BAITRICH"] = new("#414c55", "#6b7a88", "#ffffff"),
         };
 
     /// <summary>Dùng cho dạng tài liệu chưa có trong bảng — vẫn phải đọc được.</summary>

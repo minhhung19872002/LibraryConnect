@@ -16,9 +16,17 @@ import type { SearchResult } from '@/types/api';
  * Máy chủ trả SVG kèm dấu bản, trình duyệt giữ lại cả tuần.
  */
 export function Cover({ item }: { item: SearchResult }) {
-  const src = item.coverImageUrl || `/api/public/covers/${item.id}.svg`;
-
-  return <img className="lc-cover" src={src} alt={`Bìa của ${item.title}`} loading="lazy" />;
+  // Một địa chỉ duy nhất cho mọi biểu ghi: máy chủ tự quyết trả ảnh thật hay bìa dựng sẵn. Trước
+  // đây trình duyệt tự chọn theo cột coverImageUrl, và khi cột ấy trỏ sai chỗ thì cả trang đầy ô
+  // ảnh hỏng mà không ai biết.
+  return (
+    <img
+      className="lc-cover"
+      src={`/api/public/covers/${item.id}`}
+      alt={`Bìa của ${item.title}`}
+      loading="lazy"
+    />
+  );
 }
 
 /**

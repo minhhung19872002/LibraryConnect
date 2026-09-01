@@ -61,7 +61,16 @@ public class LookupBibCoverCommandHandler
 /// Chạy ở tiến trình nền: mỗi biểu ghi là một lượt gọi ra Internet, mà nguồn ngoài đều giới hạn tần
 /// suất nên phải chờ giữa các lần gọi. Vài nghìn biểu ghi thì lượt HTTP nào cũng bị proxy cắt trước.
 /// </summary>
-public record StartCoverLookupCommand(int MaxRecords = 500) : IRequest<Guid>;
+/// <param name="DocumentTypeCodes">
+/// Chỉ tra những dạng tài liệu này. Bỏ trống thì tra mọi dạng.
+///
+/// Có ích vì chỉ vài dạng mới có ISBN: đo trên kho thật, toàn bộ 1.446 bài giảng điện tử không có
+/// cuốn nào có ISBN, còn nhóm Sách và Giáo trình thì 300 trên 569 cuốn có. Mỗi lượt gọi ra nguồn
+/// ngoài tốn hơn một giây chờ, nên tra những dạng không thể có ISBN là phí thời gian.
+/// </param>
+public record StartCoverLookupCommand(
+    int MaxRecords = 500,
+    IReadOnlyList<string>? DocumentTypeCodes = null) : IRequest<Guid>;
 
 public class StartCoverLookupCommandHandler : IRequestHandler<StartCoverLookupCommand, Guid>
 {
@@ -95,11 +104,25 @@ public class StartCoverLookupCommandHandler : IRequestHandler<StartCoverLookupCo
                 + "Biên mục → Nhập xuất dữ liệu.");
         }
 
+        var loc = command.DocumentTypeCodes is { Count: > 0 }
+            ? command.DocumentTypeCodes
+            : null;
+
+        // Cột Options là jsonb, không nhận chuỗi thường: phải ghi đúng JSON.
+        var locJson = loc is null
+            ? null
+            : System.Text.Json.JsonSerializer.Serialize(loc);
+
         var job = new Domain.Entities.Ill.ImportExportJob
         {
             Id = Guid.NewGuid(),
             Type = ImportExportJobType.CoverLookup,
-            FileName = $"Tra ảnh bìa cho tối đa {command.MaxRecords} biểu ghi",
+            FileName = loc is null
+                ? $"Tra ảnh bìa cho tối đa {command.MaxRecords} biểu ghi"
+                : $"Tra ảnh bìa cho tối đa {command.MaxRecords} biểu ghi thuộc dạng "
+                  + string.Join(", ", loc),
+            // Bộ lọc phải sống qua lượt HTTP: việc chạy ở tiến trình nền, tách khỏi lượt đã mở nó.
+            Options = locJson,
             Status = JobStatus.Running,
             StartedAt = _clock.Now,
             CreatedBy = _currentUser.UserId,
@@ -209,7 +232,8 @@ public class UploadBibCoverCommandHandler : IRequestHandler<UploadBibCoverComman
         using var stream = new MemoryStream(command.Content);
         await _storage.UploadAsync(bucket, objectName, stream, dinhDang.Kieu, ct);
 
-        bib.CoverImageUrl = $"/api/public/media/{objectName}";
+        bib.CoverImageUrl = $"/api/public/covers/{bib.Id}";
+            bib.CoverObjectName = objectName;
         bib.CoverImageSource = CoverSources.Manual;
 
         await _db.SaveChangesAsync(ct);

@@ -123,12 +123,25 @@ public class CoverImageFinder : ICoverImageFinder
 
         try
         {
-            // Chỉ tra biểu ghi có ISBN hoặc có địa chỉ ảnh trong trường 856: biểu ghi khác thì gọi
-            // ra Internet cũng vô ích, mà mỗi lượt gọi tốn hơn một giây chờ.
-            var ungVien = await _db.BibRecords
+            // Chỉ tra biểu ghi có ISBN: biểu ghi khác thì gọi ra Internet cũng vô ích, mà mỗi lượt
+            // gọi tốn hơn một giây chờ.
+            var nguon = _db.BibRecords
                 .Where(bib => bib.DeletedAt == null
                               && bib.CoverImageUrl == null
-                              && bib.Isbn != null && bib.Isbn != "")
+                              && bib.Isbn != null && bib.Isbn != "");
+
+            // Bộ lọc dạng tài liệu, nếu lượt này có khai. Cột Options là jsonb.
+            var dangTaiLieu = string.IsNullOrWhiteSpace(job.Options)
+                ? new List<string>()
+                : JsonSerializer.Deserialize<List<string>>(job.Options) ?? new List<string>();
+
+            if (dangTaiLieu.Count > 0)
+            {
+                nguon = nguon.Where(bib => bib.DocumentType != null
+                                           && dangTaiLieu.Contains(bib.DocumentType.Code));
+            }
+
+            var ungVien = await nguon
                 .OrderBy(bib => bib.ControlNumber)
                 .Select(bib => bib.Id)
                 .Take(job.Total)
@@ -293,7 +306,8 @@ public class CoverImageFinder : ICoverImageFinder
             using var stream = new MemoryStream(bytes);
             await _storage.UploadAsync(_minio.ImagesBucket, objectName, stream, kieu, ct);
 
-            bib.CoverImageUrl = $"/api/public/media/{objectName}";
+            bib.CoverImageUrl = $"/api/public/covers/{bib.Id}";
+            bib.CoverObjectName = objectName;
             bib.CoverImageSource = source;
 
             await _db.SaveChangesAsync(ct);

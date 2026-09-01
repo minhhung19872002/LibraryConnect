@@ -61,9 +61,7 @@ export function CoverPanel({
     onError: (error) => message.error(errorMessage(error)),
   });
 
-  const src = `${catalogingApi.coverUrl(bibId, coverImageUrl)}${
-    coverImageUrl ? '?v=' : '?v='
-  }${khoa}`;
+  const src = `${catalogingApi.coverUrl(bibId)}?v=${khoa}`;
 
   return (
     <Card size="small" title="Ảnh bìa">

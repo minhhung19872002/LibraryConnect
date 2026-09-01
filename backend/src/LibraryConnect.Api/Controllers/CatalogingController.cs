@@ -2,6 +2,7 @@ using LibraryConnect.Api.Security;
 using LibraryConnect.Application.Common.Models;
 using LibraryConnect.Application.Common.Security;
 using LibraryConnect.Application.Features.Cataloging;
+using LibraryConnect.Application.Features.InterLibrary;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LibraryConnect.Api.Controllers;
@@ -435,13 +436,45 @@ public class CatalogingController : ApiControllerBase
     [ProducesResponseType(typeof(ApiResponse<Guid>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<ApiResponse<Guid>>> LookupCoversBatch(
-        [FromQuery] int maxRecords, CancellationToken ct)
+        [FromQuery] int maxRecords,
+        [FromQuery] string? documentTypeCodes,
+        CancellationToken ct)
     {
+        var codes = (documentTypeCodes ?? string.Empty)
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .ToList();
+
         var jobId = await Mediator.Send(
-            new StartCoverLookupCommand(maxRecords <= 0 ? 500 : maxRecords), ct);
+            new StartCoverLookupCommand(maxRecords <= 0 ? 500 : maxRecords, codes), ct);
 
         return Ok(Success(jobId,
             "Đã xếp lượt tra ảnh bìa vào hàng đợi. Tiến độ xem ở phần Nhập xuất dữ liệu."));
+    }
+
+    /// <summary>Nạp sách từ Open Library theo chủ đề — API mở, giấy phép CC0, có ảnh bìa kèm sẵn.</summary>
+    /// <remarks>
+    /// Kho thu hoạch bằng OAI-PMH từ các kho số đại học Việt Nam lệch hẳn về tài liệu xám: 93% là
+    /// luận văn, đề tài và bài giảng — loại không tồn tại ảnh bìa ở bất kỳ nguồn nào. Lượt nạp này
+    /// cân bằng lại phần sách, và chỉ nhận biểu ghi **có ảnh bìa**.
+    /// </remarks>
+    [HttpPost("open-library/harvest")]
+    [RequirePermission(PermissionCodes.CatalogBibCreate)]
+    [ProducesResponseType(typeof(ApiResponse<Guid>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<ApiResponse<Guid>>> HarvestOpenLibrary(
+        [FromQuery] int maxRecords,
+        [FromQuery] string? subjects,
+        CancellationToken ct)
+    {
+        var chuDe = (subjects ?? string.Empty)
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .ToList();
+
+        var jobId = await Mediator.Send(new StartOpenLibraryHarvestCommand(
+            chuDe, maxRecords <= 0 ? 2_000 : maxRecords), ct);
+
+        return Ok(Success(jobId,
+            "Đã xếp lượt nạp sách từ Open Library vào hàng đợi. Tiến độ xem ở phần Nhập xuất dữ liệu."));
     }
 
     // ---------------------------------------------------------------

@@ -185,6 +185,7 @@ public static class DependencyInjection
         services.AddScoped<Application.Features.InterLibrary.IRemoteCatalogSearcher,
             RemoteCatalogSearcher>();
         services.AddScoped<Application.Features.InterLibrary.IOaiHarvester, OaiHarvester>();
+        services.AddScoped<Application.Features.InterLibrary.IOpenLibraryHarvester, OpenLibraryHarvester>();
 
         services.AddHostedService<Z3950ServerHost>();
     }

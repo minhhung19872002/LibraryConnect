@@ -168,10 +168,15 @@ public class PublicController : ApiControllerBase
     /// <summary>
     /// Ảnh bìa dựng sẵn cho một biểu ghi chưa có ảnh thật.
     ///
-    /// Trả về SVG dựng từ chính dữ liệu thư mục: nhan đề, tác giả, năm, dạng tài liệu. Ảnh dựng lại
-    /// được y hệt nên đặt bộ nhớ đệm dài hạn ở trình duyệt — trang kết quả tra cứu có hai chục ô bìa
-    /// nên đây là chỗ đáng tiết kiệm nhất.
+    /// Một địa chỉ duy nhất cho mọi biểu ghi: tra được ảnh thật ở nguồn ngoài hoặc cán bộ đã tải lên
+    /// thì trả ảnh ấy; chưa có thì dựng bìa SVG từ chính dữ liệu thư mục — nhan đề, tác giả, năm,
+    /// dạng tài liệu. Phía gọi không phải phân biệt, nên giao diện không có chỗ nào rẽ nhánh theo
+    /// "biểu ghi này đã có ảnh chưa".
+    ///
+    /// Cả hai đường đều đặt dấu bản và cho trình duyệt giữ một tuần — trang kết quả tra cứu có hai
+    /// chục ô bìa nên đây là chỗ đáng tiết kiệm nhất.
     /// </summary>
+    [HttpGet("covers/{bibId:guid}")]
     [HttpGet("covers/{bibId:guid}.svg")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -187,7 +192,7 @@ public class PublicController : ApiControllerBase
         Response.Headers.ETag = cover.ETag;
         Response.Headers.CacheControl = "public, max-age=604800";
 
-        return Content(cover.Svg, "image/svg+xml; charset=utf-8");
+        return File(cover.Content, cover.ContentType);
     }
 
     /// <summary>Ảnh dùng trong nội dung: logo, banner, ảnh tin, ảnh album.</summary>

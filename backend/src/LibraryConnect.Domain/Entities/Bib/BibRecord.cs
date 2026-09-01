@@ -71,6 +71,16 @@ public class BibRecord : BaseEntity
     public string? CoverImageSource { get; set; }
 
     /// <summary>
+    /// Tên tệp ảnh bìa trong kho đối tượng, ví dụ <c>covers/3f2a….jpg</c>.
+    ///
+    /// Tách khỏi <see cref="CoverImageUrl"/> vì hai thứ khác nhau: cột kia là **địa chỉ công khai**
+    /// mà trình duyệt gọi tới, cột này là **chỗ tệp nằm** trong kho. Trước đây gộp làm một nên địa
+    /// chỉ ghi vào biểu ghi trỏ tới một endpoint không phục vụ thư mục ấy, và 16 ảnh bìa vừa tải về
+    /// hiện thành ô hỏng.
+    /// </summary>
+    public string? CoverObjectName { get; set; }
+
+    /// <summary>
     /// Lý do xóa, bắt buộc nhập khi xóa biểu ghi (II.3).
     ///
     /// Soft deletion keeps the row forever, so the reason has to live beside it: a librarian looking

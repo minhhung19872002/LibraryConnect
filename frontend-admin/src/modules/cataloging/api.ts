@@ -111,9 +111,13 @@ export const catalogingApi = {
 
   // ---- Ảnh bìa ----------------------------------------------------------------------------
 
-  /** Địa chỉ ảnh bìa để hiện: ảnh thật nếu có, còn lại là bìa máy chủ dựng từ dữ liệu thư mục. */
-  coverUrl: (bibId: string, coverImageUrl?: string | null) =>
-    coverImageUrl || `/api/public/covers/${bibId}.svg`,
+  /**
+   * Địa chỉ ảnh bìa của một biểu ghi.
+   *
+   * Một địa chỉ duy nhất cho mọi biểu ghi: máy chủ tự quyết trả ảnh thật hay bìa dựng sẵn. Để phía
+   * gọi tự chọn theo cột coverImageUrl thì khi cột ấy trỏ sai chỗ, cả trang đầy ô ảnh hỏng.
+   */
+  coverUrl: (bibId: string) => `/api/public/covers/${bibId}`,
 
   /** Tra ảnh bìa thật ở nguồn ngoài cho một biểu ghi. */
   lookupCover: (id: string) =>
@@ -129,9 +133,25 @@ export const catalogingApi = {
     });
   },
 
-  /** Mở một lượt tra ảnh bìa hàng loạt cho biểu ghi chưa có ảnh. */
-  lookupCoversBatch: (maxRecords: number) =>
-    api.post<string>(`/cataloging/covers/lookup-batch?maxRecords=${maxRecords}`),
+  /**
+   * Mở một lượt tra ảnh bìa hàng loạt cho biểu ghi chưa có ảnh.
+   *
+   * Lọc theo dạng tài liệu vì chỉ vài dạng mới có ISBN: toàn bộ bài giảng điện tử trong kho không
+   * cuốn nào có, còn nhóm Sách và Giáo trình thì hơn một nửa có. Mỗi lượt gọi ra nguồn ngoài tốn
+   * hơn một giây chờ nên tra dạng không thể có ISBN là phí thời gian.
+   */
+  lookupCoversBatch: (maxRecords: number, documentTypeCodes?: string[]) =>
+    api.post<string>(
+      `/cataloging/covers/lookup-batch?maxRecords=${maxRecords}`
+        + (documentTypeCodes?.length ? `&documentTypeCodes=${documentTypeCodes.join(',')}` : ''),
+    ),
+
+  /** Nạp sách từ Open Library theo chủ đề — API mở, giấy phép CC0, có ảnh bìa kèm sẵn. */
+  harvestOpenLibrary: (maxRecords: number, subjects?: string[]) =>
+    api.post<string>(
+      `/cataloging/open-library/harvest?maxRecords=${maxRecords}`
+        + (subjects?.length ? `&subjects=${encodeURIComponent(subjects.join(','))}` : ''),
+    ),
 
   deleteItem: (itemId: string, reason: string) =>
     api.delete<null>(`/cataloging/items/${itemId}`, { data: { reason } }),

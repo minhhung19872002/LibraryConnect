@@ -28,6 +28,7 @@ import type { ColumnsType } from 'antd/es/table';
 import { PageHeader } from '@/components/PageHeader';
 import { Can } from '@/components/PermissionGate';
 import { PERMISSIONS } from '@/api/permissions';
+import { catalogingApi } from '@/modules/cataloging/api';
 import { ApiRequestError } from '@/api/client';
 import { useCatalogOptions, toOptions } from '@/modules/cataloging/useCatalogOptions';
 import { interLibraryApi } from './api';
@@ -102,6 +103,18 @@ export function OaiRepositoriesPage() {
     },
     onError: (error) =>
       message.error(error instanceof ApiRequestError ? error.message : 'Không hỏi được kho.'),
+  });
+
+  const napOpenLibrary = useMutation({
+    mutationFn: (maxRecords: number) => catalogingApi.harvestOpenLibrary(maxRecords),
+    onSuccess: () =>
+      message.success(
+        'Đã xếp lượt nạp sách vào hàng đợi. Tiến độ xem ở Biên mục → Nhập xuất dữ liệu.',
+      ),
+    onError: (error) =>
+      message.error(
+        error instanceof ApiRequestError ? error.message : 'Không nạp được sách từ Open Library.',
+      ),
   });
 
   const harvest = useMutation({
@@ -277,11 +290,41 @@ export function OaiRepositoriesPage() {
         title="Kho OAI-PMH"
         description="Thu hoạch metadata thư mục từ kho của nơi khác về, theo lịch hoặc chạy tay."
         actions={
-          <Can permission={PERMISSIONS.interlibrary.oaiManage}>
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => open(null)}>
-              Thêm kho
-            </Button>
-          </Can>
+          <Space wrap>
+            <Can permission={PERMISSIONS.cataloging.bibCreate}>
+              <Button
+                icon={<CloudDownloadOutlined />}
+                loading={napOpenLibrary.isPending}
+                onClick={() =>
+                  modal.confirm({
+                    title: 'Nạp sách từ Open Library?',
+                    width: 600,
+                    content: (
+                      <Typography.Paragraph type="secondary" style={{ marginBottom: 0 }}>
+                        Nạp tối đa 2.000 đầu sách theo 24 chủ đề của ngành tài nguyên – môi trường:
+                        thủy văn, tài nguyên nước, môi trường, địa chất, khí tượng, viễn thám… Dữ
+                        liệu Open Library theo giấy phép CC0 nên dùng lại được, và{' '}
+                        <b>chỉ nhận biểu ghi có ảnh bìa</b> — mục đích của lượt nạp này là cân bằng
+                        lại phần sách có bìa thật cho kho, vì tài liệu nội sinh thì không nguồn nào
+                        có bìa. Ảnh tải về kho của mình, không dẫn thẳng sang máy chủ họ. Việc chạy
+                        nền, tiến độ xem ở Biên mục → Nhập xuất dữ liệu.
+                      </Typography.Paragraph>
+                    ),
+                    okText: 'Bắt đầu nạp',
+                    cancelText: 'Hủy',
+                    onOk: () => napOpenLibrary.mutateAsync(2000),
+                  })
+                }
+              >
+                Nạp sách từ Open Library
+              </Button>
+            </Can>
+            <Can permission={PERMISSIONS.interlibrary.oaiManage}>
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => open(null)}>
+                Thêm kho
+              </Button>
+            </Can>
+          </Space>
         }
       />
 

@@ -7,7 +7,7 @@ namespace LibraryConnect.Domain.Enums;
 
 public enum RecordStatus { Draft, Queued, Approved, Published }
 
-public enum BibSource { Manual, Iso2709, Z3950, Excel, Oai, MarcXml }
+public enum BibSource { Manual, Iso2709, Z3950, Excel, Oai, MarcXml, OpenLibrary }
 
 public enum ItemStatus
 {
@@ -91,7 +91,7 @@ public enum DataScopeType { Library, Warehouse, DocumentType }
 
 public enum ParameterDataType { Text, Number, Boolean, Date, Json, File, Password, Cron }
 
-public enum ImportExportJobType { Iso2709In, Iso2709Out, ExcelIn, ExcelOut, MarcXmlIn, MarcXmlOut, ReaderExcelIn, DigitalBulkIn, FullSystemExport, CoverLookup }
+public enum ImportExportJobType { Iso2709In, Iso2709Out, ExcelIn, ExcelOut, MarcXmlIn, MarcXmlOut, ReaderExcelIn, DigitalBulkIn, FullSystemExport, CoverLookup, OpenLibraryHarvest }
 
 public enum JobStatus { Pending, Running, Completed, Failed, Cancelled }
 
