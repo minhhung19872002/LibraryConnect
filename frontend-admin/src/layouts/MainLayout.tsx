@@ -1,14 +1,16 @@
 import { useMemo, useState } from 'react';
 import { Link, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Avatar, Breadcrumb, Dropdown, Layout, Menu, Spin, Tag, Typography } from 'antd';
+import { Avatar, Breadcrumb, Drawer, Dropdown, Grid, Layout, Menu, Spin, Tag, Typography } from 'antd';
 import type { MenuProps } from 'antd';
 import { KeyOutlined, LogoutOutlined, MenuFoldOutlined, MenuUnfoldOutlined, UserOutlined } from '@ant-design/icons';
 import { useAuthStore } from '@/stores/authStore';
 import { messages } from '@/i18n/messages';
+import { useDrawerMenu } from './layoutBreakpoints';
 import { filterMenuByPermission, findMenuByPath, menuTree, type MenuNode } from './menuConfig';
 import { useLibraryName } from '@/hooks/useLibraryName';
 
 const { Header, Sider, Content, Footer } = Layout;
+const { useBreakpoint } = Grid;
 
 /**
  * Shell of the admin application: permission-filtered sidebar, breadcrumb, account menu.
@@ -18,8 +20,13 @@ const { Header, Sider, Content, Footer } = Layout;
  */
 export function MainLayout() {
   const [collapsed, setCollapsed] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Dưới 992px thì không còn chỗ cho một cột menu cố định: menu chuyển thành ngăn kéo mở từ nút ở
+  // thanh trên, đúng cách mọi ứng dụng quản trị khác làm trên điện thoại.
+  const compact = useDrawerMenu(useBreakpoint());
 
   const user = useAuthStore((state) => state.user);
   const initialising = useAuthStore((state) => state.initialising);
@@ -79,39 +86,62 @@ export function MainLayout() {
     },
   ];
 
+  const menu = (
+    <Menu
+      className="lc-sider-menu"
+      mode="inline"
+      items={antdItems}
+      selectedKeys={selectedKeys}
+      defaultOpenKeys={openKeys}
+      onClick={({ key }) => {
+        const target = findByKey(visibleMenu, key);
+        if (target?.path) {
+          navigate(target.path);
+          setDrawerOpen(false);
+        }
+      }}
+    />
+  );
+
+  const brand = (showName: boolean) => (
+    <div className="lc-brand">
+      <span className="lc-brand-mark" aria-hidden="true">
+        LC
+      </span>
+      {showName && <span className="lc-brand-name">{messages.app.productName}</span>}
+    </div>
+  );
+
   return (
     <Layout className="lc-layout">
-      <Sider collapsible collapsed={collapsed} trigger={null} width={248} theme="light" className="lc-sider">
-        <div className="lc-brand">
-          <span className="lc-brand-mark" aria-hidden="true">
-            LC
-          </span>
-          {!collapsed && <span className="lc-brand-name">{messages.app.productName}</span>}
-        </div>
-        <Menu
-          className="lc-sider-menu"
-          mode="inline"
-          items={antdItems}
-          selectedKeys={selectedKeys}
-          defaultOpenKeys={openKeys}
-          onClick={({ key }) => {
-            const target = findByKey(visibleMenu, key);
-            if (target?.path) {
-              navigate(target.path);
-            }
-          }}
-        />
-      </Sider>
+      {compact ? (
+        <Drawer
+          open={drawerOpen}
+          placement="left"
+          width={280}
+          onClose={() => setDrawerOpen(false)}
+          className="lc-sider-drawer"
+          title={brand(true)}
+          styles={{ body: { padding: 0 } }}
+        >
+          {menu}
+        </Drawer>
+      ) : (
+        <Sider collapsible collapsed={collapsed} trigger={null} width={248} theme="light" className="lc-sider">
+          {brand(!collapsed)}
+          {menu}
+        </Sider>
+      )}
 
       <Layout>
         <Header className="lc-header">
           <button
             type="button"
             className="lc-collapse-button"
-            onClick={() => setCollapsed((value) => !value)}
-            aria-label={collapsed ? 'Mở rộng menu' : 'Thu gọn menu'}
+            onClick={() => (compact ? setDrawerOpen(true) : setCollapsed((value) => !value))}
+            aria-label={compact || collapsed ? 'Mở rộng menu' : 'Thu gọn menu'}
           >
-            {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+            {compact || collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
           </button>
 
           <Typography.Title level={4} className="lc-library-name">
@@ -121,7 +151,8 @@ export function MainLayout() {
           <Dropdown menu={{ items: accountMenu }} placement="bottomRight" trigger={['click']}>
             <button type="button" className="lc-account-button">
               <Avatar size="small" icon={<UserOutlined />} src={user.avatarUrl} />
-              <span className="lc-account-name">{user.fullName}</span>
+              {/* Trên điện thoại, tên người dùng nhường chỗ cho tên thư viện. */}
+              {!compact && <span className="lc-account-name">{user.fullName}</span>}
             </button>
           </Dropdown>
         </Header>

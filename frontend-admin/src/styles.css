@@ -26,8 +26,6 @@ body {
     'Be Vietnam Pro', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
     'Helvetica Neue', Arial, sans-serif;
   background: var(--lc-page-bg);
-  /* The admin UI is designed for at least 1366x768 (section 6.6). */
-  min-width: 1024px;
 }
 
 /* ---------------- Shell ---------------- */
@@ -167,8 +165,19 @@ body {
   white-space: nowrap;
 }
 
+/*
+ * Vùng nội dung là một ô của bố cục ngang, mà ô như vậy mặc định được phép nở rộng hơn khung cha
+ * để chứa hết con của nó. Một bảng mười lăm cột nằm trong đó sẽ kéo cả trang rộng ra và người dùng
+ * phải cuộn ngang toàn màn hình. min-width: 0 buộc nó dừng ở bề ngang khung, phần thừa cuộn bên
+ * trong bảng.
+ */
+.lc-layout .ant-layout {
+  min-width: 0;
+}
+
 .lc-content {
   padding: 16px 20px;
+  min-width: 0;
 }
 
 .lc-breadcrumb {
@@ -252,11 +261,151 @@ body {
   font-size: 12px;
 }
 
-/* The login screen is the one page a librarian may open on a phone. */
-@media (max-width: 640px) {
-  body {
+/*
+ * Giao diện quản trị thiết kế cho màn hình từ 1366×768, nhưng cán bộ vẫn mở nó trên điện thoại: tra
+ * nhanh một cuốn sách ở giữa kho, xem bạn đọc nào đang quá hạn trước giờ họp. Từ 992px trở xuống,
+ * menu chuyển thành ngăn kéo và các khối trên trang xếp dọc lại thay vì bắt cuộn ngang cả trang.
+ */
+@media (max-width: 991px) {
+  .lc-content {
+    padding: 12px;
+  }
+
+  .lc-header {
+    padding-inline: 12px;
+  }
+
+  .lc-library-name {
+    font-size: 15px !important;
+  }
+
+  /* Tiêu đề trang và nhóm nút xếp dọc; nút trải hết bề ngang cho dễ bấm bằng ngón tay. */
+  .lc-page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .lc-filter-fields {
     min-width: 0;
   }
+
+  .lc-filter-fields > * {
+    flex: 1 1 160px;
+    min-width: 0;
+  }
+
+  /* Bảng nghiệp vụ nhiều cột: cuộn ngang trong khung của nó, không đẩy cả trang. */
+  .ant-table-wrapper {
+    overflow-x: auto;
+  }
+
+  /* Lưới tham số hai cột không vừa màn hình hẹp; xếp thành một cột. */
+  .lc-parameter-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /*
+   * Ô nhập khai chiều rộng cố định theo màn hình máy tính (ô soạn MARC, ô tìm kiếm dài) sẽ đẩy cả
+   * trang rộng ra. Trên màn hình hẹp, không ô nào được vượt quá bề ngang của khung.
+   */
+  .lc-content textarea,
+  .lc-content .ant-input,
+  .lc-content .ant-input-affix-wrapper,
+  .lc-content .ant-input-number,
+  .lc-content .ant-picker,
+  .lc-content .ant-select,
+  .lc-content .ant-input-group-wrapper {
+    max-width: 100%;
+  }
+
+  /* Hàng nút và hàng bộ lọc xếp ngang: cho phép xuống dòng thay vì tràn ra ngoài. */
+  .lc-content .ant-space-horizontal {
+    flex-wrap: wrap;
+  }
+
+  /* Thanh thẻ nhiều mục tự cuộn trong khung của nó. */
+  .lc-content .ant-tabs-nav {
+    max-width: 100%;
+  }
+
+  /*
+   * Cột khai bề rộng cố định (span={n}) không tự co trên màn hình hẹp: sáu thẻ số liệu vẫn cố nằm
+   * một hàng và chữ bị cắt.
+   *
+   * Cột rất nhỏ (tối đa 6/24 — thường là thẻ một con số) xếp hai cái một hàng; từ 7/24 trở lên là
+   * khối nội dung thật (khung quét thẻ, bảng, biểu đồ) nên chiếm trọn hàng, không để nửa màn hình
+   * trống bên cạnh.
+   *
+   * Chỉ chạm tới cột khai cứng: cột đã khai theo điểm dừng (xs, sm, md...) sinh ra lớp riêng của
+   * AntD nên không dính luật này, và màn hình nào đã tự lo bố cục thì giữ nguyên ý của nó.
+   */
+  .lc-content .ant-col-1,
+  .lc-content .ant-col-2,
+  .lc-content .ant-col-3,
+  .lc-content .ant-col-4,
+  .lc-content .ant-col-5,
+  .lc-content .ant-col-6 {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+
+  .lc-content .ant-col-7,
+  .lc-content .ant-col-8,
+  .lc-content .ant-col-9,
+  .lc-content .ant-col-10,
+  .lc-content .ant-col-11,
+  .lc-content .ant-col-12,
+  .lc-content .ant-col-13,
+  .lc-content .ant-col-14,
+  .lc-content .ant-col-15,
+  .lc-content .ant-col-16,
+  .lc-content .ant-col-17,
+  .lc-content .ant-col-18,
+  .lc-content .ant-col-19,
+  .lc-content .ant-col-20,
+  .lc-content .ant-col-21,
+  .lc-content .ant-col-22,
+  .lc-content .ant-col-23,
+  .lc-content .ant-col-24 {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+
+
+  .lc-footer {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 575px) {
+  .lc-content {
+    padding: 10px 8px;
+  }
+
+  .lc-page-title {
+    font-size: 18px !important;
+  }
+
+  /* Nút thao tác trên đầu trang: mỗi nút một dòng, đủ rộng để bấm không trượt. */
+  .lc-page-header .ant-space {
+    width: 100%;
+  }
+
+  .lc-page-header .ant-space-item {
+    flex: 1 1 auto;
+  }
+
+  .lc-page-header .ant-space-item .ant-btn {
+    width: 100%;
+  }
+}
+
+/* Ngăn kéo menu trên điện thoại: danh sách chức năng tự cuộn như cột menu trên máy tính. */
+.lc-sider-drawer .lc-sider-menu {
+  height: 100%;
+  overflow-y: auto;
 }
 
 /* ---------------- Business screens ---------------- */

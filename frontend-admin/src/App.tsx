@@ -57,6 +57,7 @@ import { CmsGalleriesPage } from '@/modules/cms/GalleriesPage';
 import { CmsReviewsPage } from '@/modules/cms/ReviewsPage';
 import { CourseDocumentsPage } from '@/modules/courses/CourseDocumentsPage';
 import { CourseReportsPage } from '@/modules/courses/CourseReportsPage';
+import { ReportCentrePage } from '@/modules/reports/ReportCentrePage';
 import { SerialReportsPage } from '@/modules/serials/SerialReportsPage';
 import { CustomIndexPage } from '@/modules/cataloging/CustomIndexPage';
 import { CatalogQueuePage } from '@/modules/cataloging/CatalogQueuePage';
@@ -538,6 +539,23 @@ function AppRoutes() {
           element={
             <RequirePermissionRoute permission={PERMISSIONS.course.reportView}>
               <CourseReportsPage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/bao-cao"
+          element={
+            <RequirePermissionRoute
+              permission={[
+                PERMISSIONS.acquisition.reportView,
+                PERMISSIONS.circulation.reportView,
+                PERMISSIONS.reader.reportView,
+                PERMISSIONS.digital.reportView,
+                PERMISSIONS.serial.reportView,
+                PERMISSIONS.course.reportView,
+              ]}
+            >
+              <ReportCentrePage />
             </RequirePermissionRoute>
           }
         />

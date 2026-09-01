@@ -7,6 +7,7 @@ import {
   DatePicker,
   Drawer,
   Form,
+  Grid,
   Input,
   InputNumber,
   Space,
@@ -39,6 +40,9 @@ import type { ParameterGroup, ParameterHistoryItem, SystemParameter } from './ty
  * type calls for, so a boolean is a switch and a cron expression is a text field with a hint.
  */
 export function ParametersPage() {
+  // Dưới 992px, bố cục hai cột của trang này tràn ra ngoài màn hình điện thoại.
+  const screens = Grid.useBreakpoint();
+
   const { message } = App.useApp();
   const queryClient = useQueryClient();
   const { can } = usePermission();
@@ -106,7 +110,8 @@ export function ParametersPage() {
 
       <Card variant="borderless" loading={groups.isLoading}>
         <Tabs
-          tabPosition="left"
+          /* Màn hình hẹp không đủ chỗ cho một cột nhãn bên trái: nhóm tham số chuyển lên trên. */
+          tabPosition={screens.lg ? 'left' : 'top'}
           activeKey={currentGroup?.groupCode}
           onChange={(key) => {
             setActiveGroup(key);

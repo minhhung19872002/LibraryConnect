@@ -407,7 +407,9 @@ function DataFieldRow({
                 onChange={(event) => onChangeSubfield(subfieldIndex, { value: event.target.value })}
                 disabled={readOnly}
                 autoSize={{ minRows: 1, maxRows: 6 }}
-                style={{ width: 560 }}
+                // Rộng cố định 560px là vừa vặn trên máy tính nhưng đẩy cả trang tràn ra trên màn
+                // hình hẹp; đặt trần thay vì đặt cứng để ô co lại theo khung.
+                style={{ width: '100%', maxWidth: 560 }}
                 placeholder={subfieldDefinition?.name}
               />
 

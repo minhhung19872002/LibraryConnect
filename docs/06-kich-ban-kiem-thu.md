@@ -597,6 +597,12 @@ Ký hiệu bám theo **Mục 5 phần 2 của E-HSMT**.
 
 | 2.3.16 | Tài khoản còn mật khẩu tạm | Tạo một tài khoản cán bộ mới, đăng nhập bằng mật khẩu tạm rồi gọi thẳng một API nghiệp vụ (ví dụ bằng Postman) | Trả 403 kèm câu "Tài khoản phải đổi mật khẩu trước khi sử dụng hệ thống"; sau khi đổi mật khẩu thì gọi được bình thường | Integration — `PermissionAndAuditTests` | | |
 
+| 2.8.1 | Báo cáo thống kê tổng quan | Vào Báo cáo thống kê, chọn kỳ "Năm nay" | Bảy khối chỉ tiêu của bảy phân hệ, con số khớp với báo cáo riêng của từng phân hệ | Integration — `SystemReportTests` | | |
+| 2.8.2 | Biểu đồ xu hướng | Mở thẻ "Xu hướng 12 tháng" | Ba đường: lượt mượn, bản nhập kho, thẻ mới; đủ 12 cột, tháng không có giao dịch hiện 0 | Integration — `SystemReportTests` | | |
+| 2.8.3 | Mục lục báo cáo | Mở thẻ "Mục lục báo cáo" | Liệt kê báo cáo của mọi phân hệ; tài khoản không có quyền xem báo cáo nào thì không thấy dòng đó | UI — `reports/types.test.ts` | | |
+| 2.8.4 | Xuất bảng tổng quan | Bấm Xuất Excel rồi Xuất PDF | Tải về hai tệp mở được, số liệu theo đúng kỳ đang chọn | Integration — `SystemReportTests` | | |
+| 2.8.5 | Mở giao diện quản trị trên điện thoại | Mở `/admin` bằng trình duyệt điện thoại (bề ngang 390px) | Menu nằm trong ngăn kéo mở từ nút góc trái; không màn hình nào phải cuộn ngang cả trang; bảng nhiều cột cuộn trong khung của nó | UI — `layoutBreakpoints.test.ts` | | |
+
 ## Nhóm 2.5 — Chuyển đổi dữ liệu: bộ dữ liệu minh họa
 
 Kiểm trên hệ thống vừa cài xong bằng `docker compose up -d`, chưa nhập gì thêm.
@@ -638,7 +644,7 @@ Số liệu ghi trong cột kết quả là số đo lần bàn giao; hội đ�
 
 ```bash
 cd backend
-dotnet test                 # 415 unit test + 324 integration test
+dotnet test                 # 415 unit test + 331 integration test
 ```
 
 Integration test tự khởi tạo một container PostgreSQL 16 và một container MinIO riêng, chạy
@@ -647,7 +653,7 @@ duyệt dùng — không có thành phần nào bị giả lập.
 
 ```bash
 cd frontend-admin
-npm test                    # 123 test giao diện
+npm test                    # 138 test giao diện
 
 cd frontend-opac
 npm test                    # 22 test giao diện trang tra cứu

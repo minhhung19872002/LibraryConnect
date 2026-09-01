@@ -540,8 +540,9 @@ export const menuTree: MenuNode[] = [
       PERMISSIONS.circulation.reportView,
       PERMISSIONS.reader.reportView,
       PERMISSIONS.digital.reportView,
+      PERMISSIONS.serial.reportView,
+      PERMISSIONS.course.reportView,
     ],
-    comingSoon: true,
   },
 ];
 
