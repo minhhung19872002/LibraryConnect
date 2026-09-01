@@ -18,17 +18,28 @@ lên hệ thống hoàn chỉnh. Phân hệ XI (mobile) chưa làm, đúng như 
 Sau khi xong Phase 14 đã chạy thêm **một đợt rà soát chất lượng toàn diện** — mở hệ thống như người
 dùng thật, đi hết từng màn hình, cố tình đi đường sai, gọi thẳng API không qua giao diện, và nạp dữ
 liệu thật từ nguồn ngoài. Đợt rà ấy tìm ra **36 lỗi**, phần lớn là lỗi mà bộ kiểm thử cũ không bao
-giờ chạm tới vì nó chỉ xác nhận mã nguồn làm đúng thứ người viết *nghĩ*. Lượt sửa nốt bốn lỗi cuối
-tìm thêm một lỗi nữa (B12), thành **37 lỗi, đã sửa hết**.
+giờ chạm tới vì nó chỉ xác nhận mã nguồn làm đúng thứ người viết *nghĩ*.
+
+Sau đó là **đợt hoàn thiện** sáu ưu tiên: bảo mật, bộ ánh xạ Dublin Core → MARC 21, ảnh bìa, bộ dữ
+liệu trình diễn lớn, rà soát lần hai, và làm sạch bảng đáp ứng. Cộng cả ba đợt: **42 lỗi, đã sửa
+hết**.
 
 | Tài liệu | Nội dung |
 |---|---|
-| `docs/08-so-loi.md` | Sổ lỗi: 37 lỗi, tình hình sửa, và phần **"Làm tiếp gì sau đây"** ở cuối |
+| `docs/08-so-loi.md` | Sổ lỗi ba đợt: 37 lỗi hai đợt đầu, 5 lỗi đợt rà thứ hai (mục E) |
 | `docs/09-nguon-du-lieu.md` | Khảo sát 16 nguồn dữ liệu thư mục, giấy phép từng nguồn, kết quả nạp |
+| `docs/00-quyet-dinh-ky-thuat.md` | Sổ quyết định — mọi chỗ tự chốt khi đặc tả không nói rõ |
 | `docs/01`–`docs/07` | Bảy tài liệu bàn giao theo mục 10 |
 
-**Kho dữ liệu hiện có trên máy phát triển:** hơn 7.600 biểu ghi thật thu hoạch qua OAI-PMH từ bốn
-kho DSpace/OJS của Việt Nam và Thư viện Quốc hội Mỹ, đã duyệt và lên trang tra cứu.
+**Kho dữ liệu hiện có trên máy phát triển:** 7.675 biểu ghi thật thu hoạch qua OAI-PMH từ bốn kho
+DSpace/OJS của Việt Nam và Thư viện Quốc hội Mỹ, cộng bộ dữ liệu trình diễn lớn (`LC_SEED_DEMO=rich`)
+sinh trên chính kho ấy: 9.502 ĐKCB, 351 bạn đọc, 1.603 lượt mượn trải 18 tháng, 254 khoản phạt, 58
+lượt đặt giữ.
+
+**Đã kiểm bằng công cụ ngoài:** xuất toàn kho ra ISO 2709 và MARCXML rồi cho `pymarc` 5.4 đọc —
+**7.675/7.675 biểu ghi hợp lệ, 0 lỗi**, nhan đề khớp 100% giữa hai định dạng. Đây là bằng chứng cho
+mục 2.4 của E-HSMT, và nó mạnh hơn mọi phép thử round-trip tự viết: bộ mã của mình mà sai theo cùng
+một cách ở cả hai chiều thì phép thử tự viết vẫn xanh.
 
 ### A.2. Cách làm việc trên kho mã này
 
@@ -40,9 +51,9 @@ huống lỗi; phải tự tay dựng đúng bối cảnh ấy trong phép thử
 **Lệnh chạy đúng:**
 
 ```bash
-cd backend  && dotnet test                 # 431 unit + 362 integration
-cd frontend-admin && npx tsc -b && npx vitest run    # 161 test
-cd frontend-opac  && npx tsc -b && npx vitest run    #  52 test
+cd backend  && dotnet test                 # 523 unit + 362 integration
+cd frontend-admin && npx tsc -b && npx vitest run    # 167 test
+cd frontend-opac  && npx tsc -b && npx vitest run    #  44 test
 ```
 
 > `npx tsc --noEmit` **không kiểm gì cả** ở hai thư mục frontend: `tsconfig.json` là tệp solution
@@ -58,6 +69,8 @@ vướng — mỗi cái sinh ra từ một lỗi đã xảy ra thật:
 | `frontend-admin/src/lib/datetime.test.ts` | Giao diện quản trị không tự viết cách hiện ngày riêng; dùng `lib/datetime` |
 | `frontend-opac/src/lib/datetime.test.ts` | Trang tra cứu cũng vậy — hai gói riêng nên phải quét riêng, đây chính là chỗ lỗi D8 lọt qua |
 | `frontend-admin/src/lib/columnLabels.test.ts` | Không đặt tên cột đúng một chữ "Giá" — trong nghề thư viện nó vừa là giá sách vừa là giá tiền |
+| `frontend-admin/src/modules/catalogs/catalogColumns.test.ts` | Bảng danh mục: mọi cột khai bề rộng, không cột nào chỉ nhận phần thừa |
+| `backend/.../Security/SecretsInRepositoryTests.cs` | Kho mã không mang mật khẩu dùng được; tài liệu nói cách lấy chứ không in giá trị |
 | `backend/.../PermissionAndAuditTests.cs` | Thông báo lỗi không được lọt tiếng Anh của khung nền |
 
 > Một phép thử quét mã nguồn chỉ chặn đúng thư mục nó quét. Thêm luật mới thì hỏi ngay: gói kia có
@@ -95,6 +108,16 @@ docker compose run --rm -d --name lc-api-kiem -e LC_DB_NAME=lc_kiem -e LC_SEED_D
    viện — người xem buổi nghiệm thu kết luận là phần mềm chưa cài xong, dù nghiệp vụ chạy đúng.
 7. **Lỗi chỉ lộ ra khi có dữ liệu thật.** Bộ dữ liệu 200 biểu ghi nhan đề ngắn che mất một loạt lỗi
    giao diện và hiệu năng. Có nghi ngờ thì nạp dữ liệu thật rồi nhìn lại.
+8. **Tự kiểm bằng chính bộ mã của mình không chứng minh được gì.** MARC từng chỉ được kiểm bằng phép
+   thử vòng tròn — encode rồi decode bằng cùng bộ mã, thấy khớp là coi như đúng. Đem tệp xuất cho
+   `pymarc` đọc thì lộ ra ngay: xuất 7.675 biểu ghi trả về lỗi hệ thống và không lấy được biểu ghi
+   nào, chỉ vì một biểu ghi có trường dài quá giới hạn 9.999 byte của ISO 2709.
+9. **Đúng luật ở một thư mục không có nghĩa là đúng ở thư mục kia.** Phép thử quét mã nguồn chỉ chặn
+   đúng chỗ nó quét. Lỗi D8 sửa cho `frontend-admin` rồi ghi là "cả sản phẩm", mà `frontend-opac` còn
+   nguyên suốt một đợt.
+10. **Dữ liệu bẩn của kho nguồn là dữ liệu của mình sau khi thu hoạch.** Ô tác giả của kho bạn có cả
+   công thức bảng tính và nhan đề đặt nhầm; nhận vào không kiểm thì chúng thành mục trong hồ sơ thẩm
+   quyền và đứng đầu trang tra cứu của bạn đọc.
 
 ---
 

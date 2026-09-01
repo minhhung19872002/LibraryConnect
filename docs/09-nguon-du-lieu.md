@@ -139,3 +139,47 @@ hành vi mong đợi khi một lượt thu hoạch bị ngắt rồi chạy lạ
 
 **Đã sửa trong đợt này:** A1, A2, A3, A5, A7, A8, A9. Còn lại A4 (Z39.50 lấy 0 biểu ghi ở một số
 truy vấn) và A6 (thu hoạch không có điểm nối lại khi đứt giữa chừng).
+
+---
+
+## Bộ dữ liệu trình diễn lớn — `LC_SEED_DEMO=rich`
+
+Dữ liệu **thư mục** lấy từ nguồn thật qua đúng giao thức chuẩn, như mô tả ở trên. Dữ liệu **nghiệp
+vụ** thì tự sinh, vì không nguồn nào công bố lượt mượn trả hay hồ sơ bạn đọc thật — mà có công bố
+cũng không dùng được, đó là dữ liệu cá nhân.
+
+Nạp thật trên máy phát triển ngày 02/09/2026:
+
+| Hạng mục | Số lượng | Cách sinh |
+|---|---|---|
+| Biểu ghi thư mục | 7.675 | Thu hoạch thật qua OAI-PMH và Z39.50 |
+| Biểu ghi có bản in | 4.700 (61%) | Sinh ĐKCB cho 60% biểu ghi, chọn cố định theo số kiểm soát |
+| Đăng ký cá biệt | 9.502 | Qua đúng `ItemCreator` mà cán bộ bổ sung dùng |
+| Bạn đọc | 351 | Tên Việt ghép từ ba danh sách, phân bổ theo khoa và ngành |
+| Lượt mượn trả | 1.603 | Trải 18 tháng: đã trả đúng hạn, trả muộn có phạt, đang mượn, quá hạn |
+| Khoản phạt | 254 | Tính bằng chính `CirculationRules` mà quầy dùng |
+| Đặt giữ chỗ | 58 | Đủ bốn trạng thái: chờ, sẵn sàng, đã nhận, hết hạn |
+| ĐKCB mất / hỏng / thanh lý | 37 / 37 / 37 | Để báo cáo kho và màn hình thanh lý có việc thật |
+
+**Chạy lại được:** đặt `LC_SEED_DEMO=rich` rồi khởi động lại máy chủ. Bộ này khác bộ mặc định ở chỗ
+nó chạy được trên kho **đã có dữ liệu** — nó sinh ĐKCB cho chính biểu ghi thu hoạch thật chứ không
+dựng biểu ghi giả. Chỉ chạy đúng một lần, đánh dấu bằng tham số `SYS.DEMO_RICH_APPLIED`.
+
+## Ảnh bìa — kết quả tra thật
+
+| Số đo | Giá trị |
+|---|---|
+| Biểu ghi có ISBN | **444 / 7.675 (5,8%)** |
+| Tra được ảnh thật | **3** (đều từ Open Library) |
+| Google Books | **0** — trả HTTP 429 "Quota exceeded" vì gọi không kèm khóa API |
+| Trường 856 chứa địa chỉ ảnh | 0 |
+| Dùng bìa máy chủ dựng sẵn | **7.672 (99,96%)** |
+
+Con số này trả lời dứt khoát câu hỏi có đáng đầu tư thêm vào tra ảnh thật hay không: **không**. Kho
+thư viện đại học Việt Nam phần lớn là luận văn, đề tài nghiên cứu và bài giảng điện tử — không có
+ISBN, nên không nguồn nào tra ra ảnh. Phần đầu tư nằm ở bìa dựng sẵn, và nó được làm cho tử tế: màu
+theo dạng tài liệu, nhan đề ngắt dòng ở chỗ giáp từ, có tác giả và năm, tỉ lệ 2:3 đúng bìa sách.
+
+Thư viện nào muốn lớp Google Books chạy thật thì khai khóa API riêng ở **Tham số hệ thống → Cấu hình
+biên mục → Khóa API Google Books**. Khóa miễn phí, lấy ở console.cloud.google.com và bật Books API.
+
