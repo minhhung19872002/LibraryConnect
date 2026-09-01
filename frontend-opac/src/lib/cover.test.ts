@@ -47,7 +47,7 @@ describe('Ảnh bìa thay thế', () => {
 
     const bia = coverPlaceholder({ title: dai });
 
-    expect(bia.title.length).toBeLessThanOrEqual(71);
+    expect(bia.title.length).toBeLessThanOrEqual(53);
     expect(bia.title.endsWith('…')).toBe(true);
   });
 });

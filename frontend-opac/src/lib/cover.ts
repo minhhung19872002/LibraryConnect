@@ -67,7 +67,7 @@ export function coverPlaceholder(item: {
 
   return {
     background: BANG_MAU[bam(title || 'khong-co-nhan-de') % BANG_MAU.length]!,
-    title: catChuoi(title || 'Chưa có nhan đề', 70),
+    title: catChuoi(title || 'Chưa có nhan đề', 52),
     author: item.authorMain ? catChuoi(item.authorMain, 34) : '',
     label: (item.documentTypeName ?? 'Tài liệu').trim(),
   };

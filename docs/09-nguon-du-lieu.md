@@ -100,10 +100,15 @@ chừng, phải bắt đầu lại từ đầu).
 Chênh lệch giữa "lấy về" và "nhập được" là biểu ghi trùng số kiểm soát với biểu ghi đã có — đúng
 hành vi mong đợi khi một lượt thu hoạch bị ngắt rồi chạy lại từ đầu.
 
-> **Nhưng số biểu ghi này chưa dùng được.** Cả 7.471 biểu ghi lấy về đều đứng ở trạng thái "Chờ biên
-> mục": không lên OPAC (bạn đọc vẫn chỉ tra được 206 biểu ghi cũ), không vào hàng đợi biên mục, và
-> không mở ra sửa rồi lưu lại được vì thiếu trường 008. Xem lỗi **A7, A8, A9** trong `08-so-loi.md`.
-> Phải sửa ba lỗi ấy thì đợt nạp này mới thành dữ liệu thật của hệ thống.
+> **Ba lỗi chặn đường đã sửa.** Lúc mới nạp xong, cả 7.469 biểu ghi đứng ở trạng thái "Chờ biên
+> mục": không lên trang tra cứu, không vào hàng đợi biên mục, và không mở ra sửa rồi lưu lại được vì
+> thiếu trường 008 (lỗi **A7, A8, A9** trong `08-so-loi.md`). Sau khi sửa, cùng với migration dọn
+> dữ liệu cũ và chức năng duyệt hàng loạt ở hàng đợi biên mục:
+>
+> - 7.468 biểu ghi vào hàng đợi biên mục, cán bộ nhìn thấy việc phải làm;
+> - duyệt hàng loạt xong, **7.674 biểu ghi tra cứu được trên OPAC** (trước đợt nạp: 206);
+> - tra cứu tiếng Việt không dấu chạy đúng trên dữ liệu thật: `thuy loi` ra 3.665 kết quả,
+>   `tai nguyen nuoc` ra 414, `kinh te` ra 1.923.
 
 ---
 
@@ -131,3 +136,6 @@ hành vi mong đợi khi một lượt thu hoạch bị ngắt rồi chạy lạ
 | A7 | Biểu ghi thu hoạch về không vào hàng đợi biên mục — không ai biết có việc phải làm | Nghiêm trọng |
 | A8 | Hoàn thành việc trong hàng đợi không đưa biểu ghi lên OPAC | Nghiêm trọng |
 | A9 | Biểu ghi thu hoạch về thiếu trường 008, mở ra sửa rồi lưu lại thì bị chặn | Nặng |
+
+**Đã sửa trong đợt này:** A1, A2, A3, A5, A7, A8, A9. Còn lại A4 (Z39.50 lấy 0 biểu ghi ở một số
+truy vấn) và A6 (thu hoạch không có điểm nối lại khi đứt giữa chừng).

@@ -136,27 +136,35 @@ những lỗi làm chức năng không dùng được (C2, C6, B8) → phần c�
 | Mức độ | Tổng | Đã sửa | Còn lại |
 |---|---|---|---|
 | Nghiêm trọng | 4 | 4 | 0 |
-| Nặng | 8 | 7 | 1 |
-| Vừa | 16 | 9 | 7 |
-| Nhẹ | 8 | 1 | 7 |
+| Nặng | 8 | 8 | 0 |
+| Vừa | 17 | 8 | 9 |
+| Nhẹ | 7 | 3 | 4 |
 
-**Mỗi lỗi đã sửa đều có phép thử đi kèm, chạy đỏ trước khi sửa và xanh sau khi sửa.** Riêng ba phép
-thử dạng quét mã nguồn (không trỏ thẳng vào API, không đổ JSON thô ra trang công khai, không tự viết
-cách hiện ngày riêng) là để chặn cả lớp lỗi ấy quay lại chứ không chỉ chặn một chỗ.
+Tổng: **36 lỗi, đã sửa 23**.
 
-**Còn lại, theo thứ tự nên làm tiếp:**
+**Mỗi lỗi đã sửa đều có phép thử đi kèm, chạy đỏ trước khi sửa và xanh sau khi sửa.** Ba phép thử
+dạng quét mã nguồn — không trỏ thẳng vào API, không đổ JSON thô ra trang công khai, không tự viết
+cách hiện ngày riêng — là để chặn cả lớp lỗi ấy quay lại chứ không chỉ chặn một chỗ.
 
-| # | Tóm tắt | Mức độ |
-|---|---|---|
-| A6 | Thu hoạch không có điểm nối lại khi đứt giữa chừng | Vừa |
-| A4 | Z39.50 báo có kết quả nhưng lấy 0 biểu ghi ở một số truy vấn | Vừa |
-| B2 | Trang chủ đưa báo, tạp chí chưa có bản in vào mục "Sách mới bổ sung" | Vừa |
-| B6 | Bộ sưu tập chưa được gieo dữ liệu | Vừa |
-| B9, B10, B11 | Cột nhà xuất bản trống, bảng báo – tạp chí cuộn ngang không có dấu hiệu, thiếu bộ lọc tài liệu số | Vừa · Nhẹ |
-| C4 | Thông báo tiếng Anh của khung nền khi thiếu tham số biểu mẫu | Vừa |
-| C5 | Cột "Giá" trống và nhãn tối nghĩa | Vừa |
-| D6, D7, D9 | Bộ dữ liệu mẫu: tên bạn đọc trùng nhau, chưa có tin tức, chưa đặt tên thư viện | Vừa · Nhẹ |
-| B3 | Số tài liệu số ở trang chủ đếm cả phần khách không mở được | Nhẹ |
+Hai lỗi A7 và A8 kèm theo migration dọn dữ liệu cũ: thư viện nào đã thu hoạch bằng bản trước đều có
+sẵn biểu ghi kẹt ngoài hàng đợi và nhật ký kẹt ở "Đang chạy", sửa mã nguồn thôi thì số dữ liệu ấy
+vẫn nằm im. Trên chính hệ thống đang chạy, migration đã đưa 7.468 biểu ghi vào hàng đợi và đóng 15
+dòng nhật ký kẹt; sau đó duyệt hàng loạt đưa toàn bộ lên trang tra cứu.
 
-Ba lỗi cuối (D6, D7, D9) sẽ hết khi dựng bộ dữ liệu demo lớn — cùng đợt với việc đưa hơn bảy nghìn
-biểu ghi vừa thu hoạch lên trang tra cứu.
+**Còn lại, chưa sửa:**
+
+- **A4** (Vừa) — Một số truy vấn Z39.50 báo có kết quả nhưng lấy về 0 biểu ghi (máy chủ từ chối bước Presen
+- **A6** (Vừa) — Lỗi TLS ở giữa chừng làm hỏng cả lượt thu hoạch và **mất luôn phần đã lấy được**; thông bá
+- **B2** (Vừa) — Năm ô đầu là báo và tạp chí không có bản in nào, tác giả hiện dấu "—", nhãn "Chưa có bản i
+- **B3** (Nhẹ) — Ghi "6 tài liệu số" nhưng khách chưa đăng nhập vào mục Tài liệu số chỉ thấy 4 — con số đếm
+- **B6** (Vừa) — Bảng `cat.collections` chưa bao giờ được gieo dữ liệu, nên mục "Bộ sưu tập" luôn rỗng tron
+- **B9** (Vừa) — Cột "Nhà xuất bản" trống ở toàn bộ các dòng.
+- **B10** (Nhẹ) — Bảng rộng 1.260 px nằm trong khung 1.126 px nên cột cuối "Số mới nhất" bị che một nửa (`11
+- **B11** (Vừa) — Chỉ có ô tìm theo nhan đề. Đặc tả IX.4 đòi bộ lọc riêng cho tài liệu số (bộ sưu tập, định 
+- **C4** (Vừa) — Khi thiếu một tham số biểu mẫu, hệ thống trả thông báo **tiếng Anh** của khung nền: `"The 
+- **C5** (Vừa) — Cột "Giá" trống hoàn toàn ở mọi dòng. Nhãn cũng tối nghĩa: "Giá" ở đây là giá sách (kệ) ha
+- **D6** (Nhẹ) — 51 bạn đọc nhưng chỉ có khoảng 17 tên khác nhau: "Bùi Hoàng Khánh" ba người, "Đặng Hoàng H
+- **D7** (Vừa) — Không có bản tin nào, không có bộ sưu tập nào. Trang chủ OPAC hiện "Chưa có bản tin nào đư
+- **D9** (Nhẹ) — Tham số tên thư viện chưa được đặt, nên OPAC và giao diện quản trị đều hiện đúng chữ "Thư 
+
+Ba lỗi D6, D7, D9 sẽ hết khi dựng bộ dữ liệu demo lớn.
