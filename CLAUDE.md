@@ -51,7 +51,7 @@ huống lỗi; phải tự tay dựng đúng bối cảnh ấy trong phép thử
 **Lệnh chạy đúng:**
 
 ```bash
-cd backend  && dotnet test                 # 523 unit + 362 integration
+cd backend  && dotnet test                 # 552 unit + 366 integration
 cd frontend-admin && npx tsc -b && npx vitest run    # 167 test
 cd frontend-opac  && npx tsc -b && npx vitest run    #  44 test
 ```
@@ -118,6 +118,13 @@ docker compose run --rm -d --name lc-api-kiem -e LC_DB_NAME=lc_kiem -e LC_SEED_D
 10. **Dữ liệu bẩn của kho nguồn là dữ liệu của mình sau khi thu hoạch.** Ô tác giả của kho bạn có cả
    công thức bảng tính và nhan đề đặt nhầm; nhận vào không kiểm thì chúng thành mục trong hồ sơ thẩm
    quyền và đứng đầu trang tra cứu của bạn đọc.
+11. **"Đã lưu" chưa phải "hiện ra được".** Bộ tra ảnh bìa tải ảnh về kho đối tượng rồi ghi vào biểu
+   ghi một địa chỉ trỏ tới endpoint chỉ phục vụ thư mục khác. Cơ sở dữ liệu nói có ảnh, kho đối
+   tượng có tệp, báo cáo nói xong — mà trang tra cứu hiện 16 ô ảnh hỏng. Kiểm phải đi tới **nơi
+   người dùng nhìn thấy**, không dừng ở chỗ hệ thống tự nói là đã lưu.
+12. **Chặn trên phải đếm đúng thứ mình muốn chặn.** Lượt nạp Open Library đếm cả biểu ghi bỏ qua vào
+   hạn mức, nên dừng ở 152 biểu ghi trong khi xin 2.600: phần lớn kết quả tìm kiếm không có ảnh bìa
+   nên hạn mức hết veo ngay trang đầu.
 
 ---
 

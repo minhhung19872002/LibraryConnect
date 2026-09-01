@@ -32,6 +32,17 @@ public partial class DatabaseSeeder
     private const int SoLuotMuon = 1_500;
     private const int SoDatGiu = 50;
 
+    /// <summary>
+    /// Bộ trình diễn lớn chia làm hai phần, khác nhau ở chỗ chạy lại được hay không.
+    ///
+    /// **Phần chạy một lần** — bạn đọc, lượt mượn trả, đặt giữ, tên thư viện — có dấu riêng, vì chạy
+    /// lại là nhân đôi số bạn đọc và số lượt mượn.
+    ///
+    /// **Phần chạy lại được** — sinh ĐKCB cho biểu ghi chưa có bản in — không cần dấu nào cả: nó chỉ
+    /// chọn biểu ghi *chưa có bản in nào*, nên chạy hai lần cũng ra đúng một kết quả. Nhờ vậy nạp
+    /// thêm sách về sau — ví dụ 3.600 cuốn từ Open Library — rồi khởi động lại là chúng có bản in
+    /// ngay, không phải xoá dấu hay dựng lại cả bộ dữ liệu.
+    /// </summary>
     private async Task SeedDemoRichAsync(CancellationToken ct)
     {
         if (CheDoMinhHoa() != CheDoDuLieuMinhHoa.Lon)
@@ -39,32 +50,59 @@ public partial class DatabaseSeeder
             return;
         }
 
-        if (await _parameters.GetAsync(DemoRichMarker, false, ct))
+        var daNapPhanMotLan = await _parameters.GetAsync(DemoRichMarker, false, ct);
+
+        if (!daNapPhanMotLan)
         {
-            _logger.LogInformation("Bộ dữ liệu trình diễn lớn đã nạp trước đó, bỏ qua.");
+            _logger.LogInformation("Bắt đầu nạp bộ dữ liệu trình diễn lớn (LC_SEED_DEMO=rich)…");
+
+            // Đặt tên thư viện và mã cơ quan nếu tham số còn để mặc định: bản trình diễn mà đầu
+            // trang vẫn hiện đúng chữ "Thư viện" thì người xem nghĩ là phần mềm chưa cài xong.
+            await SeedDemoLibraryIdentityAsync(ct);
+        }
+
+        var moi = await SinhDkcbChoKhoThatAsync(ct);
+
+        if (!daNapPhanMotLan)
+        {
+            var sanSang = await _db.Items
+                .Where(item => item.Status == ItemStatus.InStock && !item.IsLocked)
+                .OrderBy(item => item.Barcode)
+                .ToListAsync(ct);
+
+            var readers = await SeedDemoReadersAsync(ct, SoBanDoc);
+
+            await SeedDemoCirculationAsync(readers, sanSang, ct, SoLuotMuon, soThangTraiDeu: 18);
+            await SinhDatGiuAsync(readers, ct);
+
+            await _parameters.SetAsync(DemoRichMarker, "true", ct);
+            await _parameters.InvalidateAsync(ct);
+
+            _logger.LogInformation(
+                "Đã nạp bộ dữ liệu trình diễn lớn: {Items} ĐKCB, {Readers} bạn đọc, {Loans} lượt mượn.",
+                sanSang.Count, readers.Count, SoLuotMuon);
+
             return;
         }
 
-        _logger.LogInformation("Bắt đầu nạp bộ dữ liệu trình diễn lớn (LC_SEED_DEMO=rich)…");
+        if (moi.Count == 0)
+        {
+            return;
+        }
 
-        // Đặt tên thư viện và mã cơ quan nếu tham số còn để mặc định: bản trình diễn mà đầu trang
-        // vẫn hiện đúng chữ "Thư viện" thì người xem nghĩ là phần mềm chưa cài xong (lỗi E5, cùng
-        // họ với D9 nhưng ở bộ dữ liệu lớn).
-        await SeedDemoLibraryIdentityAsync(ct);
+        // Sách mới nạp về mà nằm im trên giá thì màn hình lưu thông không thấy chúng bao giờ. Cho
+        // một phần đi vào lưu thông, tỉ lệ giữ đúng như phần lượt mượn đã sinh lúc đầu.
+        var soLuot = Math.Max(1, moi.Count * SoLuotMuon / Math.Max(1, SoBanDocTrenKho()));
 
-        var items = await SinhDkcbChoKhoThatAsync(ct);
-        var readers = await SeedDemoReadersAsync(ct, SoBanDoc);
-
-        await SeedDemoCirculationAsync(readers, items, ct, SoLuotMuon, soThangTraiDeu: 18);
-        await SinhDatGiuAsync(readers, ct);
-
-        await _parameters.SetAsync(DemoRichMarker, "true", ct);
-        await _parameters.InvalidateAsync(ct);
+        await SinhLuotMuonChoBanMoiAsync(moi, soLuot, ct);
 
         _logger.LogInformation(
-            "Đã nạp bộ dữ liệu trình diễn lớn: {Items} ĐKCB, {Readers} bạn đọc, {Loans} lượt mượn.",
-            items.Count, readers.Count, SoLuotMuon);
+            "Đã sinh thêm {Items} ĐKCB cho biểu ghi mới và {Loans} lượt mượn trên số bản ấy.",
+            moi.Count, soLuot);
     }
+
+    /// <summary>Số ĐKCB của lần nạp đầu, dùng để giữ đúng tỉ lệ lượt mượn khi sinh thêm.</summary>
+    private static int SoBanDocTrenKho() => 9_500;
 
     // ---------------------------------------------------------------------------------------------
 
@@ -160,12 +198,45 @@ public partial class DatabaseSeeder
             }
         }
 
+        if (daTao == 0)
+        {
+            return Array.Empty<Item>();
+        }
+
         await DanhDauMatHongThanhLyAsync(ct);
 
+        // Chỉ trả về những bản vừa tạo trong lượt này: phía trên cần biết đúng phần mới để sinh
+        // lượt mượn cho chúng, chứ không phải cả kho.
+        var cuaBieuGhiMoi = chuaCoBan.Select(bib => bib.Id).ToHashSet();
+
         return await _db.Items
-            .Where(item => item.Status == ItemStatus.InStock && !item.IsLocked)
+            .Where(item => cuaBieuGhiMoi.Contains(item.BibId)
+                           && item.Status == ItemStatus.InStock && !item.IsLocked)
             .OrderBy(item => item.Barcode)
             .ToListAsync(ct);
+    }
+
+    /// <summary>
+    /// Sinh lượt mượn trên những bản in vừa tạo, dùng đúng bạn đọc đã có trong kho.
+    ///
+    /// Không dựng bạn đọc mới: kho đã có 300 người, thêm nữa chỉ làm loãng. Lượt mượn đi qua đúng
+    /// <see cref="CirculationRules"/> mà quầy dùng, nên hạn trả và tiền phạt tính cùng một quy tắc.
+    /// </summary>
+    private async Task SinhLuotMuonChoBanMoiAsync(
+        IReadOnlyList<Item> items, int soLuot, CancellationToken ct)
+    {
+        var readers = await _db.Readers
+            .Where(reader => reader.DeletedAt == null && reader.Status == ReaderStatus.Active)
+            .OrderBy(reader => reader.CardNumber)
+            .ToListAsync(ct);
+
+        if (readers.Count == 0 || items.Count == 0)
+        {
+            return;
+        }
+
+        await SeedDemoCirculationAsync(
+            readers, items, ct, Math.Min(soLuot, items.Count), soThangTraiDeu: 12);
     }
 
     /// <summary>

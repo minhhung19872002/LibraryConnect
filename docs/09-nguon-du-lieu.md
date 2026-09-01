@@ -142,6 +142,41 @@ truy vấn) và A6 (thu hoạch không có điểm nối lại khi đứt giữa
 
 ---
 
+## Open Library — nguồn sách có ảnh bìa
+
+**Vì sao cần thêm nguồn này.** Kho thu hoạch bằng OAI-PMH từ các kho số đại học Việt Nam lệch hẳn về
+tài liệu xám: luận văn, luận án, đề tài nghiên cứu và bài giảng điện tử chiếm **93%**. Loại tài liệu
+ấy **không tồn tại ảnh bìa ở bất kỳ nguồn nào** — chúng không có ISBN, không nhà xuất bản nào phát
+hành, không hiệu sách nào bán. Đo thật: tra cả 299 cuốn Sách và Giáo trình có ISBN trong kho, không
+ra được **một** ảnh nào.
+
+| Hạng mục | Nội dung |
+|---|---|
+| Giao thức | Search API (`openlibrary.org/search.json`) — API mở, không cần khóa |
+| Giấy phép dữ liệu | **CC0** — hiến tặng vào phạm vi công cộng, dùng lại không cần xin phép |
+| Ảnh bìa | Covers API, lấy theo **mã ảnh** (`cover_i`) — lối này không giới hạn tần suất; lối theo ISBN bị chặn 100 lượt mỗi 5 phút |
+| Cách nạp | Theo 24 chủ đề của ngành tài nguyên – môi trường, chia đều hạn mức cho từng chủ đề |
+| Điều kiện nhận | **Chỉ nhận biểu ghi có ảnh bìa** — mục đích của lượt nạp là cân bằng lại phần sách có bìa thật |
+| Ảnh lưu ở đâu | Tải về MinIO của mình, không dẫn thẳng sang máy chủ nguồn |
+| Trạng thái biểu ghi | Công bố ngay, không qua hàng đợi hiệu đính |
+| Ghi nguồn | `035$a = (openlibrary.org)works/OL…`, `040$a = openlibrary.org`, `856$u` trỏ về trang gốc |
+
+**Vì sao công bố ngay mà biểu ghi OAI-PMH thì phải hiệu đính.** Dublin Core chỉ có mười lăm phần tử
+nên biểu ghi dựng từ nó còn nghèo — thiếu nhà xuất bản, thiếu số trang, đề mục lẫn lộn với từ khóa.
+Dữ liệu Open Library có đủ nhan đề, tác giả, năm, ISBN, nhà xuất bản, đề mục chủ đề, ngôn ngữ và số
+trang, nên biểu ghi dựng ra đã đủ chuẩn để lên trang tra cứu.
+
+**Chủ đề đã nạp:** hydrology, water resources, water supply, irrigation, hydraulic engineering,
+environmental science, environmental engineering, environmental protection, geology, meteorology,
+climatology, climatic changes, soil science, ecology, oceanography, remote sensing, geographic
+information systems, natural resources, land use, water quality, air pollution, waste management,
+renewable energy, sustainable development.
+
+**Đổi được:** danh sách chủ đề truyền qua tham số của endpoint; bỏ trống thì dùng bộ mặc định trên.
+Chạy bằng nút **Nạp sách từ Open Library** ở màn hình Liên thư viện → Kho OAI-PMH.
+
+---
+
 ## Bộ dữ liệu trình diễn lớn — `LC_SEED_DEMO=rich`
 
 Dữ liệu **thư mục** lấy từ nguồn thật qua đúng giao thức chuẩn, như mô tả ở trên. Dữ liệu **nghiệp
@@ -164,6 +199,29 @@ Nạp thật trên máy phát triển ngày 02/09/2026:
 **Chạy lại được:** đặt `LC_SEED_DEMO=rich` rồi khởi động lại máy chủ. Bộ này khác bộ mặc định ở chỗ
 nó chạy được trên kho **đã có dữ liệu** — nó sinh ĐKCB cho chính biểu ghi thu hoạch thật chứ không
 dựng biểu ghi giả. Chỉ chạy đúng một lần, đánh dấu bằng tham số `SYS.DEMO_RICH_APPLIED`.
+
+## Ảnh bìa — kết quả đo sau khi nạp Open Library
+
+| Số đo | Giá trị |
+|---|---|
+| Tổng biểu ghi | **11.675** |
+| Có ảnh bìa thật | **3.972 (34,0%)** |
+| Dùng bìa máy chủ dựng sẵn | 7.703 (66,0%) |
+| Biểu ghi có bản in trong kho | 8.900 (76,2%) |
+| Đăng ký cá biệt | 17.902 |
+| Lượt mượn trả | 3.103, trong đó 621 đang mượn |
+
+Theo nguồn:
+
+| Nguồn | Biểu ghi | Có ảnh thật |
+|---|---|---|
+| Open Library | 4.000 | **3.968 (99,2%)** |
+| OAI-PMH (bốn kho số đại học Việt Nam) | 7.466 | 1 |
+| Nhập tay / bộ dữ liệu mẫu | 208 | 3 |
+| Z39.50 | 1 | 0 |
+
+Con số ấy nói đúng một điều: **ảnh bìa đi kèm nguồn, không đi kèm công sức tra cứu.** Nạp từ nguồn
+có bìa thì 99,2% có bìa; tra ảnh cho tài liệu nội sinh Việt Nam thì 1 trên 7.466.
 
 ## Ảnh bìa — kết quả tra thật
 

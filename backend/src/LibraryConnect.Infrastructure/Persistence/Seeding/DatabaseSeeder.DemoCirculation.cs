@@ -344,7 +344,12 @@ public partial class DatabaseSeeder
         for (var index = 0; index < soLuot; index++)
         {
             var reader = borrowers[index % borrowers.Count];
-            var item = items[(index * 7) % items.Count];
+
+            // Bước nhảy phải nguyên tố cùng nhau với số bản in, nếu không hai lượt mượn rơi vào
+            // cùng một bản và cơ sở dữ liệu từ chối ngay — đúng ràng buộc "một bản in một phiếu
+            // đang mở" dựng ra sau lỗi D1. Bước 7 đúng với hầu hết số bản, nhưng kho nào có số bản
+            // chia hết cho 7 thì cả lượt nạp đổ.
+            var item = items[(index * BuocNhay(items.Count)) % items.Count];
 
             var bib = bibs.GetValueOrDefault(item.BibId);
             var documentTypeId = bib?.DocumentTypeId;
@@ -651,6 +656,35 @@ public partial class DatabaseSeeder
     }
 
     /// <summary>Ghép một ngày với một giờ trong ngày thành mốc thời gian có múi giờ của hệ thống.</summary>
+    /// <summary>
+    /// Bước nhảy khi rải lượt mượn lên danh sách bản in.
+    ///
+    /// Phải nguyên tố cùng nhau với số bản in thì phép chia lấy dư mới quét hết danh sách mà không
+    /// lặp lại bản nào.
+    /// </summary>
+    private static int BuocNhay(int soBan)
+    {
+        foreach (var buoc in new[] { 7, 11, 13, 17, 19, 23 })
+        {
+            if (UocChungLonNhat(buoc, soBan) == 1)
+            {
+                return buoc;
+            }
+        }
+
+        return 1;
+    }
+
+    private static int UocChungLonNhat(int a, int b)
+    {
+        while (b != 0)
+        {
+            (a, b) = (b, a % b);
+        }
+
+        return a;
+    }
+
     private DateTimeOffset ToMoment(DateOnly date, int hour) =>
         new(date.ToDateTime(new TimeOnly(Math.Clamp(hour, 0, 23), 0)), _clock.Now.Offset);
 }
