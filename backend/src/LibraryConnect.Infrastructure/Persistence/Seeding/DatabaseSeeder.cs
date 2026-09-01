@@ -76,7 +76,30 @@ public partial class DatabaseSeeder
         await SeedCoursesAsync(ct);
         await SeedDemoDataAsync(ct);
 
+        await CanhBaoThieuMaCoQuanAsync(ct);
+
         _logger.LogInformation("Khởi tạo dữ liệu nền hoàn tất");
+    }
+
+    /// <summary>
+    /// Nhắc khi thư viện chưa khai mã cơ quan MARC.
+    ///
+    /// Thiếu mã này thì trường 003 và 040$a của mọi biểu ghi phát ra đều trống, và biểu ghi xuất
+    /// sang phần mềm thư viện khác không nối được về đúng cơ quan nào — đúng thứ mục 2.4 của E-HSMT
+    /// đem ra kiểm. Không đặt sẵn một giá trị mặc định vì mã cơ quan là thứ phải đăng ký thật, bịa
+    /// ra một chuỗi trông giống mã còn tệ hơn để trống.
+    /// </summary>
+    private async Task CanhBaoThieuMaCoQuanAsync(CancellationToken ct)
+    {
+        var ma = await _parameters.GetAsync("LIBRARY.MARC_ORG_CODE", string.Empty, ct);
+
+        if (string.IsNullOrWhiteSpace(ma))
+        {
+            _logger.LogWarning(
+                "Chưa khai mã cơ quan MARC (Tham số hệ thống → Thông tin thư viện → Mã cơ quan "
+                + "MARC). Biểu ghi phát ra sẽ thiếu trường 003 và 040$a, nơi khác nhận biểu ghi "
+                + "không biết do ai biên mục.");
+        }
     }
 
     /// <summary>

@@ -365,10 +365,46 @@ export function BibDetailPage() {
                 },
                 {
                   key: 'digital',
-                  label: `Tài liệu số (${data.digitalDocuments.length})`,
+                  label: `Tài liệu số (${data.digitalDocuments.length + data.externalLinks.length})`,
                   children:
                     data.digitalDocuments.length === 0 ? (
-                      <Empty description="Tài liệu này chưa có bản số." />
+                      data.externalLinks.length === 0 ? (
+                        <Empty description="Tài liệu này chưa có bản số." />
+                      ) : (
+                        <List
+                          header={
+                            <Typography.Text type="secondary">
+                              Bản toàn văn do thư viện nguồn phục vụ. Bấm để mở ở trang của họ.
+                            </Typography.Text>
+                          }
+                          dataSource={data.externalLinks}
+                          renderItem={(link) => (
+                            <List.Item
+                              actions={[
+                                <a
+                                  key="open"
+                                  href={link.url}
+                                  target="_blank"
+                                  rel="noreferrer noopener"
+                                >
+                                  Mở toàn văn
+                                </a>,
+                              ]}
+                            >
+                              <List.Item.Meta
+                                title={link.label || link.note || 'Toàn văn tại thư viện nguồn'}
+                                description={
+                                  <Space size={[8, 4]} wrap>
+                                    <Tag color="blue">Liên kết ngoài</Tag>
+                                    {link.mimeType ? <Tag>{link.mimeType}</Tag> : null}
+                                    <Typography.Text type="secondary">{link.url}</Typography.Text>
+                                  </Space>
+                                }
+                              />
+                            </List.Item>
+                          )}
+                        />
+                      )
                     ) : (
                       <List
                         dataSource={data.digitalDocuments}

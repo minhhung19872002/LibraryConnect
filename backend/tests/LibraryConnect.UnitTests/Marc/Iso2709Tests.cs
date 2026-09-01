@@ -145,7 +145,7 @@ public class Iso2709Tests
         second.ControlNumber = "VNU00067890";
         second.GetField("245")!.Subfields[0].Value = "Kỹ thuật lập trình :";
 
-        var file = Iso2709Writer.WriteMany(new[] { first, second });
+        var file = Iso2709Writer.WriteMany(new[] { first, second }).Content;
         var parsed = Iso2709Reader.ReadAll(file);
 
         parsed.Should().HaveCount(2);

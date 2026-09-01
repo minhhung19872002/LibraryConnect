@@ -91,6 +91,8 @@ public class GetOpacBibQueryHandler : IRequestHandler<GetOpacBibQuery, OpacBibDe
 
         var related = await RelatedAsync(bib.Id, ct);
 
+        var externalLinks = LienKetNgoai(marc, digital);
+
         return new OpacBibDetailDto(
             bib.Id,
             bib.ControlNumber,
@@ -146,9 +148,51 @@ public class GetOpacBibQueryHandler : IRequestHandler<GetOpacBibQuery, OpacBibDe
                     dueDates.FirstOrDefault(loan => loan.ItemId == item.Id)?.DueDate))
                 .ToList(),
             digital,
+            externalLinks,
             reviews,
             reviews.Count == 0 ? null : Math.Round(reviews.Average(review => review.Rating), 1),
             related);
+    }
+
+    /// <summary>
+    /// Bản toàn văn nằm ở máy chủ khác, đọc từ trường MARC 856.
+    ///
+    /// Hơn bảy nghìn biểu ghi thu hoạch về đều có 856$u trỏ tới tệp PDF bên kho nguồn, nhưng thẻ
+    /// "Tài liệu số" vẫn hiện "(0)" vì hệ thống chỉ đếm tệp mình đang giữ. Bạn đọc nhìn thấy tài
+    /// liệu mà không mở được, trong khi bản toàn văn chỉ cách một cú bấm.
+    ///
+    /// Giữ nguyên địa chỉ chứ không tải tệp về: mình được phép mô tả tài liệu của thư viện bạn,
+    /// không đương nhiên được phép giữ bản sao. Bỏ những địa chỉ đã có tệp trong kho mình để bạn đọc
+    /// không thấy hai lối vào cùng một tài liệu.
+    /// </summary>
+    private static IReadOnlyList<OpacExternalLinkDto> LienKetNgoai(
+        MarcRecord marc, IReadOnlyList<OpacDigitalDocumentDto> digital)
+    {
+        var links = new List<OpacExternalLinkDto>();
+        var daCo = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var field in marc.GetFields("856"))
+        {
+            var url = field.GetSubfield('u')?.Trim();
+
+            if (string.IsNullOrWhiteSpace(url)
+                || !url.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+                || !daCo.Add(url))
+            {
+                continue;
+            }
+
+            links.Add(new OpacExternalLinkDto(
+                url,
+                // $y là nhãn hiện cho người đọc, $3 nói phần nào của tài liệu. Không có cái nào thì
+                // để trống, giao diện tự đặt nhãn mặc định.
+                field.GetSubfield('y')?.Trim(),
+                field.GetSubfield('3')?.Trim(),
+                field.GetSubfield('q')?.Trim()));
+        }
+
+        // Tài liệu đã có tệp trong kho mình thì lối đọc chính là trình đọc của hệ thống.
+        return digital.Count > 0 ? Array.Empty<OpacExternalLinkDto>() : links;
     }
 
     /// <summary>

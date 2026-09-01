@@ -236,8 +236,36 @@ public class CatalogingTests
 
         var marc = LibraryConnect.Marc.MarcJson.Deserialize(detail!.Data!.MarcJson);
 
-        marc.GetControlField("003").Should().NotBeNullOrWhiteSpace();
         marc.GetControlField("005").Should().NotBeNullOrWhiteSpace();
+
+        // Trường 003 chỉ ghi khi thư viện đã khai mã cơ quan MARC của mình. Trước đây nó lấy tham
+        // số "nguồn biên mục" nên mang chuỗi hiển thị ("Thư viện", "ĐH Thủy lợi — Bài giảng điện
+        // tử"); đó là tên cho người đọc, không phải mã để máy đối chiếu, và biểu ghi xuất sang phần
+        // mềm khác không nối được về đúng cơ quan nào.
+        await DatThamSoAsync(client, "LIBRARY.MARC_ORG_CODE", "VN-KIEMTHU");
+
+        var sau = await SaveAsync(client, documentTypeId, "Biểu ghi kiểm tra mã cơ quan");
+
+        var chiTiet = await client.GetFromJsonAsync<ApiResponse<BibDetailDto>>(
+            $"/api/cataloging/bibs/{sau.Id}", LibraryConnectFactory.JsonOptions);
+
+        LibraryConnect.Marc.MarcJson.Deserialize(chiTiet!.Data!.MarcJson)
+            .GetControlField("003").Should().Be("VN-KIEMTHU");
+
+        await DatThamSoAsync(client, "LIBRARY.MARC_ORG_CODE", string.Empty);
+    }
+
+    /// <summary>Đặt một tham số hệ thống rồi đợi bộ nhớ đệm tham số nhả giá trị cũ.</summary>
+    private static async Task DatThamSoAsync(HttpClient client, string key, string value)
+    {
+        var response = await client.PutAsJsonAsync("/api/admin/parameters", new
+        {
+            parameters = new[] { new { key, value } }
+        }, LibraryConnectFactory.JsonOptions);
+
+        response.IsSuccessStatusCode.Should().BeTrue(
+            "đặt tham số {0} trả về {1}: {2}",
+            key, response.StatusCode, await response.Content.ReadAsStringAsync());
     }
 
     [Fact]

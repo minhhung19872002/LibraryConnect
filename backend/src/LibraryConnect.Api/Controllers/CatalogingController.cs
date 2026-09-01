@@ -368,6 +368,16 @@ public class CatalogingController : ApiControllerBase
         var file = await Mediator.Send(
             new ExportBibRecordsCommand(request.Filter ?? new BibListRequest(), request.Ids, request.Format), ct);
 
+        // Biểu ghi nào không biểu diễn nổi bằng ISO 2709 thì báo ngay trên tiêu đề phản hồi. Trả về
+        // một tệp thiếu vài biểu ghi mà không nói gì là để cán bộ đối chiếu số lượng lệch mãi không
+        // hiểu vì sao; còn đánh đổ cả lượt xuất vì một biểu ghi thì mất luôn 7.674 biểu ghi lành.
+        if (file.Skipped.Count > 0)
+        {
+            Response.Headers["X-LibraryConnect-Bo-Qua"] = file.Skipped.Count.ToString();
+            Response.Headers["X-LibraryConnect-Bo-Qua-Ly-Do"] =
+                System.Net.WebUtility.UrlEncode(file.Skipped[0].Reason);
+        }
+
         return File(file.Content, file.ContentType, file.FileName);
     }
 

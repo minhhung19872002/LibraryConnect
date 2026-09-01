@@ -80,17 +80,21 @@ public static class DublinCore
         var record = new MarcRecord();
 
         string? First(string name) => dc.Elements(Dc + name)
-            .Select(element => element.Value.Trim())
+            .Select(element => ChuanHoaKhoangTrang(element.Value))
             .FirstOrDefault(value => !string.IsNullOrWhiteSpace(value));
 
         IEnumerable<string> All(string name) => dc.Elements(Dc + name)
-            .Select(element => element.Value.Trim())
+            .Select(element => ChuanHoaKhoangTrang(element.Value))
             .Where(value => !string.IsNullOrWhiteSpace(value));
 
         var title = First("title") ?? "(Không có nhan đề)";
         var creator = First("creator");
         var publisher = First("publisher");
-        var date = First("date");
+        var date = NamXuatBan(All("date"));
+
+        // Kho nguồn có khai ngày nhưng không khai nổi một năm xuất bản nào thì vẫn phải mở trường
+        // 264 để ghi "[không rõ]" vào đó - im lặng bỏ qua là để người đọc tưởng chưa ai điền.
+        var coKhaiNgay = All("date").Any();
         var language = First("language");
         var identifier = First("identifier");
 
@@ -111,7 +115,7 @@ public static class DublinCore
             record.AddField("100", '1').AddSubfield('a', creator);
         }
 
-        if (publisher is not null || date is not null)
+        if (publisher is not null || coKhaiNgay)
         {
             var publication = record.AddField("264", ' ', '1');
 
@@ -120,10 +124,9 @@ public static class DublinCore
                 publication.AddSubfield('b', publisher);
             }
 
-            if (date is not null)
-            {
-                publication.AddSubfield('c', date);
-            }
+            // Luôn ghi $c: "[không rõ]" là câu trả lời thật, còn bỏ trống thì người đọc biểu ghi
+            // không phân biệt được "chưa ai điền" với "đã tra mà không ra".
+            publication.AddSubfield('c', date ?? KhongRoNam);
         }
 
         foreach (var subject in All("subject"))
@@ -139,16 +142,18 @@ public static class DublinCore
         }
 
         var format = First("format");
+        var mime = format is not null && LaKieuTep(format) ? format : null;
 
-        if (format is not null)
+        // "application/pdf" là kiểu tệp, không phải mô tả vật lý. Không biết số trang thì bỏ trống
+        // cả trường 300 - bịa một giá trị vào đó còn tệ hơn để trống.
+        if (format is not null && mime is null)
         {
             record.AddField("300").AddSubfield('a', format);
         }
 
-        if (language is not null)
-        {
-            record.AddField("041").AddSubfield('a', NormalizeLanguage(language));
-        }
+        // Ngôn ngữ luôn ghi, kể cả khi kho nguồn không khai: "und" là mã chuẩn cho "không xác
+        // định", và trường 008 vị trí 35-37 phải khớp với chỗ này.
+        record.AddField("041").AddSubfield('a', LanguageCodes.ToMarc21(language));
 
         if (identifier is not null)
         {
@@ -159,7 +164,14 @@ public static class DublinCore
             }
             else if (identifier.StartsWith("http", StringComparison.OrdinalIgnoreCase))
             {
-                record.AddField("856", '4', '0').AddSubfield('u', identifier);
+                var dienTu = record.AddField("856", '4', '0');
+                dienTu.AddSubfield('u', identifier);
+
+                // $q là chỗ của kiểu tệp theo MARC 21 - thứ trước đây bị đổ nhầm vào trường 300.
+                if (mime is not null)
+                {
+                    dienTu.AddSubfield('q', mime);
+                }
             }
             else
             {
@@ -172,7 +184,150 @@ public static class DublinCore
             record.AddField("700", '1').AddSubfield('a', contributor);
         }
 
+        // Kiểu tệp còn sót lại mà chưa có 856 nào để gắn thì tự mở một trường 856 cho nó.
+        if (mime is not null && record.GetField("856") is null)
+        {
+            record.AddField("856", '4', '0').AddSubfield('q', mime);
+        }
+
+        ThemBoBaRda(record, dienTu: record.GetField("856") is not null);
+
         return record;
+    }
+
+    /// <summary>Ghi vào 264$c khi kho nguồn không cho biết năm xuất bản thật.</summary>
+    public const string KhongRoNam = "[không rõ]";
+
+    /// <summary>
+    /// Gộp mọi khoảng trắng thành một dấu cách, bỏ ký tự xuống dòng.
+    ///
+    /// Kho nguồn hay để nguyên ký tự xuống dòng của biểu mẫu nhập liệu trong nhan đề. Một trường
+    /// MARC là một dòng chữ liền, không có khái niệm xuống dòng, nên ký tự ấy chỉ gây rắc rối: nhan
+    /// đề hiện vỡ trên giao diện, phép so trùng theo nhan đề trượt, và cùng một biểu ghi xuất ra
+    /// ISO 2709 với MARCXML lại khác nhau — chuẩn XML bắt bộ đọc đổi CR LF thành LF, còn ISO 2709
+    /// giữ nguyên byte.
+    /// </summary>
+    private static string ChuanHoaKhoangTrang(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        var builder = new System.Text.StringBuilder(value.Length);
+        var khoangTrang = false;
+
+        foreach (var character in value)
+        {
+            if (char.IsWhiteSpace(character) || char.IsControl(character))
+            {
+                khoangTrang = true;
+                continue;
+            }
+
+            if (khoangTrang && builder.Length > 0)
+            {
+                builder.Append(' ');
+            }
+
+            khoangTrang = false;
+            builder.Append(character);
+        }
+
+        return builder.ToString();
+    }
+
+    /// <summary>
+    /// Bộ ba RDA 336/337/338 - loại nội dung, phương tiện và vật mang tin.
+    ///
+    /// Đây là phần bắt buộc của biểu ghi biên mục theo RDA, thay chỗ của trường 245$h ngày xưa.
+    /// Dublin Core không có thông tin này, nhưng suy ra được: mọi thứ thu hoạch về đây đều là chữ
+    /// (Leader/06 = 'a'), chỉ khác nhau ở chỗ đọc trên máy hay cầm trên tay.
+    /// </summary>
+    private static void ThemBoBaRda(MarcRecord record, bool dienTu)
+    {
+        void Them(string tag, string a, string b, string nguon)
+        {
+            if (record.GetField(tag) is not null)
+            {
+                return;
+            }
+
+            var field = record.AddField(tag);
+            field.AddSubfield('a', a);
+            field.AddSubfield('b', b);
+            field.AddSubfield('2', nguon);
+        }
+
+        Them("336", "text", "txt", "rdacontent");
+        Them("337", dienTu ? "computer" : "unmediated", dienTu ? "c" : "n", "rdamedia");
+        Them("338", dienTu ? "online resource" : "volume", dienTu ? "cr" : "nc", "rdacarrier");
+    }
+
+    /// <summary>
+    /// Chọn năm xuất bản trong danh sách dc:date, bỏ qua dấu thời gian của kho nguồn.
+    ///
+    /// DSpace gộp mọi dc.date.* vào cùng một danh sách: dc.date.accessioned là lúc kho nhận bản ghi
+    /// (2020-02-17T09:38:18Z), còn dc.date.issued mới là năm tài liệu ra đời. Lấy bừa phần tử đầu
+    /// tiên thì 7.464 trên 7.466 biểu ghi thu về mang năm xuất bản là ngày kho nguồn nhập liệu -
+    /// sai với gần như mọi biểu ghi, và sai theo cách trông vẫn hợp lệ.
+    /// </summary>
+    private static string? NamXuatBan(IEnumerable<string> dates)
+    {
+        foreach (var value in dates)
+        {
+            var text = value.Trim();
+
+            // Có phần giờ thì là dấu thời gian của hệ thống, không phải ngày xuất bản do người biên
+            // mục ghi.
+            if (text.Contains('T') && text.Contains(':'))
+            {
+                continue;
+            }
+
+            if (BonChuSoNam(text) is { } nam)
+            {
+                return nam;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>Bốn chữ số năm ở đầu chuỗi, nếu chuỗi ấy là một ngày tháng thật.</summary>
+    private static string? BonChuSoNam(string text)
+    {
+        if (text.Length < 4)
+        {
+            return null;
+        }
+
+        var dau = text[..4];
+
+        if (!dau.All(char.IsAsciiDigit))
+        {
+            return null;
+        }
+
+        // Năm ngoài khoảng này gần như chắc chắn là số hiệu chứ không phải năm xuất bản.
+        return int.TryParse(dau, out var nam) && nam is >= 1000 and <= 2999 ? dau : null;
+    }
+
+    /// <summary>
+    /// Chuỗi này là kiểu tệp (MIME) hay mô tả vật lý.
+    ///
+    /// Kiểu tệp có dạng nhom/loai và không có khoảng trắng - application/pdf, text/html, video/mp4.
+    /// Mô tả vật lý thì luôn có chữ và số trang: "215 tr. ; 24 cm".
+    /// </summary>
+    private static bool LaKieuTep(string value)
+    {
+        var text = value.Trim();
+
+        return text.Count(character => character == '/') == 1
+               && !text.Contains(' ')
+               && text.Length is > 3 and < 100
+               && text[0] != '/'
+               && text[^1] != '/';
     }
 
     private static string? TypeOf(MarcRecord record) => record.Leader.RecordType switch

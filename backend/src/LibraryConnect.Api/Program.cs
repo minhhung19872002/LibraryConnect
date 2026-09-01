@@ -386,15 +386,14 @@ static async Task InitialiseDatabaseAsync(WebApplication app)
     }
 }
 
-/// <summary>Exposed so the integration test project can spin the API up with WebApplicationFactory.</summary>
+// Lớp Program để mở (partial ở cuối tệp) cho bộ kiểm thử tích hợp dựng máy chủ bằng
+// WebApplicationFactory.
 
-/// <summary>
-/// Đổi thông báo lỗi còn sót tiếng Anh của khung nền thành câu tiếng Việt.
-///
-/// Đa số câu đã thay được bằng <c>ModelBindingMessageProvider</c>, nhưng bộ đọc JSON của .NET dựng
-/// câu riêng cho lỗi kiểu dữ liệu (<c>The JSON value could not be converted to…</c>) và không có
-/// chỗ nào cấu hình. Bắt ở đây là chốt chặn cuối trước khi câu ấy ra tới giao diện.
-/// </summary>
+// Đổi thông báo lỗi còn sót tiếng Anh của khung nền thành câu tiếng Việt.
+//
+// Đa số câu đã thay được bằng ModelBindingMessageProvider, nhưng bộ đọc JSON của .NET dựng câu
+// riêng cho lỗi kiểu dữ liệu (The JSON value could not be converted to…) và không có chỗ nào cấu
+// hình. Bắt ở đây là chốt chặn cuối trước khi câu ấy ra tới giao diện.
 static string ThongBaoTiengViet(string truong, string? thongBao)
 {
     if (string.IsNullOrWhiteSpace(thongBao))

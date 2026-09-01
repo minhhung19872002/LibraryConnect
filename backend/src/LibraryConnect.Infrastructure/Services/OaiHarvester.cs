@@ -430,13 +430,28 @@ public class OaiHarvester : IOaiHarvester
             return false;
         }
 
-        // 035$a giữ định danh của kho nguồn theo đúng quy ước MARC 21, để người đọc biểu ghi biết
-        // nó lấy từ đâu.
-        marc.AddField("035").AddSubfield('a', $"(OAI){identifier}");
+        // 035$a giữ số kiểm soát của kho nguồn theo đúng quy ước MARC 21: (mã cơ quan)số kiểm soát.
+        //
+        // Bản trước ghi "(OAI)oai:localhost:DHTL/623" — "OAI" là tên giao thức chứ không phải cơ
+        // quan nào, còn "localhost" là do kho nguồn khai sai địa chỉ của chính họ trong định danh.
+        // Nhìn vào biểu ghi không biết nó từ thư viện nào, mà truy vết lại đúng là lý do trường 035
+        // tồn tại. Định danh nguyên văn vẫn được giữ đủ ở cột source_ref cho lần thu hoạch sau.
+        marc.AddField("035").AddSubfield(
+            'a', OaiSourceCode.SystemControlNumber(repository.BaseUrl, identifier, repository.Name));
 
-        // 040$a ghi nguồn biên mục là kho đã thu về, đúng cách giới thư viện ghi nhận xuất xứ.
+        // 040 ghi dây chuyền biên mục: $a nơi biên mục gốc, $b ngôn ngữ biên mục, $d nơi hiệu đính.
+        // Nơi biên mục gốc là kho nguồn — ghi bằng mã nhận dạng của họ chứ không phải tên hiển thị
+        // do cán bộ mình tự đặt ("ĐH Thủy lợi — Bài giảng điện tử" không phải mã cơ quan nào).
         var field040 = marc.GetField("040") ?? marc.AddField("040");
-        field040.AddSubfield('a', repository.Name);
+        field040.AddSubfield('a', OaiSourceCode.ForRepository(repository.BaseUrl, repository.Name));
+        field040.AddSubfield('b', "vie");
+
+        var maCoQuan = await _parameters.GetAsync("LIBRARY.MARC_ORG_CODE", string.Empty, ct);
+
+        if (!string.IsNullOrWhiteSpace(maCoQuan))
+        {
+            field040.AddSubfield('d', maCoQuan.Trim());
+        }
 
         // Số kiểm soát của kho nguồn không dùng lại được: kho mình cấp số riêng, giữ lại thì hai
         // biểu ghi khác nhau có thể trùng số.

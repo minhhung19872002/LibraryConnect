@@ -113,6 +113,38 @@ public class MarcExportFileDto
     public byte[] Content { get; set; } = Array.Empty<byte>();
     public string FileName { get; set; } = string.Empty;
     public string ContentType { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Biểu ghi không xuất được ra ISO 2709 vì có trường không lặp được mà lại quá dài.
+    ///
+    /// Không im lặng bỏ: cán bộ xuất 7.675 biểu ghi mà nhận về 7.674 thì phải biết thiếu cuốn nào và
+    /// vì sao, nếu không lần đối chiếu số lượng nào cũng lệch mà không ai giải thích được.
+    /// </summary>
+    public IReadOnlyList<MarcExportSkippedDto> Skipped { get; set; } =
+        Array.Empty<MarcExportSkippedDto>();
+}
+
+/// <summary>Một biểu ghi phải bỏ lại khi xuất, kèm lý do nói được cho cán bộ.</summary>
+public record MarcExportSkippedDto(string? ControlNumber, string? Title, string Reason);
+
+/// <summary>Dựng tệp ISO 2709 từ một lô biểu ghi, giữ lại danh sách biểu ghi phải bỏ.</summary>
+public static class MarcExportBuilder
+{
+    public static MarcExportFileDto Iso2709(IReadOnlyList<MarcRecord> records, string stem)
+    {
+        var ket = Iso2709Writer.WriteMany(records);
+
+        return new MarcExportFileDto
+        {
+            Content = ket.Content,
+            FileName = $"{stem}.mrc",
+            // The registered type for MARC exchange files; browsers download rather than render it.
+            ContentType = "application/marc",
+            Skipped = ket.Skipped
+                .Select(bo => new MarcExportSkippedDto(bo.ControlNumber, bo.Title, bo.Reason))
+                .ToList(),
+        };
+    }
 }
 
 /// <summary>
@@ -156,13 +188,7 @@ public class ExportMarcRecordsCommandHandler : IRequestHandler<ExportMarcRecords
                     FileName = $"{stem}.xml",
                     ContentType = "application/xml"
                 },
-                _ => new MarcExportFileDto
-                {
-                    Content = Iso2709Writer.WriteMany(records),
-                    FileName = $"{stem}.mrc",
-                    // The registered type for MARC exchange files; browsers download rather than render it.
-                    ContentType = "application/marc"
-                }
+                _ => MarcExportBuilder.Iso2709(records, stem)
             });
         }
         catch (MarcException exception)

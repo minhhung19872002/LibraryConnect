@@ -202,6 +202,14 @@ export interface BibReview {
   createdAt: string;
 }
 
+/** Bản toàn văn nằm ở máy chủ khác, lấy từ trường MARC 856. */
+export interface BibExternalLink {
+  url: string;
+  label?: string | null;
+  note?: string | null;
+  mimeType?: string | null;
+}
+
 export interface BibDetail {
   id: string;
   controlNumber: string;
@@ -233,6 +241,7 @@ export interface BibDetail {
   availableItemCount: number;
   items: BibItem[];
   digitalDocuments: DigitalDocumentSummary[];
+  externalLinks: BibExternalLink[];
   reviews: BibReview[];
   averageRating?: number;
   related: SearchResult[];

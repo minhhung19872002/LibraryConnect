@@ -48,10 +48,17 @@ public static class Marc008Builder
         Write(7, (publishYear ?? today.Year).ToString(CultureInfo.InvariantCulture));
 
         var country = await parameters.GetAsync("CATALOG.DEFAULT_COUNTRY", "vm", ct);
-        var language = await parameters.GetAsync("CATALOG.DEFAULT_LANGUAGE", "vie", ct);
+
+        // Ngôn ngữ lấy theo chính biểu ghi trước, tham số hệ thống chỉ là phương án cuối. Hai chỗ
+        // này mà lệch nhau thì cùng một biểu ghi nói hai thứ khác nhau về cùng một điều, và phần
+        // mềm nhận biểu ghi tin chỗ nào cũng được.
+        var language = record.GetSubfield("041", 'a')
+            ?? await parameters.GetAsync("CATALOG.DEFAULT_LANGUAGE", "vie", ct);
 
         Write(15, country.PadRight(3)[..3]);
         Write(35, language.PadRight(3)[..3]);
+
+        DienKyTuChuaMaHoa(value);
 
         // 39 = nguồn biên mục; 'd' là "cơ quan khác", giá trị đúng cho biểu ghi do thư viện tự tạo.
         if (value[39] == ' ')
@@ -69,6 +76,35 @@ public static class Marc008Builder
                 {
                     value[start + index] = text[index];
                 }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Vị trí 18-34: nhóm riêng của tài liệu dạng sách. Chỗ nào còn trống thì điền ký tự `|`.
+    ///
+    /// `|` là ký tự điền của MARC 21, nghĩa là "không mã hóa vị trí này". Để khoảng trắng là một
+    /// lời khai hẳn hoi chứ không phải im lặng: ở vị trí 24-27 khoảng trắng nghĩa là "không có nội
+    /// dung đặc biệt nào", ở vị trí 28 nghĩa là "không phải xuất bản phẩm nhà nước", ở vị trí 33
+    /// nghĩa là "không phải tác phẩm hư cấu. Dublin Core không nói gì về những điều ấy, nên khẳng
+    /// định chúng là bịa.
+    ///
+    /// Hai ngoại lệ: vị trí 32 chuẩn chưa định nghĩa nên bắt buộc để trống, và vị trí 38 (biểu ghi
+    /// có bị sửa vì hạn chế bảng mã không) thì khoảng trắng đúng là câu trả lời thật — biểu ghi lưu
+    /// bằng UTF-8, không phải cắt bỏ ký tự nào.
+    /// </summary>
+    private static void DienKyTuChuaMaHoa(char[] value)
+    {
+        for (var index = 18; index <= 34; index++)
+        {
+            if (index == 32)
+            {
+                continue;
+            }
+
+            if (value[index] == ' ')
+            {
+                value[index] = '|';
             }
         }
     }

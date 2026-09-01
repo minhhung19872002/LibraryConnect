@@ -176,6 +176,15 @@ public static class ParameterKeys
     public const string LibraryWebsite = "LIBRARY.WEBSITE";
     public const string LibraryLogoUrl = "LIBRARY.LOGO_URL";
 
+    /// <summary>
+    /// Mã cơ quan MARC của thư viện, dạng <c>VN-XXXXX</c>.
+    ///
+    /// Đây là thứ đi vào trường 003 và 040$a của mọi biểu ghi mình phát ra, và là cách thư viện khác
+    /// nhận ra biểu ghi này do ai biên mục. Phải là **mã**, không phải tên hiển thị: tên thư viện có
+    /// dấu tiếng Việt, có gạch ngang, dài ngắn tùy nơi, nên không dùng để đối chiếu máy được.
+    /// </summary>
+    public const string LibraryMarcOrgCode = "LIBRARY.MARC_ORG_CODE";
+
     /// <summary>Written to MARC 040$a as the cataloguing source. Never hardcoded.</summary>
     public const string MarcCatalogingSource = "CATALOG.MARC_040A";
     public const string MarcDefaultLanguage = "CATALOG.DEFAULT_LANGUAGE";

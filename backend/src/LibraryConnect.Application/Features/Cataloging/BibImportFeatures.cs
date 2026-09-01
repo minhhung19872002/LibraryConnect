@@ -305,12 +305,7 @@ public class ExportBibRecordsCommandHandler : IRequestHandler<ExportBibRecordsCo
                 FileName = $"{stem}.xml",
                 ContentType = "application/xml"
             },
-            _ => new MarcExportFileDto
-            {
-                Content = Iso2709Writer.WriteMany(records),
-                FileName = $"{stem}.mrc",
-                ContentType = "application/marc"
-            }
+            _ => Features.Marc.MarcExportBuilder.Iso2709(records, stem)
         };
     }
 }

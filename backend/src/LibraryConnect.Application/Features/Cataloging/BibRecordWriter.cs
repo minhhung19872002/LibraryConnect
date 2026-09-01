@@ -197,11 +197,16 @@ public class BibRecordWriter : IBibRecordWriter
             return;
         }
 
-        var organisation = await _parameters.GetAsync("CATALOG.MARC_040A", string.Empty, ct);
+        // Mã cơ quan, không phải tên thư viện. Trước đây lấy nhầm tham số "nguồn biên mục" nên
+        // trường 003 mang chuỗi hiển thị ("Thư viện", "ĐH Thủy lợi — Bài giảng điện tử"). Trường
+        // này là mã để máy đối chiếu; đặt tên hiển thị vào đó thì biểu ghi xuất sang phần mềm khác
+        // không nối được về đúng cơ quan nào.
+        var organisation = await _parameters.GetAsync(
+            "LIBRARY.MARC_ORG_CODE", string.Empty, ct);
 
         if (!string.IsNullOrWhiteSpace(organisation))
         {
-            marc.SetControlField("003", organisation);
+            marc.SetControlField("003", organisation.Trim());
         }
     }
 

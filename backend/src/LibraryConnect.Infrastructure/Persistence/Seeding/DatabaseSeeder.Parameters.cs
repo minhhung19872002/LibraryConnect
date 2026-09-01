@@ -27,6 +27,11 @@ public partial class DatabaseSeeder
         new(ParameterKeys.LibraryWebsite, "LIBRARY", "Thông tin thư viện", "Website", null, ParameterDataType.Text, ""),
         new(ParameterKeys.LibraryLogoUrl, "LIBRARY", "Thông tin thư viện", "Logo thư viện",
             "Ảnh hiển thị ở đầu trang quản trị và trên các biểu mẫu in.", ParameterDataType.File, ""),
+        new(ParameterKeys.LibraryMarcOrgCode, "LIBRARY", "Thông tin thư viện", "Mã cơ quan MARC",
+            "Dạng VN-XXXXX, do Thư viện Quốc hội Mỹ cấp. Đi vào trường 003 và 040$a của mọi biểu ghi "
+            + "thư viện phát ra — đây là cách nơi khác nhận ra biểu ghi do ai biên mục. Chưa đăng ký "
+            + "được thì đặt tạm tên miền của thư viện. Bỏ trống thì biểu ghi xuất ra thiếu xuất xứ.",
+            ParameterDataType.Text, ""),
 
         // ---- Biên mục ----
         new(ParameterKeys.MarcCatalogingSource, "CATALOG", "Cấu hình biên mục", "Nguồn biên mục (MARC 040$a)",

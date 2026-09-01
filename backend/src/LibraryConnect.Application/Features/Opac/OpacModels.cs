@@ -189,9 +189,20 @@ public record OpacBibDetailDto(
     int AvailableItemCount,
     IReadOnlyList<OpacItemDto> Items,
     IReadOnlyList<OpacDigitalDocumentDto> DigitalDocuments,
+    IReadOnlyList<OpacExternalLinkDto> ExternalLinks,
     IReadOnlyList<OpacReviewDto> Reviews,
     double? AverageRating,
     IReadOnlyList<OpacResultDto> Related);
+
+/// <summary>
+/// Bản toàn văn nằm ở máy chủ khác, lấy từ trường MARC 856.
+///
+/// Biểu ghi thu hoạch về từ kho số của thư viện bạn hầu hết chỉ có địa chỉ tệp chứ không có tệp:
+/// mình được phép mô tả tài liệu, không được phép giữ bản sao. Không hiện địa chỉ ấy ra thì bạn đọc
+/// thấy thẻ "Tài liệu số (0)" trong khi bản toàn văn nằm ngay sau một cú bấm — vừa mất công tra
+/// cứu, vừa làm người xem tưởng kho mình rỗng.
+/// </summary>
+public record OpacExternalLinkDto(string Url, string? Label, string? Note, string? MimeType);
 
 /// <summary>Một tên tác giả / chủ đề bấm được để tra tiếp.</summary>
 public record OpacLinkedTermDto(Guid? Id, string Name, string? Note);

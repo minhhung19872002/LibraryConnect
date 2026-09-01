@@ -18,6 +18,17 @@ public static class Iso2709Writer
     {
         ArgumentNullException.ThrowIfNull(record);
 
+        // Trường dài quá 9.999 byte không khai nổi trong danh mục ISO 2709. Chuẩn bảo chia thành
+        // nhiều lần lặp — làm luôn ở đây thay vì bắt người gọi nhớ, vì quên là hỏng cả tệp xuất.
+        var (chuanBi, boQua) = Iso2709FieldSplitter.Prepare(record);
+
+        if (chuanBi is null)
+        {
+            throw new MarcException(boQua!.Reason);
+        }
+
+        record = chuanBi;
+
         var entries = BuildFields(record);
 
         // The directory has one 12-byte entry per field plus its own terminator; the data area
@@ -66,18 +77,50 @@ public static class Iso2709Writer
         return buffer;
     }
 
-    /// <summary>Ghi nhiều biểu ghi vào một tệp .mrc, nối tiếp nhau không có dấu ngăn nào khác.</summary>
-    public static byte[] WriteMany(IEnumerable<MarcRecord> records)
+    /// <summary>Kết quả ghi một lô: tệp đã dựng và danh sách biểu ghi phải bỏ lại.</summary>
+    public record Iso2709WriteResult(byte[] Content, IReadOnlyList<Iso2709FieldSplitter.BoQua> Skipped);
+
+    /// <summary>
+    /// Ghi nhiều biểu ghi vào một tệp .mrc, nối tiếp nhau không có dấu ngăn nào khác.
+    ///
+    /// Biểu ghi nào không biểu diễn nổi bằng ISO 2709 thì bỏ lại và ghi vào danh sách, chứ không
+    /// đánh đổ cả lô. Đây là lỗi đã xảy ra thật: xuất 7.675 biểu ghi trả về lỗi hệ thống và không
+    /// lấy được biểu ghi nào, chỉ vì đúng một biểu ghi có phần tóm tắt dài 10.686 byte.
+    /// </summary>
+    public static Iso2709WriteResult WriteMany(IEnumerable<MarcRecord> records)
     {
+        ArgumentNullException.ThrowIfNull(records);
+
         using var stream = new MemoryStream();
+        var boQua = new List<Iso2709FieldSplitter.BoQua>();
 
         foreach (var record in records)
         {
-            var bytes = Write(record);
+            var (chuanBi, ly) = Iso2709FieldSplitter.Prepare(record);
+
+            if (chuanBi is null)
+            {
+                boQua.Add(ly!);
+                continue;
+            }
+
+            byte[] bytes;
+
+            try
+            {
+                bytes = Write(chuanBi);
+            }
+            catch (MarcException ex)
+            {
+                boQua.Add(new Iso2709FieldSplitter.BoQua(
+                    record.ControlNumber, record.GetSubfield("245", 'a'), ex.Message));
+                continue;
+            }
+
             stream.Write(bytes, 0, bytes.Length);
         }
 
-        return stream.ToArray();
+        return new Iso2709WriteResult(stream.ToArray(), boQua);
     }
 
     public static async Task WriteManyAsync(

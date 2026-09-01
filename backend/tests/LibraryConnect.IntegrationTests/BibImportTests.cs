@@ -45,7 +45,7 @@ public class BibImportTests
             Build($"{prefix}-003", "Vật lý đại cương", "Phạm Minh Dũng", $"978-604-{seed}-3-3", 2021)
         };
 
-        return Iso2709Writer.WriteMany(records);
+        return Iso2709Writer.WriteMany(records).Content;
 
         static MarcRecord Build(string control, string title, string author, string isbn, int year)
         {
@@ -205,7 +205,7 @@ public class BibImportTests
         changed[0].GetField("245")!.Subfields[0].Value = "Lịch sử Đảng Cộng sản Việt Nam, tái bản :";
 
         var second = await RunImportAsync(
-            client, Iso2709Writer.WriteMany(changed), new { matchBy = "Isbn", onDuplicate = "Overwrite" });
+            client, Iso2709Writer.WriteMany(changed).Content, new { matchBy = "Isbn", onDuplicate = "Overwrite" });
 
         second.Success.Should().Be(3);
         second.Skipped.Should().Be(0);
@@ -235,7 +235,7 @@ public class BibImportTests
         incoming[0].AddField("500").AddSubfield('a', "Phụ chú bổ sung từ thư viện bạn");
 
         var merged = await RunImportAsync(
-            client, Iso2709Writer.WriteMany(incoming), new { matchBy = "Isbn", onDuplicate = "Merge" });
+            client, Iso2709Writer.WriteMany(incoming).Content, new { matchBy = "Isbn", onDuplicate = "Merge" });
 
         merged.Success.Should().Be(3);
 
@@ -264,7 +264,7 @@ public class BibImportTests
         records[1].DataFields.RemoveAll(field => field.Tag == "245");
 
         var job = await RunImportAsync(
-            client, Iso2709Writer.WriteMany(records), new { matchBy = "Isbn", onDuplicate = "Skip" });
+            client, Iso2709Writer.WriteMany(records).Content, new { matchBy = "Isbn", onDuplicate = "Skip" });
 
         job.Success.Should().Be(2);
         job.Failed.Should().Be(1);
