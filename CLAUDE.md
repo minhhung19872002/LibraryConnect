@@ -1,6 +1,93 @@
-# PROMPT BUILD: **LibraryConnect** — PHẦN MỀM THƯ VIỆN SỐ CHUẨN KẾT NỐI LIÊN THƯ VIỆN
+# **LibraryConnect** — PHẦN MỀM THƯ VIỆN SỐ CHUẨN KẾT NỐI LIÊN THƯ VIỆN
 
-> Tài liệu này là prompt đầy đủ để đưa cho Claude Code. Copy toàn bộ nội dung vào `CLAUDE.md` ở thư mục gốc của repo, sau đó ra lệnh build theo từng Phase ở Phần 12.
+> Tài liệu này vừa là đặc tả gốc theo hồ sơ mời thầu, vừa là bản hướng dẫn làm việc trên kho mã.
+> Bản đặc tả nguyên văn chưa chỉnh sửa nằm ở `PROMPT-BUILD-LIBRARYCONNECT.md`.
+>
+> **Đọc phần A trước khi làm bất cứ việc gì.** Phần 0–13 phía sau là đặc tả yêu cầu, giữ nguyên để
+> đối chiếu với `docs/07-bang-dap-ung-ky-thuat.md` khi nộp thầu.
+
+---
+
+## A. TÌNH HÌNH HIỆN TẠI — ĐỌC TRƯỚC
+
+### A.1. Đã xong tới đâu
+
+Phần **web đã dựng xong toàn bộ Phase 1–14**: mười phân hệ I–X chạy thật, `docker compose up -d` là
+lên hệ thống hoàn chỉnh. Phân hệ XI (mobile) chưa làm, đúng như phạm vi đã chốt ở mục 0.2.
+
+Sau khi xong Phase 14 đã chạy thêm **một đợt rà soát chất lượng toàn diện** — mở hệ thống như người
+dùng thật, đi hết từng màn hình, cố tình đi đường sai, gọi thẳng API không qua giao diện, và nạp dữ
+liệu thật từ nguồn ngoài. Đợt rà ấy tìm ra **36 lỗi**, phần lớn là lỗi mà bộ kiểm thử cũ không bao
+giờ chạm tới vì nó chỉ xác nhận mã nguồn làm đúng thứ người viết *nghĩ*.
+
+| Tài liệu | Nội dung |
+|---|---|
+| `docs/08-so-loi.md` | Sổ lỗi: 36 lỗi, tình hình sửa, và phần **"Làm tiếp gì sau đây"** ở cuối |
+| `docs/09-nguon-du-lieu.md` | Khảo sát 16 nguồn dữ liệu thư mục, giấy phép từng nguồn, kết quả nạp |
+| `docs/01`–`docs/07` | Bảy tài liệu bàn giao theo mục 10 |
+
+**Kho dữ liệu hiện có trên máy phát triển:** hơn 7.600 biểu ghi thật thu hoạch qua OAI-PMH từ bốn
+kho DSpace/OJS của Việt Nam và Thư viện Quốc hội Mỹ, đã duyệt và lên trang tra cứu.
+
+### A.2. Cách làm việc trên kho mã này
+
+**Kiểm thử.** Sửa lỗi nào cũng phải kèm một phép thử **chạy đỏ trước khi sửa, xanh sau khi sửa** —
+không có bước đỏ thì không biết phép thử ấy có bắt được gì không. Đã có lần viết phép thử xong thấy
+xanh ngay cả khi chưa sửa, vì bối cảnh trong cơ sở dữ liệu kiểm thử tình cờ không dựng ra được tình
+huống lỗi; phải tự tay dựng đúng bối cảnh ấy trong phép thử.
+
+**Lệnh chạy đúng:**
+
+```bash
+cd backend  && dotnet test                 # 427 unit + 359 integration
+cd frontend-admin && npx tsc -b && npx vitest run    # 160 test
+cd frontend-opac  && npx tsc -b && npx vitest run    #  47 test
+```
+
+> `npx tsc --noEmit` **không kiểm gì cả** ở hai thư mục frontend: `tsconfig.json` là tệp solution
+> rỗng chỉ trỏ tới hai tsconfig con. Luôn dùng `npx tsc -b`.
+
+**Bốn phép thử quét mã nguồn** chặn cả một lớp lỗi thay vì chặn một chỗ. Đừng bỏ chúng đi khi thấy
+vướng — mỗi cái sinh ra từ một lỗi đã xảy ra thật:
+
+| Phép thử | Luật |
+|---|---|
+| `frontend-admin/src/api/download.test.ts` | Ngoài `src/api`, không được viết địa chỉ bắt đầu bằng `/api/` — xác thực là JWT trong tiêu đề, thẻ liên kết không mang theo được |
+| `frontend-opac/src/lib/marcView.test.ts` | Không `JSON.stringify` biểu ghi MARC ra trang công khai |
+| `frontend-admin/src/lib/datetime.test.ts` | Không phân hệ nào tự viết cách hiện ngày riêng; dùng `lib/datetime` |
+| `backend/.../PermissionAndAuditTests.cs` | Thông báo lỗi không được lọt tiếng Anh của khung nền |
+
+**Migration.** Sửa lỗi nghiệp vụ thường phải kèm migration dọn dữ liệu cũ: thư viện đã chạy bản
+trước mang sẵn hậu quả của lỗi ấy trong kho, sửa mã nguồn thôi thì số dữ liệu ấy vẫn nằm im. Bốn
+migration gần nhất đều thuộc loại này.
+
+**Bộ dữ liệu trình diễn** chỉ chạy khi `bib_records` còn rỗng, nên không kiểm chứng được trên máy
+đang chạy. Muốn kiểm thì dựng một cơ sở dữ liệu trắng:
+
+```bash
+docker exec lc-postgres psql -U libraryconnect -d postgres -c "CREATE DATABASE lc_kiem;"
+docker compose run --rm -d --name lc-api-kiem -e LC_DB_NAME=lc_kiem -e LC_SEED_DEMO=true api
+# đợi khoảng 80 giây rồi truy vấn thẳng bằng psql, xong thì xoá cả container lẫn database
+```
+
+### A.3. Những chỗ đã trả giá — đừng lặp lại
+
+1. **Tầng nghiệp vụ không chặn được tranh chấp.** Kiểm "sách còn rảnh không" rồi mới ghi là hai quầy
+   làm cùng lúc đều ghi được. Luật kiểu "một bản in một phiếu đang mở" phải là **ràng buộc duy nhất
+   ở cơ sở dữ liệu**.
+2. **Đặt trạng thái không bằng tạo việc.** Biểu ghi mang trạng thái "Chờ biên mục" mà không có dòng
+   trong `bib.catalog_queue` thì không ai nhìn thấy. Màn hình đọc từ bảng công việc, không quét cột
+   trạng thái.
+3. **Cắt trước, lọc sau là sai.** Lấy 500 dòng đầu rồi mới bỏ dòng rỗng thì kho càng lớn danh sách
+   càng rỗng. Luôn lọc trong câu hỏi gửi xuống cơ sở dữ liệu.
+4. **Việc dài không được chạy trong lượt HTTP.** Proxy cắt ở 300 giây, việc bị bỏ dở, nhật ký kẹt
+   "Đang chạy" vĩnh viễn. Xếp vào Hangfire, kèm khoá chống chạy trùng và cơ chế đóng lượt chết.
+5. **Bảng có cột cố định thì cột quan trọng nhất cũng phải khai bề rộng.** Để trống một cột cho nó
+   "nhận phần thừa" là khi hết phần thừa nó co lại còn vài chục điểm ảnh.
+6. **Dữ liệu mẫu là một phần của sản phẩm.** Tên bạn đọc trùng nhau, danh mục rỗng, chưa đặt tên thư
+   viện — người xem buổi nghiệm thu kết luận là phần mềm chưa cài xong, dù nghiệp vụ chạy đúng.
+7. **Lỗi chỉ lộ ra khi có dữ liệu thật.** Bộ dữ liệu 200 biểu ghi nhan đề ngắn che mất một loạt lỗi
+   giao diện và hiệu năng. Có nghi ngờ thì nạp dữ liệu thật rồi nhìn lại.
 
 ---
 
@@ -1132,51 +1219,54 @@ Sinh đầy đủ 7 tài liệu trong `docs/`, tiếng Việt, có ảnh chụp 
 
 ## 12. THỨ TỰ THỰC HIỆN (làm tuần tự, không nhảy bước)
 
-**Phase 1 — Nền móng**
+> **Phase 1–14 đã xong.** Giữ lại danh sách dưới đây để đối chiếu phạm vi từng phase
+> khi rà soát. Việc còn lại xem `docs/08-so-loi.md`, phần "Làm tiếp gì sau đây".
+
+**✅ Phase 1 — Nền móng**
 Khởi tạo solution, cấu trúc Clean Architecture, EF Core + PostgreSQL, docker-compose (postgres/redis/minio/api), JWT auth, RBAC, audit log interceptor, exception middleware, health check, Serilog. Khung React admin (layout, sidebar theo quyền, routing, API client, form/table components dùng chung). Seed quyền + tài khoản admin.
 → *Nghiệm thu Phase: đăng nhập được, menu hiển thị theo quyền, thao tác sinh audit log.*
 
-**Phase 2 — Quản trị hệ thống (Phân hệ I)**
+**✅ Phase 2 — Quản trị hệ thống (Phân hệ I)**
 Đầy đủ 5 nhóm chức năng, kể cả sao lưu/phục hồi thật bằng pg_dump.
 
-**Phase 3 — Danh mục**
+**✅ Phase 3 — Danh mục**
 Toàn bộ bảng danh mục ở mục 4.2, kèm import/export Excel và chức năng gộp trùng.
 
-**Phase 4 — MARC Core** *(quan trọng nhất, làm kỹ)*
+**✅ Phase 4 — MARC Core** *(quan trọng nhất, làm kỹ)*
 `LibraryConnect.Marc`: model MARC21, parser/serializer ISO 2709, MARCXML, unit test round-trip tiếng Việt. Định nghĩa trường MARC + seed. Trình soạn MARC trên React.
 
-**Phase 5 — Biên mục (Phân hệ II)**
+**✅ Phase 5 — Biên mục (Phân hệ II)**
 Đầy đủ 10 nhóm chức năng, gồm hàng đợi biên mục và xử lý phích.
 
-**Phase 6 — Bổ sung & Kho (Phân hệ III)**
+**✅ Phase 6 — Bổ sung & Kho (Phân hệ III)**
 Đơn đặt → nhập kho → ĐKCB → in mã vạch/nhãn → kiểm kê → chuyển kho → báo cáo.
 
-**Phase 7 — Ấn phẩm định kỳ (Phân hệ IV)**
+**✅ Phase 7 — Ấn phẩm định kỳ (Phân hệ IV)**
 Chú ý thuật toán sinh số theo kỳ hạn và chức năng đóng tập.
 
-**Phase 8 — Bạn đọc (Phân hệ VI)**
+**✅ Phase 8 — Bạn đọc (Phân hệ VI)**
 Hồ sơ, in thẻ, import/export, báo cáo.
 
-**Phase 9 — Lưu thông (Phân hệ VII)**
+**✅ Phase 9 — Lưu thông (Phân hệ VII)**
 Chính sách, ghi mượn/trả tối ưu tốc độ, đặt giữ, phạt, tủ đồ, 7 báo cáo.
 
-**Phase 10 — Tài liệu số (Phân hệ V)**
+**✅ Phase 10 — Tài liệu số (Phân hệ V)**
 MinIO, upload chunk, OCR, trình đọc có watermark, duyệt yêu cầu truy cập hạn chế.
 
-**Phase 11 — Liên thư viện**
+**✅ Phase 11 — Liên thư viện**
 Z39.50 client + server, SRU, OAI-PMH provider + harvester. Test với server thật.
 
-**Phase 12 — OPAC + CMS (Phân hệ VIII, IX)**
+**✅ Phase 12 — OPAC + CMS (Phân hệ VIII, IX)**
 SPA công khai, tra cứu facet, tài khoản bạn đọc, quản trị nội dung.
 
-**Phase 13 — Tài liệu môn học (Phân hệ X)**
+**✅ Phase 13 — Tài liệu môn học (Phân hệ X)**
 
-**Phase 14 — Hoàn thiện web**
+**✅ Phase 14 — Hoàn thiện web**
 Tối ưu hiệu năng, rà soát bảo mật, seed dữ liệu demo đầy đủ, viết trọn 7 tài liệu bàn giao, docker-compose.prod, script backup/restore, kịch bản kiểm thử.
 Rà soát lần cuối nhóm `/api/reader/*` (mục XI.4): đủ endpoint, đủ test, đủ mô tả Swagger, đã viết chương "API cho ứng dụng khách" trong `docs/05-api-reference.md`.
 → *Nghiệm thu Phase: `docker compose up -d` là hệ thống web chạy hoàn chỉnh với dữ liệu demo, mọi phân hệ I–X demo được.*
 
-**Phase 15 — Mobile App (Phân hệ XI)** — *ĐỢT SAU, KHÔNG THỰC HIỆN TRONG LẦN BUILD NÀY*
+**⬜ Phase 15 — Mobile App (Phân hệ XI)** — *ĐỢT SAU, KHÔNG THỰC HIỆN TRONG LẦN BUILD NÀY*
 Flutter, đầy đủ chức năng mục XI, gọi vào nhóm endpoint đã hoàn thiện ở Phase 14, build APK/IPA.
 
 ---
@@ -1189,3 +1279,9 @@ Flutter, đầy đủ chức năng mục XI, gọi vào nhóm endpoint đã hoà
 4. **Màn hình ghi mượn/ghi trả** là nơi cán bộ dùng nhiều nhất trong ngày — ưu tiên tốc độ và thao tác bàn phím hơn là đẹp.
 5. **Trình soạn MARC** quyết định chất lượng sản phẩm trong mắt cán bộ thư viện chuyên môn. Đầu tư kỹ.
 6. Mỗi khi hoàn thành một Phase, tự đối chiếu lại với `docs/07-bang-dap-ung-ky-thuat.md` và cập nhật trạng thái đáp ứng.
+7. **Test xanh không có nghĩa là chức năng đúng.** Người viết mã tự viết test cho mã của mình chỉ
+   xác nhận mã làm đúng thứ mình *nghĩ*, không xác nhận mình nghĩ đúng. Cách kiểm duy nhất đáng tin
+   là mở hệ thống ra dùng như người dùng thật, có dữ liệu thật, và cố tình đi đường sai.
+8. **Ghi lỗi thì ghi thẳng.** Sổ lỗi `docs/08-so-loi.md` chép cả những lỗi do chính mình gây ra ở
+   các phase trước, không bào chữa. Có bằng chứng — ảnh màn hình, số đo, câu lệnh tái hiện — mới
+   được ghi là đã kiểm.
