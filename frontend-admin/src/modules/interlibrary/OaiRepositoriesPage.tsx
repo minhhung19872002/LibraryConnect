@@ -13,6 +13,7 @@ import {
   Table,
   Tabs,
   Tag,
+  Tooltip,
   Typography,
 } from 'antd';
 import {
@@ -164,9 +165,21 @@ export function OaiRepositoriesPage() {
     {
       title: 'Thu hoạch lần cuối',
       dataIndex: 'lastHarvestAt',
-      width: 170,
-      render: (value: string | null) =>
-        value ? formatDateTime(value) : <Typography.Text type="secondary">Chưa chạy</Typography.Text>,
+      width: 190,
+      render: (value: string | null, row) => (
+        <Space direction="vertical" size={0}>
+          {value ? (
+            formatDateTime(value)
+          ) : (
+            <Typography.Text type="secondary">Chưa chạy</Typography.Text>
+          )}
+          {row.resumptionToken ? (
+            <Tooltip title="Lượt trước đứt giữa chừng. Bấm Thu hoạch để chạy tiếp từ chỗ dừng; bấm Nạp lại nếu muốn quét lại toàn bộ kho.">
+              <Tag color="orange">Còn dở dang</Tag>
+            </Tooltip>
+          ) : null}
+        </Space>
+      ),
     },
     {
       title: 'Trạng thái',

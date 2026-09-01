@@ -46,7 +46,7 @@ public class RemoteCatalogSearcher : IRemoteCatalogSearcher
 
                 return new Z3950CheckResultDto(
                     true,
-                    $"Kết nối SRU tốt, tra thử được {result.TotalHits:#,##0} kết quả.",
+                    $"Kết nối SRU tốt, tra thử được {SoLuong(result.TotalHits)} kết quả.",
                     (int)stopwatch.ElapsedMilliseconds,
                     target.Name,
                     null,
@@ -80,7 +80,7 @@ public class RemoteCatalogSearcher : IRemoteCatalogSearcher
             return new Z3950CheckResultDto(
                 true,
                 $"Kết nối tốt. Máy chủ: {client.ServerImplementationName ?? "(không khai tên)"}. "
-                + $"Tra thử được {probe.TotalHits:#,##0} kết quả.",
+                + $"Tra thử được {SoLuong(probe.TotalHits)} kết quả.",
                 (int)stopwatch.ElapsedMilliseconds,
                 client.ServerImplementationName,
                 client.ServerImplementationVersion,
@@ -113,6 +113,11 @@ public class RemoteCatalogSearcher : IRemoteCatalogSearcher
                 ? await SearchSruAsync(target, field, term, maxRecords, ct)
                 : await SearchZ3950Async(target, field, term, maxRecords, ct);
 
+            if (CanChuyenSangSru(target, result))
+            {
+                result = await ChuyenSangSruAsync(target, field, term, maxRecords, result, ct);
+            }
+
             stopwatch.Stop();
 
             return result with { DurationMs = (int)stopwatch.ElapsedMilliseconds };
@@ -136,7 +141,73 @@ public class RemoteCatalogSearcher : IRemoteCatalogSearcher
 
     // ---------------------------------------------------------------------------------------------
 
-    private async Task<RemoteSearchTargetResultDto> SearchZ3950Async(
+    /// <summary>
+    /// Máy chủ Z39.50 nhận truy vấn, báo có bao nhiêu kết quả, rồi từ chối trả biểu ghi.
+    ///
+    /// Không hiếm: nhiều thư viện lớn giới hạn bước Present cho khách lạ, hoặc chỉ phát biểu ghi ở
+    /// cú pháp khác cú pháp mình xin. Cán bộ nhìn thấy "11.528 kết quả" cạnh một danh sách rỗng thì
+    /// kết luận là phần mềm hỏng, trong khi chính thư viện ấy còn một lối vào nữa vẫn lấy được.
+    /// </summary>
+    /// <summary>Viết số theo lối Việt Nam — dấu chấm phân nhóm nghìn, không phải dấu phẩy.</summary>
+    private static string SoLuong(int value) =>
+        value.ToString("#,##0", System.Globalization.CultureInfo.GetCultureInfo("vi-VN"));
+
+    private static bool CanChuyenSangSru(Z3950Target target, RemoteSearchTargetResultDto result) =>
+        !target.UseSru
+        && result.TotalHits > 0
+        && result.Records.Count == 0
+        && !string.IsNullOrWhiteSpace(target.SruBaseUrl);
+
+    /// <summary>
+    /// Lấy lại cùng truy vấn ấy qua lối SRU của chính thư viện đó.
+    ///
+    /// Lối dự phòng hỏng thì trả về nguyên kết quả của Z39.50 chứ không báo cả lượt tra là thất bại:
+    /// con số "có bao nhiêu kết quả" vẫn là tin thật, cán bộ cần thấy.
+    /// </summary>
+    private async Task<RemoteSearchTargetResultDto> ChuyenSangSruAsync(
+        Z3950Target target,
+        RemoteSearchField field,
+        string term,
+        int maxRecords,
+        RemoteSearchTargetResultDto z3950,
+        CancellationToken ct)
+    {
+        var loiZ3950 = string.IsNullOrWhiteSpace(z3950.Message)
+            ? string.Empty
+            : $" Máy chủ báo: {z3950.Message}";
+
+        try
+        {
+            var sru = await SearchSruAsync(target, field, term, maxRecords, ct);
+
+            if (sru.Records.Count == 0)
+            {
+                // Lối kia cũng không có gì thì không có gì để nói thêm: giữ nguyên câu của Z39.50.
+                return z3950;
+            }
+
+            return sru with
+            {
+                Success = true,
+                Message = $"Máy chủ Z39.50 báo có {SoLuong(z3950.TotalHits)} kết quả nhưng không "
+                          + "trả biểu ghi nào, nên hệ thống đã lấy qua lối SRU của cùng thư viện."
+                          + loiZ3950,
+            };
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Lối SRU dự phòng của {Target} cũng không dùng được.", target.Name);
+
+            return z3950 with
+            {
+                Message = $"Máy chủ Z39.50 báo có {SoLuong(z3950.TotalHits)} kết quả nhưng không "
+                          + $"trả biểu ghi nào; lối SRU dự phòng cũng không dùng được: {ex.Message}"
+                          + loiZ3950,
+            };
+        }
+    }
+
+    protected virtual async Task<RemoteSearchTargetResultDto> SearchZ3950Async(
         Z3950Target target, RemoteSearchField field, string term, int maxRecords, CancellationToken ct)
     {
         await using var client = new Z3950Client(ToOptions(target));
@@ -170,7 +241,7 @@ public class RemoteCatalogSearcher : IRemoteCatalogSearcher
             ToRecords(target, result.Records));
     }
 
-    private async Task<RemoteSearchTargetResultDto> SearchSruAsync(
+    protected virtual async Task<RemoteSearchTargetResultDto> SearchSruAsync(
         Z3950Target target, RemoteSearchField field, string term, int maxRecords, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(target.SruBaseUrl))

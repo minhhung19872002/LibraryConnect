@@ -249,7 +249,16 @@ public class OaiHarvester : IOaiHarvester
                 parameters["from"] = OaiXml.Stamp(last);
             }
 
-            string? token = null;
+            // Nối tiếp chỗ lượt trước dừng lại. Kho lớn mất hàng chục phút để lấy hết, đứt giữa
+            // chừng là chuyện thường — không nhớ chỗ dừng thì mỗi lần chạy lại đều bắt đầu từ trang
+            // đầu và kho vài chục nghìn biểu ghi không bao giờ về tới đích.
+            var token = fullReload ? null : repository.ResumptionToken;
+            var noiTiep = token is not null;
+
+            if (fullReload)
+            {
+                repository.ResumptionToken = null;
+            }
 
             for (var page = 0; page < MaxPages; page++)
             {
@@ -265,6 +274,22 @@ public class OaiHarvester : IOaiHarvester
                     };
 
                 var document = await GetAsync(repository.BaseUrl, request, ct);
+
+                // Thẻ đọc tiếp của lượt trước đã hết hạn: bỏ nó đi và quét lại từ đầu khoảng thời
+                // gian cũ. Không xử lý thì kho ấy kẹt vĩnh viễn, lần nào cũng gửi đúng thẻ chết ấy.
+                if (noiTiep && OaiXml.HasBadResumptionToken(document))
+                {
+                    errors.Add("Thẻ đọc tiếp của lượt trước đã hết hạn, hệ thống quét lại từ đầu.");
+
+                    token = null;
+                    noiTiep = false;
+                    repository.ResumptionToken = null;
+                    await _db.SaveChangesAsync(ct);
+
+                    continue;
+                }
+
+                noiTiep = false;
 
                 if (OaiXml.HasNoRecords(document))
                 {
@@ -301,6 +326,11 @@ public class OaiHarvester : IOaiHarvester
                 }
 
                 token = OaiXml.ResumptionToken(document);
+
+                // Ghi chỗ dừng ngay sau mỗi trang, không đợi tới cuối lượt: cái cần chống chính là
+                // lượt chết giữa chừng, mà lúc ấy thì không còn cơ hội ghi nữa.
+                repository.ResumptionToken = token;
+                await _db.SaveChangesAsync(ct);
 
                 if (token is null)
                 {
@@ -450,6 +480,44 @@ public class OaiHarvester : IOaiHarvester
         return true;
     }
 
+    /// <summary>
+    /// Nói bằng tiếng Việt chuyện thật sự xảy ra ở tầng mạng.
+    ///
+    /// Nguyên văn lỗi của khung nền là tiếng Anh và không nêu nguyên nhân: "The SSL connection could
+    /// not be established" đúng với cả trăm tình huống khác nhau. Cán bộ đọc nhật ký thu hoạch cần
+    /// biết đây là lỗi chứng thư của máy chủ nguồn — việc phải làm là báo bên ấy chứ không phải thử
+    /// lại — chứ không phải một câu chung chung khiến ai cũng nghĩ mạng của mình hỏng.
+    /// </summary>
+    private static string MoTaLoiMang(HttpRequestException ex)
+    {
+        for (Exception? nguyenNhan = ex; nguyenNhan is not null; nguyenNhan = nguyenNhan.InnerException)
+        {
+            if (nguyenNhan is System.Security.Authentication.AuthenticationException)
+            {
+                return "không thiết lập được phiên bảo mật TLS vì chứng thư của máy chủ nguồn không "
+                       + "kiểm chứng được — thường là do máy chủ ấy không gửi kèm chứng thư trung "
+                       + "gian. Hãy báo quản trị kho bổ sung chuỗi chứng thư, hoặc khai lại địa chỉ "
+                       + $"kho theo http:// nếu kho có phục vụ. Nguyên văn: {nguyenNhan.Message}";
+            }
+
+            if (nguyenNhan is System.Net.Sockets.SocketException socket)
+            {
+                return socket.SocketErrorCode switch
+                {
+                    System.Net.Sockets.SocketError.HostNotFound =>
+                        "không tra ra được tên máy chủ. Hãy kiểm tra lại địa chỉ kho.",
+                    System.Net.Sockets.SocketError.ConnectionRefused =>
+                        "máy chủ từ chối kết nối. Cổng có thể sai hoặc dịch vụ đang tắt.",
+                    System.Net.Sockets.SocketError.TimedOut =>
+                        "máy chủ không trả lời. Tường lửa có thể đang chặn đường ra.",
+                    _ => $"lỗi mạng {socket.SocketErrorCode}. Nguyên văn: {socket.Message}",
+                };
+            }
+        }
+
+        return ex.Message;
+    }
+
     private static string Identifier(XElement record) =>
         record.Element(Oai + "header")?.Element(Oai + "identifier")?.Value ?? "(không có định danh)";
 
@@ -479,7 +547,7 @@ public class OaiHarvester : IOaiHarvester
             // Địa chỉ gõ nhầm, máy chủ tắt, tường lửa chặn — người khai báo cần biết đúng chuyện gì
             // xảy ra chứ không phải một lỗi hệ thống chung chung.
             throw new ConflictException(
-                $"Không kết nối được tới kho tại {builder.Uri}: {ex.Message}");
+                $"Không kết nối được tới kho tại {builder.Uri}: {MoTaLoiMang(ex)}");
         }
         catch (TaskCanceledException) when (!ct.IsCancellationRequested)
         {

@@ -6,6 +6,7 @@ import { SearchBox } from '@/components/SearchBox';
 import { ResultShelf } from '@/components/ResultList';
 import { FALLBACK_LIBRARY_NAME, useSiteSettings } from '@/hooks/useSite';
 import type { HomePayload } from '@/types/api';
+import { formatDate } from '@/lib/datetime';
 
 const { Title, Paragraph } = Typography;
 
@@ -165,7 +166,7 @@ export function HomePage() {
                         <div style={{ fontSize: 12, color: 'var(--lc-muted)' }}>
                           {news.categoryName ? `${news.categoryName} • ` : ''}
                           {news.publishedAt
-                            ? new Date(news.publishedAt).toLocaleDateString('vi-VN')
+                            ? formatDate(news.publishedAt)
                             : ''}
                         </div>
                         <Paragraph

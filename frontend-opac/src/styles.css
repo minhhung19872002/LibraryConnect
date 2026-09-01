@@ -308,3 +308,20 @@ body {
     width: 72px;
   }
 }
+
+/*
+ * Bảng rộng hơn khung thì phủ một dải bóng mờ ở mép phải.
+ *
+ * Cuộn ngang bên trong bảng vốn không để lại dấu vết nào trên máy tính để bàn: cột cuối bị cắt một
+ * nửa và người xem tưởng dữ liệu bị cụt. Dải bóng này cùng với dòng nhắc phía trên là hai dấu hiệu
+ * duy nhất cho biết còn nội dung bên phải.
+ */
+.lc-scroll-hint {
+  position: relative;
+}
+
+.lc-scroll-hint--tran .ant-table-content,
+.lc-scroll-hint--tran .ant-table-body {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent 100%);
+  mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent 100%);
+}

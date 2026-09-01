@@ -477,7 +477,7 @@ function SerialEditorDrawer({
             </Form.Item>
           </Col>
           <Col span={8}>
-            <Form.Item name="shelfId" label="Giá">
+            <Form.Item name="shelfId" label="Vị trí giá">
               <Select
                 allowClear
                 disabled={!warehouseId}

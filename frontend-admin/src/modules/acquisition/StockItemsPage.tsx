@@ -287,7 +287,7 @@ export function StockItemsPage() {
     },
     { title: 'Kho', dataIndex: 'warehouseName', width: 140 },
     {
-      title: 'Giá',
+      title: 'Vị trí giá',
       dataIndex: 'shelfName',
       width: 120,
       render: (value: string | null) => value ?? <Typography.Text type="secondary">Chưa xếp</Typography.Text>,
@@ -610,7 +610,7 @@ export function StockItemsPage() {
                   options={(warehouses.data ?? []).map((item) => ({ value: item.id, label: item.name }))}
                 />
               </Form.Item>
-              <Form.Item name="shelfId" label="Giá">
+              <Form.Item name="shelfId" label="Vị trí giá">
                 <Select
                   allowClear
                   disabled={!shelfWarehouse}
@@ -793,7 +793,7 @@ export function StockItemsPage() {
               <Descriptions.Item label="Bản số">{detail.data.copyNumber}</Descriptions.Item>
               <Descriptions.Item label="Thư viện">{detail.data.libraryName ?? '—'}</Descriptions.Item>
               <Descriptions.Item label="Kho">{detail.data.warehouseName}</Descriptions.Item>
-              <Descriptions.Item label="Giá">{detail.data.shelfName ?? 'Chưa xếp giá'}</Descriptions.Item>
+              <Descriptions.Item label="Vị trí giá">{detail.data.shelfName ?? 'Chưa xếp giá'}</Descriptions.Item>
               <Descriptions.Item label="Ký hiệu xếp giá">{detail.data.callNumber ?? '—'}</Descriptions.Item>
               <Descriptions.Item label="Tình trạng">
                 <Tag color={itemStatusColors[detail.data.status]}>

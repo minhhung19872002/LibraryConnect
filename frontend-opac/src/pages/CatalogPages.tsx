@@ -4,7 +4,9 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, Input, Pagination, Table, Tag, Typography } from 'antd';
 import { opacApi } from '@/api/opac';
 import { ResultList } from '@/components/ResultList';
+import { ScrollHint } from '@/components/ScrollHint';
 import type { SerialSummary } from '@/types/api';
+import { formatDate } from '@/lib/datetime';
 
 const { Paragraph } = Typography;
 
@@ -74,6 +76,9 @@ export function SerialsPage() {
       title: 'Tên báo / tạp chí',
       dataIndex: 'title',
       width: 320,
+      // Neo lại: bảng rộng hơn khung nên khi cuộn sang phải, không neo thì người xem mất luôn tên
+      // của dòng mình đang đọc.
+      fixed: 'left' as const,
       render: (title: string, row: SerialSummary) =>
         row.bibId ? <Link to={`/tai-lieu/${row.bibId}`}>{title}</Link> : title,
     },
@@ -98,7 +103,7 @@ export function SerialsPage() {
       width: 180,
       render: (value: string | undefined, row: SerialSummary) =>
         value
-          ? `${value}${row.latestIssueDate ? ` (${new Date(row.latestIssueDate).toLocaleDateString('vi-VN')})` : ''}`
+          ? `${value}${row.latestIssueDate ? ` (${formatDate(row.latestIssueDate)})` : ''}`
           : '—',
     },
   ];
@@ -117,16 +122,18 @@ export function SerialsPage() {
           }}
         />
 
-        <Table
-          rowKey="id"
-          size="small"
-          loading={isLoading}
-          columns={columns}
-          dataSource={data?.items ?? []}
-          pagination={false}
-          scroll={{ x: 1260 }}
-          locale={{ emptyText: 'Chưa có ấn phẩm định kỳ nào.' }}
-        />
+        <ScrollHint deps={[data?.items]}>
+          <Table
+            rowKey="id"
+            size="small"
+            loading={isLoading}
+            columns={columns}
+            dataSource={data?.items ?? []}
+            pagination={false}
+            scroll={{ x: 1260 }}
+            locale={{ emptyText: 'Chưa có ấn phẩm định kỳ nào.' }}
+          />
+        </ScrollHint>
 
         {data && data.totalCount > 0 ? (
           <div style={{ textAlign: 'right', marginTop: 16 }}>

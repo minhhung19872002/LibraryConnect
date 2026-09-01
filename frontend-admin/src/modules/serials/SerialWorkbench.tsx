@@ -708,7 +708,7 @@ function ReceiveTab({
               options={(warehouses.data ?? []).map((item) => ({ value: item.id, label: item.name }))}
             />
           </Form.Item>
-          <Form.Item name="shelfId" label="Giá">
+          <Form.Item name="shelfId" label="Vị trí giá">
             <Select
               allowClear
               disabled={!warehouseId}

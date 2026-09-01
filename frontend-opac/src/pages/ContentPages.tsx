@@ -17,6 +17,7 @@ import {
 } from 'antd';
 import { opacApi } from '@/api/opac';
 import { useSiteSettings } from '@/hooks/useSite';
+import { formatDate } from '@/lib/datetime';
 
 const { Paragraph, Title } = Typography;
 
@@ -81,7 +82,7 @@ export function NewsListPage() {
                           {item.isFeatured ? <Tag color="green">Nổi bật</Tag> : null}
                           <span style={{ fontSize: 12, color: 'var(--lc-muted)' }}>
                             {item.publishedAt
-                              ? new Date(item.publishedAt).toLocaleDateString('vi-VN')
+                              ? formatDate(item.publishedAt)
                               : ''}
                           </span>
                         </Space>
@@ -180,7 +181,7 @@ export function NewsDetailPage() {
         <Space size={[8, 4]} wrap style={{ marginBottom: 16 }}>
           {data.categoryName ? <Tag>{data.categoryName}</Tag> : null}
           <span style={{ color: 'var(--lc-muted)' }}>
-            {data.publishedAt ? new Date(data.publishedAt).toLocaleDateString('vi-VN') : ''}
+            {formatDate(data.publishedAt)}
             {data.author ? ` • ${data.author}` : ''} • {data.viewCount} lượt xem
           </span>
         </Space>
@@ -211,7 +212,7 @@ export function NewsDetailPage() {
                   title={<Link to={`/tin-tuc/${item.slug}`}>{item.title}</Link>}
                   description={
                     item.publishedAt
-                      ? new Date(item.publishedAt).toLocaleDateString('vi-VN')
+                      ? formatDate(item.publishedAt)
                       : undefined
                   }
                 />

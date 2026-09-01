@@ -552,7 +552,7 @@ function PeriodDrawer({
       render: (value: string | null) => value ?? '—',
     },
     {
-      title: 'Giá',
+      title: 'Đơn giá',
       dataIndex: 'price',
       width: 110,
       align: 'right',

@@ -12,6 +12,9 @@ public partial class DatabaseSeeder
     /// Hai máy chủ Z39.50 thật của Thư viện Quốc hội Mỹ, cộng một đường SRU cũng của họ — SRU đi
     /// qua tường lửa dễ hơn nhiều, nên thư viện nào chặn cổng lạ vẫn tra được ít nhất một nguồn.
     /// Mật khẩu không có vì cả ba đều phục vụ tra cứu công khai.
+    ///
+    /// Máy chủ nào có cả hai lối thì khai luôn địa chỉ SRU vào dòng Z39.50 làm lối dự phòng: khi
+    /// bước Present bị từ chối, hệ thống lấy lại cùng truy vấn ấy qua SRU thay vì trả danh sách rỗng.
     /// </summary>
     private async Task SeedInterLibraryTargetsAsync(CancellationToken ct)
     {
@@ -27,6 +30,10 @@ public partial class DatabaseSeeder
                 Host = "lx2.loc.gov",
                 Port = 210,
                 DatabaseName = "LCDB",
+                // Lối dự phòng của chính thư viện này. Máy chủ nhận truy vấn và báo đúng số kết quả
+                // nhưng nhiều lúc từ chối bước Present, trả về tay không; khai sẵn địa chỉ SRU thì
+                // hệ thống tự lấy qua lối kia thay vì để cán bộ nhìn một danh sách rỗng.
+                SruBaseUrl = "http://lx2.loc.gov:210/lcdb",
                 Charset = "MARC-8",
                 RecordSyntax = "USMARC",
                 TimeoutSeconds = 30,

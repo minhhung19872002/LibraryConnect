@@ -96,7 +96,13 @@ export function ItemsPanel({ bibId }: { bibId: string }) {
               render: (value: string) => <span style={MONOSPACE}>{value}</span>,
             },
             { title: 'Kho', dataIndex: 'warehouseName', width: 160 },
-            { title: 'Giá', dataIndex: 'shelfName', width: 120 },
+            {
+              title: 'Vị trí giá',
+              dataIndex: 'shelfName',
+              width: 130,
+              render: (value?: string | null) =>
+                value ?? <Typography.Text type="secondary">Chưa xếp</Typography.Text>,
+            },
             {
               title: 'Ký hiệu xếp giá',
               dataIndex: 'callNumber',
@@ -253,7 +259,7 @@ function CreateItemsDrawer({
           />
         </Form.Item>
 
-        <Form.Item name="shelfId" label="Giá">
+        <Form.Item name="shelfId" label="Vị trí giá">
           <Select
             options={(shelves.data ?? []).map((shelf) => ({ value: shelf.id, label: shelf.name }))}
             placeholder={warehouseId ? 'Chưa xếp giá cụ thể' : 'Chọn kho trước'}

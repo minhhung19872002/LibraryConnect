@@ -34,6 +34,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useCartStore } from '@/stores/cartStore';
 import { useSiteSettings } from '@/hooks/useSite';
 import type { BibDetail, BibItem } from '@/types/api';
+import { formatDate } from '@/lib/datetime';
 import { MarcRecordTable } from '../components/MarcRecordTable';
 
 const { Paragraph, Title } = Typography;
@@ -143,7 +144,7 @@ export function BibDetailPage() {
           <Tag color={item.isAvailable ? 'green' : 'orange'}>{item.statusLabel}</Tag>
           {item.dueDate ? (
             <span style={{ fontSize: 12, color: 'var(--lc-muted)' }}>
-              Dự kiến trả {new Date(item.dueDate).toLocaleDateString('vi-VN')}
+              Dự kiến trả {formatDate(item.dueDate)}
             </span>
           ) : null}
         </Space>
@@ -441,7 +442,7 @@ export function BibDetailPage() {
                                   <>
                                     <div>{item.comment}</div>
                                     <div style={{ fontSize: 12, color: 'var(--lc-muted)' }}>
-                                      {new Date(item.createdAt).toLocaleDateString('vi-VN')}
+                                      {formatDate(item.createdAt)}
                                     </div>
                                   </>
                                 }

@@ -274,6 +274,21 @@ public static class OaiXml
         document.Descendants(Oai + "error")
             .Any(error => error.Attribute("code")?.Value == "noRecordsMatch");
 
+    /// <summary>
+    /// Kho từ chối thẻ đọc tiếp mình gửi lên.
+    ///
+    /// Thẻ đọc tiếp chỉ sống được ít phút tới ít giờ tùy kho. Lượt thu hoạch trước đứt giữa chừng,
+    /// tới hôm sau mới chạy lại thì thẻ đã chết — phải nhận ra để quét lại từ đầu, nếu không kho ấy
+    /// kẹt vĩnh viễn vì lần nào cũng gửi đúng cái thẻ chết ấy.
+    /// </summary>
+    public static bool HasBadResumptionToken(XDocument document)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+
+        return document.Descendants(Oai + "error")
+            .Any(error => error.Attribute("code")?.Value == "badResumptionToken");
+    }
+
     public static string? ResumptionToken(XDocument document)
     {
         var token = document.Descendants(Oai + "resumptionToken").FirstOrDefault()?.Value;

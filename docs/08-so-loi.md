@@ -21,9 +21,9 @@ Cột **Trạng thái**: `Mới` (chưa sửa) · `Đã sửa` (kèm chỗ đã 
 | A1 | Liên thư viện → Kho OAI-PMH | Hai tác giả có tên khác nhau nhưng sinh ra cùng một mã (bỏ dấu rồi viết hoa) làm vi phạm ràng buộc duy nhất `ux_author_code`; **toàn bộ lượt thu hoạch đổ, không biểu ghi nào được lưu**. Cùng lỗi này sẽ xảy ra khi nhập ISO 2709 hoặc Excel có hai biểu ghi cùng tác giả viết khác dấu. | Thu hoạch bộ `com_DHTL_13003` của `tailieuso.tlu.edu.vn` (2.353 biểu ghi): 0 biểu ghi vào hệ thống, nhật ký API ghi `duplicate key value violates unique constraint "ux_author_code" Key (code)=(PHAM_VIET_HOA)`. Trong kho đã có "Phạm Việt Hòa". | Nghiêm trọng | Dữ liệu | Đã sửa — `BibAuthorityLinker` |
 | A2 | Liên thư viện → Kho OAI-PMH | Thu hoạch chạy đồng bộ ngay trong lượt HTTP. Máy khách ngắt kết nối (đóng tab, hết hạn chờ của proxy 300 giây) là lượt thu hoạch bị bỏ dở giữa chừng, và **dòng nhật ký kẹt ở trạng thái "Đang chạy" vĩnh viễn** — không ai biết kho ấy đã lấy xong hay chưa. Hệ thống đã có Hangfire nhưng không dùng ở đây. | Bấm "Thu hoạch ngay" cho một kho lớn rồi đóng tab. Xem Nhật ký thu hoạch: dòng đó đứng mãi ở "Đang chạy", số biểu ghi 0. | Nặng | Nghiệp vụ | Đã sửa — thu hoạch chạy nền qua Hangfire, nhật ký chốt lại; lượt kẹt quá 6 giờ tự đóng |
 | A3 | Liên thư viện → Kho OAI-PMH | Chỉ nhận đúng hai tên định dạng `oai_dc` và `marc21`. Kho thật khai tên khác: VJOL khai `marcxml` và `oai_marc`, DSpace khai `marc`. Hậu quả: không lấy được biểu ghi MARC đầy đủ từ chính những kho có sẵn MARC, phải hạ xuống Dublin Core nghèo hơn nhiều. | Thêm kho `https://vjol.info.vn/index.php/index/oai` với định dạng `marcxml` → bị chặn ở bước kiểm tra dữ liệu. | Vừa | Nghiệp vụ | Đã sửa — nhận mọi tên định dạng đúng cú pháp của chuẩn |
-| A4 | Liên thư viện → Tra cứu | Một số truy vấn Z39.50 báo có kết quả nhưng lấy về 0 biểu ghi (máy chủ từ chối bước Present). Cùng truy vấn ấy qua SRU vẫn lấy được. Hệ thống không tự chuyển sang lối SRU của cùng thư viện. | Tra "Nhan đề = Vietnam" ở Thư viện Quốc hội Mỹ (Z39.50): 11.528 kết quả, 0 biểu ghi. Cùng truy vấn ở lối SRU: 5 biểu ghi. | Vừa | Nghiệp vụ | Mới |
+| A4 | Liên thư viện → Tra cứu | Một số truy vấn Z39.50 báo có kết quả nhưng lấy về 0 biểu ghi (máy chủ từ chối bước Present). Cùng truy vấn ấy qua SRU vẫn lấy được. Hệ thống không tự chuyển sang lối SRU của cùng thư viện. | Tra "Nhan đề = Vietnam" ở Thư viện Quốc hội Mỹ (Z39.50): 11.528 kết quả, 0 biểu ghi. Cùng truy vấn ở lối SRU: 5 biểu ghi. | Vừa | Nghiệp vụ | Đã sửa — tự chuyển sang lối SRU của cùng thư viện, kèm câu nói rõ đã lấy qua lối nào |
 | A5 | Liên thư viện → Kho OAI-PMH | Tên kho hiện ra còn nguyên ký tự thoát chưa giải mã: `Th&#432; Vi&#7879;n S&#7889; &#272;&#7841;i H&#7885;c Th&#7911;y L&#7907;i` thay vì "Thư Viện Số Đại Học Thủy Lợi". | Bấm "Kiểm tra kết nối" với `https://tailieuso.tlu.edu.vn/oai/request`. | Nhẹ | Ngôn ngữ | Đã sửa — giải mã ký tự thoát HTML khi đọc Identify |
-| A6 | Liên thư viện → Kho OAI-PMH | Lỗi TLS ở giữa chừng làm hỏng cả lượt thu hoạch và **mất luôn phần đã lấy được**; thông báo cho cán bộ chỉ nói chung chung, không nêu nguyên nhân thật (máy chủ nguồn thiếu chứng thư trung gian). Thu hoạch cũng không có điểm nối lại — `resumptionToken` đã đi tới đâu không được lưu, nên chạy lại là lấy lại từ đầu. | Thu hoạch `dspace.ctu.edu.vn` từ trong container: hỏng giữa chừng, phải chạy lại từ đầu. | Vừa | Nghiệp vụ | Mới |
+| A6 | Liên thư viện → Kho OAI-PMH | Lỗi TLS ở giữa chừng làm hỏng cả lượt thu hoạch và **mất luôn phần đã lấy được**; thông báo cho cán bộ chỉ nói chung chung, không nêu nguyên nhân thật (máy chủ nguồn thiếu chứng thư trung gian). Thu hoạch cũng không có điểm nối lại — `resumptionToken` đã đi tới đâu không được lưu, nên chạy lại là lấy lại từ đầu. | Thu hoạch `dspace.ctu.edu.vn` từ trong container: hỏng giữa chừng, phải chạy lại từ đầu. | Vừa | Nghiệp vụ | Đã sửa — ghi thẻ đọc tiếp sau mỗi trang để chạy tiếp từ chỗ dừng; lỗi chứng thư được nói đúng nguyên nhân |
 | A7 | Liên thư viện → Kho OAI-PMH **và** Biên mục → Hàng đợi | Biểu ghi thu hoạch về được đặt trạng thái "Chờ biên mục" nhưng **không có dòng nào được tạo trong hàng đợi biên mục**. Màn hình Hàng đợi biên mục vẫn hiện 0 ở cả năm cột trong khi kho đã có hơn 3.200 biểu ghi đang chờ. Không cán bộ nào biết có việc phải làm; số biểu ghi ấy nằm chết trong hệ thống — không lên OPAC, không vào hàng đợi. | Thu hoạch một kho OAI bất kỳ → mở Biên mục → Hàng đợi biên mục: Chờ xử lý 0, Đang biên mục 0, Chờ duyệt 0. `GET /api/cataloging/queue` trả `totalCount = 0`. | Nghiêm trọng | Nghiệp vụ | Đã sửa — thu hoạch tạo dòng việc trong hàng đợi biên mục |
 | A8 | Biên mục → Hàng đợi biên mục | **Hoàn thành một việc trong hàng đợi không đưa biểu ghi lên OPAC.** Đi hết luồng Chờ xử lý → Đang biên mục → Chờ duyệt → Đã hoàn thành, biểu ghi vẫn ở trạng thái "Chờ biên mục" và bạn đọc vẫn không tra ra. Trong toàn hệ thống không có chỗ nào chuyển biểu ghi sang "Đã xuất bản" ngoài việc mở trình soạn MARC lưu lại — nghĩa là cả luồng biên mục sơ lược → hàng đợi → duyệt là một ngõ cụt. | Tạo việc bằng `POST /api/cataloging/queue`, đổi trạng thái lần lượt tới `Completed`, rồi xem lại biểu ghi: vẫn `Queued`. Số biểu ghi OPAC tra được không đổi (206 trước và sau). | Nghiêm trọng | Nghiệp vụ | Đã sửa — trạng thái việc kéo theo trạng thái biểu ghi |
 | A9 | Liên thư viện → Kho OAI-PMH | Biểu ghi thu hoạch về **thiếu trường điều khiển 008** — tức là không hợp lệ theo chính quy tắc kiểm tra của hệ thống. Cán bộ mở biểu ghi vừa thu hoạch trong trình soạn MARC rồi bấm Lưu thì bị chặn: *"Thiếu trường bắt buộc 008 — Yếu tố dữ liệu có độ dài cố định."* Muốn hiệu đính thì phải tự gõ đủ 40 ký tự trường 008 cho từng biểu ghi. Kiểm 30/30 biểu ghi lấy về đều thiếu. | Mở một biểu ghi nguồn `Oai` bất kỳ trong Biên mục → bấm Lưu. | Nặng | Dữ liệu | Đã sửa — dựng trường 008 khi thu hoạch |
@@ -43,8 +43,9 @@ Cột **Trạng thái**: `Mới` (chưa sửa) · `Đã sửa` (kèm chỗ đã 
 | B7 | Tài khoản bạn đọc → Đang mượn / Lịch sử | Cột nhan đề hiện dấu "—" thay vì tên sách: dữ liệu mượn trả trong bộ gieo mẫu không điền nhan đề, và giao diện không có phương án dự phòng (không tra ngược sang biểu ghi). Bạn đọc nhìn danh sách sách đang mượn mà không biết mình đang mượn cuốn gì. Màn hình quầy lưu thông cũng vậy. | Đăng nhập bằng một thẻ có sách đang mượn của bộ dữ liệu mẫu. | Nặng | Dữ liệu | Đã sửa — lấy nhan đề từ biểu ghi khi cột chép sẵn trống; bộ gieo dữ liệu cũng chép nhan đề |
 | B8 | Duyệt theo tác giả | **Chỉ hiện đúng một tác giả** dù hồ sơ thẩm quyền có 9.361 tên. Nguyên nhân: hệ thống lấy 500 tác giả đầu bảng chữ cái rồi mới bỏ những người chưa có tài liệu xuất bản — kho càng lớn thì trang duyệt càng rỗng. Chọn chữ cái N cũng chỉ ra đúng một người. Đây là lỗi chung cho mọi thư viện có hơn 500 tên tác giả, không riêng bộ dữ liệu này. | OPAC → Duyệt theo tác giả → Tất cả: chỉ một thẻ "Bùi Thị Lan". `GET /api/browse/authors` trả `totalCount = 1`; `GET /api/catalogs/authors/items` trả 9.361. | Nặng | Nghiệp vụ | Đã sửa — lọc tác giả có tài liệu trước rồi mới cắt danh sách |
 | B9 | Báo – Tạp chí | Cột "Nhà xuất bản" trống ở toàn bộ các dòng. | OPAC → Báo – Tạp chí. | Vừa | Dữ liệu | Đã sửa — bộ dữ liệu mẫu điền cơ quan xuất bản cho từng đầu báo |
-| B10 | Báo – Tạp chí | Bảng rộng 1.260 px nằm trong khung 1.126 px nên cột cuối "Số mới nhất" bị che một nửa (`119 (3…`). Cuộn ngang được **bên trong bảng** nhưng không có dấu hiệu nào cho biết, người xem tưởng dữ liệu bị cụt. | OPAC → Báo – Tạp chí trên màn hình rộng 1440 px. | Nhẹ | Giao diện | Mới |
+| B10 | Báo – Tạp chí | Bảng rộng 1.260 px nằm trong khung 1.126 px nên cột cuối "Số mới nhất" bị che một nửa (`119 (3…`). Cuộn ngang được **bên trong bảng** nhưng không có dấu hiệu nào cho biết, người xem tưởng dữ liệu bị cụt. | OPAC → Báo – Tạp chí trên màn hình rộng 1440 px. | Nhẹ | Giao diện | Đã sửa — dòng nhắc cuộn ngang, dải mờ ở mép phải, cột tên báo neo lại |
 | B11 | Tài liệu số | Chỉ có ô tìm theo nhan đề. Đặc tả IX.4 đòi bộ lọc riêng cho tài liệu số (bộ sưu tập, định dạng, mức truy cập) — không có. | OPAC → Tài liệu số. | Vừa | Nghiệp vụ | Đã sửa — thêm lọc theo bộ sưu tập, định dạng, mức truy cập và tìm trong nội dung |
+| B12 | Toàn bộ trang tra cứu | Ngày trên trang công khai vẫn hiện dạng `5/9/2029` — **chính lỗi D8 chưa sửa hết**. Lần trước chỉ sửa giao diện quản trị và phép thử quét mã nguồn cũng chỉ quét thư mục ấy, nên dòng "cả sản phẩm dùng chung một cách viết ngày" ở D8 là nói quá. Bạn đọc và cán bộ nhìn thấy hai cách viết ngày khác nhau; với ngày từ 12 trở xuống thì không ai biết đâu là ngày đâu là tháng. | OPAC → Tài khoản của tôi → Đang mượn, cột hạn trả. | Vừa | Giao diện | Đã sửa — chép `lib/datetime` sang trang tra cứu và quét mã nguồn ở cả hai thư mục |
 
 ---
 
@@ -56,7 +57,7 @@ Cột **Trạng thái**: `Mới` (chưa sửa) · `Đã sửa` (kèm chỗ đã 
 | C2 | Báo cáo thống kê → Xuất Excel / Xuất PDF · Tài liệu môn học → Báo cáo → xuất · Tài liệu môn học → Gán tài liệu → "Tải tệp mẫu" | Ba nút này mở thẻ trình duyệt mới trỏ thẳng vào API. Thẻ mới **không mang theo mã đăng nhập** (hệ thống dùng JWT trong tiêu đề, không dùng cookie), nên cán bộ nhận về một trang trắng in dòng JSON `{"success":false,"message":"Phiên đăng nhập không hợp lệ hoặc đã hết hạn."}`. Ba chức năng xuất/tải này **không dùng được**, và người dùng bị dẫn tới nghĩ mình đã hết phiên đăng nhập. | Đăng nhập, mở Báo cáo thống kê, bấm "Xuất Excel". | Nặng | Nghiệp vụ | Đã sửa — tải tệp qua lớp gọi API có mã đăng nhập, kèm phép thử quét mã nguồn chặn tái diễn |
 | C3 | Quản trị hệ thống → Nhật ký hệ thống | Bảng hiện thẳng mã định danh máy `1b4c4855-804f-400d-a3f3-f493908256bf` cho cán bộ đọc. Nhật ký cần cho biết *đối tượng nào* (tên biểu ghi, tên bạn đọc), không phải chuỗi 36 ký tự. | Quản trị hệ thống → Nhật ký hệ thống. | Vừa | Giao diện | Đã sửa — nói bằng tiếng Việt, mã định danh chuyển sang phần chi tiết |
 | C4 | Toàn bộ API | Khi thiếu một tham số biểu mẫu, hệ thống trả thông báo **tiếng Anh** của khung nền: `"The options field is required."`. Cả sản phẩm phải tiếng Việt. | `POST /api/cataloging/import` chỉ đính tệp, không gửi `options`. | Vừa | Ngôn ngữ | Đã sửa — thay toàn bộ thông báo của khung nền sang tiếng Việt |
-| C5 | Bổ sung → Ấn phẩm, thẻ "Bản in trong kho" | Cột "Giá" trống hoàn toàn ở mọi dòng. Nhãn cũng tối nghĩa: "Giá" ở đây là giá sách (kệ) hay giá tiền? Cán bộ thư viện đọc hai nghĩa khác nhau. | Bổ sung → Ấn phẩm → mở một biểu ghi → thẻ "Bản in trong kho". | Vừa | Giao diện | Mới |
+| C5 | Bổ sung → Ấn phẩm, thẻ "Bản in trong kho" | Cột "Giá" trống hoàn toàn ở mọi dòng. Nhãn cũng tối nghĩa: "Giá" ở đây là giá sách (kệ) hay giá tiền? Cán bộ thư viện đọc hai nghĩa khác nhau. | Bổ sung → Ấn phẩm → mở một biểu ghi → thẻ "Bản in trong kho". | Vừa | Giao diện | Đã sửa — nhãn đổi thành "Vị trí giá" ở cả tám chỗ, kèm phép thử quét mã nguồn |
 | C6 | Biên mục → Biểu ghi thư mục | Cột **Nhan đề** chỉ rộng 66 px trong khi "Xuất bản" được 201 px và "Số kiểm soát" 135 px. Nhan đề tiếng Việt dài bị bẻ thành thang chữ dọc mỗi dòng một từ, dòng bảng cao 171–259 px, một màn hình chỉ xem được vài biểu ghi. Màn hình danh sách chính của cả phân hệ Biên mục gần như không dùng để duyệt được. Lỗi chỉ lộ ra khi có dữ liệu thật — bộ dữ liệu mẫu nhan đề ngắn nên trước đây nhìn vẫn ổn. | Biên mục → Biểu ghi thư mục sau khi thu hoạch dữ liệu thật. | Nặng | Giao diện | Đã sửa — nhan đề là cột rộng nhất, bảng cuộn ngang thay vì bóp cột |
 | C7 | Menu bên trái — menu con | Nhãn menu con dài bị cắt: "Nhập xuất dữ liệu bạn đọc" (cần 164 px, chỉ có 141 px), "Thông tin trang thư viện", "Định nghĩa trường MARC", "Công cụ biểu ghi MARC", "Gán tài liệu cho môn học", "Báo cáo tài liệu môn học", "Báo cáo ấn phẩm định kỳ". Đúng lỗi đã báo ở C1 nhưng ở tầng menu con — sửa C1 chưa động tới chỗ này. | Mở giao diện quản trị, bung menu Bạn đọc. | Vừa | Giao diện | Đã sửa — nới bề rộng menu con |
 
@@ -134,15 +135,23 @@ tài liệu số có đóng dấu chìm, và sao lưu – phục hồi lần nà
 |---|---|---|---|
 | Nghiêm trọng | 4 | 4 | 0 |
 | Nặng | 8 | 8 | 0 |
-| Vừa | 17 | 14 | 3 |
-| Nhẹ | 7 | 6 | 1 |
+| Vừa | 18 | 18 | 0 |
+| Nhẹ | 7 | 7 | 0 |
 
-Tổng: **36 lỗi, đã sửa 32, còn 4**.
+Tổng: **37 lỗi, đã sửa 37, còn 0**. (36 lỗi của đợt rà đầu, cộng B12 tìm ra khi sửa nốt bốn lỗi
+cuối.)
 
-Mỗi lỗi đã sửa đều có phép thử đi kèm, **chạy đỏ trước khi sửa và xanh sau khi sửa**. Bốn phép thử
-dạng quét mã nguồn chặn cả lớp lỗi quay lại thay vì chỉ chặn một chỗ: không trỏ thẳng vào API,
-không đổ JSON thô ra trang công khai, không tự viết cách hiện ngày riêng, và không để lọt thông báo
-tiếng Anh của khung nền.
+Mỗi lỗi đã sửa đều có phép thử đi kèm, **chạy đỏ trước khi sửa và xanh sau khi sửa**. Sáu phép thử
+dạng quét mã nguồn chặn cả lớp lỗi quay lại thay vì chỉ chặn một chỗ:
+
+| Phép thử | Luật |
+|---|---|
+| `frontend-admin/src/api/download.test.ts` | Ngoài `src/api`, không viết địa chỉ bắt đầu bằng `/api/` |
+| `frontend-opac/src/lib/marcView.test.ts` | Không `JSON.stringify` biểu ghi MARC ra trang công khai |
+| `frontend-admin/src/lib/datetime.test.ts` | Giao diện quản trị không tự viết cách hiện ngày riêng |
+| `frontend-opac/src/lib/datetime.test.ts` | Trang tra cứu cũng vậy — thêm sau khi tìm ra B12 |
+| `frontend-admin/src/lib/columnLabels.test.ts` | Không đặt tên cột đúng một chữ "Giá" — tối nghĩa |
+| `backend/.../PermissionAndAuditTests.cs` | Thông báo lỗi không lọt tiếng Anh của khung nền |
 
 ### Việc đã làm ngoài mã nguồn
 
@@ -156,20 +165,26 @@ tiếng Anh của khung nền.
   máy đang chạy đã có dữ liệu nên bộ gieo không chạy lại): tên thư viện, 6 bản tin, 10 bộ sưu tập,
   200 biểu ghi được gắn bộ sưu tập, 50 bạn đọc với 50 tên khác nhau.
 
-### Còn lại
+### Bốn lỗi cuối — đã sửa và đã kiểm thế nào
 
-| # | Màn hình | Vì sao để lại | Hướng sửa |
-|---|---|---|---|
-| A4 | Liên thư viện → Tra cứu | Phải bắt gói tin Z39.50 với máy chủ thật bên ngoài mới biết vì sao bước Present trả 0 biểu ghi | Khi Present trả rỗng thì tự chuyển sang lối SRU của cùng thư viện — SRU đã chạy đúng với cùng truy vấn |
-| A6 | Liên thư viện → Kho OAI-PMH | Cần đổi lược đồ cơ sở dữ liệu và thử với kho lớn ngoài Internet | Lưu `resumptionToken` sau mỗi trang vào dòng nhật ký để chạy lại từ chỗ dừng; cột `full_reload` đã có sẵn, thêm một cột nữa là đủ |
-| B10 | Báo – Tạp chí | Thẩm mỹ, không cản trở việc gì | Thêm bóng mờ hoặc dòng nhắc "cuộn ngang để xem thêm" ở mép bảng |
-| C5 | Bổ sung → Ấn phẩm, thẻ "Bản in trong kho" | Phải quyết trước: cột "Giá" là giá tiền hay giá sách | Đổi nhãn thành "Giá nhập" hoặc "Vị trí giá" cho rõ, rồi điền dữ liệu tương ứng |
+| # | Đã làm | Bằng chứng |
+|---|---|---|
+| A4 | Máy chủ Z39.50 báo có kết quả nhưng không trả biểu ghi thì hệ thống lấy lại cùng truy vấn ấy qua lối SRU của chính thư viện đó, kèm một câu nói rõ đã đi lối nào. Lối SRU khai ngay trên dòng máy chủ Z39.50 (ô "Địa chỉ SRU dự phòng"); migration nối sẵn cho thư viện nào đã khai hai lối thành hai dòng riêng | Bốn phép thử đơn vị cho phần quyết định chuyển lối. Kiểm trên máy thật: dựng một dòng máy chủ đòi cú pháp biểu ghi mà Thư viện Quốc hội Mỹ không phát, bước Present bị từ chối đúng như A4 → hệ thống trả về 10 biểu ghi qua lối SRU kèm câu *"Máy chủ Z39.50 báo có 11.528 kết quả nhưng không trả biểu ghi nào, nên hệ thống đã lấy qua lối SRU của cùng thư viện."* Lưu ý: đúng lúc kiểm thì lối Z39.50 thật của họ lại chạy được, nên phải dựng tình huống mới tái hiện |
+| A6 | Ghi thẻ đọc tiếp vào kho sau **mỗi trang**, không đợi tới cuối lượt — cái cần chống chính là lượt chết giữa chừng. Lượt sau nối tiếp từ đó; thẻ đã hết hạn thì quét lại từ đầu chứ không kẹt vĩnh viễn. Lỗi TLS, lỗi tên máy, lỗi cổng nay được nói đúng nguyên nhân bằng tiếng Việt | Ba phép thử tích hợp chạy trên PostgreSQL thật với một máy chủ OAI-PMH giả dựng trong bộ nhớ — chỉ dựng được mới ép nó đứt đúng ở trang thứ hai. Màn hình danh sách kho hiện nhãn "Còn dở dang" cho kho nào đang dừng giữa chừng |
+| B10 | Dòng nhắc "Còn cột bên phải — cuộn ngang trong bảng để xem hết", dải mờ ở mép phải, và neo cột tên báo lại để cuộn sang phải vẫn biết đang đọc dòng nào. Chỉ nhắc khi bảng thật sự còn phần chưa xem — đo bằng `ResizeObserver`, cuộn tới hết thì nhắc tự tắt | Ảnh chụp màn hình 1440×900 trên hệ thống đang chạy: dòng nhắc hiện, thanh cuộn hiện, mép phải mờ dần |
+| C5 | Chữ "Giá" đứng một mình bị bỏ hẳn. Cột và ô nhập chỉ cái giá xếp sách đổi thành "Vị trí giá" (8 chỗ), cột tiền trong báo cáo kiểm kê đổi thành "Đơn giá". Ô trống nay ghi "Chưa xếp" thay vì để trắng | Phép thử quét mã nguồn `columnLabels.test.ts` — chạy đỏ với 9 chỗ vi phạm trước khi sửa, trong đó có 5 chỗ mà đợt rà đầu chưa nhìn thấy |
 
 ### Làm tiếp gì sau đây
 
 1. Dựng bộ dữ liệu trình diễn lớn (`LC_SEED_DEMO=rich`): sinh ĐKCB cho khoảng 60% biểu ghi đã thu
    hoạch, 300 bạn đọc, 1.500 lượt mượn trải 18 tháng, 50 lượt đặt giữ, 30 tài liệu số giấy phép mở,
    ảnh bìa lấy từ Open Library theo ISBN.
-2. Sửa nốt A4 và A6.
-3. Rà lại một lượt nữa theo đúng cách của đợt này — lần rà đầu tìm ra 36 lỗi, phần lớn chỉ lộ ra khi
+2. Rà lại một lượt nữa theo đúng cách của đợt này — lần rà đầu tìm ra 36 lỗi, phần lớn chỉ lộ ra khi
    có dữ liệu thật; nay kho đã có hơn bảy nghìn biểu ghi thì nhiều màn hình khác cũng đáng xem lại.
+   Ưu tiên những chỗ đợt trước **chưa đi tới**: trình soạn MARC thao tác bằng chuột, thiết kế mẫu
+   phích / mẫu thẻ / mẫu tem, luồng kiểm kê từ đầu đến cuối, đóng tập ấn phẩm định kỳ, trình đọc tài
+   liệu số có đóng dấu chìm, và sao lưu – phục hồi.
+3. Bài học của lượt sửa này, đáng nhớ cho lần rà sau: **lỗi ghi là "đã sửa" chưa chắc đã sửa hết**.
+   B12 nằm ngay dưới D8 đã đóng — cùng một lỗi, chỉ khác thư mục. Phép thử quét mã nguồn của D8 chỉ
+   quét `frontend-admin` nên không ai thấy. Sửa xong một lớp lỗi thì phải hỏi lại: luật này còn chỗ
+   nào chưa được quét?

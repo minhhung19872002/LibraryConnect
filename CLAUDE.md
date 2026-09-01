@@ -18,11 +18,12 @@ lên hệ thống hoàn chỉnh. Phân hệ XI (mobile) chưa làm, đúng như 
 Sau khi xong Phase 14 đã chạy thêm **một đợt rà soát chất lượng toàn diện** — mở hệ thống như người
 dùng thật, đi hết từng màn hình, cố tình đi đường sai, gọi thẳng API không qua giao diện, và nạp dữ
 liệu thật từ nguồn ngoài. Đợt rà ấy tìm ra **36 lỗi**, phần lớn là lỗi mà bộ kiểm thử cũ không bao
-giờ chạm tới vì nó chỉ xác nhận mã nguồn làm đúng thứ người viết *nghĩ*.
+giờ chạm tới vì nó chỉ xác nhận mã nguồn làm đúng thứ người viết *nghĩ*. Lượt sửa nốt bốn lỗi cuối
+tìm thêm một lỗi nữa (B12), thành **37 lỗi, đã sửa hết**.
 
 | Tài liệu | Nội dung |
 |---|---|
-| `docs/08-so-loi.md` | Sổ lỗi: 36 lỗi, tình hình sửa, và phần **"Làm tiếp gì sau đây"** ở cuối |
+| `docs/08-so-loi.md` | Sổ lỗi: 37 lỗi, tình hình sửa, và phần **"Làm tiếp gì sau đây"** ở cuối |
 | `docs/09-nguon-du-lieu.md` | Khảo sát 16 nguồn dữ liệu thư mục, giấy phép từng nguồn, kết quả nạp |
 | `docs/01`–`docs/07` | Bảy tài liệu bàn giao theo mục 10 |
 
@@ -39,23 +40,29 @@ huống lỗi; phải tự tay dựng đúng bối cảnh ấy trong phép thử
 **Lệnh chạy đúng:**
 
 ```bash
-cd backend  && dotnet test                 # 427 unit + 359 integration
-cd frontend-admin && npx tsc -b && npx vitest run    # 160 test
-cd frontend-opac  && npx tsc -b && npx vitest run    #  47 test
+cd backend  && dotnet test                 # 431 unit + 362 integration
+cd frontend-admin && npx tsc -b && npx vitest run    # 161 test
+cd frontend-opac  && npx tsc -b && npx vitest run    #  52 test
 ```
 
 > `npx tsc --noEmit` **không kiểm gì cả** ở hai thư mục frontend: `tsconfig.json` là tệp solution
 > rỗng chỉ trỏ tới hai tsconfig con. Luôn dùng `npx tsc -b`.
 
-**Bốn phép thử quét mã nguồn** chặn cả một lớp lỗi thay vì chặn một chỗ. Đừng bỏ chúng đi khi thấy
+**Sáu phép thử quét mã nguồn** chặn cả một lớp lỗi thay vì chặn một chỗ. Đừng bỏ chúng đi khi thấy
 vướng — mỗi cái sinh ra từ một lỗi đã xảy ra thật:
 
 | Phép thử | Luật |
 |---|---|
 | `frontend-admin/src/api/download.test.ts` | Ngoài `src/api`, không được viết địa chỉ bắt đầu bằng `/api/` — xác thực là JWT trong tiêu đề, thẻ liên kết không mang theo được |
 | `frontend-opac/src/lib/marcView.test.ts` | Không `JSON.stringify` biểu ghi MARC ra trang công khai |
-| `frontend-admin/src/lib/datetime.test.ts` | Không phân hệ nào tự viết cách hiện ngày riêng; dùng `lib/datetime` |
+| `frontend-admin/src/lib/datetime.test.ts` | Giao diện quản trị không tự viết cách hiện ngày riêng; dùng `lib/datetime` |
+| `frontend-opac/src/lib/datetime.test.ts` | Trang tra cứu cũng vậy — hai gói riêng nên phải quét riêng, đây chính là chỗ lỗi D8 lọt qua |
+| `frontend-admin/src/lib/columnLabels.test.ts` | Không đặt tên cột đúng một chữ "Giá" — trong nghề thư viện nó vừa là giá sách vừa là giá tiền |
 | `backend/.../PermissionAndAuditTests.cs` | Thông báo lỗi không được lọt tiếng Anh của khung nền |
+
+> Một phép thử quét mã nguồn chỉ chặn đúng thư mục nó quét. Thêm luật mới thì hỏi ngay: gói kia có
+> vi phạm cùng luật ấy không? Lỗi D8 sửa cho `frontend-admin` rồi ghi là "cả sản phẩm", nhưng
+> `frontend-opac` vẫn còn nguyên suốt một đợt.
 
 **Migration.** Sửa lỗi nghiệp vụ thường phải kèm migration dọn dữ liệu cũ: thư viện đã chạy bản
 trước mang sẵn hậu quả của lỗi ấy trong kho, sửa mã nguồn thôi thì số dữ liệu ấy vẫn nằm im. Bốn

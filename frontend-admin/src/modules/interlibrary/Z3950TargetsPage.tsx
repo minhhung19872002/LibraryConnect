@@ -139,9 +139,20 @@ export function Z3950TargetsPage() {
     },
     {
       title: 'Giao thức',
-      width: 120,
+      width: 170,
       render: (_, row) =>
-        row.useSru ? <Tag color="blue">SRU</Tag> : <Tag color="purple">Z39.50</Tag>,
+        row.useSru ? (
+          <Tag color="blue">SRU</Tag>
+        ) : (
+          <Space size={4} wrap>
+            <Tag color="purple">Z39.50</Tag>
+            {row.sruBaseUrl ? (
+              <Tooltip title={`Khi máy chủ từ chối trả biểu ghi, hệ thống lấy qua ${row.sruBaseUrl}`}>
+                <Tag color="blue">+ SRU dự phòng</Tag>
+              </Tooltip>
+            ) : null}
+          </Space>
+        ),
     },
     { title: 'Bảng mã', dataIndex: 'charset', width: 110 },
     { title: 'Cú pháp biểu ghi', dataIndex: 'recordSyntax', width: 150 },
@@ -336,6 +347,18 @@ export function Z3950TargetsPage() {
                   <Input placeholder="LCDB" />
                 </Form.Item>
               </Space>
+
+              <Form.Item
+                name="sruBaseUrl"
+                label="Địa chỉ SRU dự phòng"
+                extra={
+                  'Không bắt buộc. Nhiều máy chủ nhận truy vấn và báo đúng số kết quả nhưng từ ' +
+                  'chối trả biểu ghi; khai địa chỉ SRU của chính thư viện đó vào đây thì hệ thống ' +
+                  'tự lấy qua lối kia thay vì trả danh sách rỗng.'
+                }
+              >
+                <Input placeholder="http://lx2.loc.gov:210/lcdb" />
+              </Form.Item>
             </>
           )}
 

@@ -28,10 +28,11 @@ import {
 } from '@/labels';
 import { useAuthStore } from '@/stores/authStore';
 import type { FineRow, HoldRow, LoanRow } from '@/types/api';
+import { formatDate, formatDateTime } from '@/lib/datetime';
 
 const currency = (value: number) => `${value.toLocaleString('vi-VN')} đ`;
 
-const date = (value?: string) => (value ? new Date(value).toLocaleDateString('vi-VN') : '—');
+const date = (value?: string) => formatDate(value) || '—';
 
 /**
  * IX.3 — Trang cá nhân của bạn đọc.
@@ -431,7 +432,7 @@ export function AccountPage() {
                             <>
                               <div>{item.body}</div>
                               <div style={{ fontSize: 12, color: 'var(--lc-muted)' }}>
-                                {new Date(item.createdAt).toLocaleString('vi-VN')}
+                                {formatDateTime(item.createdAt)}
                               </div>
                             </>
                           }
@@ -485,7 +486,7 @@ export function AccountPage() {
                     >
                       <List.Item.Meta
                         title={item.name}
-                        description={new Date(item.createdAt).toLocaleString('vi-VN')}
+                        description={formatDateTime(item.createdAt)}
                       />
                     </List.Item>
                   )}
@@ -589,7 +590,7 @@ export function AccountPage() {
                       renderItem={(item) => (
                         <List.Item>
                           <List.Item.Meta
-                            title={`Gửi ngày ${new Date(item.requestDate).toLocaleDateString('vi-VN')}`}
+                            title={`Gửi ngày ${formatDate(item.requestDate)}`}
                             description={
                               <Space size={[8, 4]} wrap>
                                 <Tag>{item.statusLabel}</Tag>
