@@ -79,6 +79,55 @@ Cột **Trạng thái**: `Mới` (chưa sửa) · `Đã sửa` (kèm chỗ đã 
 
 ---
 
+## E. Đợt rà thứ hai — trên kho dữ liệu trình diễn lớn
+
+Rà lại sau khi nạp bộ dữ liệu trình diễn lớn: **7.675 biểu ghi, 9.502 ĐKCB, 351 bạn đọc, 1.603 lượt
+mượn, 254 khoản phạt**. Cách rà giữ nguyên như đợt đầu — mở trình duyệt thật ở khổ 1440×900, đăng
+nhập thật, đi hết **72 màn hình** (19 OPAC + 53 quản trị), chụp lại tất cả, rồi đo bằng máy các dấu
+hiệu chữ bị cắt, bảng tràn khung, ảnh hỏng, mã định danh máy lọt ra, chữ tiếng Anh lọt ra, ô bảng
+trống và lỗi JavaScript.
+
+| # | Màn hình | Mô tả lỗi | Cách tái hiện | Mức độ | Loại | Trạng thái |
+|---|---|---|---|---|---|---|
+| E1 | Danh mục → Tác giả (và mọi danh mục dùng chung bảng ấy) | Hai cột **Tên** và **Tên tiếng Anh** rộng đúng **0 px**. Mười một ô tiêu đề bị bóp cao 91 px và chữ chồng lên nhau: hàng tiêu đề đọc thành "T / Đọ và tên đầy đủ / n" và "Th / Thao tác". Bảng chung khai 5 cột, riêng danh mục tác giả khai thêm 6 cột nữa, tổng 11 cột trong 1.290 px mà hai cột không khai bề rộng — đúng lỗi C6 nhưng ở màn hình khác | Danh mục → Tác giả, khổ 1440×900 | Nặng | Giao diện | Mới |
+| E2 | 18 bảng của giao diện quản trị | Bảng rộng hơn khung chứa nên cột cuối — thường là **Thao tác**, chỗ đặt nút Sửa và Xoá — nằm hẳn ngoài màn hình, mà không có dấu hiệu nào cho biết cuộn ngang được. Đo được: Tiền phạt 1.500 px trong 1.136 px, Đặt giữ 1.500/1.136, Kho OAI-PMH 1.500/1.136, Yêu cầu đọc hạn chế 1.700/1.136, Biểu ghi thư mục 1.484/1.136, Tin tức 1.480/1.102… Đây chính là lỗi B10 đã sửa cho một bảng của OPAC nhưng chưa đụng tới giao diện quản trị | Lưu thông → Tiền phạt: cột "Thao tác" không thấy đâu | Nặng | Giao diện | Mới |
+| E3 | Tài liệu số → Kho tài liệu số | Bảng rộng 1.700 px nhồi vào khung **848 px** trong khi cây bộ sưu tập bên trái chỉ chiếm một phần tư màn hình. Bốn cột cuối (Chính sách, Chữ chìm, Tải về, Thao tác) bị cắt giữa chừng | Tài liệu số → Kho tài liệu số | Nặng | Giao diện | Mới |
+| E4 | OPAC → Duyệt theo tác giả; Danh mục → Tác giả | Hồ sơ thẩm quyền tác giả nhận cả những giá trị không thể là tên người: **hai công thức bảng tính** (`+AA2994AA2967:AA2997AA29AA2967:AA2994`), một dòng `6th edition`, và một nhan đề dài 91 ký tự đặt nhầm vào ô tác giả. Hai công thức đứng **đầu tiên** trên trang công khai vì sắp theo bảng chữ cái, nên đó là hai thứ đầu tiên bạn đọc nhìn thấy. Dữ liệu bẩn tới từ `dc:creator` của kho nguồn, nhưng hệ thống nhận vào mà không kiểm gì | OPAC → Duyệt theo tác giả → Tất cả | Vừa | Dữ liệu | Mới |
+| E5 | Toàn hệ thống | Nạp xong bộ dữ liệu trình diễn lớn mà tham số tên thư viện vẫn để mặc định, nên đầu trang OPAC và giao diện quản trị đều hiện đúng chữ "Thư viện". Bộ mặc định đã đặt sẵn một tên mẫu (lỗi D9) nhưng bộ lớn thì chưa | Nạp `LC_SEED_DEMO=rich` rồi mở trang chủ OPAC | Nhẹ | Dữ liệu | Mới |
+
+### Đã nghi là lỗ hổng nhưng kiểm ra thì không phải
+
+Ghi lại vì đây là chỗ dễ báo động nhầm, và báo động nhầm cũng tốn công người đọc y như bỏ sót.
+
+Hai tên tác giả bắt đầu bằng dấu `+` làm dấy lên nghi ngờ **tiêm công thức vào tệp bảng tính**
+(CWE-1236): giá trị bắt đầu bằng `= + @ -` khi mở bằng Excel sẽ được hiểu là công thức. Đã xuất thật
+danh mục tác giả ra tệp (546 KB, 9.362 dòng) rồi mở bằng `openpyxl` để soi từng ô: bốn ô bắt đầu
+bằng `+`, nhưng **kiểu ô là chuỗi** (`data_type='s'`), nghĩa là tệp .xlsx có khai rõ đây là chữ chứ
+không phải công thức, và Excel không tính nó. Lỗ hổng ấy chỉ áp cho tệp CSV — định dạng không mang
+thông tin kiểu — mà hệ thống thì không xuất CSV ở đâu cả. **Không phải lỗ hổng.** Phần còn lại là
+lỗi chất lượng dữ liệu, ghi ở E4.
+
+### Những chỗ đã kiểm lại và vẫn tốt
+
+| Phép thử | Kết quả |
+|---|---|
+| Gõ `<script>alert(1)</script> & "nháy" 'đơn' \ | ; -- DROP TABLE; =CMD()` vào tên danh mục | Lưu được, đọc lại nguyên văn, không bị cắt và không thực thi ở đâu |
+| Chính sách lưu thông với số âm | 400 kèm câu tiếng Việt |
+| Tạo danh mục với mã và tên rỗng | 400 |
+| Mở địa chỉ biểu ghi / bạn đọc không tồn tại | 404 kèm câu tiếng Việt |
+| `page=-5&pageSize=999999` | Ép về khoảng hợp lệ, trả 500 dòng |
+| Gửi hai lượt tạo cùng một mã danh mục **cùng lúc** | Chỉ một lượt thành công, kho có đúng một bản ghi |
+| Nhập biểu ghi bằng tệp rỗng | 400 `"Vui lòng chọn tệp biểu ghi cần nhập."` |
+| Xuất ISO 2709 và MARCXML toàn kho rồi cho `pymarc` đọc | 7.675/7.675 hợp lệ, 0 lỗi |
+| Ảnh bìa: gọi lại kèm dấu bản (ETag) | 304, trình duyệt giữ bản cũ |
+| 72 màn hình: mã định danh máy, JSON thô, chữ tiếng Anh của khung nền, ảnh hỏng | Không màn hình nào lọt |
+
+**Chưa đi tới trong đợt này:** trình soạn MARC thao tác bằng chuột, thiết kế mẫu phích / mẫu thẻ /
+mẫu tem, luồng kiểm kê từ đầu đến cuối, đóng tập ấn phẩm định kỳ, trình đọc tài liệu số có đóng dấu
+chìm, và sao lưu – phục hồi. Đây vẫn đúng những chỗ chưa đi tới của đợt đầu.
+
+---
+
 ## Đ. Những chỗ đã thử phá nhưng hệ thống chịu được
 
 Ghi lại để biết chỗ nào đã kiểm và không phải kiểm lại — kèm bằng chứng, không ghi suông.
