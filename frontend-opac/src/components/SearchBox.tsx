@@ -1,26 +1,26 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AutoComplete, Button, Input, Select, Space } from 'antd';
-import { SearchOutlined } from '@ant-design/icons';
+import { AutoComplete, Button, Input, Select } from 'antd';
 import { opacApi } from '@/api/opac';
 import { SCOPE_OPTIONS } from '@/components/searchScopes';
 import type { SearchScope } from '@/types/api';
 
-
 /**
- * Ô tìm kiếm dùng ở trang chủ và ở đầu trang kết quả.
+ * Ô tìm kiếm dùng ở trang chủ và ở đầu trang kết quả: phạm vi, ô gõ, nút "Tra cứu" vàng đồng —
+ * ba mảnh dính liền trong một khung bo tròn theo bản thiết kế.
  *
  * Gợi ý chỉ gọi máy chủ khi đã gõ từ hai ký tự trở lên và sau một nhịp dừng ngắn — gõ tới đâu gọi
  * tới đó thì một câu tìm kiếm mười chữ thành mười lượt truy vấn toàn kho.
  */
 export function SearchBox({
-  size = 'large',
   initialKeyword = '',
   initialScope = 'All',
+  extraParams,
 }: {
-  size?: 'middle' | 'large';
   initialKeyword?: string;
   initialScope?: SearchScope;
+  /** Tham số giữ nguyên khi tìm lại, ví dụ dạng tài liệu đang chọn. */
+  extraParams?: Record<string, string>;
 }) {
   const navigate = useNavigate();
   const [keyword, setKeyword] = useState(initialKeyword);
@@ -30,7 +30,7 @@ export function SearchBox({
 
   const submit = (value: string) => {
     const term = value.trim();
-    const params = new URLSearchParams();
+    const params = new URLSearchParams(extraParams);
 
     if (term) params.set('keyword', term);
     if (scope !== 'All') params.set('scope', scope);
@@ -67,13 +67,14 @@ export function SearchBox({
   };
 
   return (
-    <Space.Compact className="lc-searchbox" style={{ width: '100%' }}>
+    <div className="lc-searchbox" role="search">
       <Select
-        size={size}
+        size="large"
         value={scope}
         options={SCOPE_OPTIONS}
         onChange={setScope}
-        style={{ width: 160, flex: 'none' }}
+        style={{ width: 150 }}
+        aria-label="Phạm vi tra cứu"
       />
       <AutoComplete
         value={keyword}
@@ -83,18 +84,18 @@ export function SearchBox({
           setKeyword(value);
           submit(value);
         }}
-        style={{ width: '100%' }}
       >
         <Input
-          size={size}
-          placeholder="Nhập nhan đề, tác giả, chủ đề… (gõ không dấu vẫn tìm được)"
+          size="large"
+          placeholder="Nhập nhan đề, tác giả, từ khóa…"
           onPressEnter={() => submit(keyword)}
           allowClear
+          aria-label="Từ khóa tra cứu"
         />
       </AutoComplete>
-      <Button size={size} type="primary" icon={<SearchOutlined />} onClick={() => submit(keyword)}>
-        Tìm kiếm
+      <Button size="large" type="primary" onClick={() => submit(keyword)}>
+        Tra cứu
       </Button>
-    </Space.Compact>
+    </div>
   );
 }

@@ -122,17 +122,19 @@ var app = builder.Build();
 // ---------------------------------------------------------------------------
 // Pipeline
 // ---------------------------------------------------------------------------
-app.UseForwardedHeaders(new ForwardedHeadersOptions
-{
-    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
-});
+// Tin proxy trong mạng nội bộ (mặc định ba dải RFC 1918), nếu không X-Forwarded-For của Nginx bị bỏ
+// qua và mọi yêu cầu mang địa chỉ của Nginx: nhật ký, chữ chìm và bộ giới hạn tốc độ đều sai (H7).
+app.UseForwardedHeaders(ForwardedHeadersSetup.Build(builder.Configuration));
 
-app.UseMiddleware<ExceptionHandlingMiddleware>();
-app.UseMiddleware<SecurityHeadersMiddleware>();
+// Ghi nhật ký yêu cầu đứng TRƯỚC bộ xử lý ngoại lệ: đứng sau thì nó nhìn thấy ngoại lệ nghiệp vụ
+// bay ngang qua trước khi được đổi thành 400/401/404, và ghi "ERR … trả về 500" kèm vết ngăn xếp cho
+// cả một lượt gõ sai mật khẩu. Lỗi 500 thật chìm trong đó (lỗi H1 đợt rà thứ ba).
 app.UseSerilogRequestLogging(options =>
 {
     options.MessageTemplate = "{RequestMethod} {RequestPath} trả về {StatusCode} sau {Elapsed:0.0} ms";
 });
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.UseMiddleware<SecurityHeadersMiddleware>();
 
 app.UseResponseCompression();
 

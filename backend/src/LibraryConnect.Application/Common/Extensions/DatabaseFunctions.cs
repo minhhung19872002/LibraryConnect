@@ -20,4 +20,15 @@ public static class DatabaseFunctions
         throw new InvalidOperationException(
             "DatabaseFunctions.Unaccent chỉ dùng được bên trong truy vấn LINQ để dịch sang SQL. " +
             "Ở phía ứng dụng hãy dùng VietnameseText.RemoveDiacritics.");
+
+    /// <summary>
+    /// Khoá so khớp tên: bỏ dấu, chữ thường, bỏ dấu câu, gom khoảng trắng về một dấu cách — khớp với hàm
+    /// <c>cat.lc_name_key</c> và với <c>VietnameseText.NormaliseForComparison</c> ở phía ứng dụng.
+    /// Có chỉ mục hàm trên các bảng thẩm quyền, nên tìm một tên trong chín nghìn tác giả là một
+    /// lần tra chỉ mục chứ không phải quét bảng.
+    /// </summary>
+    public static string NameKey(string value) =>
+        throw new InvalidOperationException(
+            "DatabaseFunctions.NameKey chỉ dùng được bên trong truy vấn LINQ để dịch sang SQL. " +
+            "Ở phía ứng dụng hãy dùng VietnameseText.NormaliseForComparison.");
 }

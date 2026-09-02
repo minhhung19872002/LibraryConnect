@@ -205,7 +205,7 @@ function ImageField({
         <img
           src={value}
           alt="Xem trước"
-          style={{ maxHeight: 72, borderRadius: 6, border: '1px solid ${MAU.vien}' }}
+          style={{ maxHeight: 72, borderRadius: 6, border: `1px solid ${MAU.vien}` }}
         />
       ) : null}
     </Space>

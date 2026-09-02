@@ -197,6 +197,10 @@ Ký hiệu bám theo **Mục 5 phần 2 của E-HSMT**.
 | BM.39 | Chặn ô nằm ngoài khổ phích | Kéo một ô vượt ra ngoài rồi bấm Lưu | Bị từ chối kèm số đo khổ phích | Integration — `CardPrintTests` | | |
 | BM.40 | **In phích ra PDF (II.10)** | Chọn cả bốn loại phích rồi bấm Tạo tệp PDF | Tải về tệp PDF hợp lệ; phích chính xếp theo tác giả, phích nhan đề theo nhan đề, mỗi đề mục chủ đề một phích; chữ tiếng Việt đủ dấu | Integration — `CardPrintTests` | | |
 | BM.41 | Hai cách xếp giấy | In lần lượt hai chế độ | "Nhiều phích trên A4" xếp lưới để cắt; "mỗi phích một trang" đúng khổ phích để in lên bìa in sẵn | Integration — `CardPrintTests` | | |
+| BM.42 | Khung mẫu để trống không lưu vào biểu ghi | Biên mục mới → chọn "Sách" → chỉ điền 245 → Ctrl+S → tab MARC thô | Không còn trường con rỗng nào; trường không có nội dung (020, 250, 500…) bị bỏ; 040/041/044 có giá trị ngầm định giữ nguyên | Đạt (phép thử `BibEditReviewTests`) | Đạt |
+| BM.43 | Thêm điểm truy cập vào biểu ghi đã có | Sửa một biểu ghi → thêm `100$a` tên mới và `653$a` từ khóa mới → Lưu | Lưu thành công; tác giả chính đổi theo; không có 409 "Không lưu được dữ liệu" | Đạt | Đạt |
+| BM.44 | Tên thẩm quyền không bị tạo trùng khi có hàng trăm tên cùng họ | Kho có ≥ 220 tác giả họ "Nguyễn"; lưu hai biểu ghi cùng tác giả "Nguyễn Văn Kiểm" | Danh mục tác giả chỉ có một "Nguyễn Văn Kiểm"; hai biểu ghi trỏ cùng một mục | Đạt | Đạt |
+| BM.45 | Địa chỉ người dùng không giả được | Từ một máy khác gửi `curl -H 'X-Forwarded-For: 203.0.113.9' http://<nginx>/api/auth/login` rồi đọc `sys.login_histories` | Ghi địa chỉ thật của máy gửi, không ghi `203.0.113.9`; hai máy khác nhau có hai ngăn giới hạn tốc độ riêng | Đạt (`CurrentUserIpTests`, `ForwardedHeadersSetupTests`) | Đạt |
 
 ---
 
@@ -644,7 +648,7 @@ Số liệu ghi trong cột kết quả là số đo lần bàn giao; hội đ�
 
 ```bash
 cd backend
-dotnet test                 # 415 unit test + 331 integration test
+dotnet test                 # 566 unit test + 380 integration test
 ```
 
 Integration test tự khởi tạo một container PostgreSQL 16 và một container MinIO riêng, chạy
@@ -653,10 +657,10 @@ duyệt dùng — không có thành phần nào bị giả lập.
 
 ```bash
 cd frontend-admin
-npm test                    # 138 test giao diện
+npm test                    # 211 test giao diện
 
 cd frontend-opac
-npm test                    # 22 test giao diện trang tra cứu
+npm test                    # 85 test giao diện trang tra cứu
 ```
 
 ---

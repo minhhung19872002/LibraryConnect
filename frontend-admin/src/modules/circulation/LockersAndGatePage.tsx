@@ -261,7 +261,7 @@ export function LockersAndGatePage() {
                           width: 84,
                           height: 64,
                           borderRadius: 6,
-                          border: locker.overdue ? '2px solid ${MAU.loi}' : '1px solid ${MAU.vien}',
+                          border: locker.overdue ? `2px solid ${MAU.loi}` : `1px solid ${MAU.vien}`,
                           background: lockerStatusColors[locker.status as LockerStatus],
                           color: MAU.giay,
                           cursor: locker.status === 'Broken' ? 'not-allowed' : 'pointer',

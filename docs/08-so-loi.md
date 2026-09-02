@@ -211,6 +211,71 @@ Nâng tổng số lên **mười một**. Cả bốn đều đã kiểm **đỏ 
 
 ---
 
+## H. Đợt rà thứ ba — sáu chỗ hai đợt trước chưa đi tới
+
+Rà đúng những chỗ hai đợt trước ghi là *chưa đi tới*: trình soạn MARC thao tác bằng chuột, ba trình
+thiết kế mẫu, luồng kiểm kê từ đầu đến cuối, đóng tập ấn phẩm định kỳ, trình đọc tài liệu số có chữ
+chìm, và sao lưu – phục hồi. Cách rà giữ nguyên: mở trình duyệt thật ở khổ 1440×900, đăng nhập thật,
+cố tình đi đường sai, đo bằng `getComputedStyle` thay vì nhìn ảnh, và với việc dài thì gọi thẳng API
+rồi đối chiếu trong cơ sở dữ liệu. Đợt này cũng áp lại bản thiết kế OPAC theo dự án Claude Design
+"LibraryConnect layout design" — đầu trang một hàng, câu chào giữa trang, nút "Tra cứu" vàng đồng,
+thẻ kết quả có bìa 60 × 84, trang chi tiết có bảng "Bản sẵn có tại thư viện", chân trang ba cột.
+
+Lỗi nặng nhất đợt này **không nằm ở sáu chỗ ấy** mà lộ ra ngay ở bước thứ hai của trình soạn MARC:
+sửa một biểu ghi đã có thì không lưu được.
+
+| # | Màn hình | Mô tả lỗi | Cách tái hiện | Mức độ | Loại | Trạng thái |
+|---|---|---|---|---|---|---|
+| H1 | Nhật ký máy chủ | Mọi lỗi nghiệp vụ — 400, 401, 404 — đều bị ghi thành **`ERR … trả về 500`** kèm cả vết ngăn xếp, vì bộ ghi nhật ký yêu cầu đứng *sau* bộ xử lý ngoại lệ nên nhìn thấy ngoại lệ trước khi nó được đổi thành mã đúng. Đếm trên máy đang chạy: 5 dòng "trả về 500" mà không có lượt nào trả 500 thật. Lỗi 500 thật chìm trong đó | Gõ sai mật khẩu một lần rồi đọc `docker logs lc-api` | Vừa | Vận hành | Đã sửa — đảo thứ tự hai tầng; phép thử quét `Program.cs` chốt thứ tự |
+| H2 | Trình soạn MARC → Lưu | Khung mẫu điền sẵn 20 trường; cán bộ điền 3 trường rồi Ctrl+S → biểu ghi lưu **nguyên 24 trường con rỗng** (`020 ## $a $c`, `650 #4 $a $x`, `700 1# $a $e`…). Bộ kiểm biết — bấm "Kiểm tra" ra đúng 24 cảnh báo — nhưng "Lưu" vẫn ghi và chỉ báo "Đã lưu". Xuất ISO 2709 là mang rác sang thư viện khác, tab "Xem MARC" của bạn đọc hiện nguyên chúng ra. Đếm kho: mọi nguồn khác đều sạch, lỗi nằm đúng ở đường nhập tay | Biên mục mới → chọn "Sách" → điền 245 → Ctrl+S → tab MARC thô | Nặng | Nghiệp vụ | Đã sửa — gọt ở **tầng ghi** (`MarcCleanup`) trước khi kiểm tra, bịt cả sáu lối vào kho; migration gọt biểu ghi đã có |
+| H3 | Trình soạn MARC | Thiếu so với đặc tả II.2: wizard nhập 008 (đang là ô 40 ký tự thô), kéo thả sắp xếp trường, Ctrl+D nhân bản dòng, nút "Lấy từ Z39.50 / Lấy từ ISBN" ngay trên biểu mẫu, xem trước ISBD *trước khi lưu*. Bảng đáp ứng `docs/07` không khai các mục này nên không phải khai gian, nhưng đặc tả gốc có | So II.2 của CLAUDE.md với màn hình | Thiếu chức năng | Đặc tả | Chưa làm — ghi ở "Làm tiếp" |
+| H4 | Sửa biểu ghi (`PUT /api/cataloging/bibs/{id}`) | Thêm **bất kỳ** điểm truy cập mới — tác giả, đề mục, từ khóa, phân loại — vào biểu ghi đã có là **409** "Không lưu được dữ liệu. Vui lòng kiểm tra lại thông tin nhập." Ghi SQL của PostgreSQL ra mới thấy: liên kết mới chỉ được `collection.Add` vào navigation của một biểu ghi đang *Unchanged*, Entity Framework thấy khoá đã có giá trị nên coi nó là dòng có sẵn và phát `UPDATE bib_authors … WHERE id = <mới>` với `created_at = '-infinity'` — 0 dòng bị ảnh hưởng, `DbUpdateConcurrencyException`. Với biểu ghi *mới* thì cha đang Added nên con cũng Added, vì thế đường tạo mới và mọi phép thử cũ đều xanh. Kết hợp H5 thì **6.781 trên 7.680 biểu ghi có trường 653 không sửa được** | Sửa biểu ghi tối giản, thêm `100$a` một tên mới → Lưu | **Nghiêm trọng** | Nghiệp vụ | Đã sửa — khai thẳng `Set<TLink>().Add(link)` với bộ theo dõi; phép thử tích hợp thêm tác giả và từ khóa vào biểu ghi đã có |
+| H5 | Bộ đối chiếu thẩm quyền | Lọc sơ bộ theo **từ đầu tiên** rồi `.Take(200)`: "Nguyễn" khớp 3.060 tác giả trên kho thật, tên cần tìm nằm ngoài 200 dòng đầu, và ngay **lần lưu thứ hai của cùng một biểu ghi** đã tạo thêm `NGUYEN_VAN_KIEM_2`. Đo kho trước khi sửa: 485 nhóm tác giả trùng (616 dòng thừa), 109 nhóm từ khóa trùng (146 dòng thừa) — đúng thứ mà tệp thẩm quyền sinh ra để tránh | Lưu hai biểu ghi cùng tác giả họ Nguyễn → Danh mục → Tác giả | Nặng | Dữ liệu | Đã sửa — hàm `cat.lc_name_key` tính cùng khoá với `NormaliseForComparison`, chỉ mục hàm trên năm bảng thẩm quyền, so khớp ngay trong SQL, không còn ngưỡng; migration gộp **790 tác giả và 156 từ khóa** trùng, trỏ lại liên kết |
+| H6 | Trình thiết kế phích + 5 màn hình | Đợt thay 130 màu (`58326b0`) đổi `'#e3d9c7'` thành `'${MAU.vien}'` mà giữ **dấu nháy đơn**: trình duyệt nhận nguyên văn `1px solid ${MAU.vien}`, coi là CSS sai và bỏ. Đo: khung phích 400 × 240 px có `border: 0px none`, nền giấy trên nền giấy — kéo ô ra ngoài mép cũng không thấy mép đâu. 11 chỗ ở 6 tệp: khung, lề và ô đang chọn của trình thiết kế phích, viền ảnh bìa, **viền đỏ ô tủ quá giờ**, viền khung soạn thảo tin (làm hỏng lại G5 một nửa), xem trước logo, khung định nghĩa trường MARC; hai tệp còn chưa `import MAU`. Phép thử cấm mã màu thẳng vẫn xanh vì không còn mã màu để bắt | Biên mục → Mẫu phích → Thêm mẫu, đo viền khung | Vừa | Giao diện (tự gây) | Đã sửa — dấu huyền và import; luật quét mới ở cả hai gói, đỏ trước xanh sau |
+| H7 | Toàn hệ thống — hạ tầng | Hai nửa của một lỗi. **(a)** `CurrentUser.Ip` lấy thẳng giá trị **đầu tiên** của tiêu đề `X-Forwarded-For` — chữ do người gọi tự viết. Thử thật: gửi từ một container khác qua Nginx kèm `X-Forwarded-For: 203.0.113.9` → bảng `login_histories` ghi đúng `203.0.113.9`. Nghĩa là nhật ký hệ thống (I.4), lịch sử đăng nhập và chữ chìm trên tài liệu số đều **giả được** bằng một dòng tiêu đề. **(b)** Bộ trung gian ForwardedHeaders mặc định chỉ tin proxy ở loopback, mà Nginx trong Docker đứng ở `192.168.0.x`, nên `RemoteIpAddress` — thứ bộ giới hạn tốc độ dùng để chia ngăn — là địa chỉ của Nginx cho mọi yêu cầu: **toàn bộ bạn đọc chung một ngăn 300 yêu cầu/phút**, toàn bộ cán bộ chung 20 lượt đăng nhập/phút; 200 người dùng đồng thời (mục 6.3) là 429 hàng loạt. Lúc đầu tưởng 96.737 dòng nhật ký cùng một IP là bằng chứng của (b) — không phải: trên máy phát triển mọi yêu cầu đều từ một máy, IP ấy là địa chỉ cổng Docker của chính máy này. Bằng chứng thật là phép thử giả tiêu đề và mã nguồn của bộ giới hạn | Từ container khác: `curl -H 'X-Forwarded-For: 203.0.113.9' http://nginx/api/auth/login` rồi đọc `sys.login_histories` | **Nghiêm trọng** | Hạ tầng | Đã sửa — `ForwardedHeadersSetup` tin ba dải RFC 1918 và loopback với `ForwardLimit = 1`, khai được `LC_Proxy__TrustedNetworks`; `CurrentUser.Ip` chỉ đọc `RemoteIpAddress` đã qua bộ trung gian. Kiểm lại từ container khác qua Nginx: ghi đúng địa chỉ của container (`192.168.0.9`), tiêu đề bịa bị bỏ. Gọi thẳng cổng API từ máy chủ Docker thì tiêu đề vẫn được tin — đúng thiết kế, vì máy chủ ấy nằm trong dải được tin; bản triển khai thật không mở cổng API ra ngoài (`ports: !override []` trong `docker-compose.prod.yml`) |
+
+### Nguy cơ ghi nhận, chưa tái hiện được
+
+| # | Chỗ | Nguy cơ | Đo được gì |
+|---|---|---|---|
+| H9 | Sao lưu thủ công | Chạy **ngay trong lượt HTTP** — đúng lớp lỗi số 4 của CLAUDE.md. Kho lớn kèm kho đối tượng vài GB là vượt 300 giây của proxy, việc bị bỏ dở, dòng nhật ký kẹt "Đang chạy" | 4,2 giây cho bản dump 40 MB không kèm MinIO; trên máy này không dựng được kho đủ lớn để chạm ngưỡng. Để "Làm tiếp": xếp vào Hangfire như thu hoạch OAI-PMH, màn hình đọc trạng thái từ bảng `backup_jobs` |
+
+### Đã kiểm lại và vẫn tốt
+
+| Phép thử | Kết quả |
+|---|---|
+| Trình soạn MARC bằng chuột: chọn dạng tài liệu, điền, Ctrl+S, thêm trường 856 từ gợi ý, tách chuỗi `$a…$b…` dán vào | Chạy đúng; trường mới chèn đúng thứ tự nhãn |
+| Trình thiết kế phích: đặt tên, bấm ô để sửa, **kéo thả** ô, lưu, in 53 biểu ghi × 4 loại phích ra PDF | Kéo đúng (X 30 → 0, Y 0 → 58,8 mm, có kẹp trong mép phích); PDF 7 trang, 3 phích/tờ A4, tiếng Việt đủ dấu; chặn trên 2.000 biểu ghi một lần in kèm câu tiếng Việt |
+| Kiểm kê từ đầu đến cuối qua API: tạo kỳ trên kho 4.421 bản → quét khớp, quét bản của kho khác, quét mã không có, quét trùng → tổng hợp → chốt → kết quả → xuất Excel → quét sau khi chốt | Bốn kết cục đúng tên ("Khớp", "Sai kho", "Thừa", "đã quét rồi"); chốt: khớp 2, thiếu 4.419, thừa 1, sai kho 1; Excel 318 KB; quét sau khi chốt bị từ chối 409 |
+| Đóng tập: ba số đã nhận → tập `DT00001` kèm ĐKCB mới; đóng lại cùng ba số; đóng một số còn thiếu | 200 → 409 "đã đóng tập từ trước" → 409 "không có số nào đã nhận" |
+| Trình đọc tài liệu số: trang 1 dạng ảnh qua cả lối cán bộ lẫn lối bạn đọc | PNG 909 × 1286, chữ chìm chéo lặp khắp trang ghi số thẻ, giờ và IP — chính dòng IP ấy dẫn tới H7 |
+| Sao lưu → tạo một biểu ghi → phục hồi (mật khẩu sai rồi mật khẩu đúng) | Dump 40 MB, `pg_restore --list` đọc được 129 bảng; mật khẩu sai 400 kèm tên trường; phục hồi 12,9 giây, biểu ghi tạo sau sao lưu biến mất, dữ liệu trước đó nguyên vẹn, `/health` xanh |
+| 18 phép thử biên mục cũ sau khi đổi bộ đối chiếu thẩm quyền | Xanh cả |
+
+### Ba lỗi tự mình gây ra, ghi thẳng
+
+1. **H6 là hậu quả trực tiếp của commit trước.** Thay 130 màu bằng công cụ mà không nhìn từng chỗ; và
+   phép thử viết cho việc ấy chỉ bắt *mã màu*, không bắt *chuỗi mẫu viết nhầm dấu nháy* — nó xanh
+   trong khi 11 chỗ hỏng.
+2. **H5 đã được "sửa" một lần rồi** (bỏ dấu ở cả hai phía) mà vẫn còn nguyên cái ngưỡng 200; phép
+   thử cho lần sửa ấy dùng hai tên trong một kho trống nên không bao giờ chạm ngưỡng. Lần này phép
+   thử dựng đúng 220 tác giả cùng họ trước rồi mới lưu.
+3. **H4 sống từ phase 5** vì phép thử sửa biểu ghi chỉ đổi nhan đề — chưa bao giờ *thêm* một điểm
+   truy cập. Bài học số 7 của CLAUDE.md, tự mình vi phạm.
+
+### Phép thử mới
+
+| Phép thử | Bắt gì | Đã đỏ khi nào |
+|---|---|---|
+| `LibraryConnect.UnitTests/Infrastructure/RequestLoggingOrderTests.cs` | Bộ ghi nhật ký yêu cầu đứng trước bộ xử lý ngoại lệ trong `Program.cs` | Trước khi đảo thứ tự |
+| `LibraryConnect.UnitTests/Marc/MarcCleanupTests.cs` | Gọt trường con rỗng, bỏ trường trống, không đụng trường điều khiển | — (hàm mới) |
+| `LibraryConnect.IntegrationTests/BibEditReviewTests.cs` (3) | Thêm điểm truy cập vào biểu ghi đã có; 220 tác giả cùng họ không làm tạo trùng; khung mẫu rỗng không lưu | Cả ba đỏ trước khi sửa |
+| `LibraryConnect.IntegrationTests/ForwardedHeadersSetupTests.cs` (5) | Tin mạng nội bộ, không tin IP lạ, khai dải riêng thì thay mặc định, `ForwardLimit = 1`, dải sai dạng báo rõ | — (lớp mới; bằng chứng đỏ là mã nguồn bộ giới hạn tốc độ đọc `RemoteIpAddress` với proxy chưa được tin) |
+| `LibraryConnect.IntegrationTests/CurrentUserIpTests.cs` (3) | Không tin tiêu đề `X-Forwarded-For` thô; địa chỉ IPv4 ánh xạ IPv6 trả về dạng IPv4; không có kết nối thì null | Đỏ trước khi sửa `CurrentUser.Ip` |
+| `frontend-*/src/lib/palette.test.ts` (luật mới, cả hai gói) | Không chuỗi nháy đơn nào chứa `${MAU.…}` | Đỏ với đúng dòng 101 của `CardDesigner.tsx` |
+
+---
+
 ## Đ. Những chỗ đã thử phá nhưng hệ thống chịu được
 
 Ghi lại để biết chỗ nào đã kiểm và không phải kiểm lại — kèm bằng chứng, không ghi suông.
@@ -306,17 +371,29 @@ dạng quét mã nguồn chặn cả lớp lỗi quay lại thay vì chỉ chặ
 | B10 | Dòng nhắc "Còn cột bên phải — cuộn ngang trong bảng để xem hết", dải mờ ở mép phải, và neo cột tên báo lại để cuộn sang phải vẫn biết đang đọc dòng nào. Chỉ nhắc khi bảng thật sự còn phần chưa xem — đo bằng `ResizeObserver`, cuộn tới hết thì nhắc tự tắt | Ảnh chụp màn hình 1440×900 trên hệ thống đang chạy: dòng nhắc hiện, thanh cuộn hiện, mép phải mờ dần |
 | C5 | Chữ "Giá" đứng một mình bị bỏ hẳn. Cột và ô nhập chỉ cái giá xếp sách đổi thành "Vị trí giá" (8 chỗ), cột tiền trong báo cáo kiểm kê đổi thành "Đơn giá". Ô trống nay ghi "Chưa xếp" thay vì để trắng | Phép thử quét mã nguồn `columnLabels.test.ts` — chạy đỏ với 9 chỗ vi phạm trước khi sửa, trong đó có 5 chỗ mà đợt rà đầu chưa nhìn thấy |
 
+### Tình hình sửa — đợt rà thứ ba
+
+| Mức độ | Tổng | Đã sửa | Còn lại |
+|---|---|---|---|
+| Nghiêm trọng | 2 | 2 | 0 |
+| Nặng | 2 | 2 | 0 |
+| Vừa | 2 | 2 | 0 |
+| Thiếu chức năng | 1 | 0 | 1 (H3, ghi ở "Làm tiếp") |
+| Nguy cơ | 1 | 0 | 1 (H9, ghi ở "Làm tiếp") |
+
+Cộng cả ba đợt và đợt áp thiết kế: **57 lỗi, đã sửa 55**, còn hai mục là thiếu chức năng và nguy cơ
+đã ghi rõ chỗ. Mỗi lỗi đã sửa của đợt này đều có phép thử chạy đỏ trước khi sửa và xanh sau khi sửa,
+kể cả H7: phép thử giả tiêu đề đỏ trước khi sửa `CurrentUser.Ip`.
+
 ### Làm tiếp gì sau đây
 
-1. Dựng bộ dữ liệu trình diễn lớn (`LC_SEED_DEMO=rich`): sinh ĐKCB cho khoảng 60% biểu ghi đã thu
-   hoạch, 300 bạn đọc, 1.500 lượt mượn trải 18 tháng, 50 lượt đặt giữ, 30 tài liệu số giấy phép mở,
-   ảnh bìa lấy từ Open Library theo ISBN.
-2. Rà lại một lượt nữa theo đúng cách của đợt này — lần rà đầu tìm ra 36 lỗi, phần lớn chỉ lộ ra khi
-   có dữ liệu thật; nay kho đã có hơn bảy nghìn biểu ghi thì nhiều màn hình khác cũng đáng xem lại.
-   Ưu tiên những chỗ đợt trước **chưa đi tới**: trình soạn MARC thao tác bằng chuột, thiết kế mẫu
-   phích / mẫu thẻ / mẫu tem, luồng kiểm kê từ đầu đến cuối, đóng tập ấn phẩm định kỳ, trình đọc tài
-   liệu số có đóng dấu chìm, và sao lưu – phục hồi.
-3. Bài học của lượt sửa này, đáng nhớ cho lần rà sau: **lỗi ghi là "đã sửa" chưa chắc đã sửa hết**.
-   B12 nằm ngay dưới D8 đã đóng — cùng một lỗi, chỉ khác thư mục. Phép thử quét mã nguồn của D8 chỉ
-   quét `frontend-admin` nên không ai thấy. Sửa xong một lớp lỗi thì phải hỏi lại: luật này còn chỗ
-   nào chưa được quét?
+1. **Trình soạn MARC còn thiếu so với đặc tả II.2** (H3): wizard 008, kéo thả sắp xếp trường, Ctrl+D
+   nhân bản dòng, nút "Lấy từ Z39.50 / ISBN" trên biểu mẫu, xem trước ISBD trước khi lưu.
+2. **Sao lưu thủ công xếp vào Hangfire** (H9): chạy trong lượt HTTP là đúng lớp lỗi số 4; màn hình
+   đọc trạng thái từ bảng `backup_jobs` như kho OAI-PMH đang làm.
+3. **Đợt sau là ứng dụng di động** (Phase 15) theo `PROMPT-MOBILE-LIBRARYCONNECT.md`. Nhóm
+   `/api/reader/*` đã kiểm lại trong đợt này qua lối bạn đọc thật (đọc tài liệu số có chữ chìm).
+4. Bài học giữ lại từ ba đợt: **lỗi ghi là "đã sửa" chưa chắc đã sửa hết** (B12 dưới D8, H5 dưới lần
+   sửa bỏ dấu), và **phép thử tự viết chỉ chạm tới bối cảnh người viết nghĩ ra** — H4 sống từ phase 5
+   vì phép thử sửa biểu ghi chưa bao giờ thêm một điểm truy cập; H5 sống qua một lần sửa vì phép thử
+   dùng kho trống. Dựng đúng bối cảnh của kho thật (220 tác giả cùng họ) mới bắt được.

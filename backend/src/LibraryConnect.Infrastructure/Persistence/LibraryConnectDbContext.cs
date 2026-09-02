@@ -189,6 +189,12 @@ public class LibraryConnectDbContext : DbContext, IApplicationDbContext
             .HasName("vn_unaccent")
             .HasSchema("bib");
 
+        modelBuilder
+            .HasDbFunction(typeof(Application.Common.Extensions.DatabaseFunctions)
+                .GetMethod(nameof(Application.Common.Extensions.DatabaseFunctions.NameKey), new[] { typeof(string) })!)
+            .HasName("lc_name_key")
+            .HasSchema("cat");
+
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
             var clrType = entityType.ClrType;

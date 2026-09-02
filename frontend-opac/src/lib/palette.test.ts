@@ -66,6 +66,25 @@ describe('Màu chỉ đến từ bảng màu dùng chung', () => {
     );
   });
 
+  it('không chuỗi nháy đơn nào chứa ${MAU.…} — đó là chuỗi mẫu viết nhầm dấu nháy', () => {
+    // Đợt thay 130 màu viết thẳng đã đổi '#e3d9c7' thành '${MAU.vien}' mà giữ nguyên dấu nháy đơn:
+    // trình duyệt nhận nguyên văn "1px solid ${MAU.vien}", coi là CSS sai và bỏ qua. Khung phích
+    // trong trình thiết kế mất viền, ô tủ quá giờ mất viền đỏ, khung soạn thảo mất viền — mà phép
+    // thử cấm mã màu thẳng vẫn xanh vì không còn mã màu nào để bắt. Chín chỗ ở sáu tệp (lỗi H6).
+    const viPham: string[] = [];
+
+    for (const tep of tepNguon(goc)) {
+      const tuongDoi = tep.slice(goc.length + 1).replace(/\\/g, '/');
+      const noiDung = readFileSync(tep, 'utf8');
+
+      for (const [, chuoi] of noiDung.matchAll(/'([^'\n]*\$\{MAU\.[^'\n]*)'/g)) {
+        viPham.push(`${tuongDoi}: '${chuoi}'`);
+      }
+    }
+
+    expect(viPham, 'chuỗi có ${MAU.…} phải bọc bằng dấu huyền (template literal)').toEqual([]);
+  });
+
 });
 
 /**

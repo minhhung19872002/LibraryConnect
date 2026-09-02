@@ -1,5 +1,7 @@
-/* Kiểu dáng chung của trang tra cứu. Phần lớn giao diện dùng thành phần dựng sẵn, ở đây chỉ là
-   những chỗ Ant Design không lo: khối tìm kiếm ở trang chủ, lưới bìa sách và nội dung bài viết. */
+/* Kiểu dáng chung của trang tra cứu, áp theo bản thiết kế "LibraryConnect Layout" (nền giấy ngà,
+   xanh rêu, chữ có chân Lora cho tiêu đề). Ant Design lo biểu mẫu, bảng và hộp thoại; tệp này lo
+   đầu trang, khối tra cứu, thẻ kết quả, trang chi tiết và chân trang — những chỗ bản thiết kế vẽ
+   riêng. */
 
 /*
  * Bảng màu của trang tra cứu — cùng một bộ với giao diện quản trị.
@@ -33,6 +35,19 @@
 
   --lc-gold: #b9852f;
   --lc-gold-hover: #a2731f;
+
+  /* Ba cặp màu thẻ trạng thái của bản thiết kế: còn / cần để ý / hỏng, và một cặp trung tính. */
+  --lc-tot: #4d6a42;
+  --lc-tot-nhat: #eef2e4;
+  --lc-luu-y: #8a6114;
+  --lc-luu-y-nhat: #f7ecd8;
+  --lc-loi: #a03c2e;
+  --lc-loi-nhat: #f8e8e2;
+  --lc-mo-nhat: #eceae3;
+
+  /* Chữ trên nền xanh rêu đậm. */
+  --lc-kem-mo: #c9c3ae;
+  --lc-kem-toi: #8f8a76;
 
   --lc-chu-trinh-bay: 'Lora', Georgia, 'Times New Roman', serif;
   --lc-chu-deu-net: 'Cascadia Mono', Consolas, 'Courier New', monospace;
@@ -73,6 +88,8 @@ body {
 
 /* ---- Đầu trang ---- */
 
+/* Một hàng cao 62px: huy hiệu và tên thư viện bên trái, đường dẫn ở giữa, nút đăng nhập bên phải.
+   Bản cũ hai hàng (tên + khẩu hiệu, rồi thanh menu) chiếm 100px trước khi tới nội dung. */
 .lc-header {
   position: sticky;
   top: 0;
@@ -83,63 +100,139 @@ body {
   line-height: normal;
 }
 
-.lc-header__top {
+.lc-header__row {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 12px 0;
+  gap: 24px;
+  height: 62px;
 }
 
 .lc-header__brand {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   text-decoration: none;
   color: inherit;
   min-width: 0;
+  flex: none;
 }
 
 .lc-header__logo {
-  width: 44px;
-  height: 44px;
+  width: 34px;
+  height: 34px;
   object-fit: contain;
   border-radius: 8px;
+  flex: none;
+}
+
+/* Huy hiệu hai chữ khi thư viện chưa tải logo lên. */
+.lc-header__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--lc-green);
+  color: var(--lc-cream);
+  font-family: var(--lc-chu-trinh-bay);
+  font-weight: 700;
+  font-size: 15px;
   flex: none;
 }
 
 .lc-header__name {
   font-family: var(--lc-chu-trinh-bay);
   font-weight: 600;
-  font-size: 18px;
+  font-size: 16px;
   line-height: 1.25;
-  color: var(--lc-green-dark);
+  color: var(--lc-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.lc-header__slogan {
-  font-size: 13px;
-  color: var(--lc-muted);
-}
-
-.lc-header__spacer {
-  flex: 1;
-}
-
+/* Thanh điều hướng: chữ nhỏ hơn thân bài, chưa chọn thì màu nâu nhạt — nó là đường đi chứ không
+   phải nội dung, không nên tranh chỗ với nhan đề tài liệu ngay bên dưới. */
 .lc-header__nav {
-  border-top: 1px solid var(--lc-border-soft);
-}
-
-/* Thanh điều hướng ngang: chữ nhỏ hơn thân bài, chưa chọn thì màu nâu nhạt — nó là đường đi chứ
-   không phải nội dung, không nên tranh chỗ với nhan đề tài liệu ngay bên dưới. */
-.lc-header__nav .ant-menu-horizontal {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-width: 0;
+  overflow: hidden;
   font-size: 13.5px;
   font-weight: 500;
-  background: transparent;
 }
 
-/* ---- Khối tìm kiếm trang chủ ---- */
+.lc-header__link {
+  color: var(--lc-muted);
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.lc-header__link:hover {
+  color: var(--lc-green);
+  text-decoration: none;
+}
+
+.lc-header__link--active {
+  color: var(--lc-ink);
+}
+
+.lc-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: none;
+}
+
+.lc-header__cart {
+  color: var(--lc-muted);
+  font-size: 13px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.lc-header__cart:hover {
+  color: var(--lc-green);
+}
+
+/* Nút đăng nhập viền xanh, nền trong: theo bản thiết kế nó là nút phụ của trang, còn nút chính
+   duy nhất là "Tra cứu" màu vàng đồng. */
+.lc-header__login.ant-btn {
+  border-color: var(--lc-green);
+  color: var(--lc-green);
+  background: transparent;
+  font-weight: 500;
+}
+
+.lc-header__login.ant-btn:hover {
+  background: var(--lc-green-soft) !important;
+  color: var(--lc-green) !important;
+  border-color: var(--lc-green) !important;
+}
+
+/* Nút viền xanh rêu, nền trong — dáng của nút "Đặt giữ" trong bản thiết kế. Nút đăng nhập ở đầu
+   trang cùng dáng ấy. */
+.lc-btn-outline.ant-btn {
+  border-color: var(--lc-green);
+  color: var(--lc-green);
+  background: transparent;
+  font-weight: 500;
+}
+
+.lc-btn-outline.ant-btn:hover {
+  background: var(--lc-green-soft) !important;
+  color: var(--lc-green) !important;
+  border-color: var(--lc-green) !important;
+}
+
+/* ---- Khối tra cứu ---- */
 
 /*
- * Khối tra cứu ở đầu trang chủ.
+ * Khối tra cứu ở đầu trang chủ và trang kết quả.
  *
  * Ba sắc xanh rêu chuyển dần chứ không phải hai: chuyển thẳng từ xanh sang gần đen trên một mảng
  * cao 160 điểm ảnh để lộ ra dải vằn ngang mà màn hình 8-bit không giấu được.
@@ -149,37 +242,35 @@ body {
   background-size: cover;
   background-position: center;
   color: var(--lc-cream);
-  padding: 52px 0 60px;
+  padding: 52px 24px 60px;
+}
+
+/* Ở trang kết quả khối này thấp hơn: bạn đọc đã tới đây để xem danh sách, không phải để đọc câu
+   chào. */
+.lc-hero--compact {
+  padding: 28px 24px 34px;
+}
+
+.lc-hero__inner {
+  max-width: 760px;
+  margin: 0 auto;
+  text-align: center;
 }
 
 .lc-hero__title {
   font-family: var(--lc-chu-trinh-bay);
   font-size: 38px;
   font-weight: 600;
-  line-height: 1.2;
-  margin: 0 0 10px;
+  line-height: 1.25;
+  margin: 0;
   color: var(--lc-cream);
+  text-wrap: pretty;
 }
 
 .lc-hero__subtitle {
-  margin: 0 0 24px;
+  margin: 10px 0 0;
   font-size: 15px;
-  color: #c9c3ae;
-}
-
-.lc-hero__stats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 28px;
-  margin-top: 26px;
-  color: #c9c3ae;
-}
-
-.lc-hero__stat-value {
-  font-family: var(--lc-chu-trinh-bay);
-  font-size: 23px;
-  font-weight: 600;
-  color: var(--lc-cream);
+  color: var(--lc-kem-mo);
 }
 
 /*
@@ -189,47 +280,196 @@ body {
  * sáng nhất và nổi nhất màn hình. Bóng đổ đậm chính là thứ tách nó ra khỏi mảng nền.
  */
 .lc-hero .lc-searchbox {
-  background: var(--lc-paper);
-  border-radius: 12px;
-  padding: 10px;
+  margin-top: 26px;
   box-shadow: 0 10px 30px rgba(15, 25, 12, 0.35);
 }
 
-/* Nút tra cứu lấy màu vàng đồng: sắc duy nhất không phải xanh rêu, nên mắt rơi vào nó trước. */
-.lc-hero .lc-searchbox .ant-btn-primary {
-  background: var(--lc-gold);
-  border-color: var(--lc-gold);
+.lc-searchbox {
+  display: flex;
+  width: 100%;
+  background: var(--lc-paper);
+  border-radius: 12px;
+  overflow: hidden;
 }
 
-.lc-hero .lc-searchbox .ant-btn-primary:hover {
+/* Ba mảnh của ô tra cứu dính liền nhau, không viền riêng: khung ngoài đã là viền chung. */
+.lc-searchbox .ant-select {
+  height: auto;
+  flex: none;
+}
+
+.lc-searchbox .ant-select .ant-select-selector {
+  border: none !important;
+  border-right: 1px solid var(--lc-border) !important;
+  border-radius: 0 !important;
+  background: var(--lc-panel) !important;
+  box-shadow: none !important;
+  height: 100% !important;
+  padding-inline: 14px !important;
+}
+
+.lc-searchbox .ant-select-auto-complete {
+  flex: 1;
+  min-width: 0;
+}
+
+.lc-searchbox .ant-input-affix-wrapper,
+.lc-searchbox .ant-input {
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  font-size: 15px;
+}
+
+.lc-searchbox .ant-input-affix-wrapper {
+  padding: 10px 16px;
+}
+
+/* Nút tra cứu lấy màu vàng đồng: sắc duy nhất không phải xanh rêu, nên mắt rơi vào nó trước. */
+.lc-searchbox .ant-btn-primary {
+  background: var(--lc-gold);
+  border-color: var(--lc-gold);
+  border-radius: 0 !important;
+  height: auto;
+  padding: 0 28px;
+  font-weight: 600;
+  font-size: 14.5px;
+  flex: none;
+}
+
+.lc-searchbox .ant-btn-primary:hover {
   background: var(--lc-gold-hover) !important;
   border-color: var(--lc-gold-hover) !important;
 }
 
-/* ---- Lưới kết quả ---- */
-
-.lc-cover {
-  width: 100%;
-  /* Đúng tỉ lệ bìa sách. Bìa máy chủ dựng ra cũng theo tỉ lệ này nên không bị cắt mất dòng nhãn
-     dạng tài liệu ở chân bìa. */
-  aspect-ratio: 2 / 3;
-  object-fit: cover;
-  /* Bo góc lệch: mép trái vuông hơn, giả gáy sách. */
-  border-radius: 4px 8px 8px 4px;
-  background: var(--lc-panel);
-  box-shadow: inset 3px 0 0 rgba(0, 0, 0, 0.18);
+/* Hàng viên chọn nhanh dạng tài liệu dưới ô tra cứu. */
+.lc-hero__pills {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 16px;
+  flex-wrap: wrap;
 }
 
-/* Bìa thay thế nay do máy chủ dựng ra dạng SVG, nên trình duyệt chỉ việc hiện nó như một ảnh —
-   không còn phần tử giữ chỗ nào ở phía trình duyệt nữa. */
+.lc-pill-btn {
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: transparent;
+  color: var(--lc-kem-mo);
+  font-family: inherit;
+  font-size: 12.5px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.lc-pill-btn:hover {
+  border-color: var(--lc-cream);
+  color: var(--lc-cream);
+}
+
+.lc-pill-btn--active {
+  background: var(--lc-cream);
+  border-color: var(--lc-cream);
+  color: var(--lc-green-dark);
+}
+
+/* ---- Bố cục trang kết quả ---- */
+
+.lc-results {
+  display: grid;
+  grid-template-columns: 230px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+  padding: 30px 0 50px;
+}
+
+/* Thẻ giấy: nền sáng hơn nền trang một nấc, viền mảnh, góc bo 12. */
+.lc-paper {
+  background: var(--lc-paper);
+  border: 1px solid var(--lc-border);
+  border-radius: 12px;
+}
+
+.lc-facets {
+  padding: 16px 18px;
+}
+
+.lc-facets__title {
+  font-family: var(--lc-chu-trinh-bay);
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.lc-facets__list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13.5px;
+}
+
+.lc-facets__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+  color: var(--lc-ink);
+}
+
+.lc-facets__row:hover {
+  color: var(--lc-green);
+}
+
+.lc-facets__row--active {
+  color: var(--lc-green);
+  font-weight: 600;
+}
+
+.lc-facets__count {
+  color: var(--lc-muted-light);
+  font-weight: 400;
+  flex: none;
+}
+
+.lc-results__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+  font-size: 13.5px;
+  color: var(--lc-muted);
+}
+
+.lc-results__count b {
+  color: var(--lc-ink);
+}
+
+.lc-results__list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ---- Thẻ kết quả ---- */
 
 .lc-result {
   display: flex;
   gap: 16px;
+  padding: 14px 16px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.lc-result:hover {
+  border-color: var(--lc-border-strong);
+  box-shadow: 0 4px 14px rgba(60, 48, 30, 0.08);
 }
 
 .lc-result__cover {
-  width: 92px;
+  width: 60px;
   flex: none;
 }
 
@@ -243,14 +483,232 @@ body {
   font-size: 16.5px;
   font-weight: 600;
   line-height: 1.35;
-  margin: 0 0 4px;
+  margin: 0;
   color: var(--lc-green);
+}
+
+.lc-result__title a {
+  color: inherit;
 }
 
 .lc-result__meta {
   color: var(--lc-muted);
   font-size: 13px;
-  margin: 0 0 8px;
+  margin: 3px 0 0;
+}
+
+.lc-result__tags {
+  display: flex;
+  gap: 8px;
+  margin-top: 9px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.lc-result__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  justify-content: center;
+  flex: none;
+}
+
+.lc-cover {
+  width: 100%;
+  /* Đúng tỉ lệ bìa sách 5:7 như bản thiết kế (60 × 84). Bìa máy chủ dựng ra theo tỉ lệ 2:3 nên
+     phần thừa được cắt đều hai mép, không mất dòng nhãn dạng tài liệu ở chân bìa. */
+  aspect-ratio: 5 / 7;
+  object-fit: cover;
+  display: block;
+  /* Bo góc lệch: mép trái vuông hơn, giả gáy sách. */
+  border-radius: 4px 8px 8px 4px;
+  background: var(--lc-panel);
+  box-shadow: inset 3px 0 0 rgba(0, 0, 0, 0.25);
+}
+
+/* Ô rỗng khi không có kết quả: viền đứt để phân biệt với thẻ có nội dung. */
+.lc-empty {
+  padding: 40px;
+  text-align: center;
+  color: var(--lc-muted-light);
+  background: var(--lc-paper);
+  border: 1px dashed var(--lc-line);
+  border-radius: 12px;
+}
+
+/* ---- Trang chi tiết ---- */
+
+.lc-detail {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 28px 24px 60px;
+}
+
+.lc-detail__back {
+  display: inline-block;
+  font-size: 13.5px;
+  color: var(--lc-green);
+  margin-bottom: 16px;
+}
+
+.lc-detail__head {
+  padding: 28px;
+  display: flex;
+  gap: 28px;
+  border-radius: 14px;
+}
+
+.lc-detail__cover {
+  width: 150px;
+  flex: none;
+}
+
+.lc-detail__cover .lc-cover {
+  border-radius: 5px 10px 10px 5px;
+  box-shadow: inset 5px 0 0 rgba(0, 0, 0, 0.25), 0 12px 24px rgba(60, 48, 30, 0.18);
+}
+
+.lc-detail__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.lc-detail__title {
+  font-family: var(--lc-chu-trinh-bay);
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.25;
+  margin: 0;
+  text-wrap: pretty;
+}
+
+.lc-detail__author {
+  font-size: 15px;
+  color: var(--lc-muted);
+  margin-top: 6px;
+}
+
+.lc-detail__author a {
+  color: inherit;
+}
+
+.lc-detail__grid {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 5px 12px;
+  margin-top: 16px;
+  font-size: 13.5px;
+}
+
+.lc-detail__label {
+  color: var(--lc-muted-light);
+}
+
+.lc-detail__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.lc-section {
+  margin-top: 14px;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.lc-section__title {
+  padding: 14px 20px;
+  font-family: var(--lc-chu-trinh-bay);
+  font-size: 16px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--lc-border);
+}
+
+.lc-section__body {
+  padding: 16px 20px;
+}
+
+/* Bảng bản in: bốn cột theo bản thiết kế — Kho, ĐKCB, Vị trí xếp giá, Trạng thái. */
+.lc-holdings__head,
+.lc-holdings__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) 130px minmax(0, 1fr) 150px;
+  gap: 12px;
+  padding: 10px 20px;
+  font-size: 13.5px;
+  align-items: center;
+}
+
+.lc-holdings__head {
+  padding: 9px 20px;
+  background: var(--lc-panel);
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--lc-muted-light);
+  font-weight: 600;
+}
+
+.lc-holdings__row {
+  border-top: 1px solid var(--lc-border-soft);
+}
+
+.lc-holdings__sub {
+  color: var(--lc-muted);
+  font-size: 12px;
+}
+
+/* ---- Thẻ trạng thái dạng viên ---- */
+
+/*
+ * Bốn màu thẻ Ant Design đang mang nghĩa nghiệp vụ ở hơn ba mươi chỗ ("Còn 3 bản sẵn sàng",
+ * "Chưa có bản sẵn sàng", "Chỉ có bản số"). Không đổi nghĩa, chỉ đổi dáng: viên bo tròn, không
+ * viền, nền nhạt chữ đậm — đúng ba cặp màu của bản thiết kế. Bộ chọn 0-2-0 để thắng kiểu Ant
+ * Design chèn sau (bài học số 14 của CLAUDE.md).
+ */
+.ant-tag.ant-tag {
+  border-radius: 999px;
+  border-color: transparent;
+  font-weight: 500;
+  padding-inline: 10px;
+}
+
+.ant-tag.ant-tag-green {
+  color: var(--lc-tot);
+  background: var(--lc-tot-nhat);
+}
+
+.ant-tag.ant-tag-orange {
+  color: var(--lc-luu-y);
+  background: var(--lc-luu-y-nhat);
+}
+
+.ant-tag.ant-tag-red {
+  color: var(--lc-loi);
+  background: var(--lc-loi-nhat);
+}
+
+.ant-tag.ant-tag-blue {
+  color: #3b4f86;
+  background: #eaedf6;
+}
+
+.ant-tag.ant-tag-cyan {
+  color: #1c5f57;
+  background: #e4efec;
+}
+
+.ant-tag.ant-tag-purple {
+  color: #5f3f7e;
+  background: #f0eaf5;
+}
+
+.ant-tag.ant-tag-blue a,
+.ant-tag.ant-tag-cyan a,
+.ant-tag.ant-tag-purple a,
+.ant-tag.ant-tag-green a {
+  color: inherit;
 }
 
 /* ---- Nội dung bài viết soạn bằng trình soạn thảo ---- */
@@ -306,30 +764,47 @@ body {
 /* ---- Chân trang ---- */
 
 .lc-footer {
-  color: #c9c3ae;
-  padding: 32px 0 20px;
+  color: var(--lc-kem-mo);
+  padding: 34px 0 26px;
+  margin-top: auto;
 }
 
 .lc-footer a {
-  color: #c9c3ae;
+  color: var(--lc-kem-mo);
 }
 
 .lc-footer a:hover {
   color: var(--lc-cream);
 }
 
-.lc-footer__title {
+.lc-footer__grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 32px;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.lc-footer__name {
   font-family: var(--lc-chu-trinh-bay);
-  color: var(--lc-cream);
+  font-size: 16px;
   font-weight: 600;
-  margin-bottom: 12px;
+  color: var(--lc-cream);
+  margin-bottom: 8px;
+}
+
+.lc-footer__title {
+  font-weight: 600;
+  color: var(--lc-cream);
+  margin-bottom: 8px;
 }
 
 .lc-footer__bottom {
-  border-top: 1px solid rgba(242, 236, 221, 0.15);
-  margin-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  margin-top: 22px;
   padding-top: 14px;
-  font-size: 13px;
+  font-size: 12px;
+  color: var(--lc-kem-toi);
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -338,13 +813,36 @@ body {
 
 /* ---- Màn hình hẹp ---- */
 
+@media (max-width: 900px) {
+  .lc-results {
+    grid-template-columns: 1fr;
+  }
+
+  .lc-footer__grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .lc-holdings__head {
+    display: none;
+  }
+
+  .lc-holdings__row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 @media (max-width: 768px) {
   .lc-container {
     padding: 0 16px;
   }
 
+  .lc-header__nav {
+    display: none;
+  }
+
   .lc-hero {
-    padding: 34px 0 40px;
+    padding: 34px 16px 40px;
   }
 
   .lc-hero__title {
@@ -353,10 +851,21 @@ body {
 
   .lc-result {
     gap: 12px;
+    flex-wrap: wrap;
   }
 
-  .lc-result__cover {
-    width: 72px;
+  .lc-result__actions {
+    flex-direction: row;
+    width: 100%;
+  }
+
+  .lc-detail__head {
+    flex-direction: column;
+    padding: 20px;
+  }
+
+  .lc-detail__cover {
+    width: 120px;
   }
 }
 
@@ -407,46 +916,4 @@ body {
   background: var(--lc-hover);
   border-radius: 6px;
   padding: 3px 8px;
-}
-
-/* ---------------- Thẻ trạng thái đặt sẵn ---------------- */
-
-/*
- * Kéo bốn màu thẻ đặt sẵn của Ant Design về bảng màu giấy.
- *
- * Màu đặt sẵn của Ant Design lấy từ hệ màu của nó, không theo `colorPrimary`, nên xanh dương và
- * tím của nó nằm trên nền giấy ngà trông như dán từ phần mềm khác sang. Chúng lại đang được dùng
- * ở hơn ba mươi chỗ để mang **nghĩa nghiệp vụ** — "Chỉ có bản số", "Mặc định", "Về nhà" — nên
- * không đổi sang màu khác được: đổi xanh dương thành xanh rêu là nó lẫn với thẻ xanh lá báo "còn
- * bản sẵn sàng", và hai tin khác nhau thành một.
- *
- * Cách làm: giữ nguyên *sắc* để không mất phân biệt, chỉ hạ độ tươi và kéo về đúng độ sáng của
- * nền giấy. Xanh dương vẫn ra xanh dương, chỉ là xanh dương mực chứ không phải xanh dương màn
- * hình. Sửa một chỗ ở đây thay vì sửa ba mươi tệp — và cũng để thẻ thêm về sau tự đúng màu.
- *
- * Xanh lá, cam, đỏ và vàng của Ant Design giữ nguyên: chúng đủ ấm để đứng trên nền giấy, mà đó
- * lại là bốn màu mang nghĩa nặng nhất — còn/hết, cảnh báo, lỗi — không nên động vào.
- */
-.ant-tag.ant-tag-blue {
-  color: #3b4f86;
-  background: #eaedf6;
-  border-color: #c8d0e6;
-}
-
-.ant-tag.ant-tag-cyan {
-  color: #1c5f57;
-  background: #e4efec;
-  border-color: #bcd6d0;
-}
-
-.ant-tag.ant-tag-purple {
-  color: #5f3f7e;
-  background: #f0eaf5;
-  border-color: #d7c8e3;
-}
-
-.ant-tag.ant-tag-blue a,
-.ant-tag.ant-tag-cyan a,
-.ant-tag.ant-tag-purple a {
-  color: inherit;
 }

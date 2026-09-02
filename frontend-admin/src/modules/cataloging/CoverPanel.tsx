@@ -7,6 +7,7 @@ import { PERMISSIONS } from '@/api/permissions';
 import { errorMessage } from '@/api/formErrors';
 import { catalogingApi } from './api';
 import { COVER_SOURCE_LABELS } from './types';
+import { MAU } from '@/lib/palette';
 
 /**
  * Ảnh bìa của một biểu ghi.
@@ -75,7 +76,7 @@ export function CoverPanel({
             aspectRatio: '2 / 3',
             objectFit: 'cover',
             borderRadius: 6,
-            border: '1px solid ${MAU.vien}',
+            border: `1px solid ${MAU.vien}`,
           }}
         />
 

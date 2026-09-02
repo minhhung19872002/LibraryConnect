@@ -99,13 +99,10 @@ public class CurrentUser : ICurrentUser
                 return null;
             }
 
-            // Behind the Nginx reverse proxy the real client address arrives in X-Forwarded-For.
-            var forwarded = context.Request.Headers["X-Forwarded-For"].FirstOrDefault();
-            if (!string.IsNullOrWhiteSpace(forwarded))
-            {
-                return forwarded.Split(',')[0].Trim();
-            }
-
+            // Chỉ đọc địa chỉ mà bộ trung gian ForwardedHeaders đã xác nhận và ghi vào kết nối.
+            // Bản trước lấy thẳng giá trị đầu tiên của X-Forwarded-For: người gọi tự đặt tiêu đề là
+            // lịch sử đăng nhập, nhật ký và chữ chìm ghi đúng địa chỉ bịa ấy — thử từ một container
+            // khác qua Nginx, 203.0.113.9 vào thẳng bảng login_histories (lỗi H7 đợt rà thứ ba).
             var address = context.Connection.RemoteIpAddress;
 
             if (address is null)

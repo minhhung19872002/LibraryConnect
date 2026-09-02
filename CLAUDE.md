@@ -21,12 +21,17 @@ liệu thật từ nguồn ngoài. Đợt rà ấy tìm ra **36 lỗi**, phần 
 giờ chạm tới vì nó chỉ xác nhận mã nguồn làm đúng thứ người viết *nghĩ*.
 
 Sau đó là **đợt hoàn thiện** sáu ưu tiên: bảo mật, bộ ánh xạ Dublin Core → MARC 21, ảnh bìa, bộ dữ
-liệu trình diễn lớn, rà soát lần hai, và làm sạch bảng đáp ứng. Cộng cả ba đợt: **42 lỗi, đã sửa
-hết**.
+liệu trình diễn lớn, rà soát lần hai, và làm sạch bảng đáp ứng. Rồi **đợt áp bản thiết kế** (mục G
+sổ lỗi) và **đợt rà thứ ba** (mục H) đi vào sáu chỗ hai đợt trước chưa tới — trình soạn MARC bằng
+chuột, ba trình thiết kế mẫu, kiểm kê, đóng tập, trình đọc có chữ chìm, sao lưu – phục hồi — và tìm
+ra hai lỗi nghiêm trọng đã sống từ phase 5: sửa biểu ghi đã có thì không lưu được, và địa chỉ IP người
+dùng vừa giả được vừa bị nhốt chung một ngăn giới hạn tốc độ. Cộng tất cả: **57 lỗi, đã sửa 55**; hai mục còn lại (thiếu chức
+năng H3, nguy cơ H9) ghi rõ ở "Làm tiếp gì sau đây" của sổ lỗi. Trang tra cứu đã áp lại theo dự án
+Claude Design "LibraryConnect layout design".
 
 | Tài liệu | Nội dung |
 |---|---|
-| `docs/08-so-loi.md` | Sổ lỗi bốn đợt: 37 lỗi hai đợt đầu, 5 lỗi đợt rà thứ hai (mục E), 7 lỗi đợt áp bản thiết kế (mục G) |
+| `docs/08-so-loi.md` | Sổ lỗi năm đợt: 37 lỗi hai đợt đầu, 5 lỗi đợt rà thứ hai (mục E), 9 lỗi đợt áp bản thiết kế (mục G), 7 lỗi đợt rà thứ ba (mục H) |
 | `docs/09-nguon-du-lieu.md` | Khảo sát 16 nguồn dữ liệu thư mục, giấy phép từng nguồn, kết quả nạp |
 | `docs/00-quyet-dinh-ky-thuat.md` | Sổ quyết định — mọi chỗ tự chốt khi đặc tả không nói rõ |
 | `docs/01`–`docs/07` | Bảy tài liệu bàn giao theo mục 10 |
@@ -51,15 +56,15 @@ huống lỗi; phải tự tay dựng đúng bối cảnh ấy trong phép thử
 **Lệnh chạy đúng:**
 
 ```bash
-cd backend  && dotnet test                 # 563 unit + 366 integration
-cd frontend-admin && npx tsc -b && npx vitest run    # 210 test
-cd frontend-opac  && npx tsc -b && npx vitest run    #  84 test
+cd backend  && dotnet test                 # 566 unit + 380 integration
+cd frontend-admin && npx tsc -b && npx vitest run    # 211 test
+cd frontend-opac  && npx tsc -b && npx vitest run    #  85 test
 ```
 
 > `npx tsc --noEmit` **không kiểm gì cả** ở hai thư mục frontend: `tsconfig.json` là tệp solution
 > rỗng chỉ trỏ tới hai tsconfig con. Luôn dùng `npx tsc -b`.
 
-**Mười một phép thử quét mã nguồn** chặn cả một lớp lỗi thay vì chặn một chỗ. Đừng bỏ chúng đi khi thấy
+**Mười ba phép thử quét mã nguồn** chặn cả một lớp lỗi thay vì chặn một chỗ. Đừng bỏ chúng đi khi thấy
 vướng — mỗi cái sinh ra từ một lỗi đã xảy ra thật:
 
 | Phép thử | Luật |
@@ -76,6 +81,8 @@ vướng — mỗi cái sinh ra từ một lỗi đã xảy ra thật:
 | `frontend-*/src/theme.test.ts` | Token của `theme.ts` phải trùng biến `--lc-*` của `styles.css`, và `index.html` phải tải thật hai bộ chữ |
 | `frontend-*/src/theme.test.ts` (phần WCAG) | 16 cặp màu của bảng màu phải đạt ngưỡng tương phản mục 6.6 |
 | `frontend-*/src/lib/palette.test.ts` | Không viết mã màu thẳng trong TSX — màu viết thẳng không đi qua token nào, nên đổi thiết kế xong 130 chỗ vẫn giữ màu cũ. Sáu chỗ ngoại lệ là thứ đi ra máy in, không phải màn hình |
+| `frontend-*/src/lib/palette.test.ts` (luật thứ hai) | Không chuỗi nháy đơn nào chứa `${MAU.…}` — đợt thay 130 màu để lại 11 chỗ `'1px solid ${MAU.vien}'` trong dấu nháy đơn, trình duyệt bỏ qua cả dòng CSS mà phép thử cấm mã màu vẫn xanh vì không còn mã màu để bắt |
+| `backend/.../Infrastructure/RequestLoggingOrderTests.cs` | Bộ ghi nhật ký yêu cầu đứng trước bộ xử lý ngoại lệ trong `Program.cs`; đứng sau là mọi lỗi 400/401/404 bị ghi thành ERR 500 kèm vết ngăn xếp |
 
 > Một phép thử quét mã nguồn chỉ chặn đúng thư mục nó quét. Thêm luật mới thì hỏi ngay: gói kia có
 > vi phạm cùng luật ấy không? Lỗi D8 sửa cho `frontend-admin` rồi ghi là "cả sản phẩm", nhưng
@@ -157,6 +164,24 @@ docker compose run --rm -d --name lc-api-kiem -e LC_DB_NAME=lc_kiem -e LC_SEED_D
     so với lúc chọn trên nền trắng, mà mắt không đo được. Một cặp đã trượt xuống 4,14:1. Đo bằng
     phép thử, đừng nhìn.
 
+20. **Thêm vào navigation của thực thể đang Unchanged không phải là "thêm".** Entity Framework thấy
+    khoá đã có giá trị thì coi dòng ấy có sẵn và phát UPDATE — 0 dòng bị ảnh hưởng, cả lượt lưu đổ.
+    Với cha đang Added thì con cũng Added, nên đường tạo mới xanh mà đường sửa đổ suốt từ phase 5.
+    Liên kết mới thì `Set<T>().Add` cho rõ.
+21. **Lọc sơ bộ rồi `Take(n)` là chấp nhận bỏ sót.** "Nguyễn" khớp 3.060 tác giả trên kho thật; lấy
+    200 dòng đầu là tên đã có nằm ngoài danh sách và bị tạo lại. Cái cần khớp thì so ngay trong SQL
+    bằng khoá chuẩn hoá có chỉ mục, không đặt ngưỡng.
+22. **Thay hàng loạt bằng công cụ rồi phải nhìn lại từng chỗ.** Đổi `'#e3d9c7'` thành `'${MAU.vien}'`
+    mà giữ dấu nháy đơn là chuỗi mẫu không còn là chuỗi mẫu; CSS sai lặng lẽ, phép thử viết cho
+    chính lượt thay ấy vẫn xanh vì nó chỉ bắt mã màu.
+23. **Địa chỉ người dùng chỉ lấy từ chỗ proxy đã xác nhận.** Đọc thẳng `X-Forwarded-For` là tin chữ
+    người gọi tự viết — một dòng tiêu đề là giả được IP trong nhật ký. Mà bộ trung gian
+    ForwardedHeaders mặc định chỉ tin proxy ở loopback, Nginx trong Docker thì không, nên
+    `RemoteIpAddress` là địa chỉ của Nginx cho mọi người và bộ giới hạn tốc độ nhốt cả thư viện vào
+    một ngăn. Tin đúng dải mạng của proxy, rồi mọi chỗ chỉ đọc `RemoteIpAddress`.
+24. **Con số giống nhau chưa chắc là bằng chứng.** 96.737 dòng nhật ký cùng một IP trông như lỗi
+    proxy, hoá ra là vì mọi yêu cầu trên máy phát triển đều từ một máy. Phải dựng một nguồn thứ hai
+    (container khác) mới tách được "lỗi" khỏi "bối cảnh".
 ---
 
 ## 0. VAI TRÒ VÀ NHIỆM VỤ

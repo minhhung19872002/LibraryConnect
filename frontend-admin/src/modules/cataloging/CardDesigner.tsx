@@ -98,7 +98,7 @@ export function CardDesigner({ widthMm, heightMm, layout, onChange }: CardDesign
               position: 'relative',
               width: widthMm * SCALE,
               height: heightMm * SCALE,
-              border: '1px solid ${MAU.vien}',
+              border: `1px solid ${MAU.vien}`,
               background: MAU.giay,
               userSelect: 'none',
             }}
@@ -111,7 +111,7 @@ export function CardDesigner({ widthMm, heightMm, layout, onChange }: CardDesign
                 top: layout.padding * SCALE,
                 width: (widthMm - 2 * layout.padding) * SCALE,
                 height: (heightMm - 2 * layout.padding) * SCALE,
-                border: '1px dashed ${MAU.vien}',
+                border: `1px dashed ${MAU.vien}`,
                 pointerEvents: 'none',
               }}
             />
@@ -126,7 +126,7 @@ export function CardDesigner({ widthMm, heightMm, layout, onChange }: CardDesign
                   top: (layout.padding + item.y) * SCALE,
                   width: item.width * SCALE,
                   height: item.height * SCALE,
-                  border: index === selected ? '2px solid ${MAU.chinh}' : '1px dashed ${MAU.vienDam}',
+                  border: index === selected ? `2px solid ${MAU.chinh}` : `1px dashed ${MAU.vienDam}`,
                   background: index === selected ? 'rgba(22,104,220,0.06)' : 'rgba(0,0,0,0.02)',
                   cursor: 'move',
                   overflow: 'hidden',

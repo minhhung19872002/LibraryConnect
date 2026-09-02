@@ -68,8 +68,14 @@ public class BibRecordWriter : IBibRecordWriter
         _currentUser = currentUser;
     }
 
-    public Task PrepareAsync(BibRecord entity, MarcRecord marc, CancellationToken ct = default) =>
-        EnsureControlNumberAsync(entity, marc, ct);
+    public Task PrepareAsync(BibRecord entity, MarcRecord marc, CancellationToken ct = default)
+    {
+        // Gọt trước khi kiểm tra: bộ kiểm phải nhìn thấy đúng biểu ghi sẽ được ghi. Để nguyên thì
+        // nó phát 24 cảnh báo "trường con để trống" cho những thứ sắp bị bỏ đi, còn 245 rỗng thì lọt
+        // qua như một nhan đề có thật.
+        MarcCleanup.StripEmptySubfields(marc);
+        return EnsureControlNumberAsync(entity, marc, ct);
+    }
 
     public async Task ApplyAsync(
         BibRecord entity,
@@ -80,6 +86,9 @@ public class BibRecordWriter : IBibRecordWriter
     {
         ArgumentNullException.ThrowIfNull(entity);
         ArgumentNullException.ThrowIfNull(marc);
+
+        // Lặp lại ở đây cho những đường ghi không đi qua PrepareAsync (nhập tệp, thu hoạch).
+        MarcCleanup.StripEmptySubfields(marc);
 
         if (!isNew && !string.IsNullOrEmpty(entity.MarcData))
         {

@@ -1,6 +1,10 @@
-import { Link } from 'react-router-dom';
-import { App, Button, Card, Empty, List, Space, Tag, Tooltip } from 'antd';
+import { Link, useNavigate } from 'react-router-dom';
+import { useMutation } from '@tanstack/react-query';
+import { App, Button, Skeleton, Tag, Tooltip } from 'antd';
 import { FileTextOutlined, ShoppingCartOutlined } from '@ant-design/icons';
+import { readerApi } from '@/api/opac';
+import { useSiteSettings } from '@/hooks/useSite';
+import { useAuthStore } from '@/stores/authStore';
 import { useCartStore } from '@/stores/cartStore';
 import type { SearchResult } from '@/types/api';
 
@@ -52,13 +56,78 @@ export function Availability({ item }: { item: SearchResult }) {
   return <Tag>Chưa có bản in trong kho</Tag>;
 }
 
+/**
+ * Nút đặt giữ chỗ dùng chung cho thẻ kết quả và trang chi tiết.
+ *
+ * Chưa đăng nhập thì đưa sang trang đăng nhập thay vì báo lỗi 401 khô khan: đặt giữ là việc đầu
+ * tiên bạn đọc muốn làm khi thấy sách, đừng bắt họ tự đoán phải đăng nhập ở đâu.
+ */
+export function HoldButton({
+  bibId,
+  size = 'small',
+  onDone,
+}: {
+  bibId: string;
+  size?: 'small' | 'middle';
+  onDone?: () => void;
+}) {
+  const { message } = App.useApp();
+  const navigate = useNavigate();
+  const user = useAuthStore((state) => state.user);
+  const { data: settings } = useSiteSettings();
+
+  const hold = useMutation({
+    mutationFn: () => readerApi.createHold({ bibId }),
+    onSuccess: (result) => {
+      message.success(
+        result.queuePosition <= 1
+          ? 'Đã đặt giữ, bạn đang đứng đầu hàng đợi.'
+          : `Đã đặt giữ, bạn đứng thứ ${result.queuePosition} trong hàng đợi.`,
+      );
+      onDone?.();
+    },
+    onError: (error: Error) => message.error(error.message),
+  });
+
+  if (settings?.allowHold === false) {
+    return null;
+  }
+
+  return (
+    <Button
+      className="lc-btn-outline"
+      size={size}
+      loading={hold.isPending}
+      onClick={() => {
+        if (!user) {
+          message.info('Bạn cần đăng nhập bằng số thẻ thư viện để đặt giữ.');
+          navigate('/dang-nhap');
+          return;
+        }
+        hold.mutate();
+      }}
+    >
+      Đặt giữ
+    </Button>
+  );
+}
+
+/** Một thẻ kết quả: bìa, nhan đề, dòng mô tả, thẻ trạng thái, hai nút hành động bên phải. */
 export function ResultRow({ item }: { item: SearchResult }) {
   const { message } = App.useApp();
   const add = useCartStore((state) => state.add);
   const inCart = useCartStore((state) => state.items.some((row) => row.id === item.id));
 
+  const meta = [
+    item.authorMain,
+    [item.publisherName, item.publishYear?.toString()].filter(Boolean).join(', '),
+    item.documentTypeName,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+
   return (
-    <div className="lc-result">
+    <article className="lc-paper lc-result">
       <div className="lc-result__cover">
         <Link to={`/tai-lieu/${item.id}`}>
           <Cover item={item} />
@@ -70,13 +139,9 @@ export function ResultRow({ item }: { item: SearchResult }) {
           <Link to={`/tai-lieu/${item.id}`}>{item.title}</Link>
         </h3>
 
-        <p className="lc-result__meta">
-          {[item.authorMain, item.publisherName, item.publishYear?.toString()]
-            .filter(Boolean)
-            .join(' • ')}
-        </p>
+        <p className="lc-result__meta">{meta}</p>
 
-        <Space size={[8, 8]} wrap>
+        <div className="lc-result__tags">
           {/*
             Chỉ số phân loại tách khỏi dòng thông tin, đặt vào ô chữ đều nét.
             Nó là một *mã* chứ không phải một câu: bạn đọc dò theo nó để tìm giá sách, mà dò từng
@@ -88,30 +153,38 @@ export function ResultRow({ item }: { item: SearchResult }) {
             </span>
           ) : null}
           <Availability item={item} />
-          {item.documentTypeName ? <Tag>{item.documentTypeName}</Tag> : null}
           {item.languageName ? <Tag>{item.languageName}</Tag> : null}
           {item.digitalDocumentCount > 0 ? (
             <Tag icon={<FileTextOutlined />} color="blue">
               {item.digitalDocumentCount} tệp số
             </Tag>
           ) : null}
-
-          <Tooltip title={inCart ? 'Tài liệu đã ở trong giỏ' : 'Thêm vào giỏ tài liệu'}>
-            <Button
-              size="small"
-              icon={<ShoppingCartOutlined />}
-              disabled={inCart}
-              onClick={() => {
-                add(item);
-                message.success('Đã thêm vào giỏ tài liệu.');
-              }}
-            >
-              {inCart ? 'Đã trong giỏ' : 'Thêm vào giỏ'}
-            </Button>
-          </Tooltip>
-        </Space>
+        </div>
       </div>
-    </div>
+
+      <div className="lc-result__actions">
+        <HoldButton bibId={item.id} />
+        <Link to={`/tai-lieu/${item.id}`}>
+          <Button size="small" block>
+            Chi tiết
+          </Button>
+        </Link>
+        <Tooltip title={inCart ? 'Tài liệu đã ở trong giỏ' : 'Thêm vào giỏ tài liệu'}>
+          <Button
+            size="small"
+            type="text"
+            icon={<ShoppingCartOutlined />}
+            disabled={inCart}
+            onClick={() => {
+              add(item);
+              message.success('Đã thêm vào giỏ tài liệu.');
+            }}
+          >
+            {inCart ? 'Đã trong giỏ' : 'Vào giỏ'}
+          </Button>
+        </Tooltip>
+      </div>
+    </article>
   );
 }
 
@@ -127,49 +200,46 @@ export function ResultList({
   emptyText?: string;
   showTips?: boolean;
 }) {
+  if (loading) {
+    return (
+      <div className="lc-results__list">
+        {[0, 1, 2].map((index) => (
+          <div key={index} className="lc-paper lc-result">
+            <Skeleton active avatar={{ shape: 'square', size: 84 }} paragraph={{ rows: 2 }} />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (items.length === 0) {
+    return (
+      <div className="lc-empty">
+        <div style={{ fontWeight: 600, marginBottom: 8, color: 'var(--lc-ink)' }}>{emptyText}</div>
+        {showTips ? (
+          <div style={{ lineHeight: 1.8 }}>
+            Thử bớt từ khóa, kiểm tra lại chính tả (gõ không dấu vẫn tìm được), dùng{' '}
+            <Link to="/tra-cuu-nang-cao">tra cứu nâng cao</Link> theo tác giả, chủ đề hoặc năm xuất
+            bản — hoặc <Link to="/thu-vien-khac">tìm ở thư viện khác (Z39.50)</Link>.
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+
   return (
-    <List
-      loading={loading}
-      dataSource={items}
-      locale={{
-        emptyText: (
-          <Empty
-            description={
-              <div style={{ textAlign: 'left', maxWidth: 460, margin: '0 auto' }}>
-                <div style={{ fontWeight: 600, marginBottom: 8, textAlign: 'center' }}>
-                  {emptyText}
-                </div>
-                {showTips && (
-                  <ul style={{ paddingLeft: 20, margin: 0, lineHeight: 1.8 }}>
-                    <li>Thử bớt từ khóa, giữ lại một hai từ chính.</li>
-                    <li>Gõ không dấu vẫn tìm được, nhưng hãy kiểm tra lại chính tả.</li>
-                    <li>
-                      Dùng <Link to="/tra-cuu-nang-cao">tra cứu nâng cao</Link> để tìm theo tác giả,
-                      chủ đề hoặc năm xuất bản.
-                    </li>
-                    <li>
-                      Chưa thấy ở đây thì <Link to="/thu-vien-khac">tìm ở thư viện khác</Link>.
-                    </li>
-                  </ul>
-                )}
-              </div>
-            }
-          />
-        ),
-      }}
-      renderItem={(item) => (
-        <List.Item key={item.id} style={{ padding: '16px 0' }}>
-          <ResultRow item={item} />
-        </List.Item>
-      )}
-    />
+    <div className="lc-results__list">
+      {items.map((item) => (
+        <ResultRow key={item.id} item={item} />
+      ))}
+    </div>
   );
 }
 
 /** Kệ sách nhỏ dùng ở trang chủ và mục tài liệu liên quan. */
 export function ResultShelf({ items }: { items: SearchResult[] }) {
   if (items.length === 0) {
-    return <Empty description="Chưa có tài liệu để hiển thị." />;
+    return <div className="lc-empty">Chưa có tài liệu để hiển thị.</div>;
   }
 
   return (
@@ -181,20 +251,18 @@ export function ResultShelf({ items }: { items: SearchResult[] }) {
       }}
     >
       {items.map((item) => (
-        <Card key={item.id} size="small" styles={{ body: { padding: 12 } }}>
+        <div key={item.id} className="lc-paper" style={{ padding: 12 }}>
           <Link to={`/tai-lieu/${item.id}`}>
             <Cover item={item} />
           </Link>
-          <div style={{ marginTop: 8, fontWeight: 600, fontSize: 14, lineHeight: 1.35 }}>
+          <div className="lc-result__title" style={{ fontSize: 14, marginTop: 8 }}>
             <Link to={`/tai-lieu/${item.id}`}>{item.title}</Link>
           </div>
-          <div style={{ color: 'var(--lc-muted)', fontSize: 12, marginTop: 4 }}>
-            {item.authorMain ?? '—'}
-          </div>
+          <div className="lc-result__meta">{item.authorMain ?? '—'}</div>
           <div style={{ marginTop: 6 }}>
             <Availability item={item} />
           </div>
-        </Card>
+        </div>
       ))}
     </div>
   );

@@ -1,18 +1,17 @@
 import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { App, Button, Card, Checkbox, Col, Pagination, Row, Select, Space, Tag } from 'antd';
+import { App, Button, Checkbox, Pagination, Select, Skeleton, Space, Tag } from 'antd';
 import { SaveOutlined } from '@ant-design/icons';
 import { opacApi, readerApi, type SearchParams } from '@/api/opac';
-import { describeResultCount } from '@/labels';
+import { Hero } from '@/components/Hero';
 import { ResultList } from '@/components/ResultList';
-import { SearchBox } from '@/components/SearchBox';
 import { SCOPE_OPTIONS } from '@/components/searchScopes';
 import { useAuthStore } from '@/stores/authStore';
 import type { FacetGroup, PagedResult, SearchResult, SearchScope, SortOrder } from '@/types/api';
 
 const SORT_OPTIONS: { value: SortOrder; label: string }[] = [
-  { value: 'Relevance', label: 'Liên quan nhất' },
+  { value: 'Relevance', label: 'Phù hợp nhất' },
   { value: 'Newest', label: 'Mới nhất' },
   { value: 'Title', label: 'Nhan đề A → Z' },
   { value: 'Author', label: 'Tác giả A → Z' },
@@ -44,6 +43,7 @@ export function SearchPage() {
   const scope = (params.get('scope') as SearchScope | null) ?? 'All';
   const sort = (params.get('sort') as SortOrder | null) ?? 'Relevance';
   const page = Number(params.get('page') ?? '1');
+  const documentTypeId = params.get('documentTypeId');
 
   const searchParams = useMemo<SearchParams>(() => {
     const filter: SearchParams['filter'] = {};
@@ -119,88 +119,111 @@ export function SearchPage() {
     });
   };
 
+  const total = results.data?.totalCount ?? 0;
+
   return (
-    <div className="lc-container" style={{ padding: '24px 16px 48px' }}>
-      <Card style={{ marginBottom: 16 }}>
-        <SearchBox size="middle" initialKeyword={keyword} initialScope={scope} />
-      </Card>
+    <>
+      <Hero
+        compact
+        keyword={keyword}
+        scope={scope}
+        documentTypeId={documentTypeId}
+        onPickDocumentType={(id) => update({ documentTypeId: id })}
+      />
 
-      <Row gutter={24}>
-        <Col xs={24} lg={6}>
-          <Card title="Thu hẹp kết quả" size="small" loading={facets.isLoading}>
-            <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-              <Checkbox
-                checked={params.get('available') === '1'}
-                onChange={(event) => update({ available: event.target.checked ? '1' : null })}
-              >
-                Chỉ tài liệu còn bản rảnh
-              </Checkbox>
-              <Checkbox
-                checked={params.get('digital') === '1'}
-                onChange={(event) => update({ digital: event.target.checked ? '1' : null })}
-              >
-                Chỉ tài liệu có bản số
-              </Checkbox>
+      <div className="lc-container lc-results">
+        <aside className="lc-paper lc-facets">
+          <div className="lc-facets__title">Thu hẹp kết quả</div>
 
-              {(facets.data ?? [])
-                .filter((group) => group.code !== 'availability' && group.values.length > 0)
-                .map((group) => (
-                  <div key={group.code}>
-                    {/* Chữ hoa nhỏ: tách hẳn nhãn nhóm ra khỏi danh sách giá trị ngay bên
-                        dưới, mà không phải kẻ thêm đường nào giữa sáu bảy nhóm bộ lọc. */}
-                    <div className="lc-nhan-nhom" style={{ marginBottom: 6 }}>
-                      {group.name}
-                    </div>
-                    <Space direction="vertical" size={2} style={{ width: '100%' }}>
-                      {group.values.map((value) => {
-                        const param = FACET_PARAM[group.code];
-                        const active = param ? params.get(param) === value.id : false;
+          <div className="lc-facets__list">
+            <Checkbox
+              checked={params.get('available') === '1'}
+              onChange={(event) => update({ available: event.target.checked ? '1' : null })}
+            >
+              Chỉ tài liệu còn bản rảnh
+            </Checkbox>
+            <Checkbox
+              checked={params.get('digital') === '1'}
+              onChange={(event) => update({ digital: event.target.checked ? '1' : null })}
+            >
+              Chỉ tài liệu có bản số
+            </Checkbox>
+          </div>
 
-                        return (
-                          <a
-                            key={`${group.code}-${value.id}`}
-                            onClick={() =>
-                              param ? update({ [param]: active ? null : (value.id ?? null) }) : undefined
-                            }
-                            style={{ fontWeight: active ? 600 : 400 }}
-                          >
-                            {value.label}{' '}
-                            <span style={{ color: 'var(--lc-muted)' }}>({value.count})</span>
-                          </a>
-                        );
-                      })}
-                    </Space>
-                  </div>
-                ))}
+          {facets.isLoading ? <Skeleton active paragraph={{ rows: 6 }} /> : null}
+
+          {(facets.data ?? [])
+            .filter((group) => group.code !== 'availability' && group.values.length > 0)
+            .map((group) => (
+              <div key={group.code}>
+                {/* Chữ hoa nhỏ: tách hẳn nhãn nhóm ra khỏi danh sách giá trị ngay bên dưới, mà
+                    không phải kẻ thêm đường nào giữa sáu bảy nhóm bộ lọc. */}
+                <div className="lc-nhan-nhom" style={{ margin: '16px 0 6px' }}>
+                  {group.name}
+                </div>
+                <div className="lc-facets__list">
+                  {group.values.map((value) => {
+                    const param = FACET_PARAM[group.code];
+                    const active = param ? params.get(param) === value.id : false;
+
+                    return (
+                      <span
+                        key={`${group.code}-${value.id}`}
+                        role="button"
+                        tabIndex={0}
+                        className={['lc-facets__row', active ? 'lc-facets__row--active' : ''].join(' ')}
+                        onClick={() =>
+                          param ? update({ [param]: active ? null : (value.id ?? null) }) : undefined
+                        }
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' && param) {
+                            update({ [param]: active ? null : (value.id ?? null) });
+                          }
+                        }}
+                      >
+                        <span>{value.label}</span>
+                        <span className="lc-facets__count">
+                          {value.count.toLocaleString('vi-VN')}
+                        </span>
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+        </aside>
+
+        <div>
+          <div className="lc-results__bar">
+            <span className="lc-results__count">
+              {results.data ? (
+                <>
+                  {results.data.totalCountCapped ? 'Tìm thấy hơn ' : 'Tìm thấy '}
+                  <b>{total.toLocaleString('vi-VN')}</b> tài liệu
+                </>
+              ) : (
+                'Đang tra cứu…'
+              )}
+            </span>
+            <Space>
+              {user ? (
+                <Button size="small" icon={<SaveOutlined />} onClick={saveSearch}>
+                  Lưu tìm kiếm
+                </Button>
+              ) : null}
+              <Select
+                size="small"
+                value={sort}
+                options={SORT_OPTIONS}
+                onChange={(value) => update({ sort: value })}
+                style={{ width: 170 }}
+              />
             </Space>
-          </Card>
-        </Col>
+          </div>
 
-        <Col xs={24} lg={18}>
-          <Card
-            title={
-              results.data
-                ? describeResultCount(results.data.totalCount, results.data.totalCountCapped)
-                : 'Đang tra cứu…'
-            }
-            extra={
-              <Space>
-                {user ? (
-                  <Button size="small" icon={<SaveOutlined />} onClick={saveSearch}>
-                    Lưu tìm kiếm
-                  </Button>
-                ) : null}
-                <Select
-                  size="small"
-                  value={sort}
-                  options={SORT_OPTIONS}
-                  onChange={(value) => update({ sort: value })}
-                  style={{ width: 170 }}
-                />
-              </Space>
-            }
-          >
-            <Space size={[8, 8]} wrap style={{ marginBottom: 8 }}>
+          {keyword ||
+          [...params.keys()].some((key) => Object.values(FACET_PARAM).includes(key)) ? (
+            <Space size={[8, 8]} wrap style={{ marginBottom: 12 }}>
               {keyword ? (
                 <Tag closable onClose={() => update({ keyword: null })}>
                   {SCOPE_OPTIONS.find((option) => option.value === scope)?.label}: {keyword}
@@ -215,23 +238,31 @@ export function SearchPage() {
                   </Tag>
                 ))}
             </Space>
+          ) : null}
 
-            <ResultList items={results.data?.items ?? []} loading={results.isLoading} />
+          <ResultList
+            items={results.data?.items ?? []}
+            loading={results.isLoading}
+            emptyText={
+              keyword
+                ? `Không tìm thấy tài liệu cho "${keyword}".`
+                : 'Không tìm thấy tài liệu nào phù hợp.'
+            }
+          />
 
-            {results.data && results.data.totalCount > 0 ? (
-              <div style={{ textAlign: 'right', marginTop: 16 }}>
-                <Pagination
-                  current={results.data.page}
-                  pageSize={results.data.pageSize}
-                  total={results.data.totalCount}
-                  showSizeChanger={false}
-                  onChange={(value) => update({ page: String(value) })}
-                />
-              </div>
-            ) : null}
-          </Card>
-        </Col>
-      </Row>
-    </div>
+          {results.data && total > 0 ? (
+            <div style={{ textAlign: 'right', marginTop: 16 }}>
+              <Pagination
+                current={results.data.page}
+                pageSize={results.data.pageSize}
+                total={total}
+                showSizeChanger={false}
+                onChange={(value) => update({ page: String(value) })}
+              />
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </>
   );
 }

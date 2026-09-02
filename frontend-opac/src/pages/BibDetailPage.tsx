@@ -1,43 +1,33 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   App,
   Button,
-  Card,
-  Col,
   Descriptions,
-  Divider,
   Empty,
   Input,
   List,
   Modal,
   Rate,
-  Row,
   Select,
   Skeleton,
   Space,
-  Table,
   Tabs,
   Tag,
   Typography,
 } from 'antd';
-import {
-  BookOutlined,
-  CopyOutlined,
-  HeartOutlined,
-  ShoppingCartOutlined,
-} from '@ant-design/icons';
+import { CopyOutlined, HeartOutlined, ShoppingCartOutlined } from '@ant-design/icons';
 import { opacApi, readerApi } from '@/api/opac';
-import { Availability, Cover, ResultShelf } from '@/components/ResultList';
+import { Availability, Cover, HoldButton, ResultShelf } from '@/components/ResultList';
 import { useAuthStore } from '@/stores/authStore';
 import { useCartStore } from '@/stores/cartStore';
 import { useSiteSettings } from '@/hooks/useSite';
-import type { BibDetail, BibItem } from '@/types/api';
+import type { BibDetail, SearchResult } from '@/types/api';
 import { formatDate } from '@/lib/datetime';
 import { MarcRecordTable } from '../components/MarcRecordTable';
 
-const { Paragraph, Title } = Typography;
+const { Paragraph } = Typography;
 
 const CITATION_STYLES = [
   { value: 'Apa', label: 'APA' },
@@ -48,7 +38,32 @@ const CITATION_STYLES = [
   { value: 'EndNote', label: 'EndNote' },
 ];
 
-/** IX.2 — Chi tiết tài liệu: mô tả thư mục, bản in trong kho, tài liệu số, nhận xét, trích dẫn. */
+/** Biểu ghi chi tiết nhìn như một dòng kết quả, để dùng chung bìa, nhãn tình trạng và giỏ. */
+function asResult(data: BibDetail): SearchResult {
+  return {
+    id: data.id,
+    controlNumber: data.controlNumber,
+    title: data.title,
+    authorMain: data.authorMain,
+    publisherName: data.publisherName,
+    publishYear: data.publishYear,
+    isbn: data.isbn,
+    ddc: data.ddc,
+    documentTypeName: data.documentTypeName,
+    languageName: data.languageName,
+    coverImageUrl: data.coverImageUrl,
+    itemCount: data.itemCount,
+    availableItemCount: data.availableItemCount,
+    digitalDocumentCount: data.digitalDocuments.length,
+    loanCount: 0,
+  };
+}
+
+/**
+ * IX.2 — Chi tiết tài liệu theo bản thiết kế: thẻ đầu (bìa lớn, nhan đề, tác giả, bảng thông tin,
+ * nút hành động), rồi "Bản sẵn có tại thư viện", rồi các mục còn lại — tài liệu số, mô tả đầy đủ,
+ * biểu ghi MARC, nhận xét — và tài liệu liên quan.
+ */
 export function BibDetailPage() {
   const { id = '' } = useParams();
   const { message } = App.useApp();
@@ -57,12 +72,14 @@ export function BibDetailPage() {
   const user = useAuthStore((state) => state.user);
   const { data: settings } = useSiteSettings();
   const addToCart = useCartStore((state) => state.add);
+  const moreRef = useRef<HTMLDivElement>(null);
 
   const [citationStyle, setCitationStyle] = useState('Apa');
   const [citationOpen, setCitationOpen] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
+  const [tab, setTab] = useState('info');
 
   const { data, isLoading } = useQuery<BibDetail>({
     queryKey: ['bib', id],
@@ -74,19 +91,6 @@ export function BibDetailPage() {
     queryKey: ['citation', id, citationStyle],
     queryFn: () => opacApi.citation(id, citationStyle),
     enabled: citationOpen,
-  });
-
-  const hold = useMutation({
-    mutationFn: () => readerApi.createHold({ bibId: id }),
-    onSuccess: (result) => {
-      message.success(
-        result.queuePosition <= 1
-          ? 'Đã đặt giữ, bạn đang đứng đầu hàng đợi.'
-          : `Đã đặt giữ, bạn đứng thứ ${result.queuePosition} trong hàng đợi.`,
-      );
-      void queryClient.invalidateQueries({ queryKey: ['bib', id] });
-    },
-    onError: (error: Error) => message.error(error.message),
   });
 
   const favorite = useMutation({
@@ -108,7 +112,7 @@ export function BibDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="lc-container" style={{ padding: 24 }}>
+      <div className="lc-detail">
         <Skeleton active paragraph={{ rows: 10 }} />
       </div>
     );
@@ -116,8 +120,8 @@ export function BibDetailPage() {
 
   if (!data) {
     return (
-      <div className="lc-container" style={{ padding: 48 }}>
-        <Empty description="Không tìm thấy tài liệu." />
+      <div className="lc-detail">
+        <div className="lc-empty">Không tìm thấy tài liệu.</div>
       </div>
     );
   }
@@ -131,376 +135,388 @@ export function BibDetailPage() {
     action();
   };
 
-  // Cột tình trạng đứng đầu vì đó là điều bạn đọc cần biết trước tiên: mượn được hay chưa. Ký hiệu
-  // xếp giá đứng ngay sau để họ cầm đi tìm sách trên giá. Số ĐKCB và mã vạch xếp cuối — chỉ cán bộ
-  // và máy quét dùng tới.
-  const itemColumns = [
-    {
-      title: 'Tình trạng',
-      dataIndex: 'statusLabel',
-      width: 190,
-      render: (_: unknown, item: BibItem) => (
-        <Space direction="vertical" size={0}>
-          <Tag color={item.isAvailable ? 'green' : 'orange'}>{item.statusLabel}</Tag>
-          {item.dueDate ? (
-            <span style={{ fontSize: 12, color: 'var(--lc-muted)' }}>
-              Dự kiến trả {formatDate(item.dueDate)}
-            </span>
-          ) : null}
-        </Space>
-      ),
-    },
-    { title: 'Ký hiệu xếp giá', dataIndex: 'callNumber', width: 150 },
-    { title: 'Kho', dataIndex: 'warehouseName', width: 130 },
-    { title: 'Giá', dataIndex: 'shelfName', width: 100 },
-    { title: 'Thư viện', dataIndex: 'libraryName', width: 190 },
-    { title: 'Số ĐKCB', dataIndex: 'registerNumber', width: 150 },
-    { title: 'Mã vạch', dataIndex: 'barcode', width: 130 },
-  ];
+  const showTab = (key: string) => {
+    setTab(key);
+    moreRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const summary = asResult(data);
 
   return (
-    <div className="lc-container" style={{ padding: '24px 16px 48px' }}>
-      <Row gutter={24}>
-        <Col xs={24} md={6}>
-          <Card>
-            <Cover
-              item={{
-                id: data.id,
-                controlNumber: data.controlNumber,
-                title: data.title,
-                coverImageUrl: data.coverImageUrl,
-                documentTypeName: data.documentTypeName,
-                itemCount: data.itemCount,
-                availableItemCount: data.availableItemCount,
-                digitalDocumentCount: data.digitalDocuments.length,
-                loanCount: 0,
-              }}
-            />
+    <div className="lc-detail">
+      <a
+        className="lc-detail__back"
+        onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/tra-cuu'))}
+      >
+        ← Quay lại kết quả tra cứu
+      </a>
 
-            <Space direction="vertical" style={{ width: '100%', marginTop: 16 }}>
-              <Availability
-                item={{
-                  id: data.id,
-                  controlNumber: data.controlNumber,
-                  title: data.title,
-                  itemCount: data.itemCount,
-                  availableItemCount: data.availableItemCount,
-                  digitalDocumentCount: data.digitalDocuments.length,
-                  loanCount: 0,
-                }}
-              />
+      <div className="lc-paper lc-detail__head">
+        <div className="lc-detail__cover">
+          <Cover item={summary} />
+        </div>
 
-              {settings?.allowHold !== false ? (
-                <Button
-                  type="primary"
-                  block
-                  icon={<BookOutlined />}
-                  loading={hold.isPending}
-                  onClick={() => requireLogin(() => hold.mutate())}
-                >
-                  Đặt giữ chỗ
-                </Button>
-              ) : null}
+        <div className="lc-detail__body">
+          <h1 className="lc-detail__title">
+            {data.title}
+            {data.subtitle ? <span style={{ fontWeight: 400 }}>: {data.subtitle}</span> : null}
+          </h1>
 
-              <Button
-                block
-                icon={<HeartOutlined />}
-                onClick={() => requireLogin(() => favorite.mutate())}
-              >
-                Yêu thích
-              </Button>
-
-              <Button
-                block
-                icon={<ShoppingCartOutlined />}
-                onClick={() => {
-                  addToCart({
-                    id: data.id,
-                    controlNumber: data.controlNumber,
-                    title: data.title,
-                    authorMain: data.authorMain,
-                    publisherName: data.publisherName,
-                    publishYear: data.publishYear,
-                    isbn: data.isbn,
-                    ddc: data.ddc,
-                    documentTypeName: data.documentTypeName,
-                    languageName: data.languageName,
-                    coverImageUrl: data.coverImageUrl,
-                    itemCount: data.itemCount,
-                    availableItemCount: data.availableItemCount,
-                    digitalDocumentCount: data.digitalDocuments.length,
-                    loanCount: 0,
-                  });
-                  message.success('Đã thêm vào giỏ tài liệu.');
-                }}
-              >
-                Thêm vào giỏ
-              </Button>
-
-              <Button block icon={<CopyOutlined />} onClick={() => setCitationOpen(true)}>
-                Xuất trích dẫn
-              </Button>
-            </Space>
-          </Card>
-        </Col>
-
-        <Col xs={24} md={18}>
-          <Card>
-            <Title level={3} style={{ marginTop: 0 }}>
-              {data.title}
-              {data.subtitle ? <span style={{ fontWeight: 400 }}>: {data.subtitle}</span> : null}
-            </Title>
-
-            {data.statementOfResponsibility ? (
-              <Paragraph type="secondary">{data.statementOfResponsibility}</Paragraph>
-            ) : null}
-
-            <Space size={[8, 8]} wrap style={{ marginBottom: 12 }}>
-              {data.authors.map((author) => (
-                <Link key={author.id ?? author.name} to={`/tra-cuu?authorId=${author.id ?? ''}`}>
-                  <Tag color="green">
-                    {author.name}
+          <div className="lc-detail__author">
+            {data.authors.length > 0
+              ? data.authors.map((author, index) => (
+                  <span key={author.id ?? author.name}>
+                    {index > 0 ? ', ' : ''}
+                    <Link to={`/tra-cuu?authorId=${author.id ?? ''}`}>{author.name}</Link>
                     {author.note ? ` (${author.note})` : ''}
-                  </Tag>
-                </Link>
-              ))}
-            </Space>
+                  </span>
+                ))
+              : (data.statementOfResponsibility ?? data.authorMain ?? 'Khuyết danh')}
+          </div>
 
-            <Tabs
-              items={[
-                {
-                  key: 'info',
-                  label: 'Thông tin thư mục',
-                  children: (
-                    <>
-                      <Descriptions column={{ xs: 1, sm: 2 }} size="small" bordered>
-                        {data.publisherName ? (
-                          <Descriptions.Item label="Nhà xuất bản">
-                            {[data.publishPlace, data.publisherName, data.publishYear]
-                              .filter(Boolean)
-                              .join(', ')}
-                          </Descriptions.Item>
-                        ) : null}
-                        {data.edition ? (
-                          <Descriptions.Item label="Lần xuất bản">{data.edition}</Descriptions.Item>
-                        ) : null}
-                        {data.pages ? (
-                          <Descriptions.Item label="Mô tả vật lý">
-                            {[data.pages, data.dimensions].filter(Boolean).join(' ; ')}
-                          </Descriptions.Item>
-                        ) : null}
-                        {data.isbn ? (
-                          <Descriptions.Item label="ISBN">{data.isbn}</Descriptions.Item>
-                        ) : null}
-                        {data.issn ? (
-                          <Descriptions.Item label="ISSN">{data.issn}</Descriptions.Item>
-                        ) : null}
-                        {data.ddc ? (
-                          <Descriptions.Item label="Phân loại">{data.ddc}</Descriptions.Item>
-                        ) : null}
-                        {data.languageName ? (
-                          <Descriptions.Item label="Ngôn ngữ">{data.languageName}</Descriptions.Item>
-                        ) : null}
-                        {data.documentTypeName ? (
-                          <Descriptions.Item label="Dạng tài liệu">
-                            {data.documentTypeName}
-                          </Descriptions.Item>
-                        ) : null}
-                        {data.seriesName ? (
-                          <Descriptions.Item label="Tùng thư">{data.seriesName}</Descriptions.Item>
-                        ) : null}
-                        <Descriptions.Item label="Số kiểm soát">
-                          {data.controlNumber}
+          <div className="lc-detail__grid">
+            {data.publisherName || data.publishYear ? (
+              <>
+                <span className="lc-detail__label">Nhà xuất bản</span>
+                <span>
+                  {[data.publishPlace, data.publisherName, data.publishYear]
+                    .filter(Boolean)
+                    .join(', ')}
+                </span>
+              </>
+            ) : null}
+            {data.ddc ? (
+              <>
+                <span className="lc-detail__label">Phân loại DDC</span>
+                <span>
+                  <span className="lc-ma">{data.ddc}</span>
+                </span>
+              </>
+            ) : null}
+            {data.documentTypeName ? (
+              <>
+                <span className="lc-detail__label">Dạng tài liệu</span>
+                <span>{data.documentTypeName}</span>
+              </>
+            ) : null}
+            {data.languageName ? (
+              <>
+                <span className="lc-detail__label">Ngôn ngữ</span>
+                <span>{data.languageName}</span>
+              </>
+            ) : null}
+            {data.isbn ? (
+              <>
+                <span className="lc-detail__label">ISBN</span>
+                <span>
+                  <span className="lc-ma">{data.isbn}</span>
+                </span>
+              </>
+            ) : null}
+            {data.issn ? (
+              <>
+                <span className="lc-detail__label">ISSN</span>
+                <span>
+                  <span className="lc-ma">{data.issn}</span>
+                </span>
+              </>
+            ) : null}
+            <span className="lc-detail__label">Tình trạng</span>
+            <span>
+              <Availability item={summary} />
+            </span>
+          </div>
+
+          <div className="lc-detail__actions">
+            <HoldButton
+              bibId={id}
+              size="middle"
+              onDone={() => void queryClient.invalidateQueries({ queryKey: ['bib', id] })}
+            />
+            <Button icon={<CopyOutlined />} onClick={() => setCitationOpen(true)}>
+              Trích dẫn
+            </Button>
+            <Button onClick={() => showTab('marc')}>Xem MARC</Button>
+            <Button
+              icon={<HeartOutlined />}
+              onClick={() => requireLogin(() => favorite.mutate())}
+            >
+              Yêu thích
+            </Button>
+            <Button
+              icon={<ShoppingCartOutlined />}
+              onClick={() => {
+                addToCart(summary);
+                message.success('Đã thêm vào giỏ tài liệu.');
+              }}
+            >
+              Thêm vào giỏ
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/*
+        Bảng bản in đặt cột tình trạng cuối cùng theo bản thiết kế, nhưng ký hiệu xếp giá đứng ở
+        cột thứ ba để bạn đọc cầm đi tìm sách trên giá; ĐKCB chữ đều nét để so từng ký tự.
+      */}
+      <section className="lc-paper lc-section">
+        <div className="lc-section__title">Bản sẵn có tại thư viện</div>
+        {data.items.length === 0 ? (
+          <div className="lc-section__body" style={{ color: 'var(--lc-muted)' }}>
+            Tài liệu này chưa có bản in trong kho.
+          </div>
+        ) : (
+          <>
+            <div className="lc-holdings__head">
+              <span>Kho</span>
+              <span>ĐKCB</span>
+              <span>Vị trí xếp giá</span>
+              <span>Trạng thái</span>
+            </div>
+            {data.items.map((item) => (
+              <div key={item.id} className="lc-holdings__row">
+                <span>
+                  {item.warehouseName}
+                  <div className="lc-holdings__sub">{item.libraryName}</div>
+                </span>
+                <span>
+                  <span className="lc-ma">{item.registerNumber || item.barcode}</span>
+                </span>
+                <span>
+                  {item.callNumber ?? '—'}
+                  {item.shelfName ? <div className="lc-holdings__sub">{item.shelfName}</div> : null}
+                </span>
+                <span>
+                  <Tag color={item.isAvailable ? 'green' : 'orange'}>{item.statusLabel}</Tag>
+                  {item.dueDate ? (
+                    <div className="lc-holdings__sub">Dự kiến trả {formatDate(item.dueDate)}</div>
+                  ) : null}
+                </span>
+              </div>
+            ))}
+          </>
+        )}
+      </section>
+
+      <section className="lc-paper lc-section" ref={moreRef}>
+        <div className="lc-section__body">
+          <Tabs
+            activeKey={tab}
+            onChange={setTab}
+            items={[
+              {
+                key: 'info',
+                label: 'Mô tả đầy đủ',
+                children: (
+                  <>
+                    <Descriptions column={{ xs: 1, sm: 2 }} size="small" bordered>
+                      {data.statementOfResponsibility ? (
+                        <Descriptions.Item label="Thông tin trách nhiệm" span={2}>
+                          {data.statementOfResponsibility}
                         </Descriptions.Item>
-                      </Descriptions>
-
-                      {data.subjects.length > 0 ? (
-                        <>
-                          <Divider orientation="left" plain>
-                            Chủ đề
-                          </Divider>
-                          <Space size={[8, 8]} wrap>
-                            {data.subjects.map((subject) => (
-                              <Link
-                                key={subject.id ?? subject.name}
-                                to={`/tra-cuu?subjectId=${subject.id ?? ''}`}
-                              >
-                                <Tag>{subject.name}</Tag>
-                              </Link>
-                            ))}
-                          </Space>
-                        </>
                       ) : null}
-
-                      {data.abstract ? (
-                        <>
-                          <Divider orientation="left" plain>
-                            Tóm tắt
-                          </Divider>
-                          <Paragraph>{data.abstract}</Paragraph>
-                        </>
+                      {data.edition ? (
+                        <Descriptions.Item label="Lần xuất bản">{data.edition}</Descriptions.Item>
                       ) : null}
+                      {data.pages ? (
+                        <Descriptions.Item label="Mô tả vật lý">
+                          {[data.pages, data.dimensions].filter(Boolean).join(' ; ')}
+                        </Descriptions.Item>
+                      ) : null}
+                      {data.seriesName ? (
+                        <Descriptions.Item label="Tùng thư">{data.seriesName}</Descriptions.Item>
+                      ) : null}
+                      <Descriptions.Item label="Số kiểm soát">{data.controlNumber}</Descriptions.Item>
+                    </Descriptions>
 
-                      <Divider orientation="left" plain>
-                        Mô tả theo ISBD
-                      </Divider>
-                      <Paragraph type="secondary">{data.isbd}</Paragraph>
-                    </>
-                  ),
-                },
-                {
-                  key: 'items',
-                  label: `Bản in trong kho (${data.items.length})`,
-                  children: (
-                    <Table
-                      rowKey="id"
-                      size="small"
-                      columns={itemColumns}
-                      dataSource={data.items}
-                      pagination={false}
-                      scroll={{ x: 1040 }}
-                      locale={{ emptyText: 'Tài liệu này chưa có bản in trong kho.' }}
-                    />
-                  ),
-                },
-                {
-                  key: 'digital',
-                  label: `Tài liệu số (${data.digitalDocuments.length + data.externalLinks.length})`,
-                  children:
-                    data.digitalDocuments.length === 0 ? (
-                      data.externalLinks.length === 0 ? (
-                        <Empty description="Tài liệu này chưa có bản số." />
-                      ) : (
-                        <List
-                          header={
-                            <Typography.Text type="secondary">
-                              Bản toàn văn do thư viện nguồn phục vụ. Bấm để mở ở trang của họ.
-                            </Typography.Text>
-                          }
-                          dataSource={data.externalLinks}
-                          renderItem={(link) => (
-                            <List.Item
-                              actions={[
-                                <a
-                                  key="open"
-                                  href={link.url}
-                                  target="_blank"
-                                  rel="noreferrer noopener"
-                                >
-                                  Mở toàn văn
-                                </a>,
-                              ]}
+                    {data.subjects.length > 0 ? (
+                      <>
+                        <div className="lc-nhan-nhom" style={{ margin: '16px 0 6px' }}>
+                          Chủ đề
+                        </div>
+                        <Space size={[8, 8]} wrap>
+                          {data.subjects.map((subject) => (
+                            <Link
+                              key={subject.id ?? subject.name}
+                              to={`/tra-cuu?subjectId=${subject.id ?? ''}`}
                             >
-                              <List.Item.Meta
-                                title={link.label || link.note || 'Toàn văn tại thư viện nguồn'}
-                                description={
-                                  <Space size={[8, 4]} wrap>
-                                    <Tag color="blue">Liên kết ngoài</Tag>
-                                    {link.mimeType ? <Tag>{link.mimeType}</Tag> : null}
-                                    <Typography.Text type="secondary">{link.url}</Typography.Text>
-                                  </Space>
-                                }
-                              />
-                            </List.Item>
-                          )}
-                        />
-                      )
+                              <Tag>{subject.name}</Tag>
+                            </Link>
+                          ))}
+                        </Space>
+                      </>
+                    ) : null}
+
+                    {data.keywords.length > 0 ? (
+                      <>
+                        <div className="lc-nhan-nhom" style={{ margin: '16px 0 6px' }}>
+                          Từ khóa
+                        </div>
+                        <Space size={[8, 8]} wrap>
+                          {data.keywords.map((keyword) => (
+                            <Tag key={keyword.id ?? keyword.name}>{keyword.name}</Tag>
+                          ))}
+                        </Space>
+                      </>
+                    ) : null}
+
+                    {data.abstract ? (
+                      <>
+                        <div className="lc-nhan-nhom" style={{ margin: '16px 0 6px' }}>
+                          Tóm tắt
+                        </div>
+                        <Paragraph>{data.abstract}</Paragraph>
+                      </>
+                    ) : null}
+
+                    <div className="lc-nhan-nhom" style={{ margin: '16px 0 6px' }}>
+                      Mô tả theo ISBD
+                    </div>
+                    <Paragraph type="secondary" style={{ marginBottom: 0 }}>
+                      {data.isbd}
+                    </Paragraph>
+                  </>
+                ),
+              },
+              {
+                key: 'digital',
+                label: `Tài liệu số (${data.digitalDocuments.length + data.externalLinks.length})`,
+                children:
+                  data.digitalDocuments.length === 0 ? (
+                    data.externalLinks.length === 0 ? (
+                      <Empty description="Tài liệu này chưa có bản số." />
                     ) : (
                       <List
-                        dataSource={data.digitalDocuments}
-                        renderItem={(document) => (
+                        header={
+                          <Typography.Text type="secondary">
+                            Bản toàn văn do thư viện nguồn phục vụ. Bấm để mở ở trang của họ.
+                          </Typography.Text>
+                        }
+                        dataSource={data.externalLinks}
+                        renderItem={(link) => (
                           <List.Item
                             actions={[
-                              <Link key="read" to={`/tai-lieu-so/${document.id}`}>
-                                {document.requiresRequest ? 'Xin quyền đọc' : 'Đọc trực tuyến'}
-                              </Link>,
+                              <a
+                                key="open"
+                                href={link.url}
+                                target="_blank"
+                                rel="noreferrer noopener"
+                              >
+                                Mở toàn văn
+                              </a>,
                             ]}
                           >
                             <List.Item.Meta
-                              title={document.title}
+                              title={link.label || link.note || 'Toàn văn tại thư viện nguồn'}
                               description={
                                 <Space size={[8, 4]} wrap>
-                                  <Tag>{document.accessLevelLabel}</Tag>
-                                  {document.pageCount ? (
-                                    <span>{document.pageCount} trang</span>
-                                  ) : null}
-                                  <span>{(document.fileSize / 1024 / 1024).toFixed(1)} MB</span>
-                                  {document.allowDownload ? <Tag color="blue">Tải về được</Tag> : null}
+                                  <Tag color="blue">Liên kết ngoài</Tag>
+                                  {link.mimeType ? <Tag>{link.mimeType}</Tag> : null}
+                                  <Typography.Text type="secondary">{link.url}</Typography.Text>
                                 </Space>
                               }
                             />
                           </List.Item>
                         )}
                       />
-                    ),
-                },
-                {
-                  key: 'marc',
-                  label: 'Biểu ghi MARC',
-                  children: <MarcRecordTable marcJson={data.marcJson} />,
-                },
-                {
-                  key: 'reviews',
-                  label: `Nhận xét (${data.reviews.length})`,
-                  children: (
-                    <>
-                      {data.averageRating ? (
-                        <Space style={{ marginBottom: 12 }}>
-                          <Rate disabled allowHalf value={data.averageRating} />
-                          <span>{data.averageRating}/5</span>
-                        </Space>
-                      ) : null}
-
-                      {settings?.allowReview ? (
-                        <Button
-                          style={{ marginBottom: 12 }}
-                          onClick={() => requireLogin(() => setReviewOpen(true))}
+                    )
+                  ) : (
+                    <List
+                      dataSource={data.digitalDocuments}
+                      renderItem={(document) => (
+                        <List.Item
+                          actions={[
+                            <Link key="read" to={`/tai-lieu-so/${document.id}`}>
+                              {document.requiresRequest ? 'Xin quyền đọc' : 'Đọc trực tuyến'}
+                            </Link>,
+                          ]}
                         >
-                          Viết nhận xét
-                        </Button>
-                      ) : null}
-
-                      {data.reviews.length === 0 ? (
-                        <Empty description="Chưa có nhận xét nào." />
-                      ) : (
-                        <List
-                          dataSource={data.reviews}
-                          renderItem={(item) => (
-                            <List.Item>
-                              <List.Item.Meta
-                                title={
-                                  <Space>
-                                    <span>{item.readerName}</span>
-                                    <Rate disabled value={item.rating} style={{ fontSize: 14 }} />
-                                  </Space>
-                                }
-                                description={
-                                  <>
-                                    <div>{item.comment}</div>
-                                    <div style={{ fontSize: 12, color: 'var(--lc-muted)' }}>
-                                      {formatDate(item.createdAt)}
-                                    </div>
-                                  </>
-                                }
-                              />
-                            </List.Item>
-                          )}
-                        />
+                          <List.Item.Meta
+                            title={document.title}
+                            description={
+                              <Space size={[8, 4]} wrap>
+                                <Tag>{document.accessLevelLabel}</Tag>
+                                {document.pageCount ? <span>{document.pageCount} trang</span> : null}
+                                <span>{(document.fileSize / 1024 / 1024).toFixed(1)} MB</span>
+                                {document.allowDownload ? <Tag color="blue">Tải về được</Tag> : null}
+                              </Space>
+                            }
+                          />
+                        </List.Item>
                       )}
-                    </>
+                    />
                   ),
-                },
-              ]}
-            />
-          </Card>
+              },
+              {
+                key: 'marc',
+                label: 'Biểu ghi MARC',
+                children: <MarcRecordTable marcJson={data.marcJson} />,
+              },
+              {
+                key: 'reviews',
+                label: `Nhận xét (${data.reviews.length})`,
+                children: (
+                  <>
+                    {data.averageRating ? (
+                      <Space style={{ marginBottom: 12 }}>
+                        <Rate disabled allowHalf value={data.averageRating} />
+                        <span>{data.averageRating}/5</span>
+                      </Space>
+                    ) : null}
 
-          {data.related.length > 0 ? (
-            <Card title="Tài liệu liên quan" style={{ marginTop: 24 }}>
-              <ResultShelf items={data.related} />
-            </Card>
-          ) : null}
-        </Col>
-      </Row>
+                    {settings?.allowReview ? (
+                      <Button
+                        style={{ marginBottom: 12 }}
+                        onClick={() => requireLogin(() => setReviewOpen(true))}
+                      >
+                        Viết nhận xét
+                      </Button>
+                    ) : null}
+
+                    {data.reviews.length === 0 ? (
+                      <Empty description="Chưa có nhận xét nào." />
+                    ) : (
+                      <List
+                        dataSource={data.reviews}
+                        renderItem={(item) => (
+                          <List.Item>
+                            <List.Item.Meta
+                              title={
+                                <Space>
+                                  <span>{item.readerName}</span>
+                                  <Rate disabled value={item.rating} style={{ fontSize: 14 }} />
+                                </Space>
+                              }
+                              description={
+                                <>
+                                  <div>{item.comment}</div>
+                                  <div style={{ fontSize: 12, color: 'var(--lc-muted)' }}>
+                                    {formatDate(item.createdAt)}
+                                  </div>
+                                </>
+                              }
+                            />
+                          </List.Item>
+                        )}
+                      />
+                    )}
+                  </>
+                ),
+              },
+            ]}
+          />
+        </div>
+      </section>
+
+      {data.related.length > 0 ? (
+        <section className="lc-paper lc-section">
+          <div className="lc-section__title">Tài liệu liên quan</div>
+          <div className="lc-section__body">
+            <ResultShelf items={data.related} />
+          </div>
+        </section>
+      ) : null}
 
       <Modal
         open={citationOpen}

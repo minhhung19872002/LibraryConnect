@@ -311,20 +311,17 @@ public class BibAuthorityLinker : IBibAuthorityLinker
     {
         var normalised = VietnameseText.NormaliseForComparison(name);
 
-        // Lọc sơ bộ trong cơ sở dữ liệu rồi so chính xác trong bộ nhớ, để không phải nạp cả tệp
-        // thẩm quyền về chỉ để tìm một tên.
+        // So khớp ngay trong cơ sở dữ liệu bằng khoá tên — cùng phép chuẩn hoá với
+        // NormaliseForComparison (bỏ dấu, chữ thường, bỏ dấu câu, gom khoảng trắng) — trên
+        // chỉ mục hàm cat.lc_name_key(name), rồi so lại trong bộ nhớ cho chắc.
         //
-        // Bước lọc sơ bộ phải bỏ dấu ở CẢ HAI PHÍA. Trước đây nó so chuỗi còn nguyên dấu, nên biểu
-        // ghi ghi "Pham Viet Hoa" không tìm ra "Phạm Việt Hòa" đã có trong kho: hệ thống tạo thêm
-        // một tác giả nữa, mã sinh ra trùng và cả lượt nhập đổ ở ràng buộc duy nhất. Đúng thứ mà
-        // tệp thẩm quyền sinh ra để tránh.
-        var firstWord = name.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? name;
-
-        var probe = VietnameseText.RemoveDiacritics(firstWord).ToLowerInvariant();
-
+        // Bản trước lọc sơ bộ theo TỪ ĐẦU TIÊN rồi chỉ lấy 200 ứng viên. "Nguyễn" khớp 3.060 tác
+        // giả trên kho thật, tên cần tìm nằm ngoài 200 dòng đầu, và lần lưu thứ hai của cùng một
+        // biểu ghi tạo thêm "NGUYEN_VAN_KIEM_2". Đo được 485 nhóm tác giả trùng, 109 nhóm từ khoá
+        // trùng — đúng thứ mà tệp thẩm quyền sinh ra để tránh (lỗi H5 đợt rà thứ ba).
         var candidates = await set
-            .Where(entity => DatabaseFunctions.Unaccent(entity.Name).Contains(probe))
-            .Take(200)
+            .Where(entity => DatabaseFunctions.NameKey(entity.Name) == normalised)
+            .OrderBy(entity => entity.CreatedAt)
             .ToListAsync(ct);
 
         var match = candidates.FirstOrDefault(
@@ -416,7 +413,7 @@ public class BibAuthorityLinker : IBibAuthorityLinker
     /// Thay danh sách liên kết bằng danh sách mới: bỏ những liên kết không còn, giữ nguyên đối tượng
     /// của những liên kết vẫn còn để không sinh thao tác xóa rồi thêm lại vô ích.
     /// </summary>
-    private static void Replace<TLink>(ICollection<TLink> collection, List<TLink> existing, List<TLink> keep)
+    private void Replace<TLink>(ICollection<TLink> collection, List<TLink> existing, List<TLink> keep)
         where TLink : BaseEntity
     {
         foreach (var link in existing.Where(item => !keep.Contains(item)))
@@ -427,6 +424,14 @@ public class BibAuthorityLinker : IBibAuthorityLinker
         foreach (var link in keep.Where(item => !existing.Contains(item)))
         {
             collection.Add(link);
+
+            // Khai thẳng với bộ theo dõi rằng đây là dòng MỚI. Chỉ thêm vào navigation của một biểu
+            // ghi đang ở trạng thái Unchanged thì Entity Framework thấy khoá đã có giá trị và coi
+            // nó là dòng có sẵn cần cập nhật: phát UPDATE bib_authors WHERE id = <mới>, 0 dòng bị
+            // ảnh hưởng, và cả lượt sửa đổ ở DbUpdateConcurrencyException với câu "Không lưu được
+            // dữ liệu. Vui lòng kiểm tra lại thông tin nhập." (lỗi H4 đợt rà thứ ba). Với biểu ghi
+            // mới thì cha đang Added nên con cũng Added — vì thế lỗi không lộ ở đường tạo mới.
+            _db.Set<TLink>().Add(link);
         }
     }
 }

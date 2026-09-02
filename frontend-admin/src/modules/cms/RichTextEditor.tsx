@@ -108,11 +108,11 @@ export function RichTextEditor({
   };
 
   return (
-    <div style={{ border: '1px solid ${MAU.vien}', borderRadius: 8, overflow: 'hidden' }}>
+    <div style={{ border: `1px solid ${MAU.vien}`, borderRadius: 8, overflow: 'hidden' }}>
       <Space
         size={4}
         wrap
-        style={{ padding: 8, borderBottom: '1px solid ${MAU.vien}', background: MAU.nenDam }}
+        style={{ padding: 8, borderBottom: `1px solid ${MAU.vien}`, background: MAU.nenDam }}
       >
         <Tooltip title="Đậm">
           <Button size="small" icon={<BoldOutlined />} onClick={() => run('bold')} />
