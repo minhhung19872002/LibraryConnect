@@ -7,6 +7,13 @@ export const messages = {
     productName: 'LibraryConnect',
     adminTitle: 'Quản trị thư viện',
     poweredBy: 'Powered by LibraryConnect',
+
+    // Chân cột menu. Phiên bản và nền tảng là hai thứ người quản trị phải tra ngay khi gọi báo
+    // sự cố, mà đi tìm trong tài liệu thì lâu.
+    platformLine: 'Phiên bản 1.0 · PostgreSQL 16',
+
+    serverUp: 'Hệ thống hoạt động',
+    serverDown: 'Mất kết nối máy chủ',
   },
 
   actions: {

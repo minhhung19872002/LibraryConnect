@@ -149,6 +149,63 @@ học Tài nguyên và Môi trường Thành phố Hồ Chí Minh"*. Dấu hai c
 
 ---
 
+## G. Đợt áp bản thiết kế giao diện
+
+Đợt này không đi rà lỗi — việc chính là áp một bản thiết kế mới (nền giấy ngà, xanh rêu, chữ có
+chân Lora cho tiêu đề) vào cả hai ứng dụng. Nhưng cứ mỗi lần **đo** thay vì nhìn ảnh chụp là lại ra
+một lỗi, và bốn trong bảy lỗi dưới đây có từ các phase trước chứ không phải mới sinh ra.
+
+Bài học chung của cả bảng: **ảnh chụp màn hình không phải bằng chứng.** Một phần tử thiếu hẳn kiểu
+vẫn hiện ra, chỉ là hiện trần; nhìn thì thấy "hơi nhạt", phải `getComputedStyle` mới thấy nền của
+nó là `rgba(0, 0, 0, 0)`.
+
+| # | Màn hình | Mô tả lỗi | Cách tái hiện | Mức độ | Loại | Trạng thái |
+|---|---|---|---|---|---|---|
+| G1 | Toàn hệ thống — hạ tầng | Nginx khai máy chủ đích bằng khối `upstream`, mà khối ấy **tra tên máy một lần lúc khởi động rồi ghim IP mãi**. Dựng lại một dịch vụ là nó nhận IP mới còn Nginx vẫn gửi tới IP cũ. Xảy ra thật: sau `docker compose up -d admin opac`, hai container **đổi chỗ IP cho nhau**, và **trang tra cứu công khai trả về giao diện quản trị** — mã trả về vẫn 200, nhật ký Nginx không có một dòng lỗi nào | `docker compose up -d --force-recreate admin opac` rồi mở `http://localhost/` | **Nghiêm trọng** | Hạ tầng | Đã sửa — dùng máy chủ tên của Docker (`resolver 127.0.0.11 valid=10s`) và đặt tên dịch vụ vào biến, nên Nginx tra tên lại theo từng yêu cầu. Sửa cả `nginx.conf` lẫn `nginx.prod.conf`. Kiểm bằng cách ép hai container đổi IP cho nhau rồi gọi lại **không** khởi động lại Nginx |
+| G2 | OPAC → chi tiết tài liệu | **4.624 biểu ghi** hiện dòng "Mô tả vật lý: `application/pdf`" cho bạn đọc. Bộ ánh xạ Dublin Core cũ đổ `dc:format` vào trường 300; migration `20260902100000` đã sửa cả bộ ánh xạ lẫn trường MARC — kiểm lại thì **không còn biểu ghi nào** mang `application/*` ở trường 300 — nhưng nó bỏ sót **cột phẳng** `pages`, mà đó mới là thứ trang tra cứu thật sự đọc | Mở bất kỳ tài liệu nào thu hoạch qua OAI-PMH trước ngày 2026-09-02 | Nặng | Dữ liệu | Đã sửa — migration `20260902160000` rút lại `pages` từ chính `300$a`, kèm chặn ở **tầng chiếu** (`MarcProjection.MoTaVatLy`) để bịt cả sáu lối vào kho, không riêng Dublin Core. Đo: 4.624 → 0, còn 6.526 mô tả vật lý thật giữ nguyên |
+| G3 | Quản trị → Quản lý kho | Chọn một thư viện thì hàng ấy **không sáng lên**, nên cán bộ không biết danh sách kho bên dưới đang là của thư viện nào — nhất là sau khi cuộn. Lớp `lc-row-selected` được gắn vào hàng từ phase 6 nhưng **chưa bao giờ có luật CSS nào** | Bổ sung → Quản lý kho → bấm một thư viện | Vừa | Giao diện | Đã sửa — nền xanh nhạt kèm vạch đứng 3 px ở mép trái |
+| G4 | Quản trị → Nhập dữ liệu bạn đọc | Dòng nhập sai trong bảng xem trước **không đỏ**, phải đọc từng cột của từng dòng mới tìm ra, mà cột "lỗi" lại nằm ngoài khung nhìn bên phải. Lớp `lc-row-error` cũng chưa bao giờ có kiểu | Bạn đọc → Nhập xuất dữ liệu → tải lên tệp có dòng sai | Vừa | Giao diện | Đã sửa — nền đỏ nhạt kèm vạch đứng ở mép trái |
+| G5 | Quản trị → Quản trị nội dung | Khung soạn thảo tin tức và trang tĩnh (`contentEditable`) không viền, không nền, không con trỏ trước khi bấm vào — nhìn hệt một khoảng trắng, người dùng không biết gõ vào đâu. Lớp `lc-editor` chưa có kiểu | Quản trị nội dung → Tin tức → Thêm mới | Vừa | Giao diện | Đã sửa — viền và nền giấy như mọi ô nhập khác, sáng viền khi đang gõ |
+| G6 | Quản trị → Quản lý kho → Bản đồ kho | Ô giá trống trên lưới bản đồ không vẽ gì nên lẫn với nền trang, cái lưới mất hình dạng, nhìn không ra kho có mấy hàng mấy cột. Hai lớp `lc-shelf-cell` và `lc-shelf-cell-empty` chưa có kiểu | Bổ sung → Quản lý kho → Giá và bản đồ kho | Nhẹ | Giao diện | Đã sửa — ô trống có viền đứt và nền kẻ chéo mờ. **Chưa nhìn tận mắt được**: bộ dữ liệu hiện tại chưa giá nào đặt vị trí hàng/cột nên bản đồ không vẽ ra. Chỉ chốt được bằng phép thử quét mã nguồn |
+| G7 | Quản trị → thanh trên | Huy hiệu tình trạng máy chủ cao **66 px** trong một thanh cao 58 px, thành một vệt bầu dục to hơn cả thanh. Nguyên nhân: Ant Design đặt `line-height` của thanh trên bằng đúng chiều cao thanh, huy hiệu thừa kế con số ấy, cộng lề trong thành 66 px, mà `border-radius: 999px` biến nó thành hình viên thuốc khổng lồ | Đăng nhập giao diện quản trị, nhìn góc phải thanh trên | Nhẹ | Giao diện | Đã sửa — khai lại `line-height` cho riêng huy hiệu |
+
+### Ba lỗi tự mình gây ra ngay trong đợt này
+
+Ghi thẳng, không bào chữa:
+
+1. **Luật CSS của huy hiệu tình trạng rơi mất lúc soạn tệp.** Viết xong khối luật, lúc chuyển cách
+   soạn thì đánh rơi mất nó. Ảnh chụp trông vẫn bình thường vì huy hiệu là chữ, chữ thì vẫn hiện.
+   Chỉ `getComputedStyle` mới thấy nền là `rgba(0, 0, 0, 0)`.
+2. **Luật đổi màu thẻ đặt sẵn không hề có tác dụng.** Ant Design 5 sinh kiểu bằng JavaScript rồi
+   chèn vào `<head>` **sau** tệp kiểu của mình, và bọc bộ chọn trong `:where(...)` nên độ ưu tiên
+   chỉ là 0-1-0 — bằng đúng `.ant-tag-blue` viết trần. Bằng nhau thì cái chèn sau thắng. Nhìn ảnh
+   thì thẻ vẫn "hơi xanh", dễ tưởng đã ăn. Sửa bằng cách viết `.ant-tag.ant-tag-blue` cho lên 0-2-0.
+3. **Migration `20260902100000` của đợt trước thiếu phần dọn cột phẳng** — chính là lỗi G2. CLAUDE.md
+   mục A.3 đã ghi sẵn bài học "sửa mã nguồn thôi thì số dữ liệu cũ vẫn nằm im", mà vẫn vi phạm.
+
+### Đo được gì bằng máy trong đợt này
+
+| Phép đo | Kết quả |
+|---|---|
+| Hai bộ chữ có thật sự hiện không | Đo bề rộng cùng một chuỗi bằng ba phông: Be Vietnam Pro 441,8 px · Arial 415,9 px · Lora 431,8 px · serif 388,4 px — khác nhau rõ ở **cả hai** ứng dụng, nên cả hai phông đều đã tải và đang dùng |
+| Độ tương phản WCAG AA | 19 cặp màu, **18 đạt**. Một cặp trượt: chữ thẻ `#7a6f5f` trên nền thẻ `#f1ebdd` chỉ được **4,14:1** (cần 4,5:1) — nhìn thì vẫn đọc được, mà thẻ đang mang thông tin thật (dạng tài liệu, ngôn ngữ, trạng thái bản in). Đã đổi sang `#6e6252`, đạt 5,00:1 |
+| Lớp `lc-*` gắn vào phần tử mà thiếu kiểu | 7 lớp (1 mới, 6 có từ trước) → 0 |
+| Luật CSS khai ra rồi bỏ đấy | 1 (`lc-cover--placeholder`, sót lại từ đợt chuyển bìa thay thế sang cho máy chủ dựng) → 0 |
+| Chữ bị cắt trên 15 màn hình | 0 |
+| Lỗi JavaScript trên 15 màn hình | 0 |
+
+### Ba phép thử quét mã nguồn mới
+
+Nâng tổng số lên **chín**. Cả ba đều đã kiểm **đỏ trước, xanh sau**:
+
+| Phép thử | Luật | Đã đỏ khi nào |
+|---|---|---|
+| `frontend-*/src/styles.test.ts` | Mọi lớp `lc-*` gắn vào phần tử phải có kiểu; mọi luật khai ra phải có người dùng | Gỡ thử luật `.lc-status-pill` → đỏ cả hai chiều |
+| `frontend-*/src/theme.test.ts` | Token của `theme.ts` phải trùng biến `--lc-*` của `styles.css`; hai bộ chữ phải được `index.html` tải thật | Lệch **một chữ số hex** (`#35523f` → `#35523e`) → đỏ ngay |
+| `frontend-*/src/theme.test.ts` (phần WCAG) | 16 cặp màu của bảng màu phải đạt ngưỡng tương phản 4,5:1 (chữ thường) hoặc 3:1 (chữ phụ trợ) | Chính cặp thẻ trung tính đã đỏ và buộc phải đổi màu |
+
+---
+
 ## Đ. Những chỗ đã thử phá nhưng hệ thống chịu được
 
 Ghi lại để biết chỗ nào đã kiểm và không phải kiểm lại — kèm bằng chứng, không ghi suông.

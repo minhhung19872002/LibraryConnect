@@ -9,6 +9,7 @@ import { messages } from '@/i18n/messages';
 import { useDrawerMenu } from './layoutBreakpoints';
 import { filterMenuByPermission, findMenuByPath, menuTree, type MenuNode } from './menuConfig';
 import { useLibraryName } from '@/hooks/useLibraryName';
+import { useServerStatus } from '@/hooks/useServerStatus';
 
 const { Header, Sider, Content, Footer } = Layout;
 const { useBreakpoint } = Grid;
@@ -40,6 +41,7 @@ export function MainLayout() {
   const logout = useAuthStore((state) => state.logout);
 
   const libraryName = useLibraryName();
+  const serverUp = useServerStatus();
 
   // hasAnyPermission là một tham chiếu cố định của kho trạng thái: nó đọc quyền hiện tại qua get()
   // chứ không đóng gói quyền vào chính nó. Vì vậy user phải nằm trong danh sách phụ thuộc — bỏ nó
@@ -113,7 +115,12 @@ export function MainLayout() {
       <span className="lc-brand-mark" aria-hidden="true">
         LC
       </span>
-      {showName && <span className="lc-brand-name">{messages.app.productName}</span>}
+      {showName && (
+        <span className="lc-brand-text">
+          <span className="lc-brand-name">{messages.app.productName}</span>
+          <span className="lc-brand-role">{messages.app.adminTitle}</span>
+        </span>
+      )}
     </div>
   );
 
@@ -135,6 +142,8 @@ export function MainLayout() {
         <Sider collapsible collapsed={collapsed} trigger={null} width={264} theme="light" className="lc-sider">
           {brand(!collapsed)}
           {menu}
+          {/* Phiên bản và nền tảng: hai thứ người quản trị phải tra ngay khi gọi báo sự cố. */}
+          {!collapsed && <div className="lc-sider-footer">{messages.app.platformLine}</div>}
         </Sider>
       )}
 
@@ -152,6 +161,21 @@ export function MainLayout() {
           <Typography.Title level={4} className="lc-library-name">
             {libraryName}
           </Typography.Title>
+
+          {/*
+            Trang đơn không tự biết máy chủ đã chết: khung trang vẫn hiện từ bộ nhớ trình duyệt,
+            chỉ nút Lưu là im lặng. Huy hiệu này đọc từ chính những lượt gọi thật của màn hình
+            đang mở — xem `useServerStatus`. Màn hình hẹp thì bỏ chữ, giữ lại chấm màu.
+          */}
+          <span
+            className={serverUp ? 'lc-status-pill' : 'lc-status-pill lc-status-pill--mat'}
+            title={serverUp ? messages.app.serverUp : messages.app.serverDown}
+          >
+            <span className="lc-status-dot" aria-hidden="true">
+              ●
+            </span>
+            {!compact && <span>{serverUp ? messages.app.serverUp : messages.app.serverDown}</span>}
+          </span>
 
           <Dropdown menu={{ items: accountMenu }} placement="bottomRight" trigger={['click']}>
             <button type="button" className="lc-account-button">
@@ -177,7 +201,7 @@ export function MainLayout() {
         </Content>
 
         <Footer className="lc-footer">
-          {libraryName} · <Tag color="blue">{messages.app.poweredBy}</Tag>
+          {libraryName} · <Tag>{messages.app.poweredBy}</Tag>
         </Footer>
       </Layout>
     </Layout>

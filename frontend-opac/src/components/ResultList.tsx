@@ -71,17 +71,22 @@ export function ResultRow({ item }: { item: SearchResult }) {
         </h3>
 
         <p className="lc-result__meta">
-          {[
-            item.authorMain,
-            item.publisherName,
-            item.publishYear?.toString(),
-            item.ddc ? `Phân loại ${item.ddc}` : undefined,
-          ]
+          {[item.authorMain, item.publisherName, item.publishYear?.toString()]
             .filter(Boolean)
             .join(' • ')}
         </p>
 
         <Space size={[8, 8]} wrap>
+          {/*
+            Chỉ số phân loại tách khỏi dòng thông tin, đặt vào ô chữ đều nét.
+            Nó là một *mã* chứ không phải một câu: bạn đọc dò theo nó để tìm giá sách, mà dò từng
+            ký tự thì chữ đều nét dễ hơn hẳn — và tách ra thì cũng thôi lẫn vào tên nhà xuất bản.
+          */}
+          {item.ddc ? (
+            <span className="lc-ma" title="Chỉ số phân loại DDC">
+              {item.ddc}
+            </span>
+          ) : null}
           <Availability item={item} />
           {item.documentTypeName ? <Tag>{item.documentTypeName}</Tag> : null}
           {item.languageName ? <Tag>{item.languageName}</Tag> : null}

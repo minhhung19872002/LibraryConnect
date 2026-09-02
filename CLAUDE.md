@@ -26,7 +26,7 @@ hết**.
 
 | Tài liệu | Nội dung |
 |---|---|
-| `docs/08-so-loi.md` | Sổ lỗi ba đợt: 37 lỗi hai đợt đầu, 5 lỗi đợt rà thứ hai (mục E) |
+| `docs/08-so-loi.md` | Sổ lỗi bốn đợt: 37 lỗi hai đợt đầu, 5 lỗi đợt rà thứ hai (mục E), 7 lỗi đợt áp bản thiết kế (mục G) |
 | `docs/09-nguon-du-lieu.md` | Khảo sát 16 nguồn dữ liệu thư mục, giấy phép từng nguồn, kết quả nạp |
 | `docs/00-quyet-dinh-ky-thuat.md` | Sổ quyết định — mọi chỗ tự chốt khi đặc tả không nói rõ |
 | `docs/01`–`docs/07` | Bảy tài liệu bàn giao theo mục 10 |
@@ -51,15 +51,15 @@ huống lỗi; phải tự tay dựng đúng bối cảnh ấy trong phép thử
 **Lệnh chạy đúng:**
 
 ```bash
-cd backend  && dotnet test                 # 552 unit + 366 integration
-cd frontend-admin && npx tsc -b && npx vitest run    # 167 test
-cd frontend-opac  && npx tsc -b && npx vitest run    #  44 test
+cd backend  && dotnet test                 # 563 unit + 366 integration
+cd frontend-admin && npx tsc -b && npx vitest run    # 200 test
+cd frontend-opac  && npx tsc -b && npx vitest run    #  77 test
 ```
 
 > `npx tsc --noEmit` **không kiểm gì cả** ở hai thư mục frontend: `tsconfig.json` là tệp solution
 > rỗng chỉ trỏ tới hai tsconfig con. Luôn dùng `npx tsc -b`.
 
-**Sáu phép thử quét mã nguồn** chặn cả một lớp lỗi thay vì chặn một chỗ. Đừng bỏ chúng đi khi thấy
+**Chín phép thử quét mã nguồn** chặn cả một lớp lỗi thay vì chặn một chỗ. Đừng bỏ chúng đi khi thấy
 vướng — mỗi cái sinh ra từ một lỗi đã xảy ra thật:
 
 | Phép thử | Luật |
@@ -72,6 +72,9 @@ vướng — mỗi cái sinh ra từ một lỗi đã xảy ra thật:
 | `frontend-admin/src/modules/catalogs/catalogColumns.test.ts` | Bảng danh mục: mọi cột khai bề rộng, không cột nào chỉ nhận phần thừa |
 | `backend/.../Security/SecretsInRepositoryTests.cs` | Kho mã không mang mật khẩu dùng được; tài liệu nói cách lấy chứ không in giá trị |
 | `backend/.../PermissionAndAuditTests.cs` | Thông báo lỗi không được lọt tiếng Anh của khung nền |
+| `frontend-*/src/styles.test.ts` | Mọi lớp `lc-*` gắn vào phần tử phải có kiểu, và mọi luật khai ra phải có người dùng — bảy lớp từng được gắn mà chưa bao giờ có kiểu, nên hàng đang chọn ở Quản lý kho không sáng lên suốt mấy phase |
+| `frontend-*/src/theme.test.ts` | Token của `theme.ts` phải trùng biến `--lc-*` của `styles.css`, và `index.html` phải tải thật hai bộ chữ |
+| `frontend-*/src/theme.test.ts` (phần WCAG) | 16 cặp màu của bảng màu phải đạt ngưỡng tương phản mục 6.6 |
 
 > Một phép thử quét mã nguồn chỉ chặn đúng thư mục nó quét. Thêm luật mới thì hỏi ngay: gói kia có
 > vi phạm cùng luật ấy không? Lỗi D8 sửa cho `frontend-admin` rồi ghi là "cả sản phẩm", nhưng
@@ -125,6 +128,26 @@ docker compose run --rm -d --name lc-api-kiem -e LC_DB_NAME=lc_kiem -e LC_SEED_D
 12. **Chặn trên phải đếm đúng thứ mình muốn chặn.** Lượt nạp Open Library đếm cả biểu ghi bỏ qua vào
    hạn mức, nên dừng ở 152 biểu ghi trong khi xin 2.600: phần lớn kết quả tìm kiếm không có ảnh bìa
    nên hạn mức hết veo ngay trang đầu.
+
+13. **Ảnh chụp màn hình không phải bằng chứng.** Một phần tử thiếu hẳn kiểu CSS vẫn hiện ra, chỉ là
+    hiện trần — nhìn thấy "hơi nhạt" rồi cho qua. Phải `getComputedStyle` mới thấy nền của nó là
+    `rgba(0, 0, 0, 0)`. Bảy lớp `lc-*` đã sống như vậy qua mấy phase.
+14. **Ant Design chèn kiểu của nó sau tệp kiểu của mình.** Nó sinh CSS bằng JavaScript lúc chạy rồi
+    chèn vào `<head>`, và bọc bộ chọn trong `:where(...)` nên độ ưu tiên chỉ 0-1-0 — bằng đúng
+    `.ant-tag-blue` viết trần, mà bằng nhau thì cái chèn sau thắng. Muốn đè phải lên 0-2-0
+    (`.ant-tag.ant-tag-blue`), không cần `!important`.
+15. **`upstream` của Nginx ghim IP một lần rồi thôi.** Dựng lại một container là nó nhận IP mới, mà
+    Nginx vẫn gửi tới IP cũ. Đã xảy ra: hai container đổi chỗ IP cho nhau và **trang tra cứu công
+    khai trả về giao diện quản trị**, mã 200, nhật ký sạch. Dùng `resolver 127.0.0.11` cộng tên dịch
+    vụ đặt trong biến thì Nginx tra tên lại theo từng yêu cầu.
+16. **Sửa `marc_data` chưa phải là sửa xong.** Cột phẳng rút từ MARC (`pages`, `publish_year`,
+    `title`…) không tự cập nhật theo, mà **trang tra cứu đọc cột phẳng**. Migration
+    `20260902100000` sửa trường 300 sạch sẽ nhưng bỏ quên cột `pages`, nên 4.624 biểu ghi vẫn hiện
+    "Mô tả vật lý: application/pdf" cho bạn đọc suốt từ đó. Đây đúng là bài học số 8 ở trên, tự mình
+    vi phạm lại.
+17. **Bảng màu nền giấy dễ trượt tương phản.** Nền không phải trắng nên mọi cặp màu tối đi một chút
+    so với lúc chọn trên nền trắng, mà mắt không đo được. Một cặp đã trượt xuống 4,14:1. Đo bằng
+    phép thử, đừng nhìn.
 
 ---
 

@@ -146,7 +146,11 @@ export function SearchPage() {
                 .filter((group) => group.code !== 'availability' && group.values.length > 0)
                 .map((group) => (
                   <div key={group.code}>
-                    <div style={{ fontWeight: 600, marginBottom: 6 }}>{group.name}</div>
+                    {/* Chữ hoa nhỏ: tách hẳn nhãn nhóm ra khỏi danh sách giá trị ngay bên
+                        dưới, mà không phải kẻ thêm đường nào giữa sáu bảy nhóm bộ lọc. */}
+                    <div className="lc-nhan-nhom" style={{ marginBottom: 6 }}>
+                      {group.name}
+                    </div>
                     <Space direction="vertical" size={2} style={{ width: '100%' }}>
                       {group.values.map((value) => {
                         const param = FACET_PARAM[group.code];

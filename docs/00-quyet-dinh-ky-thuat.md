@@ -162,3 +162,23 @@ biểu ghi ấy ở hai nguồn ngoài chỉ ra được **3 ảnh**. Nghĩa là
 | HT.4 | Sinh ĐKCB bằng đường nào | Qua đúng `ItemCreator` mà cán bộ bổ sung dùng | Không có đường tắt riêng cho dữ liệu trình diễn: mã vạch, số đăng ký cá biệt và ký hiệu xếp giá phải theo đúng quy tắc đang khai trong tham số, nếu không thì dữ liệu demo không chứng minh được gì về quy tắc ấy | Không |
 | HT.4 | Tỉ lệ bạn đọc theo loại khi bộ dữ liệu to lên | Tính theo phần trăm (70% sinh viên, 10% học viên, 6% NCS, 8% giảng viên, còn lại cán bộ) thay vì mốc cứng | Mốc cứng viết cho 50 bạn đọc thì với 300 bạn đọc sẽ ra 265 sinh viên và đúng 5 người cho bốn loại còn lại | Không |
 
+---
+
+## Đợt áp bản thiết kế giao diện
+
+Bản thiết kế nhận về ở dạng một tệp HTML mẫu. Ràng buộc đặt ra từ đầu: **không chép HTML ấy**, mà
+dựng lại bằng React + TypeScript + Ant Design 5 theo đúng khuôn sẵn có của kho mã, không đổi router,
+phân quyền, lớp gọi API, kho trạng thái hay bất kỳ logic nghiệp vụ nào, và không thêm thư viện giao
+diện nào mới.
+
+| Phase | Vấn đề | Phương án đã chọn | Lý do | Đổi được không |
+|---|---|---|---|---|
+| TK | Áp thiết kế bằng đường nào | Qua **token của `ConfigProvider`** (`theme.ts`) cộng với biến `--lc-*` trong `styles.css`; không đụng tới tệp thành phần nào ngoài phần khung | Ant Design vẽ bảng, biểu mẫu, thẻ và nút từ token của nó. Sửa token là 100+ màn hình đổi theo cùng lúc; đi sửa từng màn hình thì vừa sót vừa lệch, mà lần đổi thiết kế sau lại phải làm lại từ đầu | Có — sửa `theme.ts` |
+| TK | Hai nơi cùng khai màu, chống lệch bằng gì | Một **phép thử** so từng token của `theme.ts` với từng biến `--lc-*` của `styles.css` | Cột menu tự vẽ đứng sát bảng do Ant Design vẽ, viền hai bên chạm nhau giữa màn hình. Lệch một sắc là lộ ra thành một đường kẻ mờ, mà nhìn ảnh chụp không ai đoán ra nguyên nhân là hai tệp khác nhau | Không |
+| TK | Chữ có chân dùng ở đâu | Lora chỉ cho tên thư viện, tiêu đề trang, nhan đề tài liệu và con số thống kê. Toàn bộ bảng, biểu mẫu, nhãn nút giữ Be Vietnam Pro | Chữ số của Lora rộng hẹp không đều nên một con số đứng riêng đọc như trong sách; nhưng đúng vì thế mà **cột số trong bảng thì không dùng được** — cột số phải thẳng hàng để so sánh | Có — hằng `CHU_TRINH_BAY` |
+| TK | Tải phông bằng cách nào | Thẻ `<link>` tới Google Fonts, `display=swap`, chỉ lấy các độ đậm thật sự dùng (Lora 500/600/700, Be Vietnam Pro 400–700) | `display=swap` để chữ hiện ngay bằng phông dự phòng thay vì để trang trắng chờ tải — thư viện trong nước hay chạy đường truyền chậm. Lấy đủ dải độ đậm thì tệp phông nặng gấp đôi mà không dùng tới | Có — sửa địa chỉ trong `index.html` |
+| TK | Thẻ màu đặt sẵn của Ant Design đụng bảng màu | Giữ nguyên **sắc**, chỉ hạ độ tươi và kéo về độ sáng của nền giấy: xanh dương vẫn ra xanh dương, chỉ là xanh dương mực | Ba màu ấy đang mang **nghĩa nghiệp vụ** ở hơn ba mươi chỗ ("Chỉ có bản số", "Mặc định", "Về nhà"). Đổi xanh dương thành xanh rêu là nó lẫn với thẻ xanh lá báo "còn bản sẵn sàng", và hai tin khác nhau thành một | Không — mất phân biệt |
+| TK | Huy hiệu tình trạng máy chủ đo bằng gì | Nghe **kho lượt gọi của react-query**, không gọi thêm lượt kiểm tra sức khoẻ nào của riêng mình | Thêm một lượt gọi mỗi mười giây cho 200 người dùng đồng thời là 20 lượt mỗi giây chỉ để vẽ một chấm tròn — mà lượt ấy hỏng hay không cũng chưa chắc nói đúng chuyện những lượt gọi thật đang gặp. Chỉ lỗi mạng (`status === 0`) mới tính là mất kết nối; 403 hay 404 nghĩa là máy chủ vẫn sống | Có — `useServerStatus` |
+| TK | Nginx tìm máy chủ đích bằng gì | Bỏ khối `upstream`, dùng máy chủ tên của Docker (`resolver 127.0.0.11 valid=10s`) và đặt tên dịch vụ vào **biến** | `upstream` tra tên một lần lúc khởi động rồi ghim IP mãi. Dựng lại một dịch vụ là Nginx gửi tới IP cũ — nếu IP ấy đã sang tay dịch vụ khác thì trang công khai trả về giao diện quản trị, mã vẫn 200, nhật ký không có lỗi. Đánh đổi: có biến trong `proxy_pass` thì phải tự ghép đường dẫn ở từng khối `location` | Không |
+| TK | Chặn kiểu tệp lọt vào "mô tả vật lý" ở tầng nào | Ở **tầng chiếu MARC → cột phẳng**, không ở riêng bộ ánh xạ Dublin Core | Dublin Core không phải lối vào duy nhất: biểu ghi còn vào kho qua ISO 2709, Z39.50, Excel và trình soạn MARC gõ tay. Chặn ở tầng chiếu là chặn cả sáu lối cùng lúc | Không |
+| TK | Nhận ra kiểu tệp bằng gì | Hình dạng: có dấu gạch chéo mà **không có khoảng trắng** nào | Mô tả vật lý thật luôn có khoảng trắng ("2 tập / 480 tr."), kiểu MIME thì không bao giờ có. Đối chiếu với một danh sách MIME cố định thì kiểu mới lại lọt | Có — `MarcProjection.MoTaVatLy` |

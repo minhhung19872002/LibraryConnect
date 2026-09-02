@@ -4,10 +4,39 @@
  * screen on the same grid: filter bar on top, table in the middle, pagination below.
  */
 
+/*
+ * Bảng màu dùng chung của phần khung tự vẽ.
+ *
+ * Phải trùng với `theme.ts`: Ant Design vẽ bảng, biểu mẫu và nút từ token của nó, còn tệp này vẽ
+ * cột menu, thanh trên và trang đăng nhập. Hai bên lệch một sắc là chỗ tiếp giáp lộ ra ngay.
+ */
 :root {
-  --lc-border: #e8e8e8;
-  --lc-page-bg: #f5f6f8;
-  --lc-brand: #1668dc;
+  --lc-brand: #35523f;
+  --lc-brand-hover: #2a4232;
+  --lc-brand-dark: #22301f;
+  --lc-brand-soft: #eef2e4;
+  --lc-brand-soft-border: #d5ddc4;
+  --lc-cream: #f2ecdd;
+
+  --lc-page-bg: #f4efe6;
+  --lc-paper: #fffdf8;
+  --lc-panel: #f6f1e5;
+  --lc-hover: #f1ebdd;
+
+  --lc-border: #e3d9c7;
+  --lc-border-soft: #f0e9da;
+  --lc-border-strong: #b8ab8e;
+  --lc-line: #d8cdb6;
+
+  --lc-ink: #2a2118;
+  --lc-muted: #7a6f5f;
+  --lc-muted-light: #9a8f7c;
+
+  --lc-gold: #b9852f;
+  --lc-danger: #a03c2e;
+
+  --lc-chu-trinh-bay: 'Lora', Georgia, 'Times New Roman', serif;
+  --lc-chu-deu-net: 'Cascadia Mono', Consolas, 'Courier New', monospace;
 }
 
 * {
@@ -26,6 +55,7 @@ body {
     'Be Vietnam Pro', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
     'Helvetica Neue', Arial, sans-serif;
   background: var(--lc-page-bg);
+  color: var(--lc-ink);
 }
 
 /* ---------------- Shell ---------------- */
@@ -71,17 +101,17 @@ body {
 }
 
 .lc-sider-menu::-webkit-scrollbar-thumb {
-  background: #d0d5dd;
+  background: var(--lc-line);
   border-radius: 3px;
 }
 
 .lc-sider-menu::-webkit-scrollbar-thumb:hover {
-  background: #b4bcc8;
+  background: var(--lc-border-strong);
 }
 
 .lc-sider-menu {
   scrollbar-width: thin;
-  scrollbar-color: #d0d5dd transparent;
+  scrollbar-color: var(--lc-line) transparent;
 }
 
 /*
@@ -106,8 +136,8 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  height: 56px;
-  padding: 0 16px;
+  min-height: 58px;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--lc-border);
 }
 
@@ -115,27 +145,59 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 7px;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
   background: var(--lc-brand);
-  color: #fff;
+  color: var(--lc-cream);
+  font-family: var(--lc-chu-trinh-bay);
   font-weight: 700;
-  font-size: 13px;
+  font-size: 15px;
   letter-spacing: 0.5px;
   flex-shrink: 0;
 }
 
 .lc-brand-mark--large {
-  width: 48px;
-  height: 48px;
-  font-size: 18px;
+  width: 52px;
+  height: 52px;
+  font-size: 21px;
   border-radius: 12px;
+}
+
+/*
+ * Tên sản phẩm và dòng vai trò xếp dọc.
+ *
+ * Mục 0.1 đặt LibraryConnect ở góc còn tên thư viện làm tiêu đề chính trên thanh ngang, nên chỗ
+ * này chỉ cần đủ để cán bộ biết mình đang ở phần quản trị chứ không phải trang tra cứu.
+ */
+.lc-brand-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .lc-brand-name {
   font-weight: 600;
+  font-size: 13.5px;
   white-space: nowrap;
+}
+
+.lc-brand-role {
+  font-size: 11px;
+  color: var(--lc-muted);
+  white-space: nowrap;
+}
+
+/* Chân cột menu: phiên bản và nền tảng — đúng hai thứ người quản trị phải tra khi báo sự cố. */
+.lc-sider-footer {
+  flex-shrink: 0;
+  padding: 12px 16px;
+  border-top: 1px solid var(--lc-border);
+  font-size: 11px;
+  color: var(--lc-muted-light);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .lc-header {
@@ -163,13 +225,15 @@ body {
 .lc-account-button:hover,
 .lc-collapse-button:focus-visible,
 .lc-account-button:focus-visible {
-  background: #f0f0f0;
+  background: var(--lc-hover);
 }
 
 .lc-library-name {
   flex: 1;
   margin: 0 !important;
-  font-size: 16px !important;
+  font-family: var(--lc-chu-trinh-bay);
+  font-size: 17px !important;
+  font-weight: 600 !important;
   line-height: 1.4 !important;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -184,6 +248,52 @@ body {
 }
 
 /*
+ * Huy hiệu tình trạng hệ thống trên thanh trên.
+ *
+ * Không phải trang trí: giao diện quản trị là một trang đơn: API chết thì khung trang vẫn hiện
+ * nguyên vẹn từ bộ nhớ trình duyệt, menu vẫn bấm được, chỉ nút Lưu là im lặng. Xem
+ * `useServerStatus` để biết huy hiệu này đo bằng cách nào.
+ */
+.lc-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  font-size: 12px;
+  /* Ant Design đặt `line-height` của thanh trên bằng đúng chiều cao thanh (58px), và huy hiệu
+     thừa kế con số ấy. Cộng với lề trong thì ô cao 66px, mà `border-radius: 999px` biến nó thành
+     một vệt bầu dục to hơn cả thanh trên. Phải khai lại chiều cao dòng cho riêng nó. */
+  line-height: 1.6;
+  border-radius: 999px;
+  padding: 3px 10px;
+  white-space: nowrap;
+  color: #55694a;
+  background: var(--lc-brand-soft);
+  border: 1px solid var(--lc-brand-soft-border);
+}
+
+.lc-status-pill--mat {
+  color: var(--lc-danger);
+  background: #f8e8e2;
+  border-color: #d8b5ac;
+}
+
+.lc-status-dot {
+  font-size: 8px;
+  line-height: 1;
+}
+
+/*
+ * Ảnh đại diện lấy màu vàng đồng.
+ *
+ * Đây là sắc duy nhất trong cả bảng màu không phải xanh rêu hay nâu giấy, nên mắt tìm ra góc tài
+ * khoản ngay mà không cần thêm viền hay bóng đổ.
+ */
+.lc-account-button .ant-avatar {
+  background: var(--lc-gold);
+}
+
+/*
  * Vùng nội dung là một ô của bố cục ngang, mà ô như vậy mặc định được phép nở rộng hơn khung cha
  * để chứa hết con của nó. Một bảng mười lăm cột nằm trong đó sẽ kéo cả trang rộng ra và người dùng
  * phải cuộn ngang toàn màn hình. min-width: 0 buộc nó dừng ở bề ngang khung, phần thừa cuộn bên
@@ -194,18 +304,23 @@ body {
 }
 
 .lc-content {
-  padding: 16px 20px;
+  padding: 20px 28px 28px;
   min-width: 0;
 }
 
 .lc-breadcrumb {
-  margin-bottom: 12px;
+  margin-bottom: 14px;
+  font-size: 12.5px;
+}
+
+.lc-breadcrumb li:last-child {
+  color: var(--lc-muted-light);
 }
 
 .lc-footer {
   text-align: center;
   padding: 12px 24px;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--lc-muted-light);
   font-size: 13px;
 }
 
@@ -235,19 +350,26 @@ body {
 
 /* ---------------- Login ---------------- */
 
+/*
+ * Trang đăng nhập lấy nền xanh rêu đậm chuyển sắc.
+ *
+ * Đây là màn hình duy nhất của phần quản trị không có dữ liệu nghiệp vụ nào, nên cũng là chỗ duy
+ * nhất chịu được một mảng màu lớn — cùng dải màu với khối tra cứu ở đầu trang OPAC, để hai ứng
+ * dụng nhìn ra là một bộ.
+ */
 .lc-login-page {
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: 100vh;
   padding: 24px;
-  background: linear-gradient(160deg, #eef3fb 0%, #f7f9fc 60%, #ffffff 100%);
+  background: linear-gradient(170deg, #33492f 0%, #2a3f2c 60%, #22301f 100%);
 }
 
 .lc-login-card {
   width: 100%;
   max-width: 400px;
-  box-shadow: 0 8px 32px rgba(15, 34, 66, 0.1);
+  box-shadow: 0 10px 30px rgba(15, 25, 12, 0.35);
 }
 
 .lc-login-brand {
@@ -267,6 +389,7 @@ body {
 
 .lc-login-title {
   margin: 8px 0 0 !important;
+  font-family: var(--lc-chu-trinh-bay);
 }
 
 .lc-login-alert {
@@ -438,6 +561,32 @@ body {
 
 .lc-page-title {
   margin: 0 !important;
+  font-family: var(--lc-chu-trinh-bay);
+  font-weight: 600 !important;
+}
+
+/*
+ * Con số trong thẻ số liệu dùng chữ có chân.
+ *
+ * Chữ số của Lora rộng hẹp không đều nên đọc như con số trong sách chứ không như dãy số trên bảng
+ * điều khiển — đúng thứ cần cho một con số đứng riêng một mình. Cột số trong bảng thì ngược lại,
+ * phải thẳng hàng để so sánh, nên vẫn giữ chữ không chân.
+ */
+.ant-statistic-content-value,
+.ant-statistic-content-prefix {
+  font-family: var(--lc-chu-trinh-bay);
+}
+
+/* Thẻ nổi lên khi rê chuột: dấu hiệu bấm được, vì mỗi thẻ số liệu dẫn tới một màn hình. */
+.lc-page .ant-card {
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.lc-page .ant-card-hoverable:hover {
+  border-color: var(--lc-border-strong);
+  box-shadow: 0 4px 14px rgba(60, 48, 30, 0.08);
 }
 
 .lc-page-description {
@@ -473,9 +622,9 @@ body {
   gap: 12px;
   padding: 8px 12px;
   margin-bottom: 12px;
-  background: #f0f6ff;
-  border: 1px solid #adc6ff;
-  border-radius: 6px;
+  background: var(--lc-brand-soft);
+  border: 1px solid var(--lc-brand-soft-border);
+  border-radius: 8px;
 }
 
 .lc-disabled-action {
@@ -488,7 +637,7 @@ body {
 }
 
 .lc-mono {
-  font-family: 'Cascadia Mono', Consolas, 'Courier New', monospace;
+  font-family: var(--lc-chu-deu-net);
 }
 
 .lc-small {
@@ -496,12 +645,13 @@ body {
 }
 
 .lc-generated-password {
-  font-family: 'Cascadia Mono', Consolas, 'Courier New', monospace;
+  font-family: var(--lc-chu-deu-net);
   font-size: 16px;
   letter-spacing: 1px;
   padding: 8px 12px;
-  background: #f5f5f5;
-  border-radius: 6px;
+  background: var(--lc-panel);
+  border: 1px solid var(--lc-border);
+  border-radius: 8px;
   display: inline-block;
 }
 
@@ -528,7 +678,7 @@ body {
   padding: 10px;
   border-radius: 6px;
   border: 1px solid var(--lc-border);
-  font-family: 'Cascadia Mono', Consolas, 'Courier New', monospace;
+  font-family: var(--lc-chu-deu-net);
   font-size: 12px;
   line-height: 1.5;
   max-height: 380px;
@@ -593,7 +743,7 @@ body {
   width: 44px;
   pointer-events: none;
   z-index: 2;
-  background: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.94));
+  background: linear-gradient(to right, rgba(255, 253, 248, 0), rgba(255, 253, 248, 0.94));
 }
 
 /* Mũi tên nhỏ ở mép phải: dải mờ nói "còn nữa", mũi tên nói "cuộn sang phải thì thấy". */
@@ -611,8 +761,177 @@ body {
   text-align: center;
   border-radius: 50%;
   font-size: 16px;
-  color: #1f4e5f;
-  background: #ffffff;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+  color: var(--lc-brand);
+  background: var(--lc-paper);
+  box-shadow: 0 1px 4px rgba(60, 48, 30, 0.22);
   pointer-events: none;
+}
+
+/*
+ * Nhãn cột bảng: chữ hoa nhỏ, giãn nét.
+ *
+ * Bảng nghiệp vụ nào cũng mười lăm cột, mà nhãn cột cùng cỡ chữ với dữ liệu thì hàng đầu trông
+ * như một dòng dữ liệu nữa. Chữ hoa nhỏ tách hẳn hàng nhãn ra khỏi phần dữ liệu mà không cần
+ * thêm đường kẻ nào.
+ */
+.ant-table-thead > tr > th {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+/* Ô mã vạch, ĐKCB, chỉ số phân loại và MARC thô: chữ đều nét để so từng ký tự. */
+.ant-table-cell .lc-mono,
+.ant-descriptions-item-content .lc-mono {
+  font-size: 12.5px;
+}
+
+/* ---------------- Thẻ trạng thái đặt sẵn ---------------- */
+
+/*
+ * Kéo bốn màu thẻ đặt sẵn của Ant Design về bảng màu giấy.
+ *
+ * Màu đặt sẵn của Ant Design lấy từ hệ màu của nó, không theo `colorPrimary`, nên xanh dương và
+ * tím của nó nằm trên nền giấy ngà trông như dán từ phần mềm khác sang. Chúng lại đang được dùng
+ * ở hơn ba mươi chỗ để mang **nghĩa nghiệp vụ** — "Chỉ có bản số", "Mặc định", "Về nhà" — nên
+ * không đổi sang màu khác được: đổi xanh dương thành xanh rêu là nó lẫn với thẻ xanh lá báo "còn
+ * bản sẵn sàng", và hai tin khác nhau thành một.
+ *
+ * Cách làm: giữ nguyên *sắc* để không mất phân biệt, chỉ hạ độ tươi và kéo về đúng độ sáng của
+ * nền giấy. Xanh dương vẫn ra xanh dương, chỉ là xanh dương mực chứ không phải xanh dương màn
+ * hình. Sửa một chỗ ở đây thay vì sửa ba mươi tệp — và cũng để thẻ thêm về sau tự đúng màu.
+ *
+ * Xanh lá, cam, đỏ và vàng của Ant Design giữ nguyên: chúng đủ ấm để đứng trên nền giấy, mà đó
+ * lại là bốn màu mang nghĩa nặng nhất — còn/hết, cảnh báo, lỗi — không nên động vào.
+ */
+.ant-tag.ant-tag-blue {
+  color: #3b4f86;
+  background: #eaedf6;
+  border-color: #c8d0e6;
+}
+
+.ant-tag.ant-tag-cyan {
+  color: #1c5f57;
+  background: #e4efec;
+  border-color: #bcd6d0;
+}
+
+.ant-tag.ant-tag-purple {
+  color: #5f3f7e;
+  background: #f0eaf5;
+  border-color: #d7c8e3;
+}
+
+.ant-tag.ant-tag-blue a,
+.ant-tag.ant-tag-cyan a,
+.ant-tag.ant-tag-purple a {
+  color: inherit;
+}
+
+/* ---------------- Hàng bảng có trạng thái riêng ---------------- */
+
+/*
+ * Hàng đang được chọn ở màn hình hai bảng nối nhau (Thư viện → Kho → Giá).
+ *
+ * Bảng dưới hiện dữ liệu của hàng đang chọn ở bảng trên. Không tô hàng ấy lên thì hai bảng nhìn
+ * rời nhau, và cán bộ không biết danh sách kho đang thuộc thư viện nào — nhất là sau khi cuộn.
+ */
+.lc-row-selected > td {
+  background: var(--lc-brand-soft) !important;
+}
+
+.lc-row-selected > td:first-child {
+  box-shadow: inset 3px 0 0 var(--lc-brand);
+}
+
+/*
+ * Dòng nhập sai trong bảng xem trước tệp nhập.
+ *
+ * Tệp bạn đọc nhập vào có khi vài trăm dòng, sai dăm dòng. Không tô đỏ thì phải đọc từng cột của
+ * từng dòng mới tìm ra, mà cột "lỗi" lại nằm ngoài khung nhìn ở bên phải.
+ */
+.lc-row-error > td {
+  background: #f8e8e2 !important;
+}
+
+.lc-row-error > td:first-child {
+  box-shadow: inset 3px 0 0 var(--lc-danger);
+}
+
+/* ---------------- Bản đồ kho ---------------- */
+
+/*
+ * Lưới bản đồ kho: cao quá thì cuộn trong lòng nó.
+ *
+ * Số hàng và số cột do dữ liệu kho quyết định — một kho lớn ra lưới cao hơn cả màn hình, và thẻ
+ * "Bản đồ kho" cùng dòng ghi chú "còn N bản chưa xếp giá" ở dưới bị đẩy khuất hẳn. Cuộn trong
+ * lòng lưới thì phần khung của thẻ vẫn đứng yên.
+ */
+.lc-shelf-map {
+  max-height: 62vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/*
+ * Ô giá trống trên bản đồ kho (mục III.2).
+ *
+ * Lưới bản đồ có ô là giá thật và ô là chỗ trống. Chỗ trống không vẽ gì thì nó lẫn với nền trang,
+ * và cái lưới mất hẳn hình dạng — nhìn không ra kho có mấy hàng mấy cột. Viền đứt nói đúng điều
+ * cần nói: đây là một chỗ trong lưới, hiện chưa có giá.
+ */
+.lc-shelf-cell {
+  min-height: 92px;
+  border-radius: 8px;
+}
+
+.lc-shelf-cell-empty {
+  border: 1px dashed var(--lc-line);
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 6px,
+    rgba(216, 205, 182, 0.28) 6px,
+    rgba(216, 205, 182, 0.28) 12px
+  );
+}
+
+/* ---------------- Khung soạn thảo nội dung ---------------- */
+
+/*
+ * Vùng gõ của trình soạn thảo tin tức và trang tĩnh.
+ *
+ * `contentEditable` không có viền, không có nền, không có con trỏ nhấp nháy trước khi bấm vào —
+ * nhìn hệt một khoảng trắng, người dùng không biết gõ vào đâu. Cho nó viền và nền giấy như mọi ô
+ * nhập khác, và sáng viền lên khi đang gõ.
+ */
+.lc-editor {
+  border: 1px solid var(--lc-line);
+  border-top: 0;
+  border-radius: 0 0 8px 8px;
+  background: var(--lc-paper);
+}
+
+.lc-editor:focus {
+  border-color: var(--lc-brand);
+  box-shadow: inset 0 0 0 1px var(--lc-brand);
+}
+
+/* Nội dung người dùng dán vào không được phá khung. */
+.lc-editor img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+}
+
+.lc-editor table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.lc-editor th,
+.lc-editor td {
+  border: 1px solid var(--lc-border);
+  padding: 6px 8px;
 }

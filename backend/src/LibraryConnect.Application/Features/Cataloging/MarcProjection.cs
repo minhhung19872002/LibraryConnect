@@ -94,7 +94,7 @@ public static class MarcProjection
             PublishPlace = Clean(publication?.GetSubfield('a')),
             PublishYear = ParseYear(publication?.GetSubfield('c')) ?? FixedFieldYear(fixedField),
             Edition = Clean(record.GetSubfield("250", 'a')),
-            Pages = Clean(record.GetSubfield("300", 'a')),
+            Pages = MoTaVatLy(record.GetSubfield("300", 'a')),
             Dimensions = Clean(record.GetSubfield("300", 'c')),
             Ddc = Clean(record.GetSubfield("082", 'a')),
             LanguageCode = Lower(record.GetSubfield("041", 'a')) ?? FixedFieldSlice(fixedField, 35, 3),
@@ -265,6 +265,34 @@ public static class MarcProjection
     }
 
     /// <summary>Bỏ khoảng trắng thừa và dấu câu ISBD ở cuối chuỗi.</summary>
+    /// <summary>
+    /// Mô tả vật lý, sau khi loại kiểu tệp.
+    ///
+    /// Trường 300 lẽ ra chứa "xii, 260 tr. : minh hoạ ; 24 cm", nhưng biểu ghi thu hoạch từ kho số
+    /// lại hay mang `application/pdf` ở đó — kho nguồn khai `dc:format` là kiểu MIME, và bộ ánh xạ
+    /// cũ đổ thẳng sang. Cột phẳng này chính là thứ trang tra cứu công khai đọc để hiện dòng "Mô tả
+    /// vật lý", nên bạn đọc mở sách ra thấy "Mô tả vật lý: application/pdf".
+    ///
+    /// Chặn ở đây chứ không ở riêng bộ ánh xạ Dublin Core: biểu ghi còn vào kho qua ISO 2709, qua
+    /// Z39.50, qua Excel và qua trình soạn MARC gõ tay — mọi lối ấy đều đi qua phép chiếu này.
+    ///
+    /// Nhận ra kiểu tệp bằng hình dạng: có dấu gạch chéo mà **không có khoảng trắng** nào. Mô tả
+    /// vật lý thật luôn có khoảng trắng ("2 tập / 480 tr."), còn kiểu MIME thì không bao giờ có.
+    ///
+    /// Thà bỏ trống còn hơn hiện một chuỗi vô nghĩa: kiểu tệp đã có chỗ đứng đúng của nó ở `856$q`.
+    /// </summary>
+    public static string? MoTaVatLy(string? value)
+    {
+        var cleaned = Clean(value);
+
+        if (cleaned is null)
+        {
+            return null;
+        }
+
+        return cleaned.Contains('/') && !cleaned.Any(char.IsWhiteSpace) ? null : cleaned;
+    }
+
     public static string? Clean(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))

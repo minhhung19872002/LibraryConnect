@@ -67,7 +67,7 @@ export function SearchBox({
   };
 
   return (
-    <Space.Compact style={{ width: '100%' }}>
+    <Space.Compact className="lc-searchbox" style={{ width: '100%' }}>
       <Select
         size={size}
         value={scope}
