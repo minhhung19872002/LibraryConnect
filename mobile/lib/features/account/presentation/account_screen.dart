@@ -35,6 +35,29 @@ class AccountScreen extends ConsumerWidget {
                 subtitle: Text(reader.username),
               ),
             ),
+          if (reader != null) ...[
+            const SizedBox(height: 12),
+            Card(
+              child: Column(
+                children: [
+                  ListTile(
+                    key: const Key('account-card'),
+                    leading: const Icon(Icons.badge_outlined),
+                    title: Text(l10n.cardTitle),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => context.push(Routes.card),
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: const Icon(Icons.library_books_outlined),
+                    title: Text(l10n.myLibraryTitle),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => context.go(Routes.myLibrary),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 12),
           Card(
             child: Column(

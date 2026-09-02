@@ -10,6 +10,8 @@ import '../../features/browse/presentation/browse_hub_screen.dart';
 import '../../features/browse/presentation/browse_list_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
 import '../../features/home/presentation/news_screens.dart';
+import '../../features/my_library/presentation/card_screen.dart';
+import '../../features/my_library/presentation/my_library_screen.dart';
 import '../../features/scan/presentation/scan_screen.dart';
 import '../../features/search/data/search_params.dart';
 import '../../features/search/presentation/search_screen.dart';
@@ -31,6 +33,8 @@ class Routes {
   static const browse = '/danh-muc';
   static const news = '/tin-tuc';
   static const pagePath = '/trang';
+  static const myLibrary = '/sach-cua-toi';
+  static const card = '/the-thu-vien';
 
   static String bib(String id) => '$bibPath/$id';
   static String newsItem(String slug) => '$news/$slug';
@@ -176,6 +180,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) =>
             StaticPageScreen(slug: state.pathParameters['slug']!),
       ),
+      GoRoute(
+        path: Routes.card,
+        parentNavigatorKey: _rootKey,
+        builder: (context, state) => const CardScreen(),
+      ),
       ShellRoute(
         builder: (context, state, child) =>
             AppShell(location: state.matchedLocation, child: child),
@@ -201,6 +210,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const ScanScreen(),
           ),
           GoRoute(
+            path: Routes.myLibrary,
+            builder: (context, state) => const MyLibraryScreen(),
+          ),
+          GoRoute(
             path: Routes.account,
             builder: (context, state) => const AccountScreen(),
           ),
@@ -210,4 +223,4 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   );
 });
 
-const _protected = [Routes.account];
+const _protected = [Routes.account, Routes.myLibrary, Routes.card];

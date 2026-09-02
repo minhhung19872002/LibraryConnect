@@ -1200,6 +1200,372 @@ abstract class L10n {
   /// In vi, this message translates to:
   /// **'Nổi bật'**
   String get featured;
+
+  /// No description provided for @cardTitle.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thẻ thư viện'**
+  String get cardTitle;
+
+  /// No description provided for @cardNumberLabel.
+  ///
+  /// In vi, this message translates to:
+  /// **'Số thẻ'**
+  String get cardNumberLabel;
+
+  /// No description provided for @readerType.
+  ///
+  /// In vi, this message translates to:
+  /// **'Loại bạn đọc'**
+  String get readerType;
+
+  /// No description provided for @faculty.
+  ///
+  /// In vi, this message translates to:
+  /// **'Khoa'**
+  String get faculty;
+
+  /// No description provided for @classLabel.
+  ///
+  /// In vi, this message translates to:
+  /// **'Lớp'**
+  String get classLabel;
+
+  /// No description provided for @cardExpiry.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hạn thẻ'**
+  String get cardExpiry;
+
+  /// No description provided for @cardStatus.
+  ///
+  /// In vi, this message translates to:
+  /// **'Trạng thái'**
+  String get cardStatus;
+
+  /// No description provided for @cardActive.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đang hoạt động'**
+  String get cardActive;
+
+  /// No description provided for @cardInactiveNote.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thẻ không còn hiệu lực nên không hiện mã. Liên hệ thư viện để gia hạn hoặc mở khóa.'**
+  String get cardInactiveNote;
+
+  /// No description provided for @cardOfflineNote.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không có mạng — đang hiện bản lưu trên máy, cập nhật lúc {time}.'**
+  String cardOfflineNote(String time);
+
+  /// No description provided for @cardRenewRequest.
+  ///
+  /// In vi, this message translates to:
+  /// **'Gửi yêu cầu gia hạn thẻ'**
+  String get cardRenewRequest;
+
+  /// No description provided for @cardRenewReason.
+  ///
+  /// In vi, this message translates to:
+  /// **'Lý do (không bắt buộc)'**
+  String get cardRenewReason;
+
+  /// No description provided for @cardRenewSent.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã gửi yêu cầu gia hạn thẻ. Thư viện sẽ xử lý và báo lại.'**
+  String get cardRenewSent;
+
+  /// No description provided for @cardRenewals.
+  ///
+  /// In vi, this message translates to:
+  /// **'Yêu cầu đã gửi'**
+  String get cardRenewals;
+
+  /// No description provided for @cardShowAtDesk.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đưa mã này cho quầy thủ thư hoặc cổng ra vào.'**
+  String get cardShowAtDesk;
+
+  /// No description provided for @warningsLabel.
+  ///
+  /// In vi, this message translates to:
+  /// **'Lưu ý'**
+  String get warningsLabel;
+
+  /// No description provided for @loanCountLabel.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đang mượn {count}'**
+  String loanCountLabel(int count);
+
+  /// No description provided for @finesOwed.
+  ///
+  /// In vi, this message translates to:
+  /// **'Nợ phạt {amount}'**
+  String finesOwed(String amount);
+
+  /// No description provided for @myLibraryTitle.
+  ///
+  /// In vi, this message translates to:
+  /// **'Sách của tôi'**
+  String get myLibraryTitle;
+
+  /// No description provided for @currentLoans.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đang mượn'**
+  String get currentLoans;
+
+  /// No description provided for @loanHistory.
+  ///
+  /// In vi, this message translates to:
+  /// **'Lịch sử'**
+  String get loanHistory;
+
+  /// No description provided for @holdsTab.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đặt giữ'**
+  String get holdsTab;
+
+  /// No description provided for @finesTab.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tiền phạt'**
+  String get finesTab;
+
+  /// No description provided for @dueIn.
+  ///
+  /// In vi, this message translates to:
+  /// **'Còn {days} ngày'**
+  String dueIn(int days);
+
+  /// No description provided for @dueToday.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hạn trả hôm nay'**
+  String get dueToday;
+
+  /// No description provided for @overdueBy.
+  ///
+  /// In vi, this message translates to:
+  /// **'Quá hạn {days} ngày'**
+  String overdueBy(int days);
+
+  /// No description provided for @dueOn.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hạn trả {date}'**
+  String dueOn(String date);
+
+  /// No description provided for @renewAction.
+  ///
+  /// In vi, this message translates to:
+  /// **'Gia hạn'**
+  String get renewAction;
+
+  /// No description provided for @renewedTo.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã gia hạn, hạn trả mới {date}.'**
+  String renewedTo(String date);
+
+  /// No description provided for @renewCount.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã gia hạn {count}/{max}'**
+  String renewCount(int count, int max);
+
+  /// No description provided for @noLoans.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bạn không mượn cuốn nào.'**
+  String get noLoans;
+
+  /// No description provided for @noHistory.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chưa có lịch sử mượn.'**
+  String get noHistory;
+
+  /// No description provided for @noHolds.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không có đặt giữ nào.'**
+  String get noHolds;
+
+  /// No description provided for @noFines.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không có khoản phạt nào.'**
+  String get noFines;
+
+  /// No description provided for @cancelHold.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hủy đặt giữ'**
+  String get cancelHold;
+
+  /// No description provided for @cancelHoldConfirm.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hủy đặt giữ \"{title}\"?'**
+  String cancelHoldConfirm(String title);
+
+  /// No description provided for @holdCancelled.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã hủy đặt giữ.'**
+  String get holdCancelled;
+
+  /// No description provided for @queuePosition.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thứ {position} trong hàng đợi'**
+  String queuePosition(int position);
+
+  /// No description provided for @holdReady.
+  ///
+  /// In vi, this message translates to:
+  /// **'Sẵn sàng nhận'**
+  String get holdReady;
+
+  /// No description provided for @holdWaiting.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đang chờ'**
+  String get holdWaiting;
+
+  /// No description provided for @holdFulfilled.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã nhận'**
+  String get holdFulfilled;
+
+  /// No description provided for @holdExpired.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hết hạn'**
+  String get holdExpired;
+
+  /// No description provided for @holdCancelledStatus.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã hủy'**
+  String get holdCancelledStatus;
+
+  /// No description provided for @pickupAt.
+  ///
+  /// In vi, this message translates to:
+  /// **'Nhận tại {place}'**
+  String pickupAt(String place);
+
+  /// No description provided for @holdExpires.
+  ///
+  /// In vi, this message translates to:
+  /// **'Giữ đến {date}'**
+  String holdExpires(String date);
+
+  /// No description provided for @totalOutstanding.
+  ///
+  /// In vi, this message translates to:
+  /// **'Còn phải nộp'**
+  String get totalOutstanding;
+
+  /// No description provided for @totalPaid.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã nộp'**
+  String get totalPaid;
+
+  /// No description provided for @finePaymentGuide.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thanh toán tại quầy thủ thư. Ứng dụng không thu tiền.'**
+  String get finePaymentGuide;
+
+  /// No description provided for @fineTypeOverdue.
+  ///
+  /// In vi, this message translates to:
+  /// **'Quá hạn'**
+  String get fineTypeOverdue;
+
+  /// No description provided for @fineTypeLost.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mất'**
+  String get fineTypeLost;
+
+  /// No description provided for @fineTypeDamaged.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hỏng'**
+  String get fineTypeDamaged;
+
+  /// No description provided for @fineTypeOther.
+  ///
+  /// In vi, this message translates to:
+  /// **'Khác'**
+  String get fineTypeOther;
+
+  /// No description provided for @filterAll.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tất cả'**
+  String get filterAll;
+
+  /// No description provided for @filter30Days.
+  ///
+  /// In vi, this message translates to:
+  /// **'30 ngày qua'**
+  String get filter30Days;
+
+  /// No description provided for @filterThisYear.
+  ///
+  /// In vi, this message translates to:
+  /// **'Năm nay'**
+  String get filterThisYear;
+
+  /// No description provided for @historySearchHint.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tìm theo nhan đề, mã vạch…'**
+  String get historySearchHint;
+
+  /// No description provided for @returnedOn.
+  ///
+  /// In vi, this message translates to:
+  /// **'Trả ngày {date}'**
+  String returnedOn(String date);
+
+  /// No description provided for @borrowedOn.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mượn ngày {date}'**
+  String borrowedOn(String date);
+
+  /// No description provided for @estimatedFine.
+  ///
+  /// In vi, this message translates to:
+  /// **'Phạt dự kiến {amount}'**
+  String estimatedFine(String amount);
+
+  /// No description provided for @cancelAction.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hủy'**
+  String get cancelAction;
+
+  /// No description provided for @confirmAction.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đồng ý'**
+  String get confirmAction;
 }
 
 class _L10nDelegate extends LocalizationsDelegate<L10n> {

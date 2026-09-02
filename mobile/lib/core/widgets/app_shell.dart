@@ -20,6 +20,11 @@ class AppShell extends StatelessWidget {
       icon: Icons.qr_code_scanner,
       selected: Icons.qr_code_scanner,
     ),
+    (
+      path: Routes.myLibrary,
+      icon: Icons.library_books_outlined,
+      selected: Icons.library_books,
+    ),
     (path: Routes.account, icon: Icons.person_outline, selected: Icons.person),
   ];
 
@@ -39,6 +44,7 @@ class AppShell extends StatelessWidget {
       l10n.tabHome,
       l10n.tabSearch,
       l10n.tabScan,
+      l10n.tabMyLibrary,
       l10n.tabAccount,
     ];
 

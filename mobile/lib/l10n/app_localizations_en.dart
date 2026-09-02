@@ -605,4 +605,221 @@ class L10nEn extends L10n {
 
   @override
   String get featured => 'Featured';
+
+  @override
+  String get cardTitle => 'Library card';
+
+  @override
+  String get cardNumberLabel => 'Card number';
+
+  @override
+  String get readerType => 'Reader type';
+
+  @override
+  String get faculty => 'Faculty';
+
+  @override
+  String get classLabel => 'Class';
+
+  @override
+  String get cardExpiry => 'Valid until';
+
+  @override
+  String get cardStatus => 'Status';
+
+  @override
+  String get cardActive => 'Active';
+
+  @override
+  String get cardInactiveNote =>
+      'This card is not valid, so no code is shown. Contact the library to renew or unlock it.';
+
+  @override
+  String cardOfflineNote(String time) {
+    return 'Offline — showing the copy saved on this device, updated $time.';
+  }
+
+  @override
+  String get cardRenewRequest => 'Request card renewal';
+
+  @override
+  String get cardRenewReason => 'Reason (optional)';
+
+  @override
+  String get cardRenewSent =>
+      'Renewal request sent. The library will process it and let you know.';
+
+  @override
+  String get cardRenewals => 'Requests sent';
+
+  @override
+  String get cardShowAtDesk =>
+      'Show this code at the desk or the entrance gate.';
+
+  @override
+  String get warningsLabel => 'Notes';
+
+  @override
+  String loanCountLabel(int count) {
+    return '$count on loan';
+  }
+
+  @override
+  String finesOwed(String amount) {
+    return 'Fines owed $amount';
+  }
+
+  @override
+  String get myLibraryTitle => 'My library';
+
+  @override
+  String get currentLoans => 'On loan';
+
+  @override
+  String get loanHistory => 'History';
+
+  @override
+  String get holdsTab => 'Holds';
+
+  @override
+  String get finesTab => 'Fines';
+
+  @override
+  String dueIn(int days) {
+    return '$days days left';
+  }
+
+  @override
+  String get dueToday => 'Due today';
+
+  @override
+  String overdueBy(int days) {
+    return '$days days overdue';
+  }
+
+  @override
+  String dueOn(String date) {
+    return 'Due $date';
+  }
+
+  @override
+  String get renewAction => 'Renew';
+
+  @override
+  String renewedTo(String date) {
+    return 'Renewed, new due date $date.';
+  }
+
+  @override
+  String renewCount(int count, int max) {
+    return 'Renewed $count/$max';
+  }
+
+  @override
+  String get noLoans => 'You have nothing on loan.';
+
+  @override
+  String get noHistory => 'No loan history yet.';
+
+  @override
+  String get noHolds => 'No holds.';
+
+  @override
+  String get noFines => 'No fines.';
+
+  @override
+  String get cancelHold => 'Cancel hold';
+
+  @override
+  String cancelHoldConfirm(String title) {
+    return 'Cancel the hold on \"$title\"?';
+  }
+
+  @override
+  String get holdCancelled => 'Hold cancelled.';
+
+  @override
+  String queuePosition(int position) {
+    return 'Number $position in the queue';
+  }
+
+  @override
+  String get holdReady => 'Ready for pickup';
+
+  @override
+  String get holdWaiting => 'Waiting';
+
+  @override
+  String get holdFulfilled => 'Collected';
+
+  @override
+  String get holdExpired => 'Expired';
+
+  @override
+  String get holdCancelledStatus => 'Cancelled';
+
+  @override
+  String pickupAt(String place) {
+    return 'Pick up at $place';
+  }
+
+  @override
+  String holdExpires(String date) {
+    return 'Held until $date';
+  }
+
+  @override
+  String get totalOutstanding => 'Outstanding';
+
+  @override
+  String get totalPaid => 'Paid';
+
+  @override
+  String get finePaymentGuide =>
+      'Pay at the circulation desk. The app does not take payments.';
+
+  @override
+  String get fineTypeOverdue => 'Overdue';
+
+  @override
+  String get fineTypeLost => 'Lost';
+
+  @override
+  String get fineTypeDamaged => 'Damaged';
+
+  @override
+  String get fineTypeOther => 'Other';
+
+  @override
+  String get filterAll => 'All';
+
+  @override
+  String get filter30Days => 'Last 30 days';
+
+  @override
+  String get filterThisYear => 'This year';
+
+  @override
+  String get historySearchHint => 'Search by title or barcode…';
+
+  @override
+  String returnedOn(String date) {
+    return 'Returned $date';
+  }
+
+  @override
+  String borrowedOn(String date) {
+    return 'Borrowed $date';
+  }
+
+  @override
+  String estimatedFine(String amount) {
+    return 'Estimated fine $amount';
+  }
+
+  @override
+  String get cancelAction => 'Cancel';
+
+  @override
+  String get confirmAction => 'OK';
 }

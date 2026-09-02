@@ -604,4 +604,220 @@ class L10nVi extends L10n {
 
   @override
   String get featured => 'Nổi bật';
+
+  @override
+  String get cardTitle => 'Thẻ thư viện';
+
+  @override
+  String get cardNumberLabel => 'Số thẻ';
+
+  @override
+  String get readerType => 'Loại bạn đọc';
+
+  @override
+  String get faculty => 'Khoa';
+
+  @override
+  String get classLabel => 'Lớp';
+
+  @override
+  String get cardExpiry => 'Hạn thẻ';
+
+  @override
+  String get cardStatus => 'Trạng thái';
+
+  @override
+  String get cardActive => 'Đang hoạt động';
+
+  @override
+  String get cardInactiveNote =>
+      'Thẻ không còn hiệu lực nên không hiện mã. Liên hệ thư viện để gia hạn hoặc mở khóa.';
+
+  @override
+  String cardOfflineNote(String time) {
+    return 'Không có mạng — đang hiện bản lưu trên máy, cập nhật lúc $time.';
+  }
+
+  @override
+  String get cardRenewRequest => 'Gửi yêu cầu gia hạn thẻ';
+
+  @override
+  String get cardRenewReason => 'Lý do (không bắt buộc)';
+
+  @override
+  String get cardRenewSent =>
+      'Đã gửi yêu cầu gia hạn thẻ. Thư viện sẽ xử lý và báo lại.';
+
+  @override
+  String get cardRenewals => 'Yêu cầu đã gửi';
+
+  @override
+  String get cardShowAtDesk => 'Đưa mã này cho quầy thủ thư hoặc cổng ra vào.';
+
+  @override
+  String get warningsLabel => 'Lưu ý';
+
+  @override
+  String loanCountLabel(int count) {
+    return 'Đang mượn $count';
+  }
+
+  @override
+  String finesOwed(String amount) {
+    return 'Nợ phạt $amount';
+  }
+
+  @override
+  String get myLibraryTitle => 'Sách của tôi';
+
+  @override
+  String get currentLoans => 'Đang mượn';
+
+  @override
+  String get loanHistory => 'Lịch sử';
+
+  @override
+  String get holdsTab => 'Đặt giữ';
+
+  @override
+  String get finesTab => 'Tiền phạt';
+
+  @override
+  String dueIn(int days) {
+    return 'Còn $days ngày';
+  }
+
+  @override
+  String get dueToday => 'Hạn trả hôm nay';
+
+  @override
+  String overdueBy(int days) {
+    return 'Quá hạn $days ngày';
+  }
+
+  @override
+  String dueOn(String date) {
+    return 'Hạn trả $date';
+  }
+
+  @override
+  String get renewAction => 'Gia hạn';
+
+  @override
+  String renewedTo(String date) {
+    return 'Đã gia hạn, hạn trả mới $date.';
+  }
+
+  @override
+  String renewCount(int count, int max) {
+    return 'Đã gia hạn $count/$max';
+  }
+
+  @override
+  String get noLoans => 'Bạn không mượn cuốn nào.';
+
+  @override
+  String get noHistory => 'Chưa có lịch sử mượn.';
+
+  @override
+  String get noHolds => 'Không có đặt giữ nào.';
+
+  @override
+  String get noFines => 'Không có khoản phạt nào.';
+
+  @override
+  String get cancelHold => 'Hủy đặt giữ';
+
+  @override
+  String cancelHoldConfirm(String title) {
+    return 'Hủy đặt giữ \"$title\"?';
+  }
+
+  @override
+  String get holdCancelled => 'Đã hủy đặt giữ.';
+
+  @override
+  String queuePosition(int position) {
+    return 'Thứ $position trong hàng đợi';
+  }
+
+  @override
+  String get holdReady => 'Sẵn sàng nhận';
+
+  @override
+  String get holdWaiting => 'Đang chờ';
+
+  @override
+  String get holdFulfilled => 'Đã nhận';
+
+  @override
+  String get holdExpired => 'Hết hạn';
+
+  @override
+  String get holdCancelledStatus => 'Đã hủy';
+
+  @override
+  String pickupAt(String place) {
+    return 'Nhận tại $place';
+  }
+
+  @override
+  String holdExpires(String date) {
+    return 'Giữ đến $date';
+  }
+
+  @override
+  String get totalOutstanding => 'Còn phải nộp';
+
+  @override
+  String get totalPaid => 'Đã nộp';
+
+  @override
+  String get finePaymentGuide =>
+      'Thanh toán tại quầy thủ thư. Ứng dụng không thu tiền.';
+
+  @override
+  String get fineTypeOverdue => 'Quá hạn';
+
+  @override
+  String get fineTypeLost => 'Mất';
+
+  @override
+  String get fineTypeDamaged => 'Hỏng';
+
+  @override
+  String get fineTypeOther => 'Khác';
+
+  @override
+  String get filterAll => 'Tất cả';
+
+  @override
+  String get filter30Days => '30 ngày qua';
+
+  @override
+  String get filterThisYear => 'Năm nay';
+
+  @override
+  String get historySearchHint => 'Tìm theo nhan đề, mã vạch…';
+
+  @override
+  String returnedOn(String date) {
+    return 'Trả ngày $date';
+  }
+
+  @override
+  String borrowedOn(String date) {
+    return 'Mượn ngày $date';
+  }
+
+  @override
+  String estimatedFine(String amount) {
+    return 'Phạt dự kiến $amount';
+  }
+
+  @override
+  String get cancelAction => 'Hủy';
+
+  @override
+  String get confirmAction => 'Đồng ý';
 }
