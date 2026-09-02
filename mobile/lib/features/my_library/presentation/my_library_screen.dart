@@ -119,6 +119,12 @@ class MyLibraryScreen extends StatelessWidget {
             _FinesTab(),
           ],
         ),
+        floatingActionButton: FloatingActionButton.extended(
+          key: const Key('self-checkout-fab'),
+          onPressed: () => context.push(Routes.selfCheckout),
+          icon: const Icon(Icons.qr_code_scanner),
+          label: Text(l10n.selfCheckoutTitle),
+        ),
       ),
     );
   }

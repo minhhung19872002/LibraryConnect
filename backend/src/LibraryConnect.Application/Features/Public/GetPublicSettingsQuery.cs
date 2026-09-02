@@ -43,6 +43,13 @@ public class PublicSettingsDto
     public bool ShowNewBooks { get; set; } = true;
     public bool ShowPopularBooks { get; set; } = true;
     public bool ShowInterlibrary { get; set; } = true;
+
+    // ---- Phase 15: ứng dụng bạn đọc cần biết trước khi hỏi quyền Wi-Fi hay mở máy quét mã trạm ----
+    /// <summary>Thư viện có mở mượn tự phục vụ không (CIRCULATION.SELF_CHECKOUT_ENABLED).</summary>
+    public bool SelfCheckoutEnabled { get; set; }
+
+    /// <summary>NONE | WIFI_SSID | QR_STATION (CIRCULATION.SELF_CHECKOUT_VERIFY_MODE).</summary>
+    public string SelfCheckoutVerifyMode { get; set; } = "NONE";
 }
 
 public class GetPublicSettingsQueryHandler : IRequestHandler<GetPublicSettingsQuery, PublicSettingsDto>
@@ -97,7 +104,11 @@ public class GetPublicSettingsQueryHandler : IRequestHandler<GetPublicSettingsQu
                 : 9,
             ShowNewBooks = Flag(CmsSettingCatalog.ShowNewBooks, true),
             ShowPopularBooks = Flag(CmsSettingCatalog.ShowPopularBooks, true),
-            ShowInterlibrary = Flag(CmsSettingCatalog.ShowInterlibrary, true)
+            ShowInterlibrary = Flag(CmsSettingCatalog.ShowInterlibrary, true),
+            SelfCheckoutEnabled = await _parameters.GetAsync(ParameterKeysBridge.SelfCheckoutEnabled, false, ct),
+            SelfCheckoutVerifyMode =
+                (await _parameters.GetAsync(ParameterKeysBridge.SelfCheckoutVerifyMode, "NONE", ct) ?? "NONE")
+                .Trim().ToUpperInvariant()
         };
     }
 }
@@ -119,4 +130,6 @@ internal static class ParameterKeysBridge
     public const string OpacPageSize = "OPAC.PAGE_SIZE";
     public const string OpacAllowHold = "OPAC.ALLOW_HOLD";
     public const string OpacAllowReview = "OPAC.ALLOW_REVIEW";
+    public const string SelfCheckoutEnabled = "CIRCULATION.SELF_CHECKOUT_ENABLED";
+    public const string SelfCheckoutVerifyMode = "CIRCULATION.SELF_CHECKOUT_VERIFY_MODE";
 }

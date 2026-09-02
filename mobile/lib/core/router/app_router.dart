@@ -12,6 +12,7 @@ import '../../features/home/presentation/home_screen.dart';
 import '../../features/home/presentation/news_screens.dart';
 import '../../features/my_library/presentation/card_screen.dart';
 import '../../features/my_library/presentation/my_library_screen.dart';
+import '../../features/self_checkout/presentation/self_checkout_screen.dart';
 import '../../features/scan/presentation/scan_screen.dart';
 import '../../features/search/data/search_params.dart';
 import '../../features/search/presentation/search_screen.dart';
@@ -35,6 +36,7 @@ class Routes {
   static const pagePath = '/trang';
   static const myLibrary = '/sach-cua-toi';
   static const card = '/the-thu-vien';
+  static const selfCheckout = '/muon-tu-phuc-vu';
 
   static String bib(String id) => '$bibPath/$id';
   static String newsItem(String slug) => '$news/$slug';
@@ -185,6 +187,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         parentNavigatorKey: _rootKey,
         builder: (context, state) => const CardScreen(),
       ),
+      GoRoute(
+        path: Routes.selfCheckout,
+        parentNavigatorKey: _rootKey,
+        builder: (context, state) => const SelfCheckoutScreen(),
+      ),
       ShellRoute(
         builder: (context, state, child) =>
             AppShell(location: state.matchedLocation, child: child),
@@ -223,4 +230,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   );
 });
 
-const _protected = [Routes.account, Routes.myLibrary, Routes.card];
+const _protected = [
+  Routes.account,
+  Routes.myLibrary,
+  Routes.card,
+  Routes.selfCheckout,
+];

@@ -78,7 +78,7 @@ flutter test integration_test -d <device> --dart-define=LC_API_BASE_URL=http://1
   `app/build.gradle.kts` không còn `kotlin-android`.
 - `kotlin.incremental=false` trong `android/gradle.properties`: Pub cache (ổ C:) và thư mục build (ổ D:) khác ổ, Kotlin
   incremental ném "different roots" cho mọi plugin Kotlin. Cùng ổ thì bỏ dòng này được.
-- `flutter_secure_storage` giữ bản 10: bản 11 đòi `compileSdk 37` mà SDK chỉ có `android-37.0`, Gradle không tìm thấy.
+- `flutter_secure_storage` giữ bản 10 và `permission_handler` giữ bản 12: bản mới hơn đòi `compileSdk 37` mà SDK chỉ có `android-37.0`, Gradle không tìm thấy.
 - `flutter_local_notifications` cần `isCoreLibraryDesugaringEnabled = true` + `desugar_jdk_libs`.
 - APK debug gộp mọi ABI nặng ~195 MB; máy ảo phải còn hơn 400 MB trống. Máy ảo thử nghiệm: `LC_Pixel` (Android 16,
   Pixel 9, ổ dữ liệu 8 GB), tạo bằng `avdmanager create avd -n LC_Pixel -k "system-images;android-36;google_apis_playstore;x86_64" -d pixel_9`.
@@ -99,6 +99,7 @@ flutter gen-l10n                                            # tự chạy khi `f
 | 3 | Tra cứu (gợi ý, không dấu, facet, sắp xếp, nâng cao, tìm gần đây) + quét mã + chi tiết 5 thẻ | Xong — MB.10–MB.12; camera thật chưa kiểm |
 | 4 | Trang chủ đầy đủ, bảy danh mục duyệt (cây, A–Z, ngành → môn → tài liệu, luận văn, ấn phẩm định kỳ), tin tức, trang tĩnh | Xong — MB.13–MB.15 |
 | 5 | Thẻ điện tử (mã vạch + QR, ngoại tuyến, yêu cầu gia hạn thẻ), Sách của tôi (đang mượn + gia hạn, lịch sử, đặt giữ + hủy, tiền phạt) | Xong — MB.16–MB.18 |
-| 6–10 | Tự mượn, tài liệu số, thông báo, đóng gói | Chưa |
+| 6 | Mượn tự phục vụ: xác thực NONE / Wi-Fi / QR trạm, quét sách liên tiếp, phiếu tóm tắt | Xong — MB.19–MB.20 |
+| 7–10 | Tài liệu số, thông báo, đóng gói | Chưa |
 
 Chưa bước nào chạy được trên **máy thật**: máy phát triển không có điện thoại kết nối. Mỗi bước ghi rõ điều này trong báo cáo.

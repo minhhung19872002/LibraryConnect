@@ -1566,6 +1566,204 @@ abstract class L10n {
   /// In vi, this message translates to:
   /// **'Đồng ý'**
   String get confirmAction;
+
+  /// No description provided for @selfCheckoutTitle.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mượn tự phục vụ'**
+  String get selfCheckoutTitle;
+
+  /// No description provided for @selfCheckoutIntro.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tự vào kho chọn sách, quét mã vạch trên gáy sách để mượn. Máy chủ kiểm chính sách từng cuốn.'**
+  String get selfCheckoutIntro;
+
+  /// No description provided for @selfCheckoutDisabled.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thư viện chưa mở chức năng mượn tự phục vụ.'**
+  String get selfCheckoutDisabled;
+
+  /// No description provided for @verifyStepTitle.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bước 1 · Xác nhận bạn đang ở thư viện'**
+  String get verifyStepTitle;
+
+  /// No description provided for @verifyWifiHint.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hãy nối vào Wi-Fi của thư viện rồi bấm kiểm tra.'**
+  String get verifyWifiHint;
+
+  /// No description provided for @verifyWifiAction.
+  ///
+  /// In vi, this message translates to:
+  /// **'Kiểm tra Wi-Fi'**
+  String get verifyWifiAction;
+
+  /// No description provided for @verifyWifiCurrent.
+  ///
+  /// In vi, this message translates to:
+  /// **'Wi-Fi hiện tại: {ssid}'**
+  String verifyWifiCurrent(String ssid);
+
+  /// No description provided for @verifyWifiUnknown.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không đọc được tên Wi-Fi. Cấp quyền vị trí cho ứng dụng và bật định vị.'**
+  String get verifyWifiUnknown;
+
+  /// No description provided for @verifyQrHint.
+  ///
+  /// In vi, this message translates to:
+  /// **'Quét mã QR trạm dán ở cửa kho.'**
+  String get verifyQrHint;
+
+  /// No description provided for @verifyQrAction.
+  ///
+  /// In vi, this message translates to:
+  /// **'Quét mã trạm'**
+  String get verifyQrAction;
+
+  /// No description provided for @verifyQrManual.
+  ///
+  /// In vi, this message translates to:
+  /// **'Nhập nội dung mã trạm'**
+  String get verifyQrManual;
+
+  /// No description provided for @verifyNoneHint.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thư viện không yêu cầu xác thực vị trí.'**
+  String get verifyNoneHint;
+
+  /// No description provided for @verifyStart.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bắt đầu'**
+  String get verifyStart;
+
+  /// No description provided for @verifying.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đang xác thực…'**
+  String get verifying;
+
+  /// No description provided for @verifiedAt.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã xác thực tại {place}'**
+  String verifiedAt(String place);
+
+  /// No description provided for @verifiedPlain.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã xác thực vị trí'**
+  String get verifiedPlain;
+
+  /// No description provided for @verifiedUntil.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hiệu lực đến {time}'**
+  String verifiedUntil(String time);
+
+  /// No description provided for @verifyExpired.
+  ///
+  /// In vi, this message translates to:
+  /// **'Phiếu xác thực đã hết hiệu lực, xác thực lại.'**
+  String get verifyExpired;
+
+  /// No description provided for @scanBooksTitle.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bước 2 · Quét mã vạch sách'**
+  String get scanBooksTitle;
+
+  /// No description provided for @scanBooksHint.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đưa mã vạch trên gáy sách vào khung. Quét liên tiếp nhiều cuốn.'**
+  String get scanBooksHint;
+
+  /// No description provided for @enterBarcode.
+  ///
+  /// In vi, this message translates to:
+  /// **'Nhập mã vạch'**
+  String get enterBarcode;
+
+  /// No description provided for @checkoutOk.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã mượn · hạn trả {date}'**
+  String checkoutOk(String date);
+
+  /// No description provided for @checkoutFailed.
+  ///
+  /// In vi, this message translates to:
+  /// **'Từ chối'**
+  String get checkoutFailed;
+
+  /// No description provided for @finishAction.
+  ///
+  /// In vi, this message translates to:
+  /// **'Kết thúc'**
+  String get finishAction;
+
+  /// No description provided for @borrowedCount.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã mượn {count} cuốn'**
+  String borrowedCount(int count);
+
+  /// No description provided for @rejectedCount.
+  ///
+  /// In vi, this message translates to:
+  /// **'{count} cuốn bị từ chối'**
+  String rejectedCount(int count);
+
+  /// No description provided for @slipTitle.
+  ///
+  /// In vi, this message translates to:
+  /// **'Phiếu mượn'**
+  String get slipTitle;
+
+  /// No description provided for @slipCode.
+  ///
+  /// In vi, this message translates to:
+  /// **'Số phiếu {code}'**
+  String slipCode(String code);
+
+  /// No description provided for @slipEmpty.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chưa mượn cuốn nào.'**
+  String get slipEmpty;
+
+  /// No description provided for @newSession.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mượn tiếp'**
+  String get newSession;
+
+  /// No description provided for @alreadyScanned.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mã {barcode} đã quét rồi.'**
+  String alreadyScanned(String barcode);
+
+  /// No description provided for @checkingBarcode.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đang kiểm {barcode}…'**
+  String checkingBarcode(String barcode);
+
+  /// No description provided for @openMyLibrary.
+  ///
+  /// In vi, this message translates to:
+  /// **'Xem Sách của tôi'**
+  String get openMyLibrary;
 }
 
 class _L10nDelegate extends LocalizationsDelegate<L10n> {

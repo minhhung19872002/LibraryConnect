@@ -820,4 +820,126 @@ class L10nVi extends L10n {
 
   @override
   String get confirmAction => 'Đồng ý';
+
+  @override
+  String get selfCheckoutTitle => 'Mượn tự phục vụ';
+
+  @override
+  String get selfCheckoutIntro =>
+      'Tự vào kho chọn sách, quét mã vạch trên gáy sách để mượn. Máy chủ kiểm chính sách từng cuốn.';
+
+  @override
+  String get selfCheckoutDisabled =>
+      'Thư viện chưa mở chức năng mượn tự phục vụ.';
+
+  @override
+  String get verifyStepTitle => 'Bước 1 · Xác nhận bạn đang ở thư viện';
+
+  @override
+  String get verifyWifiHint =>
+      'Hãy nối vào Wi-Fi của thư viện rồi bấm kiểm tra.';
+
+  @override
+  String get verifyWifiAction => 'Kiểm tra Wi-Fi';
+
+  @override
+  String verifyWifiCurrent(String ssid) {
+    return 'Wi-Fi hiện tại: $ssid';
+  }
+
+  @override
+  String get verifyWifiUnknown =>
+      'Không đọc được tên Wi-Fi. Cấp quyền vị trí cho ứng dụng và bật định vị.';
+
+  @override
+  String get verifyQrHint => 'Quét mã QR trạm dán ở cửa kho.';
+
+  @override
+  String get verifyQrAction => 'Quét mã trạm';
+
+  @override
+  String get verifyQrManual => 'Nhập nội dung mã trạm';
+
+  @override
+  String get verifyNoneHint => 'Thư viện không yêu cầu xác thực vị trí.';
+
+  @override
+  String get verifyStart => 'Bắt đầu';
+
+  @override
+  String get verifying => 'Đang xác thực…';
+
+  @override
+  String verifiedAt(String place) {
+    return 'Đã xác thực tại $place';
+  }
+
+  @override
+  String get verifiedPlain => 'Đã xác thực vị trí';
+
+  @override
+  String verifiedUntil(String time) {
+    return 'Hiệu lực đến $time';
+  }
+
+  @override
+  String get verifyExpired => 'Phiếu xác thực đã hết hiệu lực, xác thực lại.';
+
+  @override
+  String get scanBooksTitle => 'Bước 2 · Quét mã vạch sách';
+
+  @override
+  String get scanBooksHint =>
+      'Đưa mã vạch trên gáy sách vào khung. Quét liên tiếp nhiều cuốn.';
+
+  @override
+  String get enterBarcode => 'Nhập mã vạch';
+
+  @override
+  String checkoutOk(String date) {
+    return 'Đã mượn · hạn trả $date';
+  }
+
+  @override
+  String get checkoutFailed => 'Từ chối';
+
+  @override
+  String get finishAction => 'Kết thúc';
+
+  @override
+  String borrowedCount(int count) {
+    return 'Đã mượn $count cuốn';
+  }
+
+  @override
+  String rejectedCount(int count) {
+    return '$count cuốn bị từ chối';
+  }
+
+  @override
+  String get slipTitle => 'Phiếu mượn';
+
+  @override
+  String slipCode(String code) {
+    return 'Số phiếu $code';
+  }
+
+  @override
+  String get slipEmpty => 'Chưa mượn cuốn nào.';
+
+  @override
+  String get newSession => 'Mượn tiếp';
+
+  @override
+  String alreadyScanned(String barcode) {
+    return 'Mã $barcode đã quét rồi.';
+  }
+
+  @override
+  String checkingBarcode(String barcode) {
+    return 'Đang kiểm $barcode…';
+  }
+
+  @override
+  String get openMyLibrary => 'Xem Sách của tôi';
 }

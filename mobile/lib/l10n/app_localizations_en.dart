@@ -822,4 +822,126 @@ class L10nEn extends L10n {
 
   @override
   String get confirmAction => 'OK';
+
+  @override
+  String get selfCheckoutTitle => 'Self-checkout';
+
+  @override
+  String get selfCheckoutIntro =>
+      'Pick books from the shelves and scan the barcode on the spine to borrow. The server checks the policy for each book.';
+
+  @override
+  String get selfCheckoutDisabled =>
+      'Self-checkout is not enabled by the library.';
+
+  @override
+  String get verifyStepTitle => 'Step 1 · Confirm you are in the library';
+
+  @override
+  String get verifyWifiHint => 'Connect to the library Wi-Fi, then check.';
+
+  @override
+  String get verifyWifiAction => 'Check Wi-Fi';
+
+  @override
+  String verifyWifiCurrent(String ssid) {
+    return 'Current Wi-Fi: $ssid';
+  }
+
+  @override
+  String get verifyWifiUnknown =>
+      'Could not read the Wi-Fi name. Grant location permission and turn on location.';
+
+  @override
+  String get verifyQrHint => 'Scan the station QR code at the stack-room door.';
+
+  @override
+  String get verifyQrAction => 'Scan station code';
+
+  @override
+  String get verifyQrManual => 'Enter station code content';
+
+  @override
+  String get verifyNoneHint =>
+      'The library does not require location verification.';
+
+  @override
+  String get verifyStart => 'Start';
+
+  @override
+  String get verifying => 'Verifying…';
+
+  @override
+  String verifiedAt(String place) {
+    return 'Verified at $place';
+  }
+
+  @override
+  String get verifiedPlain => 'Location verified';
+
+  @override
+  String verifiedUntil(String time) {
+    return 'Valid until $time';
+  }
+
+  @override
+  String get verifyExpired => 'The verification expired, verify again.';
+
+  @override
+  String get scanBooksTitle => 'Step 2 · Scan book barcodes';
+
+  @override
+  String get scanBooksHint =>
+      'Point at the barcode on the spine. Scan several books in a row.';
+
+  @override
+  String get enterBarcode => 'Enter barcode';
+
+  @override
+  String checkoutOk(String date) {
+    return 'Borrowed · due $date';
+  }
+
+  @override
+  String get checkoutFailed => 'Refused';
+
+  @override
+  String get finishAction => 'Finish';
+
+  @override
+  String borrowedCount(int count) {
+    return '$count books borrowed';
+  }
+
+  @override
+  String rejectedCount(int count) {
+    return '$count refused';
+  }
+
+  @override
+  String get slipTitle => 'Loan slip';
+
+  @override
+  String slipCode(String code) {
+    return 'Slip $code';
+  }
+
+  @override
+  String get slipEmpty => 'Nothing borrowed.';
+
+  @override
+  String get newSession => 'Borrow more';
+
+  @override
+  String alreadyScanned(String barcode) {
+    return '$barcode was already scanned.';
+  }
+
+  @override
+  String checkingBarcode(String barcode) {
+    return 'Checking $barcode…';
+  }
+
+  @override
+  String get openMyLibrary => 'Open My library';
 }

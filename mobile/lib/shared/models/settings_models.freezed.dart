@@ -16,7 +16,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$PublicSettings {
 
- String get libraryName; String? get libraryNameEn; String? get address; String? get phone; String? get email; String? get website; String? get logoUrl; bool get showPoweredBy; int get opacPageSize; bool get allowHold; bool get allowReview; String? get slogan; String? get heroImageUrl; String? get footerText; String? get openingHours; String? get contactNote; String? get mapEmbedUrl; String? get facebook; String? get youtube; String? get zalo; bool get showNewBooks; bool get showPopularBooks; bool get showInterlibrary;
+ String get libraryName; String? get libraryNameEn; String? get address; String? get phone; String? get email; String? get website; String? get logoUrl; bool get showPoweredBy; int get opacPageSize; bool get allowHold; bool get allowReview; String? get slogan; String? get heroImageUrl; String? get footerText; String? get openingHours; String? get contactNote; String? get mapEmbedUrl; String? get facebook; String? get youtube; String? get zalo; bool get showNewBooks; bool get showPopularBooks; bool get showInterlibrary; bool get selfCheckoutEnabled; String get selfCheckoutVerifyMode;
 /// Create a copy of PublicSettings
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -30,20 +30,20 @@ $PublicSettingsCopyWith<PublicSettings> get copyWith => _$PublicSettingsCopyWith
 @override
 bool operator ==(Object other) {
   final _this = this as PublicSettings;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PublicSettings&&(identical(other.libraryName, _this.libraryName) || other.libraryName == _this.libraryName)&&(identical(other.libraryNameEn, _this.libraryNameEn) || other.libraryNameEn == _this.libraryNameEn)&&(identical(other.address, _this.address) || other.address == _this.address)&&(identical(other.phone, _this.phone) || other.phone == _this.phone)&&(identical(other.email, _this.email) || other.email == _this.email)&&(identical(other.website, _this.website) || other.website == _this.website)&&(identical(other.logoUrl, _this.logoUrl) || other.logoUrl == _this.logoUrl)&&(identical(other.showPoweredBy, _this.showPoweredBy) || other.showPoweredBy == _this.showPoweredBy)&&(identical(other.opacPageSize, _this.opacPageSize) || other.opacPageSize == _this.opacPageSize)&&(identical(other.allowHold, _this.allowHold) || other.allowHold == _this.allowHold)&&(identical(other.allowReview, _this.allowReview) || other.allowReview == _this.allowReview)&&(identical(other.slogan, _this.slogan) || other.slogan == _this.slogan)&&(identical(other.heroImageUrl, _this.heroImageUrl) || other.heroImageUrl == _this.heroImageUrl)&&(identical(other.footerText, _this.footerText) || other.footerText == _this.footerText)&&(identical(other.openingHours, _this.openingHours) || other.openingHours == _this.openingHours)&&(identical(other.contactNote, _this.contactNote) || other.contactNote == _this.contactNote)&&(identical(other.mapEmbedUrl, _this.mapEmbedUrl) || other.mapEmbedUrl == _this.mapEmbedUrl)&&(identical(other.facebook, _this.facebook) || other.facebook == _this.facebook)&&(identical(other.youtube, _this.youtube) || other.youtube == _this.youtube)&&(identical(other.zalo, _this.zalo) || other.zalo == _this.zalo)&&(identical(other.showNewBooks, _this.showNewBooks) || other.showNewBooks == _this.showNewBooks)&&(identical(other.showPopularBooks, _this.showPopularBooks) || other.showPopularBooks == _this.showPopularBooks)&&(identical(other.showInterlibrary, _this.showInterlibrary) || other.showInterlibrary == _this.showInterlibrary));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PublicSettings&&(identical(other.libraryName, _this.libraryName) || other.libraryName == _this.libraryName)&&(identical(other.libraryNameEn, _this.libraryNameEn) || other.libraryNameEn == _this.libraryNameEn)&&(identical(other.address, _this.address) || other.address == _this.address)&&(identical(other.phone, _this.phone) || other.phone == _this.phone)&&(identical(other.email, _this.email) || other.email == _this.email)&&(identical(other.website, _this.website) || other.website == _this.website)&&(identical(other.logoUrl, _this.logoUrl) || other.logoUrl == _this.logoUrl)&&(identical(other.showPoweredBy, _this.showPoweredBy) || other.showPoweredBy == _this.showPoweredBy)&&(identical(other.opacPageSize, _this.opacPageSize) || other.opacPageSize == _this.opacPageSize)&&(identical(other.allowHold, _this.allowHold) || other.allowHold == _this.allowHold)&&(identical(other.allowReview, _this.allowReview) || other.allowReview == _this.allowReview)&&(identical(other.slogan, _this.slogan) || other.slogan == _this.slogan)&&(identical(other.heroImageUrl, _this.heroImageUrl) || other.heroImageUrl == _this.heroImageUrl)&&(identical(other.footerText, _this.footerText) || other.footerText == _this.footerText)&&(identical(other.openingHours, _this.openingHours) || other.openingHours == _this.openingHours)&&(identical(other.contactNote, _this.contactNote) || other.contactNote == _this.contactNote)&&(identical(other.mapEmbedUrl, _this.mapEmbedUrl) || other.mapEmbedUrl == _this.mapEmbedUrl)&&(identical(other.facebook, _this.facebook) || other.facebook == _this.facebook)&&(identical(other.youtube, _this.youtube) || other.youtube == _this.youtube)&&(identical(other.zalo, _this.zalo) || other.zalo == _this.zalo)&&(identical(other.showNewBooks, _this.showNewBooks) || other.showNewBooks == _this.showNewBooks)&&(identical(other.showPopularBooks, _this.showPopularBooks) || other.showPopularBooks == _this.showPopularBooks)&&(identical(other.showInterlibrary, _this.showInterlibrary) || other.showInterlibrary == _this.showInterlibrary)&&(identical(other.selfCheckoutEnabled, _this.selfCheckoutEnabled) || other.selfCheckoutEnabled == _this.selfCheckoutEnabled)&&(identical(other.selfCheckoutVerifyMode, _this.selfCheckoutVerifyMode) || other.selfCheckoutVerifyMode == _this.selfCheckoutVerifyMode));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as PublicSettings;
-  return Object.hashAll([runtimeType,_this.libraryName,_this.libraryNameEn,_this.address,_this.phone,_this.email,_this.website,_this.logoUrl,_this.showPoweredBy,_this.opacPageSize,_this.allowHold,_this.allowReview,_this.slogan,_this.heroImageUrl,_this.footerText,_this.openingHours,_this.contactNote,_this.mapEmbedUrl,_this.facebook,_this.youtube,_this.zalo,_this.showNewBooks,_this.showPopularBooks,_this.showInterlibrary]);
+  return Object.hashAll([runtimeType,_this.libraryName,_this.libraryNameEn,_this.address,_this.phone,_this.email,_this.website,_this.logoUrl,_this.showPoweredBy,_this.opacPageSize,_this.allowHold,_this.allowReview,_this.slogan,_this.heroImageUrl,_this.footerText,_this.openingHours,_this.contactNote,_this.mapEmbedUrl,_this.facebook,_this.youtube,_this.zalo,_this.showNewBooks,_this.showPopularBooks,_this.showInterlibrary,_this.selfCheckoutEnabled,_this.selfCheckoutVerifyMode]);
 }
 
 @override
 String toString() {
   final _this = this as PublicSettings;
-  return 'PublicSettings(libraryName: ${_this.libraryName}, libraryNameEn: ${_this.libraryNameEn}, address: ${_this.address}, phone: ${_this.phone}, email: ${_this.email}, website: ${_this.website}, logoUrl: ${_this.logoUrl}, showPoweredBy: ${_this.showPoweredBy}, opacPageSize: ${_this.opacPageSize}, allowHold: ${_this.allowHold}, allowReview: ${_this.allowReview}, slogan: ${_this.slogan}, heroImageUrl: ${_this.heroImageUrl}, footerText: ${_this.footerText}, openingHours: ${_this.openingHours}, contactNote: ${_this.contactNote}, mapEmbedUrl: ${_this.mapEmbedUrl}, facebook: ${_this.facebook}, youtube: ${_this.youtube}, zalo: ${_this.zalo}, showNewBooks: ${_this.showNewBooks}, showPopularBooks: ${_this.showPopularBooks}, showInterlibrary: ${_this.showInterlibrary})';
+  return 'PublicSettings(libraryName: ${_this.libraryName}, libraryNameEn: ${_this.libraryNameEn}, address: ${_this.address}, phone: ${_this.phone}, email: ${_this.email}, website: ${_this.website}, logoUrl: ${_this.logoUrl}, showPoweredBy: ${_this.showPoweredBy}, opacPageSize: ${_this.opacPageSize}, allowHold: ${_this.allowHold}, allowReview: ${_this.allowReview}, slogan: ${_this.slogan}, heroImageUrl: ${_this.heroImageUrl}, footerText: ${_this.footerText}, openingHours: ${_this.openingHours}, contactNote: ${_this.contactNote}, mapEmbedUrl: ${_this.mapEmbedUrl}, facebook: ${_this.facebook}, youtube: ${_this.youtube}, zalo: ${_this.zalo}, showNewBooks: ${_this.showNewBooks}, showPopularBooks: ${_this.showPopularBooks}, showInterlibrary: ${_this.showInterlibrary}, selfCheckoutEnabled: ${_this.selfCheckoutEnabled}, selfCheckoutVerifyMode: ${_this.selfCheckoutVerifyMode})';
 }
 
 
@@ -54,7 +54,7 @@ abstract mixin class $PublicSettingsCopyWith<$Res>  {
   factory $PublicSettingsCopyWith(PublicSettings value, $Res Function(PublicSettings) _then) = _$PublicSettingsCopyWithImpl;
 @useResult
 $Res call({
- String libraryName, String? libraryNameEn, String? address, String? phone, String? email, String? website, String? logoUrl, bool showPoweredBy, int opacPageSize, bool allowHold, bool allowReview, String? slogan, String? heroImageUrl, String? footerText, String? openingHours, String? contactNote, String? mapEmbedUrl, String? facebook, String? youtube, String? zalo, bool showNewBooks, bool showPopularBooks, bool showInterlibrary
+ String libraryName, String? libraryNameEn, String? address, String? phone, String? email, String? website, String? logoUrl, bool showPoweredBy, int opacPageSize, bool allowHold, bool allowReview, String? slogan, String? heroImageUrl, String? footerText, String? openingHours, String? contactNote, String? mapEmbedUrl, String? facebook, String? youtube, String? zalo, bool showNewBooks, bool showPopularBooks, bool showInterlibrary, bool selfCheckoutEnabled, String selfCheckoutVerifyMode
 });
 
 
@@ -71,7 +71,7 @@ class _$PublicSettingsCopyWithImpl<$Res>
 
 /// Create a copy of PublicSettings
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? libraryName = null,Object? libraryNameEn = freezed,Object? address = freezed,Object? phone = freezed,Object? email = freezed,Object? website = freezed,Object? logoUrl = freezed,Object? showPoweredBy = null,Object? opacPageSize = null,Object? allowHold = null,Object? allowReview = null,Object? slogan = freezed,Object? heroImageUrl = freezed,Object? footerText = freezed,Object? openingHours = freezed,Object? contactNote = freezed,Object? mapEmbedUrl = freezed,Object? facebook = freezed,Object? youtube = freezed,Object? zalo = freezed,Object? showNewBooks = null,Object? showPopularBooks = null,Object? showInterlibrary = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? libraryName = null,Object? libraryNameEn = freezed,Object? address = freezed,Object? phone = freezed,Object? email = freezed,Object? website = freezed,Object? logoUrl = freezed,Object? showPoweredBy = null,Object? opacPageSize = null,Object? allowHold = null,Object? allowReview = null,Object? slogan = freezed,Object? heroImageUrl = freezed,Object? footerText = freezed,Object? openingHours = freezed,Object? contactNote = freezed,Object? mapEmbedUrl = freezed,Object? facebook = freezed,Object? youtube = freezed,Object? zalo = freezed,Object? showNewBooks = null,Object? showPopularBooks = null,Object? showInterlibrary = null,Object? selfCheckoutEnabled = null,Object? selfCheckoutVerifyMode = null,}) {
   return _then(PublicSettings(
 libraryName: null == libraryName ? _self.libraryName : libraryName // ignore: cast_nullable_to_non_nullable
 as String,libraryNameEn: freezed == libraryNameEn ? _self.libraryNameEn : libraryNameEn // ignore: cast_nullable_to_non_nullable
@@ -96,7 +96,9 @@ as String?,zalo: freezed == zalo ? _self.zalo : zalo // ignore: cast_nullable_to
 as String?,showNewBooks: null == showNewBooks ? _self.showNewBooks : showNewBooks // ignore: cast_nullable_to_non_nullable
 as bool,showPopularBooks: null == showPopularBooks ? _self.showPopularBooks : showPopularBooks // ignore: cast_nullable_to_non_nullable
 as bool,showInterlibrary: null == showInterlibrary ? _self.showInterlibrary : showInterlibrary // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,selfCheckoutEnabled: null == selfCheckoutEnabled ? _self.selfCheckoutEnabled : selfCheckoutEnabled // ignore: cast_nullable_to_non_nullable
+as bool,selfCheckoutVerifyMode: null == selfCheckoutVerifyMode ? _self.selfCheckoutVerifyMode : selfCheckoutVerifyMode // ignore: cast_nullable_to_non_nullable
+as String,
   ));
 }
 
@@ -181,10 +183,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String libraryName,  String? libraryNameEn,  String? address,  String? phone,  String? email,  String? website,  String? logoUrl,  bool showPoweredBy,  int opacPageSize,  bool allowHold,  bool allowReview,  String? slogan,  String? heroImageUrl,  String? footerText,  String? openingHours,  String? contactNote,  String? mapEmbedUrl,  String? facebook,  String? youtube,  String? zalo,  bool showNewBooks,  bool showPopularBooks,  bool showInterlibrary)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String libraryName,  String? libraryNameEn,  String? address,  String? phone,  String? email,  String? website,  String? logoUrl,  bool showPoweredBy,  int opacPageSize,  bool allowHold,  bool allowReview,  String? slogan,  String? heroImageUrl,  String? footerText,  String? openingHours,  String? contactNote,  String? mapEmbedUrl,  String? facebook,  String? youtube,  String? zalo,  bool showNewBooks,  bool showPopularBooks,  bool showInterlibrary,  bool selfCheckoutEnabled,  String selfCheckoutVerifyMode)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PublicSettings() when $default != null:
-return $default(_that.libraryName,_that.libraryNameEn,_that.address,_that.phone,_that.email,_that.website,_that.logoUrl,_that.showPoweredBy,_that.opacPageSize,_that.allowHold,_that.allowReview,_that.slogan,_that.heroImageUrl,_that.footerText,_that.openingHours,_that.contactNote,_that.mapEmbedUrl,_that.facebook,_that.youtube,_that.zalo,_that.showNewBooks,_that.showPopularBooks,_that.showInterlibrary);case _:
+return $default(_that.libraryName,_that.libraryNameEn,_that.address,_that.phone,_that.email,_that.website,_that.logoUrl,_that.showPoweredBy,_that.opacPageSize,_that.allowHold,_that.allowReview,_that.slogan,_that.heroImageUrl,_that.footerText,_that.openingHours,_that.contactNote,_that.mapEmbedUrl,_that.facebook,_that.youtube,_that.zalo,_that.showNewBooks,_that.showPopularBooks,_that.showInterlibrary,_that.selfCheckoutEnabled,_that.selfCheckoutVerifyMode);case _:
   return orElse();
 
 }
@@ -202,10 +204,10 @@ return $default(_that.libraryName,_that.libraryNameEn,_that.address,_that.phone,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String libraryName,  String? libraryNameEn,  String? address,  String? phone,  String? email,  String? website,  String? logoUrl,  bool showPoweredBy,  int opacPageSize,  bool allowHold,  bool allowReview,  String? slogan,  String? heroImageUrl,  String? footerText,  String? openingHours,  String? contactNote,  String? mapEmbedUrl,  String? facebook,  String? youtube,  String? zalo,  bool showNewBooks,  bool showPopularBooks,  bool showInterlibrary)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String libraryName,  String? libraryNameEn,  String? address,  String? phone,  String? email,  String? website,  String? logoUrl,  bool showPoweredBy,  int opacPageSize,  bool allowHold,  bool allowReview,  String? slogan,  String? heroImageUrl,  String? footerText,  String? openingHours,  String? contactNote,  String? mapEmbedUrl,  String? facebook,  String? youtube,  String? zalo,  bool showNewBooks,  bool showPopularBooks,  bool showInterlibrary,  bool selfCheckoutEnabled,  String selfCheckoutVerifyMode)  $default,) {final _that = this;
 switch (_that) {
 case _PublicSettings():
-return $default(_that.libraryName,_that.libraryNameEn,_that.address,_that.phone,_that.email,_that.website,_that.logoUrl,_that.showPoweredBy,_that.opacPageSize,_that.allowHold,_that.allowReview,_that.slogan,_that.heroImageUrl,_that.footerText,_that.openingHours,_that.contactNote,_that.mapEmbedUrl,_that.facebook,_that.youtube,_that.zalo,_that.showNewBooks,_that.showPopularBooks,_that.showInterlibrary);case _:
+return $default(_that.libraryName,_that.libraryNameEn,_that.address,_that.phone,_that.email,_that.website,_that.logoUrl,_that.showPoweredBy,_that.opacPageSize,_that.allowHold,_that.allowReview,_that.slogan,_that.heroImageUrl,_that.footerText,_that.openingHours,_that.contactNote,_that.mapEmbedUrl,_that.facebook,_that.youtube,_that.zalo,_that.showNewBooks,_that.showPopularBooks,_that.showInterlibrary,_that.selfCheckoutEnabled,_that.selfCheckoutVerifyMode);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -222,10 +224,10 @@ return $default(_that.libraryName,_that.libraryNameEn,_that.address,_that.phone,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String libraryName,  String? libraryNameEn,  String? address,  String? phone,  String? email,  String? website,  String? logoUrl,  bool showPoweredBy,  int opacPageSize,  bool allowHold,  bool allowReview,  String? slogan,  String? heroImageUrl,  String? footerText,  String? openingHours,  String? contactNote,  String? mapEmbedUrl,  String? facebook,  String? youtube,  String? zalo,  bool showNewBooks,  bool showPopularBooks,  bool showInterlibrary)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String libraryName,  String? libraryNameEn,  String? address,  String? phone,  String? email,  String? website,  String? logoUrl,  bool showPoweredBy,  int opacPageSize,  bool allowHold,  bool allowReview,  String? slogan,  String? heroImageUrl,  String? footerText,  String? openingHours,  String? contactNote,  String? mapEmbedUrl,  String? facebook,  String? youtube,  String? zalo,  bool showNewBooks,  bool showPopularBooks,  bool showInterlibrary,  bool selfCheckoutEnabled,  String selfCheckoutVerifyMode)?  $default,) {final _that = this;
 switch (_that) {
 case _PublicSettings() when $default != null:
-return $default(_that.libraryName,_that.libraryNameEn,_that.address,_that.phone,_that.email,_that.website,_that.logoUrl,_that.showPoweredBy,_that.opacPageSize,_that.allowHold,_that.allowReview,_that.slogan,_that.heroImageUrl,_that.footerText,_that.openingHours,_that.contactNote,_that.mapEmbedUrl,_that.facebook,_that.youtube,_that.zalo,_that.showNewBooks,_that.showPopularBooks,_that.showInterlibrary);case _:
+return $default(_that.libraryName,_that.libraryNameEn,_that.address,_that.phone,_that.email,_that.website,_that.logoUrl,_that.showPoweredBy,_that.opacPageSize,_that.allowHold,_that.allowReview,_that.slogan,_that.heroImageUrl,_that.footerText,_that.openingHours,_that.contactNote,_that.mapEmbedUrl,_that.facebook,_that.youtube,_that.zalo,_that.showNewBooks,_that.showPopularBooks,_that.showInterlibrary,_that.selfCheckoutEnabled,_that.selfCheckoutVerifyMode);case _:
   return null;
 
 }
@@ -237,7 +239,7 @@ return $default(_that.libraryName,_that.libraryNameEn,_that.address,_that.phone,
 @JsonSerializable()
 
 class _PublicSettings implements PublicSettings {
-  const _PublicSettings({this.libraryName = 'Thư viện', this.libraryNameEn, this.address, this.phone, this.email, this.website, this.logoUrl, this.showPoweredBy = true, this.opacPageSize = 20, this.allowHold = true, this.allowReview = false, this.slogan, this.heroImageUrl, this.footerText, this.openingHours, this.contactNote, this.mapEmbedUrl, this.facebook, this.youtube, this.zalo, this.showNewBooks = true, this.showPopularBooks = true, this.showInterlibrary = true});
+  const _PublicSettings({this.libraryName = 'Thư viện', this.libraryNameEn, this.address, this.phone, this.email, this.website, this.logoUrl, this.showPoweredBy = true, this.opacPageSize = 20, this.allowHold = true, this.allowReview = false, this.slogan, this.heroImageUrl, this.footerText, this.openingHours, this.contactNote, this.mapEmbedUrl, this.facebook, this.youtube, this.zalo, this.showNewBooks = true, this.showPopularBooks = true, this.showInterlibrary = true, this.selfCheckoutEnabled = false, this.selfCheckoutVerifyMode = 'NONE'});
   factory _PublicSettings.fromJson(Map<String, dynamic> json) => _$PublicSettingsFromJson(json);
 
 @override@JsonKey() final  String libraryName;
@@ -263,6 +265,8 @@ class _PublicSettings implements PublicSettings {
 @override@JsonKey() final  bool showNewBooks;
 @override@JsonKey() final  bool showPopularBooks;
 @override@JsonKey() final  bool showInterlibrary;
+@override@JsonKey() final  bool selfCheckoutEnabled;
+@override@JsonKey() final  String selfCheckoutVerifyMode;
 
 /// Create a copy of PublicSettings
 /// with the given fields replaced by the non-null parameter values.
@@ -277,18 +281,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _PublicSettings&&(identical(other.libraryName, libraryName) || other.libraryName == libraryName)&&(identical(other.libraryNameEn, libraryNameEn) || other.libraryNameEn == libraryNameEn)&&(identical(other.address, address) || other.address == address)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.email, email) || other.email == email)&&(identical(other.website, website) || other.website == website)&&(identical(other.logoUrl, logoUrl) || other.logoUrl == logoUrl)&&(identical(other.showPoweredBy, showPoweredBy) || other.showPoweredBy == showPoweredBy)&&(identical(other.opacPageSize, opacPageSize) || other.opacPageSize == opacPageSize)&&(identical(other.allowHold, allowHold) || other.allowHold == allowHold)&&(identical(other.allowReview, allowReview) || other.allowReview == allowReview)&&(identical(other.slogan, slogan) || other.slogan == slogan)&&(identical(other.heroImageUrl, heroImageUrl) || other.heroImageUrl == heroImageUrl)&&(identical(other.footerText, footerText) || other.footerText == footerText)&&(identical(other.openingHours, openingHours) || other.openingHours == openingHours)&&(identical(other.contactNote, contactNote) || other.contactNote == contactNote)&&(identical(other.mapEmbedUrl, mapEmbedUrl) || other.mapEmbedUrl == mapEmbedUrl)&&(identical(other.facebook, facebook) || other.facebook == facebook)&&(identical(other.youtube, youtube) || other.youtube == youtube)&&(identical(other.zalo, zalo) || other.zalo == zalo)&&(identical(other.showNewBooks, showNewBooks) || other.showNewBooks == showNewBooks)&&(identical(other.showPopularBooks, showPopularBooks) || other.showPopularBooks == showPopularBooks)&&(identical(other.showInterlibrary, showInterlibrary) || other.showInterlibrary == showInterlibrary));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _PublicSettings&&(identical(other.libraryName, libraryName) || other.libraryName == libraryName)&&(identical(other.libraryNameEn, libraryNameEn) || other.libraryNameEn == libraryNameEn)&&(identical(other.address, address) || other.address == address)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.email, email) || other.email == email)&&(identical(other.website, website) || other.website == website)&&(identical(other.logoUrl, logoUrl) || other.logoUrl == logoUrl)&&(identical(other.showPoweredBy, showPoweredBy) || other.showPoweredBy == showPoweredBy)&&(identical(other.opacPageSize, opacPageSize) || other.opacPageSize == opacPageSize)&&(identical(other.allowHold, allowHold) || other.allowHold == allowHold)&&(identical(other.allowReview, allowReview) || other.allowReview == allowReview)&&(identical(other.slogan, slogan) || other.slogan == slogan)&&(identical(other.heroImageUrl, heroImageUrl) || other.heroImageUrl == heroImageUrl)&&(identical(other.footerText, footerText) || other.footerText == footerText)&&(identical(other.openingHours, openingHours) || other.openingHours == openingHours)&&(identical(other.contactNote, contactNote) || other.contactNote == contactNote)&&(identical(other.mapEmbedUrl, mapEmbedUrl) || other.mapEmbedUrl == mapEmbedUrl)&&(identical(other.facebook, facebook) || other.facebook == facebook)&&(identical(other.youtube, youtube) || other.youtube == youtube)&&(identical(other.zalo, zalo) || other.zalo == zalo)&&(identical(other.showNewBooks, showNewBooks) || other.showNewBooks == showNewBooks)&&(identical(other.showPopularBooks, showPopularBooks) || other.showPopularBooks == showPopularBooks)&&(identical(other.showInterlibrary, showInterlibrary) || other.showInterlibrary == showInterlibrary)&&(identical(other.selfCheckoutEnabled, selfCheckoutEnabled) || other.selfCheckoutEnabled == selfCheckoutEnabled)&&(identical(other.selfCheckoutVerifyMode, selfCheckoutVerifyMode) || other.selfCheckoutVerifyMode == selfCheckoutVerifyMode));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hashAll([runtimeType,libraryName,libraryNameEn,address,phone,email,website,logoUrl,showPoweredBy,opacPageSize,allowHold,allowReview,slogan,heroImageUrl,footerText,openingHours,contactNote,mapEmbedUrl,facebook,youtube,zalo,showNewBooks,showPopularBooks,showInterlibrary]);
+    return Object.hashAll([runtimeType,libraryName,libraryNameEn,address,phone,email,website,logoUrl,showPoweredBy,opacPageSize,allowHold,allowReview,slogan,heroImageUrl,footerText,openingHours,contactNote,mapEmbedUrl,facebook,youtube,zalo,showNewBooks,showPopularBooks,showInterlibrary,selfCheckoutEnabled,selfCheckoutVerifyMode]);
 }
 
 @override
 String toString() {
-    return 'PublicSettings(libraryName: $libraryName, libraryNameEn: $libraryNameEn, address: $address, phone: $phone, email: $email, website: $website, logoUrl: $logoUrl, showPoweredBy: $showPoweredBy, opacPageSize: $opacPageSize, allowHold: $allowHold, allowReview: $allowReview, slogan: $slogan, heroImageUrl: $heroImageUrl, footerText: $footerText, openingHours: $openingHours, contactNote: $contactNote, mapEmbedUrl: $mapEmbedUrl, facebook: $facebook, youtube: $youtube, zalo: $zalo, showNewBooks: $showNewBooks, showPopularBooks: $showPopularBooks, showInterlibrary: $showInterlibrary)';
+    return 'PublicSettings(libraryName: $libraryName, libraryNameEn: $libraryNameEn, address: $address, phone: $phone, email: $email, website: $website, logoUrl: $logoUrl, showPoweredBy: $showPoweredBy, opacPageSize: $opacPageSize, allowHold: $allowHold, allowReview: $allowReview, slogan: $slogan, heroImageUrl: $heroImageUrl, footerText: $footerText, openingHours: $openingHours, contactNote: $contactNote, mapEmbedUrl: $mapEmbedUrl, facebook: $facebook, youtube: $youtube, zalo: $zalo, showNewBooks: $showNewBooks, showPopularBooks: $showPopularBooks, showInterlibrary: $showInterlibrary, selfCheckoutEnabled: $selfCheckoutEnabled, selfCheckoutVerifyMode: $selfCheckoutVerifyMode)';
 }
 
 
@@ -299,7 +303,7 @@ abstract mixin class _$PublicSettingsCopyWith<$Res> implements $PublicSettingsCo
   factory _$PublicSettingsCopyWith(_PublicSettings value, $Res Function(_PublicSettings) _then) = __$PublicSettingsCopyWithImpl;
 @override @useResult
 $Res call({
- String libraryName, String? libraryNameEn, String? address, String? phone, String? email, String? website, String? logoUrl, bool showPoweredBy, int opacPageSize, bool allowHold, bool allowReview, String? slogan, String? heroImageUrl, String? footerText, String? openingHours, String? contactNote, String? mapEmbedUrl, String? facebook, String? youtube, String? zalo, bool showNewBooks, bool showPopularBooks, bool showInterlibrary
+ String libraryName, String? libraryNameEn, String? address, String? phone, String? email, String? website, String? logoUrl, bool showPoweredBy, int opacPageSize, bool allowHold, bool allowReview, String? slogan, String? heroImageUrl, String? footerText, String? openingHours, String? contactNote, String? mapEmbedUrl, String? facebook, String? youtube, String? zalo, bool showNewBooks, bool showPopularBooks, bool showInterlibrary, bool selfCheckoutEnabled, String selfCheckoutVerifyMode
 });
 
 
@@ -316,7 +320,7 @@ class __$PublicSettingsCopyWithImpl<$Res>
 
 /// Create a copy of PublicSettings
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? libraryName = null,Object? libraryNameEn = freezed,Object? address = freezed,Object? phone = freezed,Object? email = freezed,Object? website = freezed,Object? logoUrl = freezed,Object? showPoweredBy = null,Object? opacPageSize = null,Object? allowHold = null,Object? allowReview = null,Object? slogan = freezed,Object? heroImageUrl = freezed,Object? footerText = freezed,Object? openingHours = freezed,Object? contactNote = freezed,Object? mapEmbedUrl = freezed,Object? facebook = freezed,Object? youtube = freezed,Object? zalo = freezed,Object? showNewBooks = null,Object? showPopularBooks = null,Object? showInterlibrary = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? libraryName = null,Object? libraryNameEn = freezed,Object? address = freezed,Object? phone = freezed,Object? email = freezed,Object? website = freezed,Object? logoUrl = freezed,Object? showPoweredBy = null,Object? opacPageSize = null,Object? allowHold = null,Object? allowReview = null,Object? slogan = freezed,Object? heroImageUrl = freezed,Object? footerText = freezed,Object? openingHours = freezed,Object? contactNote = freezed,Object? mapEmbedUrl = freezed,Object? facebook = freezed,Object? youtube = freezed,Object? zalo = freezed,Object? showNewBooks = null,Object? showPopularBooks = null,Object? showInterlibrary = null,Object? selfCheckoutEnabled = null,Object? selfCheckoutVerifyMode = null,}) {
   return _then(_PublicSettings(
 libraryName: null == libraryName ? _self.libraryName : libraryName // ignore: cast_nullable_to_non_nullable
 as String,libraryNameEn: freezed == libraryNameEn ? _self.libraryNameEn : libraryNameEn // ignore: cast_nullable_to_non_nullable
@@ -341,7 +345,9 @@ as String?,zalo: freezed == zalo ? _self.zalo : zalo // ignore: cast_nullable_to
 as String?,showNewBooks: null == showNewBooks ? _self.showNewBooks : showNewBooks // ignore: cast_nullable_to_non_nullable
 as bool,showPopularBooks: null == showPopularBooks ? _self.showPopularBooks : showPopularBooks // ignore: cast_nullable_to_non_nullable
 as bool,showInterlibrary: null == showInterlibrary ? _self.showInterlibrary : showInterlibrary // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,selfCheckoutEnabled: null == selfCheckoutEnabled ? _self.selfCheckoutEnabled : selfCheckoutEnabled // ignore: cast_nullable_to_non_nullable
+as bool,selfCheckoutVerifyMode: null == selfCheckoutVerifyMode ? _self.selfCheckoutVerifyMode : selfCheckoutVerifyMode // ignore: cast_nullable_to_non_nullable
+as String,
   ));
 }
 

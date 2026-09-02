@@ -9,6 +9,7 @@ using LibraryConnect.Application.Common.Models;
 using LibraryConnect.Application.Features.Acquisition;
 using LibraryConnect.Application.Features.Catalogs;
 using LibraryConnect.Application.Features.Circulation;
+using LibraryConnect.Application.Features.Public;
 using LibraryConnect.Application.Features.Digital;
 using LibraryConnect.Application.Features.Locations;
 using LibraryConnect.Application.Features.Opac;
@@ -394,6 +395,32 @@ public class MobileBackendTests
         response.StatusCode.Should().Be(HttpStatusCode.Conflict, await response.Content.ReadAsStringAsync());
         var payload = await response.Content.ReadFromJsonAsync<ApiResponse>(LibraryConnectFactory.JsonOptions);
         return payload?.Errors?.FirstOrDefault()?.Code;
+    }
+
+    [Fact]
+    public async Task Cai_dat_cong_khai_cho_ung_dung_biet_che_do_xac_thuc_muon_tu_phuc_vu()
+    {
+        var staff = await StaffAsync();
+        await SetParametersAsync(staff,
+            ("CIRCULATION.SELF_CHECKOUT_ENABLED", "true"),
+            ("CIRCULATION.SELF_CHECKOUT_VERIFY_MODE", "qr_station"));
+
+        try
+        {
+            var settings = await ReadAsync<PublicSettingsDto>(await _factory.CreateClient().GetAsync("/api/public/settings"));
+            settings.SelfCheckoutEnabled.Should().BeTrue();
+            settings.SelfCheckoutVerifyMode.Should().Be("QR_STATION", "ứng dụng so sánh chữ hoa, máy chủ chuẩn hoá");
+        }
+        finally
+        {
+            await SetParametersAsync(staff,
+                ("CIRCULATION.SELF_CHECKOUT_ENABLED", "false"),
+                ("CIRCULATION.SELF_CHECKOUT_VERIFY_MODE", "NONE"));
+
+            var settings = await ReadAsync<PublicSettingsDto>(await _factory.CreateClient().GetAsync("/api/public/settings"));
+            settings.SelfCheckoutEnabled.Should().BeFalse();
+            settings.SelfCheckoutVerifyMode.Should().Be("NONE");
+        }
     }
 
     private static async Task SetParametersAsync(HttpClient staff, params (string Key, string Value)[] values)

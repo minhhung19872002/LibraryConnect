@@ -54,6 +54,13 @@ class AccountScreen extends ConsumerWidget {
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () => context.go(Routes.myLibrary),
                   ),
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: const Icon(Icons.qr_code_scanner),
+                    title: Text(l10n.selfCheckoutTitle),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => context.push(Routes.selfCheckout),
+                  ),
                 ],
               ),
             ),
@@ -133,8 +140,10 @@ class AccountScreen extends ConsumerWidget {
               icon: const Icon(Icons.logout),
               label: Text(l10n.signOut),
               onPressed: () async {
+                // Về trang chủ trước rồi mới đăng xuất: nếu đăng xuất trước, tuyến /tai-khoan
+                // đang mở là tuyến bảo vệ nên bộ định tuyến đẩy ngay sang màn hình đăng nhập.
+                context.go(Routes.home);
                 await ref.read(authControllerProvider.notifier).signOut();
-                if (context.mounted) context.go(Routes.home);
               },
             )
           else

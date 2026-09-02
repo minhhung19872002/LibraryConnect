@@ -31,6 +31,9 @@ _PublicSettings _$PublicSettingsFromJson(Map<String, dynamic> json) =>
       showNewBooks: json['showNewBooks'] as bool? ?? true,
       showPopularBooks: json['showPopularBooks'] as bool? ?? true,
       showInterlibrary: json['showInterlibrary'] as bool? ?? true,
+      selfCheckoutEnabled: json['selfCheckoutEnabled'] as bool? ?? false,
+      selfCheckoutVerifyMode:
+          json['selfCheckoutVerifyMode'] as String? ?? 'NONE',
     );
 
 Map<String, dynamic> _$PublicSettingsToJson(_PublicSettings instance) =>
@@ -58,6 +61,8 @@ Map<String, dynamic> _$PublicSettingsToJson(_PublicSettings instance) =>
       'showNewBooks': instance.showNewBooks,
       'showPopularBooks': instance.showPopularBooks,
       'showInterlibrary': instance.showInterlibrary,
+      'selfCheckoutEnabled': instance.selfCheckoutEnabled,
+      'selfCheckoutVerifyMode': instance.selfCheckoutVerifyMode,
     };
 
 _AppVersionInfo _$AppVersionInfoFromJson(Map<String, dynamic> json) =>

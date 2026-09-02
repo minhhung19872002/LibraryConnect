@@ -513,6 +513,8 @@ mã mới ở lần mở sau.
 | Method | Đường dẫn | Chức năng |
 |---|---|---|
 | GET | `/api/public/settings` | Tên thư viện, logo, địa chỉ, giờ mở cửa, các tùy chọn hiển thị |
+
+> Phase 15: trả thêm `selfCheckoutEnabled` (bool) và `selfCheckoutVerifyMode` (`NONE` | `WIFI_SSID` | `QR_STATION`) để ứng dụng bạn đọc biết phải xin quyền Wi-Fi hay mở máy quét mã trạm trước khi mượn tự phục vụ.
 | GET | `/api/public/home` | Nội dung trang chủ: sách mới, sách mượn nhiều, tin tức, banner |
 | GET | `/api/public/news` | Danh sách tin tức |
 | GET | `/api/public/news/{slug}` | Một bản tin |

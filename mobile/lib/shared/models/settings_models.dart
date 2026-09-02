@@ -31,6 +31,8 @@ abstract class PublicSettings with _$PublicSettings {
     @Default(true) bool showNewBooks,
     @Default(true) bool showPopularBooks,
     @Default(true) bool showInterlibrary,
+    @Default(false) bool selfCheckoutEnabled,
+    @Default('NONE') String selfCheckoutVerifyMode,
   }) = _PublicSettings;
 
   factory PublicSettings.fromJson(Map<String, dynamic> json) =>
