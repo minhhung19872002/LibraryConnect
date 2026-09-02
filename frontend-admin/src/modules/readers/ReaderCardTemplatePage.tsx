@@ -28,6 +28,7 @@ import { Can } from '@/components/PermissionGate';
 import { PERMISSIONS } from '@/api/permissions';
 import { saveBlob } from '@/modules/marc/api';
 import { readersApi } from './api';
+import { MAU } from '@/lib/palette';
 import type {
   CardBarcodeDto,
   CardBoxDto,
@@ -477,9 +478,11 @@ function CardTemplateDrawer({
                 width: width * SCALE,
                 height: height * SCALE,
                 position: 'relative',
-                border: '1px solid #d9d9d9',
+                border: `1px solid ${MAU.vien}`,
                 borderRadius: 6,
                 overflow: 'hidden',
+                // Trắng thật, không phải trắng ngà của giao diện: thẻ in trên phôi nhựa
+                // trắng, và đây là màu mực đi ra máy in chứ không phải màu màn hình.
                 background: layout.backgroundColor ?? '#ffffff',
                 touchAction: 'none',
               }}
@@ -496,7 +499,9 @@ function CardTemplateDrawer({
                     top: 0,
                     width: '100%',
                     height: (layout.headerBandHeight ?? 0) * SCALE,
-                    background: layout.headerBandColor ?? '#0D47A1',
+                    // Dải màu đầu thẻ mặc định lấy màu chính của sản phẩm; cán bộ đổi được bằng
+                    // ô chọn màu bên dưới, và thẻ đã lưu thì giữ nguyên màu đã chọn.
+                    background: layout.headerBandColor ?? MAU.chinh,
                   }}
                 />
               )}
@@ -512,13 +517,13 @@ function CardTemplateDrawer({
                     top: image.y * SCALE,
                     width: image.width * SCALE,
                     height: image.height * SCALE,
-                    border: '1px dashed #8c8c8c',
-                    background: '#fafafa',
+                    border: `1px dashed ${MAU.vienDam}`,
+                    background: MAU.nenDam,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontSize: 10,
-                    color: '#8c8c8c',
+                    color: MAU.chuMo,
                     cursor: 'move',
                   }}
                 >
@@ -539,6 +544,8 @@ function CardTemplateDrawer({
                     width: layout.barcode.width * SCALE,
                     height: layout.barcode.height * SCALE,
                     background:
+                      // Vạch mã vạch phải gần đen tuyệt đối: máy quét đọc theo độ tương phản,
+                      // đổi sang nâu của bảng màu giao diện là thẻ in ra quét không nhận.
                       'repeating-linear-gradient(90deg, #222 0 2px, transparent 2px 5px)',
                     cursor: 'move',
                   }}
@@ -685,7 +692,7 @@ function CardTemplateDrawer({
                     }
                   />
                   <ColorPicker
-                    value={layout.headerBandColor ?? '#0D47A1'}
+                    value={layout.headerBandColor ?? MAU.chinh}
                     onChangeComplete={(color) =>
                       setLayout((current) => ({ ...current, headerBandColor: color.toHexString() }))
                     }

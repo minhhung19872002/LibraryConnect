@@ -26,6 +26,7 @@ import { money } from '@/modules/acquisition/labels';
 import { serialsApi } from './api';
 import { frequencyLabels } from './labels';
 import type { SerialReportFilter } from './types';
+import { MAU } from '@/lib/palette';
 
 /**
  * IV.5 — Báo cáo thống kê ấn phẩm định kỳ.
@@ -159,7 +160,7 @@ export function SerialReportsPage() {
             <Statistic
               title="Số kỳ đã nhận"
               value={report.data?.totalReceivedIssues ?? 0}
-              valueStyle={{ color: '#389e0d' }}
+              valueStyle={{ color: MAU.tot }}
             />
           </Card>
         </Col>
@@ -168,7 +169,7 @@ export function SerialReportsPage() {
             <Statistic
               title="Số kỳ thiếu"
               value={report.data?.totalMissingIssues ?? 0}
-              valueStyle={{ color: '#cf1322' }}
+              valueStyle={{ color: MAU.loi }}
             />
           </Card>
         </Col>

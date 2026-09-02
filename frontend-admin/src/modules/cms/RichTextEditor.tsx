@@ -16,6 +16,7 @@ import {
 } from '@ant-design/icons';
 import { cmsApi } from './api';
 import { toEmbedUrl } from './embedUrl';
+import { MAU } from '@/lib/palette';
 
 /**
  * Trình soạn thảo nội dung cho trang tĩnh và bản tin (VIII.1, VIII.2).
@@ -107,11 +108,11 @@ export function RichTextEditor({
   };
 
   return (
-    <div style={{ border: '1px solid #d9d9d9', borderRadius: 8, overflow: 'hidden' }}>
+    <div style={{ border: '1px solid ${MAU.vien}', borderRadius: 8, overflow: 'hidden' }}>
       <Space
         size={4}
         wrap
-        style={{ padding: 8, borderBottom: '1px solid #f0f0f0', background: '#fafafa' }}
+        style={{ padding: 8, borderBottom: '1px solid ${MAU.vien}', background: MAU.nenDam }}
       >
         <Tooltip title="Đậm">
           <Button size="small" icon={<BoldOutlined />} onClick={() => run('bold')} />

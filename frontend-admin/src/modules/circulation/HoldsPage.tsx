@@ -23,6 +23,7 @@ import { ApiRequestError } from '@/api/client';
 import { circulationApi } from './api';
 import { formatDate, formatDateTime, holdStatusColors, holdStatusLabels } from './labels';
 import type { HoldRowDto, HoldStatus, PendingRenewalDto } from './types';
+import { MAU } from '@/lib/palette';
 
 const statusOptions = (Object.keys(holdStatusLabels) as HoldStatus[]).map((value) => ({
   value,
@@ -243,13 +244,13 @@ export function HoldsPage() {
           <Statistic title="Tổng phiếu đang mở" value={holds.data?.totalCount ?? 0} />
         </Card>
         <Card size="small">
-          <Statistic title="Sẵn sàng nhận" value={ready.length} valueStyle={{ color: '#389e0d' }} />
+          <Statistic title="Sẵn sàng nhận" value={ready.length} valueStyle={{ color: MAU.tot }} />
         </Card>
         <Card size="small">
           <Statistic
             title="Yêu cầu gia hạn chờ duyệt"
             value={renewals.data?.length ?? 0}
-            valueStyle={{ color: (renewals.data?.length ?? 0) > 0 ? '#d46b08' : undefined }}
+            valueStyle={{ color: (renewals.data?.length ?? 0) > 0 ? MAU.luuY : undefined }}
           />
         </Card>
       </Space>

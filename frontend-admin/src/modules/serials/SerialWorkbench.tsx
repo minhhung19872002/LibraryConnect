@@ -41,6 +41,7 @@ import { saveBlob } from '@/modules/marc/api';
 import { locationsApi } from '@/modules/acquisition/api';
 import { formatDate, money } from '@/modules/acquisition/labels';
 import { serialsApi } from './api';
+import { MAU } from '@/lib/palette';
 import {
   claimStatusColors,
   claimStatusLabels,
@@ -127,7 +128,7 @@ export function SerialWorkbenchDrawer({
             </Col>
             <Col span={5}>
               <Card size="small">
-                <Statistic title="Đã nhận" value={data.receivedCount} valueStyle={{ color: '#389e0d' }} />
+                <Statistic title="Đã nhận" value={data.receivedCount} valueStyle={{ color: MAU.tot }} />
               </Card>
             </Col>
             <Col span={5}>
@@ -137,7 +138,7 @@ export function SerialWorkbenchDrawer({
             </Col>
             <Col span={5}>
               <Card size="small">
-                <Statistic title="Thiếu" value={data.missingCount} valueStyle={{ color: '#cf1322' }} />
+                <Statistic title="Thiếu" value={data.missingCount} valueStyle={{ color: MAU.loi }} />
               </Card>
             </Col>
             <Col span={4}>

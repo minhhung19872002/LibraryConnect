@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import { Button, Checkbox, Col, InputNumber, Row, Select, Space, Typography } from 'antd';
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { CARD_SOURCES, newBox, type CardBox, type CardLayout } from './cardTypes';
+import { MAU } from '@/lib/palette';
 
 /** Số điểm ảnh trên một milimét khi vẽ phích trên màn hình. */
 const SCALE = 3.2;
@@ -97,8 +98,8 @@ export function CardDesigner({ widthMm, heightMm, layout, onChange }: CardDesign
               position: 'relative',
               width: widthMm * SCALE,
               height: heightMm * SCALE,
-              border: '1px solid #d9d9d9',
-              background: '#fff',
+              border: '1px solid ${MAU.vien}',
+              background: MAU.giay,
               userSelect: 'none',
             }}
           >
@@ -110,7 +111,7 @@ export function CardDesigner({ widthMm, heightMm, layout, onChange }: CardDesign
                 top: layout.padding * SCALE,
                 width: (widthMm - 2 * layout.padding) * SCALE,
                 height: (heightMm - 2 * layout.padding) * SCALE,
-                border: '1px dashed #e0e0e0',
+                border: '1px dashed ${MAU.vien}',
                 pointerEvents: 'none',
               }}
             />
@@ -125,7 +126,7 @@ export function CardDesigner({ widthMm, heightMm, layout, onChange }: CardDesign
                   top: (layout.padding + item.y) * SCALE,
                   width: item.width * SCALE,
                   height: item.height * SCALE,
-                  border: index === selected ? '2px solid #1668dc' : '1px dashed #bfbfbf',
+                  border: index === selected ? '2px solid ${MAU.chinh}' : '1px dashed ${MAU.vienDam}',
                   background: index === selected ? 'rgba(22,104,220,0.06)' : 'rgba(0,0,0,0.02)',
                   cursor: 'move',
                   overflow: 'hidden',

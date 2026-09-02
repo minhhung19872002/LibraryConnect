@@ -1,6 +1,7 @@
 import { Empty, Table, Tooltip, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { docBieuGhiMarc, type MarcFieldView } from '../lib/marcView';
+import { MAU } from '@/lib/palette';
 
 const MONOSPACE = { fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace' };
 
@@ -63,7 +64,7 @@ export function MarcRecordTable({ marcJson }: { marcJson: string | null | undefi
           <div>
             {field.subfields.map((subfield, index) => (
               <div key={`${subfield.code}-${index}`} style={{ marginBottom: 2 }}>
-                <span style={{ ...MONOSPACE, color: '#1668dc', marginRight: 6 }}>
+                <span style={{ ...MONOSPACE, color: MAU.chinh, marginRight: 6 }}>
                   ${subfield.code}
                 </span>
                 <span>{subfield.value}</span>

@@ -25,6 +25,7 @@ import { ApiRequestError } from '@/api/client';
 import { digitalApi } from './api';
 import { accessLevelLabels } from './labels';
 import type { DigitalAccessLevel, DigitalCollectionDto, DigitalImportRowDto } from './types';
+import { MAU } from '@/lib/palette';
 
 const accessOptions = (Object.keys(accessLevelLabels) as DigitalAccessLevel[]).map((value) => ({
   value,
@@ -208,12 +209,12 @@ export function DigitalImportExportPage() {
                   <Statistic
                     title="Đạt"
                     value={summary.success}
-                    valueStyle={{ color: '#389e0d' }}
+                    valueStyle={{ color: MAU.tot }}
                   />
                   <Statistic
                     title="Lỗi"
                     value={summary.failed}
-                    valueStyle={{ color: summary.failed > 0 ? '#cf1322' : undefined }}
+                    valueStyle={{ color: summary.failed > 0 ? MAU.loi : undefined }}
                   />
                 </Space>
               )}

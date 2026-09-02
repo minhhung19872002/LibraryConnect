@@ -5,6 +5,7 @@ import { Breadcrumb, Button, Card, Col, Empty, List, Row, Space, Tag, Typography
 import { clickable } from '@/components/clickable';
 import { opacApi } from '@/api/opac';
 import type { BrowseEntry } from '@/types/api';
+import { MAU } from '@/lib/palette';
 
 const { Paragraph } = Typography;
 
@@ -201,7 +202,7 @@ export function MajorCoursesPage() {
                   {...clickable(() => setCourseId(course.id), `${course.code} — ${course.name}`)}
                   style={{
                     cursor: 'pointer',
-                    background: courseId === course.id ? '#eef6f2' : undefined,
+                    background: courseId === course.id ? MAU.chinhNhat : undefined,
                     padding: '10px 12px',
                     borderRadius: 6,
                   }}

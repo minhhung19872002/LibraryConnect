@@ -7,6 +7,7 @@ import { ResultShelf } from '@/components/ResultList';
 import { FALLBACK_LIBRARY_NAME, useSiteSettings } from '@/hooks/useSite';
 import type { HomePayload } from '@/types/api';
 import { formatDate } from '@/lib/datetime';
+import { MAU } from '@/lib/palette';
 
 const { Title, Paragraph } = Typography;
 
@@ -42,17 +43,17 @@ export function HomePage() {
 
           <div style={{ marginTop: 12 }}>
             <Space size="middle" wrap>
-              <Link to="/tra-cuu-nang-cao" style={{ color: '#fff' }}>
+              <Link to="/tra-cuu-nang-cao" style={{ color: MAU.kem }}>
                 Tra cứu nâng cao
               </Link>
-              <Link to="/duyet/chu-de" style={{ color: '#fff' }}>
+              <Link to="/duyet/chu-de" style={{ color: MAU.kem }}>
                 Duyệt theo chủ đề
               </Link>
-              <Link to="/duyet/nganh" style={{ color: '#fff' }}>
+              <Link to="/duyet/nganh" style={{ color: MAU.kem }}>
                 Tài liệu theo ngành học
               </Link>
               {settings?.showInterlibrary ? (
-                <Link to="/thu-vien-khac" style={{ color: '#fff' }}>
+                <Link to="/thu-vien-khac" style={{ color: MAU.kem }}>
                   Tìm ở thư viện khác
                 </Link>
               ) : null}

@@ -25,6 +25,7 @@ import { readerApi } from '@/api/opac';
 import { useAuthStore } from '@/stores/authStore';
 import type { DigitalDocumentRow } from '@/types/api';
 import type { DigitalFilter } from '@/types/api';
+import { MAU } from '@/lib/palette';
 import {
   MUC_TRUY_CAP,
   NHOM_DINH_DANG,
@@ -349,7 +350,7 @@ export function DigitalViewerPage() {
 
             <div
               style={{
-                background: '#f0f2f1',
+                background: MAU.nen,
                 padding: 16,
                 borderRadius: 8,
                 textAlign: 'center',

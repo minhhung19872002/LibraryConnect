@@ -28,6 +28,7 @@ import { saveBlob } from '@/modules/marc/api';
 import { circulationApi } from './api';
 import { fineTypeLabels, formatDateTime, money } from './labels';
 import type { FineRowDto, FineType } from './types';
+import { MAU } from '@/lib/palette';
 
 const typeOptions = (Object.keys(fineTypeLabels) as FineType[]).map((value) => ({
   value,
@@ -288,7 +289,7 @@ export function FinesPage() {
                 value={money(summary.data.totalOutstanding)}
                 suffix="đ còn nợ"
                 valueStyle={{
-                  color: summary.data.totalOutstanding > 0 ? '#cf1322' : '#389e0d',
+                  color: summary.data.totalOutstanding > 0 ? MAU.loi : MAU.tot,
                   fontSize: 20,
                 }}
               />

@@ -3,6 +3,7 @@ import { App, Alert, Button, Modal, Slider, Space, Upload } from 'antd';
 import { CameraOutlined, UploadOutlined } from '@ant-design/icons';
 import type { UploadProps } from 'antd';
 import { readersApi } from './api';
+import { MAU } from '@/lib/palette';
 
 interface ReaderPhotoCaptureProps {
   readerId: string;
@@ -146,6 +147,8 @@ export function ReaderPhotoCapture({ readerId, open, onClose, onSaved }: ReaderP
       return;
     }
 
+    // Nền ảnh thẻ phải trắng thật: đây là ảnh sẽ in lên thẻ nhựa, không phải một khối
+    // trên màn hình.
     context.fillStyle = '#FFFFFF';
     context.fillRect(0, 0, OUTPUT_WIDTH, OUTPUT_HEIGHT);
 
@@ -210,6 +213,7 @@ export function ReaderPhotoCapture({ readerId, open, onClose, onSaved }: ReaderP
               ref={videoRef}
               width={FRAME_WIDTH}
               height={FRAME_HEIGHT}
+              // Nền khung xem trực tiếp để đen thật, cho khuôn mặt nổi lên trước khi bấm chụp.
               style={{ objectFit: 'cover', background: '#000', borderRadius: 4 }}
               muted
               playsInline
@@ -229,10 +233,10 @@ export function ReaderPhotoCapture({ readerId, open, onClose, onSaved }: ReaderP
                 height: FRAME_HEIGHT,
                 overflow: 'hidden',
                 position: 'relative',
-                border: '1px solid #d9d9d9',
+                border: `1px solid ${MAU.vien}`,
                 borderRadius: 4,
                 cursor: 'move',
-                background: '#fafafa',
+                background: MAU.nenDam,
               }}
               onPointerDown={(event) => {
                 dragRef.current = { x: event.clientX - offset.x, y: event.clientY - offset.y };
@@ -277,7 +281,7 @@ export function ReaderPhotoCapture({ readerId, open, onClose, onSaved }: ReaderP
               />
             </Space>
 
-            <span style={{ color: '#8c8c8c', fontSize: 12 }}>
+            <span style={{ color: MAU.chuMo, fontSize: 12 }}>
               Kéo ảnh để chỉnh khuôn mặt vào giữa khung 3×4.
             </span>
           </Space>

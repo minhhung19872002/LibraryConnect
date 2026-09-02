@@ -35,6 +35,7 @@ import { usePagedQuery } from '@/hooks/usePagedQuery';
 import { messages } from '@/i18n/messages';
 import { downloadFile, formatBytes, formatDateTime } from './helpers';
 import type { BackupJob, BackupStorage, BackupType } from './types';
+import { MAU } from '@/lib/palette';
 
 /**
  * Phân hệ I.5 — sao lưu và phục hồi.
@@ -236,7 +237,7 @@ export function BackupsPage() {
             <Statistic
               title="Sao lưu tự động"
               value={storage.data?.autoEnabled ? 'Đang bật' : 'Đang tắt'}
-              valueStyle={{ color: storage.data?.autoEnabled ? '#389e0d' : '#8c8c8c' }}
+              valueStyle={{ color: storage.data?.autoEnabled ? MAU.tot : MAU.chuMo }}
             />
             <Typography.Text type="secondary" className="lc-mono">
               Lịch: {storage.data?.scheduleCron ?? '—'}
@@ -400,7 +401,7 @@ function RestoreModal({
       open
       title={
         <Space>
-          <ExclamationCircleFilled style={{ color: '#faad14' }} />
+          <ExclamationCircleFilled style={{ color: MAU.luuY }} />
           Phục hồi cơ sở dữ liệu
         </Space>
       }

@@ -40,6 +40,7 @@ import type { CatalogItem } from '@/modules/catalogs/types';
 import { cmsApi } from './api';
 import { RichTextEditor } from './RichTextEditor';
 import type { CmsNewsRow } from './types';
+import { MAU } from '@/lib/palette';
 
 /**
  * VIII.2 — Quản lý tin tức và sự kiện.
@@ -146,7 +147,7 @@ function NewsTab() {
         url ? (
           <img src={url} alt="" style={{ width: 84, height: 52, objectFit: 'cover', borderRadius: 4 }} />
         ) : (
-          <span style={{ color: '#999' }}>—</span>
+          <span style={{ color: MAU.chuMo }}>—</span>
         ),
     },
     { title: 'Tiêu đề', dataIndex: 'title', width: 320 },

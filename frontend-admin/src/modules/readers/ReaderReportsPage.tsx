@@ -42,6 +42,7 @@ import { saveBlob } from '@/modules/marc/api';
 import { useCatalogOptions, toOptions } from '@/modules/cataloging/useCatalogOptions';
 import { readersApi } from './api';
 import { dimensionLabels, formatDate, groupingLabels, readerStatusLabels } from './labels';
+import { MAU, MAU_BIEU_DO, mauBieuDo } from '@/lib/palette';
 import type {
   ExpiringCardRowDto,
   ReaderActivityRowDto,
@@ -69,7 +70,15 @@ const kindCodes: Record<ReportKind, number> = {
   activity: 3,
 };
 
-const chartColors = ['#1677ff', '#52c41a', '#faad14', '#f5222d', '#722ed1', '#13c2c2', '#eb2f96'];
+/*
+ * Màu của biểu đồ phân loại.
+ *
+ * Dùng thẳng dải màu biểu đồ, **không** trộn màu ngữ nghĩa vào. Lấy `MAU.chinh` và `MAU.tot` làm
+ * hai màu đầu là sai hai lần: chúng là hai sắc xanh rêu gần nhau nên hai mảng cạnh nhau trong biểu
+ * đồ tròn không phân biệt được, mà chúng còn *mang nghĩa* — xanh lá là "tốt", đỏ là "hỏng" — trong
+ * khi ở đây chúng chỉ đang đánh dấu loại bạn đọc hay dạng tài liệu, không có gì tốt xấu.
+ */
+const chartColors = MAU_BIEU_DO;
 
 /**
  * VI.5 — Báo cáo thống kê bạn đọc.
@@ -450,14 +459,14 @@ export function ReaderReportsPage() {
                     type="monotone"
                     dataKey="newReaders"
                     name="Đăng ký mới"
-                    stroke="#1677ff"
+                    stroke={mauBieuDo(2)}
                     strokeWidth={2}
                   />
                   <Line
                     type="monotone"
                     dataKey="cumulative"
                     name="Cộng dồn"
-                    stroke="#52c41a"
+                    stroke={mauBieuDo(5)}
                     strokeWidth={2}
                   />
                 </LineChart>
@@ -486,7 +495,7 @@ export function ReaderReportsPage() {
                 <Statistic
                   title="Thẻ đã hết hạn"
                   value={expiring.data?.expiredCount ?? 0}
-                  valueStyle={{ color: '#cf1322' }}
+                  valueStyle={{ color: MAU.loi }}
                 />
               </Card>
             </Col>
@@ -495,7 +504,7 @@ export function ReaderReportsPage() {
                 <Statistic
                   title={`Hết hạn trong ${withinDays} ngày tới`}
                   value={expiring.data?.expiringCount ?? 0}
-                  valueStyle={{ color: '#d46b08' }}
+                  valueStyle={{ color: MAU.luuY }}
                 />
               </Card>
             </Col>
@@ -504,7 +513,7 @@ export function ReaderReportsPage() {
                 <Statistic
                   title="Thẻ còn hạn dài"
                   value={expiring.data?.validCount ?? 0}
-                  valueStyle={{ color: '#389e0d' }}
+                  valueStyle={{ color: MAU.tot }}
                 />
               </Card>
             </Col>
@@ -534,7 +543,7 @@ export function ReaderReportsPage() {
                   <XAxis dataKey="fullName" interval={0} angle={-25} textAnchor="end" height={90} />
                   <YAxis allowDecimals={false} />
                   <Tooltip />
-                  <Bar dataKey="loanCount" name="Lượt mượn" fill="#1677ff" />
+                  <Bar dataKey="loanCount" name="Lượt mượn" fill={mauBieuDo(2)} />
                 </BarChart>
               </ResponsiveContainer>
             </Card>

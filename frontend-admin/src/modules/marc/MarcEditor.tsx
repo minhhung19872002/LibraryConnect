@@ -47,6 +47,7 @@ import {
   updateSubfield,
 } from './marcRecord';
 import { LeaderEditor } from './LeaderEditor';
+import { MAU } from '@/lib/palette';
 
 interface MarcEditorProps {
   record: MarcRecord;
@@ -324,10 +325,10 @@ function DataFieldRow({
   return (
     <div
       style={{
-        border: `1px solid ${hasError ? '#ffa39e' : '#f0f0f0'}`,
+        border: `1px solid ${hasError ? MAU.loiVien : MAU.vien}`,
         borderRadius: 6,
         padding: 10,
-        background: hasError ? '#fff2f0' : undefined,
+        background: hasError ? MAU.loiNhat : undefined,
       }}
     >
       <Space align="center" wrap style={{ marginBottom: 8 }}>

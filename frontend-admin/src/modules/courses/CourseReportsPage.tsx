@@ -19,6 +19,7 @@ import type { PagedResult } from '@/types/api';
 import type { CatalogItem } from '@/modules/catalogs/types';
 import { coursesApi } from './api';
 import { downloadFile } from '@/api/download';
+import { MAU } from '@/lib/palette';
 
 /**
  * X.3 — Ba báo cáo của phân hệ tài liệu môn học.
@@ -118,7 +119,7 @@ export function CourseReportsPage() {
                                 key={row.name}
                                 // Dưới một nửa số môn có tài liệu là mức cần bổ sung gấp; đỏ để cán
                                 // bộ nhìn biểu đồ là thấy ngay ngành nào đang thiếu.
-                                fill={row.percent >= 80 ? '#52c41a' : row.percent >= 50 ? '#faad14' : '#ff4d4f'}
+                                fill={row.percent >= 80 ? MAU.tot : row.percent >= 50 ? MAU.luuY : MAU.loi}
                               />
                             ))}
                           </Bar>
@@ -237,7 +238,7 @@ export function CourseReportsPage() {
         <Col span={24}>
           <Card size="small">
             <Space direction="vertical" size={4}>
-              <span style={{ color: '#888' }}>
+              <span style={{ color: MAU.chuMo }}>
                 Cột <b>Bản rảnh</b> ở thẻ cuối tô đỏ khi số bản còn rảnh ít hơn số môn đang dùng
                 chung cuốn đó — đây là chỗ thư viện cần bổ sung thêm bản.
               </span>

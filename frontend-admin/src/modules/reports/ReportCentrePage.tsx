@@ -23,6 +23,7 @@ import { reportsApi } from './api';
 import { REPORT_CATALOGUE } from './reportCatalogue';
 import { formatMetric, type OverviewBreakdownRow, type OverviewMetric } from './types';
 import { downloadFile } from '@/api/download';
+import { mauBieuDo } from '@/lib/palette';
 
 const { RangePicker } = DatePicker;
 
@@ -164,21 +165,21 @@ export function ReportCentrePage() {
                           type="monotone"
                           dataKey="loans"
                           name="Lượt mượn"
-                          stroke="#1668dc"
+                          stroke={mauBieuDo(2)}
                           strokeWidth={2}
                         />
                         <Line
                           type="monotone"
                           dataKey="acquisitions"
                           name="Bản nhập kho"
-                          stroke="#52c41a"
+                          stroke={mauBieuDo(5)}
                           strokeWidth={2}
                         />
                         <Line
                           type="monotone"
                           dataKey="newReaders"
                           name="Thẻ mới"
-                          stroke="#faad14"
+                          stroke={mauBieuDo(7)}
                           strokeWidth={2}
                         />
                       </LineChart>
@@ -218,7 +219,7 @@ export function ReportCentrePage() {
                             <XAxis dataKey="label" />
                             <YAxis allowDecimals={false} />
                             <ChartTooltip formatter={(value: number) => [value.toLocaleString('vi-VN'), 'Bản in']} />
-                            <Bar dataKey="count" name="Bản in" fill="#1668dc" />
+                            <Bar dataKey="count" name="Bản in" fill={mauBieuDo(2)} />
                           </BarChart>
                         </ResponsiveContainer>
                       </div>

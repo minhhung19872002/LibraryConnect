@@ -42,6 +42,7 @@ import { useCatalogOptions, toOptions } from '@/modules/cataloging/useCatalogOpt
 import { readersApi } from './api';
 import { ReaderDetailDrawer } from './ReaderDetailDrawer';
 import { useReaderPhoto } from './useReaderPhoto';
+import { MAU } from '@/lib/palette';
 import {
   describeExpiry,
   formatDate,
@@ -889,7 +890,7 @@ function ReaderAvatar({ reader }: { reader: ReaderDto }) {
   const photo = useReaderPhoto(reader.id, Boolean(reader.photoUrl));
 
   return (
-    <Avatar shape="square" size={40} src={photo} style={{ backgroundColor: '#1677ff' }}>
+    <Avatar shape="square" size={40} src={photo} style={{ backgroundColor: MAU.chinh }}>
       {initials(reader.fullName)}
     </Avatar>
   );

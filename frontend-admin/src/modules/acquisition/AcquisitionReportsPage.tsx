@@ -26,6 +26,7 @@ import { saveBlob } from '@/modules/marc/api';
 import { useCatalogOptions, toOptions } from '@/modules/cataloging/useCatalogOptions';
 import { acqReportsApi, locationsApi } from './api';
 import { acquisitionTypeLabels, formatDate, money, orderStatusLabels } from './labels';
+import { MAU } from '@/lib/palette';
 import type {
   AcquisitionReportFilter,
   AcquisitionStatRowDto,
@@ -248,7 +249,7 @@ export function AcquisitionReportsPage() {
                       <Statistic
                         title="Sẵn sàng cho mượn"
                         value={overview.data?.availableItems ?? 0}
-                        valueStyle={{ color: '#389e0d' }}
+                        valueStyle={{ color: MAU.tot }}
                       />
                     </Card>
                   </Col>
@@ -546,7 +547,7 @@ export function AcquisitionReportsPage() {
                       <Statistic
                         title="Đã duyệt"
                         value={approval.data?.approvedRequests ?? 0}
-                        valueStyle={{ color: '#389e0d' }}
+                        valueStyle={{ color: MAU.tot }}
                       />
                     </Card>
                   </Col>
@@ -555,7 +556,7 @@ export function AcquisitionReportsPage() {
                       <Statistic
                         title="Từ chối"
                         value={approval.data?.rejectedRequests ?? 0}
-                        valueStyle={{ color: '#cf1322' }}
+                        valueStyle={{ color: MAU.loi }}
                       />
                     </Card>
                   </Col>

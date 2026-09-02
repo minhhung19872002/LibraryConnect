@@ -34,6 +34,7 @@ import { saveBlob } from '@/modules/marc/api';
 import { useCatalogOptions, toOptions } from '@/modules/cataloging/useCatalogOptions';
 import { readersApi } from './api';
 import { duplicateActionOptions, formatDateTime, importFieldLabels } from './labels';
+import { MAU } from '@/lib/palette';
 import type {
   ReaderImportBatchDto,
   ReaderImportDuplicateAction,
@@ -387,14 +388,14 @@ export function ReaderImportPage() {
               <Statistic
                 title="Sẵn sàng nhập"
                 value={preview.validRows}
-                valueStyle={{ color: '#389e0d' }}
+                valueStyle={{ color: MAU.tot }}
               />
             </Col>
             <Col span={6}>
               <Statistic
                 title="Dòng lỗi"
                 value={preview.errorRows}
-                valueStyle={{ color: preview.errorRows > 0 ? '#cf1322' : undefined }}
+                valueStyle={{ color: preview.errorRows > 0 ? MAU.loi : undefined }}
               />
             </Col>
           </Row>

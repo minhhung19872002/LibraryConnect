@@ -33,6 +33,7 @@ import { saveBlob } from '@/modules/marc/api';
 import { useReaderPhoto } from '@/modules/readers/useReaderPhoto';
 import { initials } from '@/modules/readers/labels';
 import { circulationApi } from './api';
+import { MAU } from '@/lib/palette';
 import {
   beep,
   describeDue,
@@ -461,7 +462,7 @@ export function CirculationDeskPage() {
                       shape="square"
                       size={64}
                       src={photo}
-                      style={{ backgroundColor: '#1677ff' }}
+                      style={{ backgroundColor: MAU.chinh }}
                     >
                       {initials(reader.fullName)}
                     </Avatar>
@@ -487,14 +488,14 @@ export function CirculationDeskPage() {
                       <Statistic
                         title="Còn mượn được"
                         value={Math.max(0, reader.remainingQuota)}
-                        valueStyle={{ color: reader.remainingQuota > 0 ? '#389e0d' : '#cf1322' }}
+                        valueStyle={{ color: reader.remainingQuota > 0 ? MAU.tot : MAU.loi }}
                       />
                     </Col>
                     <Col span={8}>
                       <Statistic
                         title="Nợ phí"
                         value={money(reader.outstandingFines)}
-                        valueStyle={{ color: reader.outstandingFines > 0 ? '#cf1322' : undefined }}
+                        valueStyle={{ color: reader.outstandingFines > 0 ? MAU.loi : undefined }}
                       />
                     </Col>
                   </Row>

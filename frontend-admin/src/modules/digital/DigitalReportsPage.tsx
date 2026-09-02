@@ -41,6 +41,7 @@ import { ApiRequestError } from '@/api/client';
 import { saveBlob } from '@/modules/marc/api';
 import { digitalApi } from './api';
 import { formatGroupLabels, formatSize } from './labels';
+import { MAU, MAU_BIEU_DO, mauBieuDo } from '@/lib/palette';
 import type {
   DigitalCollectionDto,
   DigitalCountRowDto,
@@ -58,7 +59,15 @@ const kindIndex: Record<ReportKind, number> = {
   requests: 3,
 };
 
-const chartColors = ['#1677ff', '#52c41a', '#faad14', '#f5222d', '#722ed1', '#13c2c2', '#eb2f96'];
+/*
+ * Màu của biểu đồ phân loại.
+ *
+ * Dùng thẳng dải màu biểu đồ, **không** trộn màu ngữ nghĩa vào. Lấy `MAU.chinh` và `MAU.tot` làm
+ * hai màu đầu là sai hai lần: chúng là hai sắc xanh rêu gần nhau nên hai mảng cạnh nhau trong biểu
+ * đồ tròn không phân biệt được, mà chúng còn *mang nghĩa* — xanh lá là "tốt", đỏ là "hỏng" — trong
+ * khi ở đây chúng chỉ đang đánh dấu loại bạn đọc hay dạng tài liệu, không có gì tốt xấu.
+ */
+const chartColors = MAU_BIEU_DO;
 
 /**
  * V.4 — Bốn báo cáo thống kê tài liệu số. Mỗi báo cáo đều có bảng, biểu đồ và hai nút xuất tệp,
@@ -238,7 +247,7 @@ export function DigitalReportsPage() {
                     <Statistic
                       title="Tìm được toàn văn"
                       value={inventory.data.withText}
-                      valueStyle={{ color: '#389e0d' }}
+                      valueStyle={{ color: MAU.tot }}
                     />
                   </Card>
                   <Card size="small">
@@ -292,7 +301,7 @@ export function DigitalReportsPage() {
                       />
                       <YAxis allowDecimals={false} />
                       <Tooltip />
-                      <Bar dataKey="count" name="Số tài liệu" fill="#1677ff" />
+                      <Bar dataKey="count" name="Số tài liệu" fill={mauBieuDo(2)} />
                     </BarChart>
                   </ResponsiveContainer>
                 </Card>
@@ -323,8 +332,8 @@ export function DigitalReportsPage() {
                       <YAxis allowDecimals={false} />
                       <Tooltip />
                       <Legend />
-                      <Line type="monotone" dataKey="views" name="Lượt xem" stroke="#1677ff" />
-                      <Line type="monotone" dataKey="downloads" name="Lượt tải" stroke="#52c41a" />
+                      <Line type="monotone" dataKey="views" name="Lượt xem" stroke={mauBieuDo(2)} />
+                      <Line type="monotone" dataKey="downloads" name="Lượt tải" stroke={mauBieuDo(5)} />
                     </LineChart>
                   </ResponsiveContainer>
                 </Card>
@@ -411,14 +420,14 @@ export function DigitalReportsPage() {
                     <Statistic
                       title="Chờ duyệt"
                       value={requests.data.pending}
-                      valueStyle={{ color: requests.data.pending > 0 ? '#d46b08' : undefined }}
+                      valueStyle={{ color: requests.data.pending > 0 ? MAU.luuY : undefined }}
                     />
                   </Card>
                   <Card size="small">
                     <Statistic
                       title="Đã duyệt"
                       value={requests.data.approved}
-                      valueStyle={{ color: '#389e0d' }}
+                      valueStyle={{ color: MAU.tot }}
                     />
                   </Card>
                   <Card size="small">
@@ -441,8 +450,8 @@ export function DigitalReportsPage() {
                       <YAxis allowDecimals={false} />
                       <Tooltip />
                       <Legend />
-                      <Bar dataKey="views" name="Đã duyệt" fill="#52c41a" />
-                      <Bar dataKey="downloads" name="Từ chối" fill="#f5222d" />
+                      <Bar dataKey="views" name="Đã duyệt" fill={mauBieuDo(5)} />
+                      <Bar dataKey="downloads" name="Từ chối" fill={mauBieuDo(1)} />
                     </BarChart>
                   </ResponsiveContainer>
                 </Card>

@@ -25,6 +25,7 @@ import { Can } from '@/components/PermissionGate';
 import { PERMISSIONS } from '@/api/permissions';
 import { ApiRequestError } from '@/api/client';
 import { digitalApi } from './api';
+import { MAU } from '@/lib/palette';
 import {
   accessActionLabels,
   formatDate,
@@ -280,7 +281,7 @@ export function DigitalRequestsPage() {
           <Statistic
             title="Đang chờ duyệt"
             value={pending.data?.totalCount ?? 0}
-            valueStyle={{ color: (pending.data?.totalCount ?? 0) > 0 ? '#d46b08' : undefined }}
+            valueStyle={{ color: (pending.data?.totalCount ?? 0) > 0 ? MAU.luuY : undefined }}
           />
         </Card>
         <Card size="small">

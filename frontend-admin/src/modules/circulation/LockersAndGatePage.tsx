@@ -31,6 +31,7 @@ import {
   lockerStatusLabels,
 } from './labels';
 import type { GateScanResultDto, LockerRowDto, LockerStatus, VisitRowDto } from './types';
+import { MAU } from '@/lib/palette';
 
 /**
  * VII.2 và VII.3 — Ghi nhận ra vào thư viện và quản lý tủ gửi đồ.
@@ -193,7 +194,7 @@ export function LockersAndGatePage() {
                       <Statistic
                         title="Tủ trống"
                         value={lockers.data?.free ?? 0}
-                        valueStyle={{ color: '#389e0d' }}
+                        valueStyle={{ color: MAU.tot }}
                       />
                     </Card>
                   </Col>
@@ -207,7 +208,7 @@ export function LockersAndGatePage() {
                       <Statistic
                         title="Quá giờ chưa trả"
                         value={lockers.data?.overdue ?? 0}
-                        valueStyle={{ color: (lockers.data?.overdue ?? 0) > 0 ? '#cf1322' : undefined }}
+                        valueStyle={{ color: (lockers.data?.overdue ?? 0) > 0 ? MAU.loi : undefined }}
                       />
                     </Card>
                   </Col>
@@ -260,9 +261,9 @@ export function LockersAndGatePage() {
                           width: 84,
                           height: 64,
                           borderRadius: 6,
-                          border: locker.overdue ? '2px solid #cf1322' : '1px solid #d9d9d9',
+                          border: locker.overdue ? '2px solid ${MAU.loi}' : '1px solid ${MAU.vien}',
                           background: lockerStatusColors[locker.status as LockerStatus],
-                          color: '#fff',
+                          color: MAU.giay,
                           cursor: locker.status === 'Broken' ? 'not-allowed' : 'pointer',
                           display: 'flex',
                           flexDirection: 'column',

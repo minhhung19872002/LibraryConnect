@@ -52,14 +52,14 @@ huống lỗi; phải tự tay dựng đúng bối cảnh ấy trong phép thử
 
 ```bash
 cd backend  && dotnet test                 # 563 unit + 366 integration
-cd frontend-admin && npx tsc -b && npx vitest run    # 200 test
-cd frontend-opac  && npx tsc -b && npx vitest run    #  77 test
+cd frontend-admin && npx tsc -b && npx vitest run    # 210 test
+cd frontend-opac  && npx tsc -b && npx vitest run    #  84 test
 ```
 
 > `npx tsc --noEmit` **không kiểm gì cả** ở hai thư mục frontend: `tsconfig.json` là tệp solution
 > rỗng chỉ trỏ tới hai tsconfig con. Luôn dùng `npx tsc -b`.
 
-**Chín phép thử quét mã nguồn** chặn cả một lớp lỗi thay vì chặn một chỗ. Đừng bỏ chúng đi khi thấy
+**Mười một phép thử quét mã nguồn** chặn cả một lớp lỗi thay vì chặn một chỗ. Đừng bỏ chúng đi khi thấy
 vướng — mỗi cái sinh ra từ một lỗi đã xảy ra thật:
 
 | Phép thử | Luật |
@@ -75,6 +75,7 @@ vướng — mỗi cái sinh ra từ một lỗi đã xảy ra thật:
 | `frontend-*/src/styles.test.ts` | Mọi lớp `lc-*` gắn vào phần tử phải có kiểu, và mọi luật khai ra phải có người dùng — bảy lớp từng được gắn mà chưa bao giờ có kiểu, nên hàng đang chọn ở Quản lý kho không sáng lên suốt mấy phase |
 | `frontend-*/src/theme.test.ts` | Token của `theme.ts` phải trùng biến `--lc-*` của `styles.css`, và `index.html` phải tải thật hai bộ chữ |
 | `frontend-*/src/theme.test.ts` (phần WCAG) | 16 cặp màu của bảng màu phải đạt ngưỡng tương phản mục 6.6 |
+| `frontend-*/src/lib/palette.test.ts` | Không viết mã màu thẳng trong TSX — màu viết thẳng không đi qua token nào, nên đổi thiết kế xong 130 chỗ vẫn giữ màu cũ. Sáu chỗ ngoại lệ là thứ đi ra máy in, không phải màn hình |
 
 > Một phép thử quét mã nguồn chỉ chặn đúng thư mục nó quét. Thêm luật mới thì hỏi ngay: gói kia có
 > vi phạm cùng luật ấy không? Lỗi D8 sửa cho `frontend-admin` rồi ghi là "cả sản phẩm", nhưng
@@ -145,7 +146,14 @@ docker compose run --rm -d --name lc-api-kiem -e LC_DB_NAME=lc_kiem -e LC_SEED_D
     `20260902100000` sửa trường 300 sạch sẽ nhưng bỏ quên cột `pages`, nên 4.624 biểu ghi vẫn hiện
     "Mô tả vật lý: application/pdf" cho bạn đọc suốt từ đó. Đây đúng là bài học số 8 ở trên, tự mình
     vi phạm lại.
-17. **Bảng màu nền giấy dễ trượt tương phản.** Nền không phải trắng nên mọi cặp màu tối đi một chút
+17. **Màu viết thẳng trong TSX không đi qua token nào.** Áp thiết kế qua `ConfigProvider` là hơn
+    trăm màn hình đổi theo cùng lúc — trừ 130 chỗ viết `'#1677ff'` thẳng vào `valueStyle` và vào
+    `fill` của Recharts. Chúng nằm ngoài mọi token, đổi thiết kế xong vẫn nguyên màu cũ. Dùng
+    `lib/palette.ts`, và có phép thử cấm viết mã màu thẳng.
+18. **Màu ngữ nghĩa không dùng làm màu phân loại được.** Xanh lá là "tốt", đỏ là "hỏng" — đem chúng
+    tô biểu đồ loại bạn đọc là gán nghĩa không có thật, mà hai sắc xanh trong bảng lại gần nhau nên
+    hai mảng cạnh nhau còn không phân biệt được. Hai dải riêng.
+19. **Bảng màu nền giấy dễ trượt tương phản.** Nền không phải trắng nên mọi cặp màu tối đi một chút
     so với lúc chọn trên nền trắng, mà mắt không đo được. Một cặp đã trượt xuống 4,14:1. Đo bằng
     phép thử, đừng nhìn.
 

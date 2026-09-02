@@ -36,6 +36,7 @@ import { useCatalogOptions, toOptions } from '@/modules/cataloging/useCatalogOpt
 import { readersApi } from './api';
 import { ReaderPhotoCapture } from './ReaderPhotoCapture';
 import { useReaderPhoto } from './useReaderPhoto';
+import { MAU } from '@/lib/palette';
 import {
   describeExpiry,
   formatDate,
@@ -375,7 +376,7 @@ export function ReaderDetailDrawer({
                         shape="square"
                         size={120}
                         src={photo}
-                        style={{ backgroundColor: '#1677ff', fontSize: 36 }}
+                        style={{ backgroundColor: MAU.chinh, fontSize: 36 }}
                       >
                         {initials(detail.fullName)}
                       </Avatar>

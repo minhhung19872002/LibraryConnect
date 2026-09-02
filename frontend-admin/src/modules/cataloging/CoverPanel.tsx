@@ -75,7 +75,7 @@ export function CoverPanel({
             aspectRatio: '2 / 3',
             objectFit: 'cover',
             borderRadius: 6,
-            border: '1px solid #f0f0f0',
+            border: '1px solid ${MAU.vien}',
           }}
         />
 

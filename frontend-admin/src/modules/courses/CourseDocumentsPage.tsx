@@ -43,6 +43,7 @@ import {
   type CourseRow,
 } from './types';
 import { downloadFile } from '@/api/download';
+import { MAU } from '@/lib/palette';
 
 const { Paragraph } = Typography;
 
@@ -320,7 +321,7 @@ export function CourseDocumentsPage() {
                     cursor: 'pointer',
                     padding: '10px 12px',
                     borderRadius: 6,
-                    background: selected?.id === course.id ? '#e6f4ff' : undefined,
+                    background: selected?.id === course.id ? MAU.chinhNhat : undefined,
                   }}
                 >
                   <List.Item.Meta
@@ -422,7 +423,7 @@ export function CourseDocumentsPage() {
                           cursor: 'pointer',
                           padding: '8px 12px',
                           borderRadius: 6,
-                          background: picked ? '#f6ffed' : undefined,
+                          background: picked ? MAU.totNhat : undefined,
                         }}
                       >
                         <List.Item.Meta

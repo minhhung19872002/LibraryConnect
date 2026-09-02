@@ -44,6 +44,7 @@ import { ApiRequestError } from '@/api/client';
 import { saveBlob } from '@/modules/marc/api';
 import { useCatalogOptions, toOptions } from '@/modules/cataloging/useCatalogOptions';
 import { locationsApi, stockApi } from './api';
+import { MAU } from '@/lib/palette';
 import {
   acquisitionTypeLabels,
   disposalTypes,
@@ -433,7 +434,7 @@ export function StockItemsPage() {
                 setFilter(next);
                 setPage((current) => ({ ...current, page: 1 }));
               }}
-              style={filter.status === card.status ? { borderColor: '#1677ff' } : undefined}
+              style={filter.status === card.status ? { borderColor: MAU.chinh } : undefined}
             >
               <Statistic title={card.title} value={card.value ?? 0} />
             </Card>

@@ -153,7 +153,7 @@ học Tài nguyên và Môi trường Thành phố Hồ Chí Minh"*. Dấu hai c
 
 Đợt này không đi rà lỗi — việc chính là áp một bản thiết kế mới (nền giấy ngà, xanh rêu, chữ có
 chân Lora cho tiêu đề) vào cả hai ứng dụng. Nhưng cứ mỗi lần **đo** thay vì nhìn ảnh chụp là lại ra
-một lỗi, và bốn trong bảy lỗi dưới đây có từ các phase trước chứ không phải mới sinh ra.
+một lỗi, và năm trong chín lỗi dưới đây có từ các phase trước chứ không phải mới sinh ra.
 
 Bài học chung của cả bảng: **ảnh chụp màn hình không phải bằng chứng.** Một phần tử thiếu hẳn kiểu
 vẫn hiện ra, chỉ là hiện trần; nhìn thì thấy "hơi nhạt", phải `getComputedStyle` mới thấy nền của
@@ -168,6 +168,8 @@ nó là `rgba(0, 0, 0, 0)`.
 | G5 | Quản trị → Quản trị nội dung | Khung soạn thảo tin tức và trang tĩnh (`contentEditable`) không viền, không nền, không con trỏ trước khi bấm vào — nhìn hệt một khoảng trắng, người dùng không biết gõ vào đâu. Lớp `lc-editor` chưa có kiểu | Quản trị nội dung → Tin tức → Thêm mới | Vừa | Giao diện | Đã sửa — viền và nền giấy như mọi ô nhập khác, sáng viền khi đang gõ |
 | G6 | Quản trị → Quản lý kho → Bản đồ kho | Ô giá trống trên lưới bản đồ không vẽ gì nên lẫn với nền trang, cái lưới mất hình dạng, nhìn không ra kho có mấy hàng mấy cột. Hai lớp `lc-shelf-cell` và `lc-shelf-cell-empty` chưa có kiểu | Bổ sung → Quản lý kho → Giá và bản đồ kho | Nhẹ | Giao diện | Đã sửa — ô trống có viền đứt và nền kẻ chéo mờ. **Chưa nhìn tận mắt được**: bộ dữ liệu hiện tại chưa giá nào đặt vị trí hàng/cột nên bản đồ không vẽ ra. Chỉ chốt được bằng phép thử quét mã nguồn |
 | G7 | Quản trị → thanh trên | Huy hiệu tình trạng máy chủ cao **66 px** trong một thanh cao 58 px, thành một vệt bầu dục to hơn cả thanh. Nguyên nhân: Ant Design đặt `line-height` của thanh trên bằng đúng chiều cao thanh, huy hiệu thừa kế con số ấy, cộng lề trong thành 66 px, mà `border-radius: 999px` biến nó thành hình viên thuốc khổng lồ | Đăng nhập giao diện quản trị, nhìn góc phải thanh trên | Nhẹ | Giao diện | Đã sửa — khai lại `line-height` cho riêng huy hiệu |
+| G8 | 32 màn hình của giao diện quản trị + 4 của trang tra cứu | Áp xong bản thiết kế mà **130 chỗ trong 33 màu** vẫn giữ nguyên bảng màu mặc định của Ant Design, vì chúng viết màu **thẳng trong TSX** nên không đi qua token nào: cả trang báo cáo đầy biểu đồ xanh dương `#1677ff` giữa một sản phẩm đã chuyển hẳn sang xanh rêu trên nền giấy. Hai trong số đó còn **trượt tương phản** ngay từ trước: xanh `#52c41a` trên nền giấy chỉ đạt **2,23:1** và cam `#faad14` đạt **1,87:1** — dưới cả ngưỡng 3:1 của chữ cỡ lớn, mà chúng đang là màu con số thống kê | Lưu thông → Báo cáo lưu thông; Bạn đọc → Báo cáo bạn đọc | Nặng | Giao diện | Đã sửa — dựng `lib/palette.ts` cho ba loại chỗ không đi qua Ant Design được (`valueStyle` của `Statistic`, `fill`/`stroke` của Recharts, vài khối tự vẽ), thay hết 130 chỗ, kèm phép thử cấm viết mã màu thẳng trong TSX |
+| G9 | Ba trang báo cáo | Biểu đồ tròn lấy **màu ngữ nghĩa** làm màu phân loại: `MAU.chinh` và `MAU.tot` là hai sắc xanh rêu gần nhau nên hai mảng cạnh nhau không phân biệt được, mà chúng còn *mang nghĩa* — xanh lá "tốt", đỏ "hỏng" — trong khi ở đây chỉ đang đánh dấu loại bạn đọc, chẳng có gì tốt xấu | Bạn đọc → Báo cáo bạn đọc → Số lượng bạn đọc | Nhẹ | Giao diện | Đã sửa — biểu đồ phân loại dùng dải 12 sắc riêng, đo lại: 5 mảng ra 5 sắc khác hẳn nhau |
 
 ### Ba lỗi tự mình gây ra ngay trong đợt này
 
@@ -190,19 +192,22 @@ Ghi thẳng, không bào chữa:
 | Hai bộ chữ có thật sự hiện không | Đo bề rộng cùng một chuỗi bằng ba phông: Be Vietnam Pro 441,8 px · Arial 415,9 px · Lora 431,8 px · serif 388,4 px — khác nhau rõ ở **cả hai** ứng dụng, nên cả hai phông đều đã tải và đang dùng |
 | Độ tương phản WCAG AA | 19 cặp màu, **18 đạt**. Một cặp trượt: chữ thẻ `#7a6f5f` trên nền thẻ `#f1ebdd` chỉ được **4,14:1** (cần 4,5:1) — nhìn thì vẫn đọc được, mà thẻ đang mang thông tin thật (dạng tài liệu, ngôn ngữ, trạng thái bản in). Đã đổi sang `#6e6252`, đạt 5,00:1 |
 | Lớp `lc-*` gắn vào phần tử mà thiếu kiểu | 7 lớp (1 mới, 6 có từ trước) → 0 |
+| Màu viết thẳng trong TSX, không qua token | 130 chỗ / 33 màu → **6 chỗ**, và cả sáu đều có lý do ghi rõ: nền thẻ nhựa và nền ảnh thẻ phải trắng thật (thẻ in trên phôi trắng), vạch mã vạch phải gần đen tuyệt đối (máy quét đọc theo độ tương phản), màu chữ mặc định trong ô mẫu thẻ là mực in, nền khung máy ảnh để đen cho khuôn mặt nổi lên |
+| Dải 12 màu biểu đồ trên nền giấy | thấp nhất 7,32:1 — cả dải đạt |
 | Luật CSS khai ra rồi bỏ đấy | 1 (`lc-cover--placeholder`, sót lại từ đợt chuyển bìa thay thế sang cho máy chủ dựng) → 0 |
 | Chữ bị cắt trên 15 màn hình | 0 |
 | Lỗi JavaScript trên 15 màn hình | 0 |
 
-### Ba phép thử quét mã nguồn mới
+### Bốn phép thử quét mã nguồn mới
 
-Nâng tổng số lên **chín**. Cả ba đều đã kiểm **đỏ trước, xanh sau**:
+Nâng tổng số lên **mười một**. Cả bốn đều đã kiểm **đỏ trước, xanh sau**:
 
 | Phép thử | Luật | Đã đỏ khi nào |
 |---|---|---|
 | `frontend-*/src/styles.test.ts` | Mọi lớp `lc-*` gắn vào phần tử phải có kiểu; mọi luật khai ra phải có người dùng | Gỡ thử luật `.lc-status-pill` → đỏ cả hai chiều |
 | `frontend-*/src/theme.test.ts` | Token của `theme.ts` phải trùng biến `--lc-*` của `styles.css`; hai bộ chữ phải được `index.html` tải thật | Lệch **một chữ số hex** (`#35523f` → `#35523e`) → đỏ ngay |
 | `frontend-*/src/theme.test.ts` (phần WCAG) | 16 cặp màu của bảng màu phải đạt ngưỡng tương phản 4,5:1 (chữ thường) hoặc 3:1 (chữ phụ trợ) | Chính cặp thẻ trung tính đã đỏ và buộc phải đổi màu |
+| `frontend-*/src/lib/palette.test.ts` | Không viết mã màu thẳng trong TSX; bảng màu dùng chung phải trùng token; mọi màu con số và màu biểu đồ phải đạt tương phản trên nền giấy | Đặt lại `#389e0d` vào một `valueStyle` → đỏ, chỉ đúng tên tệp và mã màu |
 
 ---
 

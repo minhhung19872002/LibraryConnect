@@ -161,7 +161,7 @@ export function MarcFieldFormDrawer({ open, field, onClose, onSaved }: MarcField
               {(items, { add, remove }) => (
                 <Space direction="vertical" size={12} style={{ width: '100%', marginBottom: 16 }}>
                   {items.map((item) => (
-                    <div key={item.key} style={{ border: '1px solid #f0f0f0', borderRadius: 6, padding: 12 }}>
+                    <div key={item.key} style={{ border: '1px solid ${MAU.vien}', borderRadius: 6, padding: 12 }}>
                       <Space align="start">
                         <Form.Item
                           name={[item.name, 'position']}

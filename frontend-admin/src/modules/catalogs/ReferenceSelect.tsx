@@ -3,6 +3,7 @@ import { Select } from 'antd';
 import { api } from '@/api/client';
 import type { PagedResult } from '@/types/api';
 import type { CatalogItem } from './types';
+import { MAU } from '@/lib/palette';
 
 /**
  * Ô chọn một giá trị của danh mục khác, ví dụ khoa quản lý của một ngành đào tạo.
@@ -65,7 +66,7 @@ export function ReferenceLabel({ catalog, value }: { catalog: string; value?: st
   });
 
   if (!value) {
-    return <span style={{ color: '#bbb' }}>—</span>;
+    return <span style={{ color: MAU.chuMo }}>—</span>;
   }
 
   const match = (items.data?.items ?? []).find((item) => item.id === value);

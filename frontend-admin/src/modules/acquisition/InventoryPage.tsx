@@ -41,6 +41,7 @@ import { ApiRequestError } from '@/api/client';
 import { saveBlob } from '@/modules/marc/api';
 import { useCatalogOptions, toOptions } from '@/modules/cataloging/useCatalogOptions';
 import { formsApi, inventoryApi, locationsApi } from './api';
+import { MAU } from '@/lib/palette';
 import {
   disposalTypes,
   formatDate,
@@ -619,17 +620,17 @@ function PeriodDrawer({
             </Col>
             <Col span={5}>
               <Card size="small">
-                <Statistic title="Khớp" value={stats.matchCount} valueStyle={{ color: '#389e0d' }} />
+                <Statistic title="Khớp" value={stats.matchCount} valueStyle={{ color: MAU.tot }} />
               </Card>
             </Col>
             <Col span={5}>
               <Card size="small">
-                <Statistic title="Thiếu" value={stats.missingCount} valueStyle={{ color: '#cf1322' }} />
+                <Statistic title="Thiếu" value={stats.missingCount} valueStyle={{ color: MAU.loi }} />
               </Card>
             </Col>
             <Col span={5}>
               <Card size="small">
-                <Statistic title="Thừa" value={stats.unexpectedCount} valueStyle={{ color: '#d46b08' }} />
+                <Statistic title="Thừa" value={stats.unexpectedCount} valueStyle={{ color: MAU.luuY }} />
               </Card>
             </Col>
             <Col span={4}>

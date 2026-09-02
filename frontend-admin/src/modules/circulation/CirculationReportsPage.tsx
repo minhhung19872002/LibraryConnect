@@ -45,6 +45,7 @@ import { locationsApi } from '@/modules/acquisition/api';
 import { circulationApi } from './api';
 import { formatDate, money } from './labels';
 import type { CirculationReportFilter, LoanRowDto, TopItemRowDto, TopReaderRowDto } from './types';
+import { MAU, MAU_BIEU_DO, mauBieuDo } from '@/lib/palette';
 
 type ReportKind = 'visits' | 'current' | 'history' | 'overdue' | 'lockers' | 'topReaders' | 'topItems';
 
@@ -69,7 +70,15 @@ const kindCodes: Record<ReportKind, number> = {
   topItems: 6,
 };
 
-const chartColors = ['#1677ff', '#52c41a', '#faad14', '#f5222d', '#722ed1', '#13c2c2'];
+/*
+ * Màu của biểu đồ phân loại.
+ *
+ * Dùng thẳng dải màu biểu đồ, **không** trộn màu ngữ nghĩa vào. Lấy `MAU.chinh` và `MAU.tot` làm
+ * hai màu đầu là sai hai lần: chúng là hai sắc xanh rêu gần nhau nên hai mảng cạnh nhau trong biểu
+ * đồ tròn không phân biệt được, mà chúng còn *mang nghĩa* — xanh lá là "tốt", đỏ là "hỏng" — trong
+ * khi ở đây chúng chỉ đang đánh dấu loại bạn đọc hay dạng tài liệu, không có gì tốt xấu.
+ */
+const chartColors = MAU_BIEU_DO;
 
 /**
  * VII.5 — Bảy báo cáo lưu thông bắt buộc.
@@ -344,7 +353,7 @@ export function CirculationReportsPage() {
                   <XAxis dataKey="label" interval={1} />
                   <YAxis allowDecimals={false} />
                   <Tooltip />
-                  <Bar dataKey="count" name="Lượt vào" fill="#1677ff" />
+                  <Bar dataKey="count" name="Lượt vào" fill={mauBieuDo(2)} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -363,7 +372,7 @@ export function CirculationReportsPage() {
                       <YAxis allowDecimals={false} />
                       <Tooltip />
                       <Legend />
-                      <Line type="monotone" dataKey="count" name="Lượt vào" stroke="#52c41a" />
+                      <Line type="monotone" dataKey="count" name="Lượt vào" stroke={mauBieuDo(5)} />
                     </LineChart>
                   </ResponsiveContainer>
                 )}
@@ -448,7 +457,7 @@ export function CirculationReportsPage() {
                   <XAxis dataKey="label" />
                   <YAxis allowDecimals={false} />
                   <Tooltip />
-                  <Line type="monotone" dataKey="count" name="Lượt mượn" stroke="#1677ff" />
+                  <Line type="monotone" dataKey="count" name="Lượt mượn" stroke={mauBieuDo(2)} />
                 </LineChart>
               </ResponsiveContainer>
             )}
@@ -476,7 +485,7 @@ export function CirculationReportsPage() {
                 <Statistic
                   title="Tài liệu quá hạn"
                   value={overdue.data?.totalOverdue ?? 0}
-                  valueStyle={{ color: '#cf1322' }}
+                  valueStyle={{ color: MAU.loi }}
                 />
               </Card>
             </Col>
@@ -521,7 +530,7 @@ export function CirculationReportsPage() {
                   <XAxis dataKey="label" />
                   <YAxis allowDecimals={false} />
                   <Tooltip />
-                  <Bar dataKey="count" name="Số tài liệu" fill="#f5222d" />
+                  <Bar dataKey="count" name="Số tài liệu" fill={mauBieuDo(1)} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -580,7 +589,7 @@ export function CirculationReportsPage() {
                   <XAxis dataKey="label" />
                   <YAxis allowDecimals={false} />
                   <Tooltip />
-                  <Bar dataKey="count" name="Lượt dùng" fill="#722ed1" />
+                  <Bar dataKey="count" name="Lượt dùng" fill={mauBieuDo(4)} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -618,7 +627,7 @@ export function CirculationReportsPage() {
                   <XAxis dataKey="fullName" interval={0} angle={-25} textAnchor="end" height={90} />
                   <YAxis allowDecimals={false} />
                   <Tooltip />
-                  <Bar dataKey="loanCount" name="Lượt mượn" fill="#1677ff" />
+                  <Bar dataKey="loanCount" name="Lượt mượn" fill={mauBieuDo(2)} />
                 </BarChart>
               </ResponsiveContainer>
             </Card>
@@ -649,7 +658,7 @@ export function CirculationReportsPage() {
                   <XAxis dataKey="title" interval={0} angle={-20} textAnchor="end" height={110} />
                   <YAxis allowDecimals={false} />
                   <Tooltip />
-                  <Bar dataKey="loanCount" name="Lượt mượn" fill="#52c41a" />
+                  <Bar dataKey="loanCount" name="Lượt mượn" fill={mauBieuDo(5)} />
                 </BarChart>
               </ResponsiveContainer>
             </Card>

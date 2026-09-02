@@ -10,6 +10,7 @@ import { PERMISSIONS } from '@/api/permissions';
 import { ApiRequestError } from '@/api/client';
 import { cmsApi } from './api';
 import type { CmsReviewRow } from './types';
+import { MAU } from '@/lib/palette';
 
 /**
  * Kiểm duyệt nhận xét bạn đọc gửi từ trang tra cứu.
@@ -57,7 +58,7 @@ export function CmsReviewsPage() {
       render: (name: string, row) => (
         <Space direction="vertical" size={0}>
           <span>{name}</span>
-          <span style={{ fontSize: 12, color: '#999' }}>{row.readerCardNumber}</span>
+          <span style={{ fontSize: 12, color: MAU.chuMo }}>{row.readerCardNumber}</span>
         </Space>
       ),
     },

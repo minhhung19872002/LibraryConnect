@@ -30,6 +30,7 @@ import { marcApi, saveBlob } from './api';
 import { MarcEditor, MarcValidationSummary } from './MarcEditor';
 import { createEmptyRecord, formatRecordAsText } from './marcRecord';
 import type { MarcRecord, MarcValidationResult, ParseMarcFileResult } from './types';
+import { MAU } from '@/lib/palette';
 
 const MONOSPACE = { fontFamily: 'ui-monospace, Consolas, monospace' } as const;
 
@@ -211,7 +212,7 @@ export function MarcToolPage() {
                     onClick={() => openParsedRecord(parsed, index)}
                     style={{
                       cursor: 'pointer',
-                      background: selected === index ? '#e6f4ff' : undefined,
+                      background: selected === index ? MAU.chinhNhat : undefined,
                       paddingInline: 12,
                     }}
                   >
@@ -223,7 +224,7 @@ export function MarcToolPage() {
                         {item.validation.errorCount > 0 ? (
                           <Tag color="red">{item.validation.errorCount} lỗi</Tag>
                         ) : (
-                          <CheckCircleOutlined style={{ color: '#52c41a' }} />
+                          <CheckCircleOutlined style={{ color: MAU.tot }} />
                         )}
                       </Space>
                       <Typography.Text ellipsis style={{ fontSize: 13 }}>

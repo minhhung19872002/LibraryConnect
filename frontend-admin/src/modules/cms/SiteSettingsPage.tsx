@@ -31,6 +31,7 @@ import { PERMISSIONS } from '@/api/permissions';
 import { ApiRequestError } from '@/api/client';
 import { cmsApi } from './api';
 import type { CmsBanner, CmsLink, CmsMenu, CmsSettingItem } from './types';
+import { MAU } from '@/lib/palette';
 
 const { Paragraph } = Typography;
 
@@ -204,7 +205,7 @@ function ImageField({
         <img
           src={value}
           alt="Xem trước"
-          style={{ maxHeight: 72, borderRadius: 6, border: '1px solid #f0f0f0' }}
+          style={{ maxHeight: 72, borderRadius: 6, border: '1px solid ${MAU.vien}' }}
         />
       ) : null}
     </Space>
@@ -722,7 +723,7 @@ function buildMenuNodes(
     title: (
       <Space>
         <span style={{ fontWeight: 500 }}>{item.name}</span>
-        <span style={{ color: '#999' }}>{item.url}</span>
+        <span style={{ color: MAU.chuMo }}>{item.url}</span>
         {item.isActive ? null : <Tag>đang tắt</Tag>}
         <Can permission={PERMISSIONS.cms.menuManage}>
           <Button

@@ -11,6 +11,7 @@ import { http } from '@/api/client';
 import { digitalApi } from './api';
 import { describeReadable } from './labels';
 import type { DigitalReaderSessionDto } from './types';
+import { MAU } from '@/lib/palette';
 
 interface Props {
   documentId: string | null;
@@ -147,7 +148,7 @@ export function DigitalViewer({ documentId, onClose }: Props) {
       width={1000}
       footer={null}
       title={session?.title ?? 'Đọc tài liệu số'}
-      styles={{ body: { background: '#f0f2f5', padding: 16 } }}
+      styles={{ body: { background: MAU.nen, padding: 16 } }}
     >
       {error && <Alert type="error" showIcon message={error} style={{ marginBottom: 12 }} />}
 
@@ -196,7 +197,7 @@ export function DigitalViewer({ documentId, onClose }: Props) {
               maxHeight: '65vh',
               overflow: 'auto',
               textAlign: 'center',
-              background: '#fff',
+              background: MAU.giay,
               padding: 12,
               borderRadius: 6,
             }}
