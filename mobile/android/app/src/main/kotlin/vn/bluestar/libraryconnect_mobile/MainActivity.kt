@@ -1,7 +1,7 @@
 package vn.bluestar.libraryconnect_mobile
 
 import android.view.WindowManager
-import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
@@ -10,7 +10,7 @@ import io.flutter.plugin.common.MethodChannel
  * màn hình, ảnh xem trước trong danh sách ứng dụng gần đây cũng đen. Viết thẳng 20 dòng thay vì
  * thêm một gói phụ thuộc chỉ để gọi một cờ của Window.
  */
-class MainActivity : FlutterActivity() {
+class MainActivity : FlutterFragmentActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "vn.bluestar.libraryconnect/secure_screen")

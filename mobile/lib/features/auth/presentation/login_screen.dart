@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:local_auth/local_auth.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../../core/api/api_exception.dart';
@@ -43,6 +44,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     _card.dispose();
     _password.dispose();
     super.dispose();
+  }
+
+  Future<void> _unlock() async {
+    final l10n = L10n.of(context);
+    final ok = await ref
+        .read(authControllerProvider.notifier)
+        .unlock(
+          () => LocalAuthentication().authenticate(
+            localizedReason: l10n.biometricPrompt,
+          ),
+        );
+    if (!mounted) return;
+    if (ok) {
+      final next = GoRouterState.of(context).uri.queryParameters['tiep'];
+      context.go(next == null || next.isEmpty ? Routes.home : next);
+    } else {
+      setState(() => _error = l10n.lockedNote);
+    }
   }
 
   Future<void> _submit() async {
@@ -204,6 +223,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                         ),
                       ),
+                    if (ref.watch(authControllerProvider) is AuthLocked) ...[
+                      FilledButton.tonalIcon(
+                        key: const Key('unlock'),
+                        onPressed: _unlock,
+                        icon: const Icon(Icons.fingerprint),
+                        label: Text(l10n.unlockAction),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
                     FilledButton(
                       onPressed: _busy ? null : _submit,
                       child: _busy

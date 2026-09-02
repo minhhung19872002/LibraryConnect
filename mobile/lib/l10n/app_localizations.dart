@@ -2112,6 +2112,222 @@ abstract class L10n {
   /// In vi, this message translates to:
   /// **'Đăng nhập để xem tài liệu nội bộ và gửi yêu cầu truy cập.'**
   String get digitalSignInHint;
+
+  /// No description provided for @notificationsTitle.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thông báo'**
+  String get notificationsTitle;
+
+  /// No description provided for @notificationsEmpty.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chưa có thông báo nào.'**
+  String get notificationsEmpty;
+
+  /// No description provided for @unreadOnly.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chỉ chưa đọc'**
+  String get unreadOnly;
+
+  /// No description provided for @markAllRead.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đọc hết'**
+  String get markAllRead;
+
+  /// No description provided for @notificationSettings.
+  ///
+  /// In vi, this message translates to:
+  /// **'Cài đặt thông báo'**
+  String get notificationSettings;
+
+  /// No description provided for @notificationSettingsHint.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tắt loại nào thì không nhận email và thông báo đẩy loại đó; dòng trong ứng dụng vẫn ghi.'**
+  String get notificationSettingsHint;
+
+  /// No description provided for @notificationSettingsSaved.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã lưu cài đặt thông báo.'**
+  String get notificationSettingsSaved;
+
+  /// No description provided for @pushDisabledNote.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thông báo đẩy chưa bật trên máy này (thiếu cấu hình Firebase). Thông báo vẫn xem được ở đây.'**
+  String get pushDisabledNote;
+
+  /// No description provided for @pushEnabledNote.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thiết bị đã đăng ký nhận thông báo đẩy.'**
+  String get pushEnabledNote;
+
+  /// No description provided for @profileTitle.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hồ sơ'**
+  String get profileTitle;
+
+  /// No description provided for @editContact.
+  ///
+  /// In vi, this message translates to:
+  /// **'Cập nhật liên hệ'**
+  String get editContact;
+
+  /// No description provided for @emailLabel.
+  ///
+  /// In vi, this message translates to:
+  /// **'Email'**
+  String get emailLabel;
+
+  /// No description provided for @phoneLabel.
+  ///
+  /// In vi, this message translates to:
+  /// **'Điện thoại'**
+  String get phoneLabel;
+
+  /// No description provided for @addressLabel.
+  ///
+  /// In vi, this message translates to:
+  /// **'Địa chỉ'**
+  String get addressLabel;
+
+  /// No description provided for @contactSaved.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã cập nhật thông tin liên hệ.'**
+  String get contactSaved;
+
+  /// No description provided for @changePassword.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đổi mật khẩu'**
+  String get changePassword;
+
+  /// No description provided for @currentPassword.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mật khẩu hiện tại'**
+  String get currentPassword;
+
+  /// No description provided for @newPassword.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mật khẩu mới'**
+  String get newPassword;
+
+  /// No description provided for @confirmPassword.
+  ///
+  /// In vi, this message translates to:
+  /// **'Nhập lại mật khẩu mới'**
+  String get confirmPassword;
+
+  /// No description provided for @passwordMismatch.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hai mật khẩu mới không khớp.'**
+  String get passwordMismatch;
+
+  /// No description provided for @passwordChanged.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã đổi mật khẩu.'**
+  String get passwordChanged;
+
+  /// No description provided for @saveAction.
+  ///
+  /// In vi, this message translates to:
+  /// **'Lưu'**
+  String get saveAction;
+
+  /// No description provided for @biometricLock.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mở khóa bằng vân tay / khuôn mặt'**
+  String get biometricLock;
+
+  /// No description provided for @biometricLockHint.
+  ///
+  /// In vi, this message translates to:
+  /// **'Lần mở ứng dụng sau phải xác thực sinh trắc học mới vào được tài khoản.'**
+  String get biometricLockHint;
+
+  /// No description provided for @biometricUnavailable.
+  ///
+  /// In vi, this message translates to:
+  /// **'Máy này chưa có sinh trắc học.'**
+  String get biometricUnavailable;
+
+  /// No description provided for @biometricPrompt.
+  ///
+  /// In vi, this message translates to:
+  /// **'Xác thực để mở tài khoản thư viện'**
+  String get biometricPrompt;
+
+  /// No description provided for @unlockAction.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mở khóa'**
+  String get unlockAction;
+
+  /// No description provided for @lockedNote.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tài khoản đang khóa bằng sinh trắc học.'**
+  String get lockedNote;
+
+  /// No description provided for @versionInfo.
+  ///
+  /// In vi, this message translates to:
+  /// **'Phiên bản {app} · máy chủ yêu cầu tối thiểu {min}'**
+  String versionInfo(String app, String min);
+
+  /// No description provided for @languageVietnamese.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tiếng Việt'**
+  String get languageVietnamese;
+
+  /// No description provided for @languageEnglish.
+  ///
+  /// In vi, this message translates to:
+  /// **'English'**
+  String get languageEnglish;
+
+  /// No description provided for @textSize.
+  ///
+  /// In vi, this message translates to:
+  /// **'Cỡ chữ'**
+  String get textSize;
+
+  /// No description provided for @studentCode.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mã sinh viên'**
+  String get studentCode;
+
+  /// No description provided for @majorLabel.
+  ///
+  /// In vi, this message translates to:
+  /// **'Ngành'**
+  String get majorLabel;
+
+  /// No description provided for @courseYearLabel.
+  ///
+  /// In vi, this message translates to:
+  /// **'Khóa'**
+  String get courseYearLabel;
+
+  /// No description provided for @serverLabel.
+  ///
+  /// In vi, this message translates to:
+  /// **'Máy chủ'**
+  String get serverLabel;
 }
 
 class _L10nDelegate extends LocalizationsDelegate<L10n> {

@@ -17,6 +17,11 @@ class AuthGuest extends AuthState {
   const AuthGuest();
 }
 
+/// Có phiên trên máy nhưng bạn đọc bật khoá sinh trắc học và chưa xác thực lần mở này.
+class AuthLocked extends AuthState {
+  const AuthLocked();
+}
+
 class AuthSignedIn extends AuthState {
   const AuthSignedIn(this.user, {this.mustChangePassword = false});
 
@@ -49,6 +54,32 @@ class AuthController extends Notifier<AuthState> {
       state = const AuthGuest();
       return;
     }
+
+    // Khoá sinh trắc học: có phiên nhưng phải xác thực vân tay / khuôn mặt mới vào tài khoản.
+    if (await tokens.biometricEnabled) {
+      state = const AuthLocked();
+      return;
+    }
+
+    await _restoreSession();
+  }
+
+  /// Xác thực sinh trắc học rồi mở phiên đã lưu. Trả về false khi người dùng huỷ hoặc máy từ chối.
+  Future<bool> unlock(Future<bool> Function() authenticate) async {
+    if (state is! AuthLocked) return state is AuthSignedIn;
+    bool ok;
+    try {
+      ok = await authenticate();
+    } catch (_) {
+      ok = false;
+    }
+    if (!ok) return false;
+    await _restoreSession();
+    return state is AuthSignedIn;
+  }
+
+  Future<void> _restoreSession() async {
+    final tokens = ref.read(tokenStoreProvider);
 
     try {
       final api = ref.read(apiClientProvider);

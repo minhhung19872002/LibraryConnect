@@ -111,6 +111,7 @@ flutter gen-l10n                                            # tự chạy khi `f
 | 5 | Thẻ điện tử (mã vạch + QR, ngoại tuyến, yêu cầu gia hạn thẻ), Sách của tôi (đang mượn + gia hạn, lịch sử, đặt giữ + hủy, tiền phạt) | Xong — MB.16–MB.18 |
 | 6 | Mượn tự phục vụ: xác thực NONE / Wi-Fi / QR trạm, quét sách liên tiếp, phiếu tóm tắt | Xong — MB.19–MB.20 |
 | 7 | Tài liệu số: danh sách + toàn văn, trình đọc trang ảnh có chữ chìm, tìm trong văn bản, đánh dấu trang, gói ngoại tuyến mã hoá tự hết hạn, xin quyền, lịch sử, chặn chụp màn hình (Android) | Xong — MB.21–MB.23 |
-| 8–10 | Thông báo đẩy, tài khoản, đóng gói | Chưa |
+| 8 | Thông báo (danh sách, mở đúng màn hình, cài đặt loại), dịch vụ đẩy FCM (tắt lặng lẽ khi thiếu Firebase), tài khoản đầy đủ, khoá sinh trắc học, cài đặt lưu máy | Xong — MB.24–MB.26; đẩy thật chưa kiểm |
+| 9–10 | Ngoại tuyến, hiệu năng, chế độ tối, đóng gói, tài liệu | Chưa |
 
 Chưa bước nào chạy được trên **máy thật**: máy phát triển không có điện thoại kết nối. Mỗi bước ghi rõ điều này trong báo cáo.

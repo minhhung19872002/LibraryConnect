@@ -1,26 +1,61 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import 'core/auth/auth_controller.dart';
 import 'core/config/env.dart';
+import 'core/push/push_service.dart';
 import 'core/config/settings_provider.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'l10n/app_localizations.dart';
 
-/// Tuỳ chọn hiển thị của người dùng: sáng / tối / theo hệ thống, cỡ chữ, ngôn ngữ.
+/// Tuỳ chọn hiển thị của người dùng: sáng / tối / theo hệ thống, cỡ chữ, ngôn ngữ — lưu trên máy.
 class DisplaySettings
     extends Notifier<({ThemeMode theme, double textScale, Locale? locale})> {
-  @override
-  ({ThemeMode theme, double textScale, Locale? locale}) build() =>
-      (theme: ThemeMode.system, textScale: 1.0, locale: null);
+  static const _themeKey = 'lc.display.theme';
+  static const _scaleKey = 'lc.display.scale';
+  static const _localeKey = 'lc.display.locale';
 
-  void setTheme(ThemeMode mode) =>
-      state = (theme: mode, textScale: state.textScale, locale: state.locale);
-  void setTextScale(double scale) =>
-      state = (theme: state.theme, textScale: scale, locale: state.locale);
-  void setLocale(Locale? locale) =>
-      state = (theme: state.theme, textScale: state.textScale, locale: locale);
+  @override
+  ({ThemeMode theme, double textScale, Locale? locale}) build() {
+    _load();
+    return (theme: ThemeMode.system, textScale: 1.0, locale: null);
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final theme = ThemeMode.values.firstWhere(
+      (m) => m.name == prefs.getString(_themeKey),
+      orElse: () => ThemeMode.system,
+    );
+    final scale = prefs.getDouble(_scaleKey) ?? 1.0;
+    final code = prefs.getString(_localeKey);
+    state = (
+      theme: theme,
+      textScale: scale,
+      locale: code == null || code.isEmpty ? null : Locale(code),
+    );
+  }
+
+  Future<void> setTheme(ThemeMode mode) async {
+    state = (theme: mode, textScale: state.textScale, locale: state.locale);
+    (await SharedPreferences.getInstance()).setString(_themeKey, mode.name);
+  }
+
+  Future<void> setTextScale(double scale) async {
+    state = (theme: state.theme, textScale: scale, locale: state.locale);
+    (await SharedPreferences.getInstance()).setDouble(_scaleKey, scale);
+  }
+
+  Future<void> setLocale(Locale? locale) async {
+    state = (theme: state.theme, textScale: state.textScale, locale: locale);
+    (await SharedPreferences.getInstance()).setString(
+      _localeKey,
+      locale?.languageCode ?? '',
+    );
+  }
 }
 
 final displaySettingsProvider =
@@ -36,6 +71,15 @@ class LibraryConnectApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
     final display = ref.watch(displaySettingsProvider);
+
+    // Đăng nhập xong thì đăng ký thiết bị nhận thông báo đẩy; chạm thông báo mở đúng đường dẫn.
+    ref.listen<AuthState>(authControllerProvider, (previous, next) {
+      if (next is AuthSignedIn && previous is! AuthSignedIn) {
+        ref
+            .read(pushServiceProvider.notifier)
+            .start(onOpenLink: (link) => router.push(link));
+      }
+    });
     final settings = ref.watch(publicSettingsProvider);
     final version = ref.watch(appVersionProvider);
 

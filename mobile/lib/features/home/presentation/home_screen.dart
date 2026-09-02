@@ -15,6 +15,7 @@ import '../../../shared/models/content_models.dart';
 import '../../../shared/models/settings_models.dart';
 import '../../browse/data/browse_api.dart';
 import '../../browse/presentation/browse_hub_screen.dart';
+import '../../notifications/data/notifications_api.dart';
 import '../../search/presentation/result_card.dart';
 import '../data/public_api.dart';
 
@@ -210,7 +211,9 @@ class _Hero extends StatelessWidget {
                   style: TextButton.styleFrom(foregroundColor: LcColors.cream),
                   icon: const Icon(Icons.login, size: 18),
                   label: Text(l10n.signIn),
-                ),
+                )
+              else
+                const _Bell(),
             ],
           ),
           const SizedBox(height: 4),
@@ -242,6 +245,27 @@ class _Hero extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Chuông thông báo trên trang chủ, chấm đỏ khi còn thông báo chưa đọc.
+class _Bell extends ConsumerWidget {
+  const _Bell();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final unread = ref.watch(unreadCountProvider).value ?? 0;
+    return IconButton(
+      key: const Key('home-bell'),
+      tooltip: L10n.of(context).notificationsTitle,
+      color: LcColors.cream,
+      icon: Badge(
+        isLabelVisible: unread > 0,
+        label: Text('$unread'),
+        child: const Icon(Icons.notifications_outlined),
+      ),
+      onPressed: () => context.push(Routes.notifications),
     );
   }
 }

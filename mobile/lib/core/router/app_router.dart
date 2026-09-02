@@ -14,6 +14,7 @@ import '../../features/digital/presentation/digital_reader_screen.dart';
 import '../../features/home/presentation/news_screens.dart';
 import '../../features/my_library/presentation/card_screen.dart';
 import '../../features/my_library/presentation/my_library_screen.dart';
+import '../../features/notifications/presentation/notifications_screen.dart';
 import '../../features/self_checkout/presentation/self_checkout_screen.dart';
 import '../../features/scan/presentation/scan_screen.dart';
 import '../../features/search/data/search_params.dart';
@@ -40,6 +41,7 @@ class Routes {
   static const card = '/the-thu-vien';
   static const selfCheckout = '/muon-tu-phuc-vu';
   static const digital = '/tai-lieu-so';
+  static const notifications = '/thong-bao';
 
   static String digitalDoc(String id) => '$digital/$id';
 
@@ -204,6 +206,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const SelfCheckoutScreen(),
       ),
       GoRoute(
+        path: Routes.notifications,
+        parentNavigatorKey: _rootKey,
+        builder: (context, state) => const NotificationsScreen(),
+      ),
+      GoRoute(
         path: Routes.digital,
         parentNavigatorKey: _rootKey,
         builder: (context, state) => const DigitalLibraryScreen(),
@@ -269,4 +276,5 @@ const _protected = [
   Routes.myLibrary,
   Routes.card,
   Routes.selfCheckout,
+  Routes.notifications,
 ];

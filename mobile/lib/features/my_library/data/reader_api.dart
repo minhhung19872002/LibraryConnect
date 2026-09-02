@@ -58,6 +58,22 @@ class ReaderApi {
     decode: (json) => FineSummary.fromJson(json! as Map<String, dynamic>),
   );
 
+  /// Cập nhật email / điện thoại / địa chỉ của chính bạn đọc.
+  Future<void> updateProfile({String? email, String? phone, String? address}) =>
+      _api.put<void>(
+        '/reader/profile',
+        body: {'email': email, 'phone': phone, 'address': address},
+      );
+
+  /// Máy chủ kiểm mật khẩu hiện tại và chính sách mật khẩu; sai thì ném đúng câu của nó.
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) => _api.post<void>(
+    '/reader/auth/change-password',
+    body: {'currentPassword': currentPassword, 'newPassword': newPassword},
+  );
+
   Future<void> requestCardRenewal(String? reason) =>
       _api.post<void>('/reader/card/renew-request', body: {'reason': ?reason});
 
@@ -74,6 +90,10 @@ class ReaderApi {
 
 final readerApiProvider = Provider<ReaderApi>(
   (ref) => ReaderApi(ref.watch(apiClientProvider)),
+);
+
+final profileProvider = FutureProvider.autoDispose<ReaderProfile>(
+  (ref) => ref.watch(readerApiProvider).profile(),
 );
 
 final currentLoansProvider = FutureProvider.autoDispose<Paged<LoanRow>>(

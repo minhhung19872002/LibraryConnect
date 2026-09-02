@@ -1140,4 +1140,118 @@ class L10nEn extends L10n {
   @override
   String get digitalSignInHint =>
       'Sign in to read internal documents and request access.';
+
+  @override
+  String get notificationsTitle => 'Notifications';
+
+  @override
+  String get notificationsEmpty => 'No notifications yet.';
+
+  @override
+  String get unreadOnly => 'Unread only';
+
+  @override
+  String get markAllRead => 'Mark all read';
+
+  @override
+  String get notificationSettings => 'Notification settings';
+
+  @override
+  String get notificationSettingsHint =>
+      'Turning a kind off stops its email and push; the in-app entry is still recorded.';
+
+  @override
+  String get notificationSettingsSaved => 'Notification settings saved.';
+
+  @override
+  String get pushDisabledNote =>
+      'Push is not enabled on this device (Firebase config missing). Notifications are still listed here.';
+
+  @override
+  String get pushEnabledNote =>
+      'This device is registered for push notifications.';
+
+  @override
+  String get profileTitle => 'Profile';
+
+  @override
+  String get editContact => 'Update contact';
+
+  @override
+  String get emailLabel => 'Email';
+
+  @override
+  String get phoneLabel => 'Phone';
+
+  @override
+  String get addressLabel => 'Address';
+
+  @override
+  String get contactSaved => 'Contact details updated.';
+
+  @override
+  String get changePassword => 'Change password';
+
+  @override
+  String get currentPassword => 'Current password';
+
+  @override
+  String get newPassword => 'New password';
+
+  @override
+  String get confirmPassword => 'Repeat new password';
+
+  @override
+  String get passwordMismatch => 'The new passwords do not match.';
+
+  @override
+  String get passwordChanged => 'Password changed.';
+
+  @override
+  String get saveAction => 'Save';
+
+  @override
+  String get biometricLock => 'Unlock with fingerprint / face';
+
+  @override
+  String get biometricLockHint =>
+      'Next time the app opens, biometric authentication is required to access the account.';
+
+  @override
+  String get biometricUnavailable => 'No biometrics on this device.';
+
+  @override
+  String get biometricPrompt => 'Authenticate to open your library account';
+
+  @override
+  String get unlockAction => 'Unlock';
+
+  @override
+  String get lockedNote => 'The account is locked with biometrics.';
+
+  @override
+  String versionInfo(String app, String min) {
+    return 'Version $app · server requires at least $min';
+  }
+
+  @override
+  String get languageVietnamese => 'Tiếng Việt';
+
+  @override
+  String get languageEnglish => 'English';
+
+  @override
+  String get textSize => 'Text size';
+
+  @override
+  String get studentCode => 'Student ID';
+
+  @override
+  String get majorLabel => 'Major';
+
+  @override
+  String get courseYearLabel => 'Cohort';
+
+  @override
+  String get serverLabel => 'Server';
 }

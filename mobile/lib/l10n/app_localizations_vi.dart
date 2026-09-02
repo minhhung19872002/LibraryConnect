@@ -1135,4 +1135,117 @@ class L10nVi extends L10n {
   @override
   String get digitalSignInHint =>
       'Đăng nhập để xem tài liệu nội bộ và gửi yêu cầu truy cập.';
+
+  @override
+  String get notificationsTitle => 'Thông báo';
+
+  @override
+  String get notificationsEmpty => 'Chưa có thông báo nào.';
+
+  @override
+  String get unreadOnly => 'Chỉ chưa đọc';
+
+  @override
+  String get markAllRead => 'Đọc hết';
+
+  @override
+  String get notificationSettings => 'Cài đặt thông báo';
+
+  @override
+  String get notificationSettingsHint =>
+      'Tắt loại nào thì không nhận email và thông báo đẩy loại đó; dòng trong ứng dụng vẫn ghi.';
+
+  @override
+  String get notificationSettingsSaved => 'Đã lưu cài đặt thông báo.';
+
+  @override
+  String get pushDisabledNote =>
+      'Thông báo đẩy chưa bật trên máy này (thiếu cấu hình Firebase). Thông báo vẫn xem được ở đây.';
+
+  @override
+  String get pushEnabledNote => 'Thiết bị đã đăng ký nhận thông báo đẩy.';
+
+  @override
+  String get profileTitle => 'Hồ sơ';
+
+  @override
+  String get editContact => 'Cập nhật liên hệ';
+
+  @override
+  String get emailLabel => 'Email';
+
+  @override
+  String get phoneLabel => 'Điện thoại';
+
+  @override
+  String get addressLabel => 'Địa chỉ';
+
+  @override
+  String get contactSaved => 'Đã cập nhật thông tin liên hệ.';
+
+  @override
+  String get changePassword => 'Đổi mật khẩu';
+
+  @override
+  String get currentPassword => 'Mật khẩu hiện tại';
+
+  @override
+  String get newPassword => 'Mật khẩu mới';
+
+  @override
+  String get confirmPassword => 'Nhập lại mật khẩu mới';
+
+  @override
+  String get passwordMismatch => 'Hai mật khẩu mới không khớp.';
+
+  @override
+  String get passwordChanged => 'Đã đổi mật khẩu.';
+
+  @override
+  String get saveAction => 'Lưu';
+
+  @override
+  String get biometricLock => 'Mở khóa bằng vân tay / khuôn mặt';
+
+  @override
+  String get biometricLockHint =>
+      'Lần mở ứng dụng sau phải xác thực sinh trắc học mới vào được tài khoản.';
+
+  @override
+  String get biometricUnavailable => 'Máy này chưa có sinh trắc học.';
+
+  @override
+  String get biometricPrompt => 'Xác thực để mở tài khoản thư viện';
+
+  @override
+  String get unlockAction => 'Mở khóa';
+
+  @override
+  String get lockedNote => 'Tài khoản đang khóa bằng sinh trắc học.';
+
+  @override
+  String versionInfo(String app, String min) {
+    return 'Phiên bản $app · máy chủ yêu cầu tối thiểu $min';
+  }
+
+  @override
+  String get languageVietnamese => 'Tiếng Việt';
+
+  @override
+  String get languageEnglish => 'English';
+
+  @override
+  String get textSize => 'Cỡ chữ';
+
+  @override
+  String get studentCode => 'Mã sinh viên';
+
+  @override
+  String get majorLabel => 'Ngành';
+
+  @override
+  String get courseYearLabel => 'Khóa';
+
+  @override
+  String get serverLabel => 'Máy chủ';
 }
