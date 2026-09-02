@@ -254,7 +254,34 @@ public partial class DatabaseSeeder
         new(ParameterKeys.MobileSelfCheckoutWifiSsid, "MOBILE", "Cấu hình ứng dụng di động", "Tên Wi-Fi xác thực vị trí",
             "App chỉ cho mượn tự phục vụ khi thiết bị đang kết nối Wi-Fi này.", ParameterDataType.Text, ""),
         new(ParameterKeys.MobileSelfCheckoutQrSecret, "MOBILE", "Cấu hình ứng dụng di động", "Khóa bí mật mã QR đặt tại kho",
-            null, ParameterDataType.Password, "", IsSecret: true)
+            null, ParameterDataType.Password, "", IsSecret: true),
+
+        // ---- Phase 15: ứng dụng di động ----
+        new("CIRCULATION.SELF_CHECKOUT_VERIFY_MODE", "CIRCULATION", "Cấu hình lưu thông",
+            "Cách xác thực vị trí khi mượn tự phục vụ",
+            "NONE: không kiểm; WIFI_SSID: thiết bị phải nối Wi-Fi thư viện; QR_STATION: phải quét mã QR trạm mượn dán tại kho.",
+            ParameterDataType.Text, "NONE"),
+        new("CIRCULATION.SELF_CHECKOUT_QR_TTL_MINUTES", "CIRCULATION", "Cấu hình lưu thông",
+            "Phiếu xác thực vị trí có hiệu lực (phút)",
+            "Sau khi quét mã trạm hoặc kiểm Wi-Fi, bạn đọc có bấy nhiêu phút để quét sách.",
+            ParameterDataType.Number, "15"),
+        new("DIGITAL.OFFLINE_PACKAGE_DAYS", "DIGITAL", "Cấu hình tài liệu số",
+            "Gói tài liệu tải về đọc ngoại tuyến dùng được (ngày)",
+            "Hết hạn thì ứng dụng tự xoá và máy chủ không phát tệp nữa.",
+            ParameterDataType.Number, "7"),
+        new("MOBILE.APP_MIN_VERSION", "MOBILE", "Cấu hình ứng dụng di động", "Phiên bản ứng dụng thấp nhất còn dùng được",
+            "Ứng dụng thấp hơn phiên bản này bị chặn và yêu cầu cập nhật.", ParameterDataType.Text, "1.0.0"),
+        new("MOBILE.APP_LATEST_VERSION", "MOBILE", "Cấu hình ứng dụng di động", "Phiên bản ứng dụng mới nhất",
+            null, ParameterDataType.Text, "1.0.0"),
+        new("MOBILE.APP_UPDATE_URL_ANDROID", "MOBILE", "Cấu hình ứng dụng di động", "Địa chỉ tải bản Android",
+            "Liên kết Google Play hoặc tệp APK.", ParameterDataType.Text, ""),
+        new("MOBILE.APP_UPDATE_URL_IOS", "MOBILE", "Cấu hình ứng dụng di động", "Địa chỉ tải bản iOS",
+            "Liên kết App Store hoặc TestFlight.", ParameterDataType.Text, ""),
+        new("MOBILE.APP_FORCE_UPDATE", "MOBILE", "Cấu hình ứng dụng di động", "Bắt buộc cập nhật",
+            "Bật thì ứng dụng cũ hơn phiên bản mới nhất cũng bị nhắc cập nhật ngay.", ParameterDataType.Boolean, "false"),
+        new("MOBILE.NEWS_PUSH_ENABLED", "MOBILE", "Cấu hình ứng dụng di động", "Đẩy thông báo khi đăng tin mới",
+            "Tin đăng lên trang thư viện thì gửi thông báo đẩy tới bạn đọc chưa tắt loại 'Tin tức mới'.",
+            ParameterDataType.Boolean, "true")
     };
 
     private async Task SeedSystemParametersAsync(CancellationToken ct)

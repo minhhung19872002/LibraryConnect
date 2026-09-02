@@ -169,6 +169,7 @@ public class ReaderPortalController : ApiControllerBase
         [FromQuery] Guid? collectionId,
         [FromQuery] int page,
         [FromQuery] int pageSize,
+        [FromQuery] DateTimeOffset? updatedSince,
         CancellationToken ct)
     {
         var request = new DigitalDocumentQueryRequest
@@ -176,6 +177,7 @@ public class ReaderPortalController : ApiControllerBase
             Keyword = keyword,
             Page = page <= 0 ? 1 : page,
             PageSize = pageSize <= 0 ? 20 : pageSize,
+            UpdatedSince = updatedSince,
             Filter = new DigitalDocumentFilter { CollectionId = collectionId }
         };
 
@@ -387,6 +389,78 @@ public class ReaderPortalController : ApiControllerBase
     {
         await Mediator.Send(new RemoveDeviceTokenCommand(token), ct);
         return Ok(SuccessMessage("Đã gỡ thiết bị."));
+    }
+
+    // ---------------------------------------------------------------
+    // Phase 15 — ứng dụng di động
+    // ---------------------------------------------------------------
+
+    /// <summary>
+    /// Xác thực vị trí trước khi mượn tự phục vụ. Máy chủ chọn cách kiểm theo tham số
+    /// <c>CIRCULATION.SELF_CHECKOUT_VERIFY_MODE</c>: nối Wi-Fi thư viện (gửi <c>ssid</c>) hoặc quét mã QR
+    /// trạm dán tại kho (gửi <c>qrContent</c>). Đạt thì nhận <c>verificationToken</c> có hạn dùng để nộp
+    /// kèm khi gọi <c>POST /api/reader/loans/self-checkout</c>. Không đạt thì 409 kèm mã lỗi trong
+    /// <c>errors[0].code</c>: LOCATION_REQUIRED, WIFI_MISMATCH, STATION_UNKNOWN, STATION_INACTIVE.
+    /// </summary>
+    [HttpPost("loans/self-checkout/verify")]
+    [ProducesResponseType(typeof(ApiResponse<SelfCheckoutVerificationDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<ApiResponse<SelfCheckoutVerificationDto>>> VerifySelfCheckoutLocation(
+        [FromBody] VerifySelfCheckoutLocationCommand command, CancellationToken ct)
+    {
+        var result = await Mediator.Send(command, ct);
+        return Ok(Success(result, "Đã xác thực vị trí, hãy quét mã vạch tài liệu."));
+    }
+
+    /// <summary>
+    /// Xin gói tài liệu số để đọc ngoại tuyến: trả khoá AES-256-CBC, hạn dùng và địa chỉ tải tệp đã mã
+    /// hoá. Chỉ cấp cho tài liệu được tải về hoặc đã được duyệt quyền; tài liệu chỉ đọc trực tuyến thì 403.
+    /// </summary>
+    [HttpPost("digital/{id:guid}/offline-package")]
+    [ProducesResponseType(typeof(ApiResponse<OfflinePackageDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<ApiResponse<OfflinePackageDto>>> CreateOfflinePackage(Guid id, CancellationToken ct)
+    {
+        var result = await Mediator.Send(new CreateOfflinePackageCommand(id), ct);
+        return Ok(Success(result, $"Đã cấp gói đọc ngoại tuyến, dùng được tới {result.ExpiresAt:dd/MM/yyyy}."));
+    }
+
+    /// <summary>Các gói ngoại tuyến đã cấp cho bạn đọc, kèm trạng thái hết hạn / thu hồi.</summary>
+    [HttpGet("digital/offline-packages")]
+    [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<OfflinePackageRowDto>>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<IReadOnlyList<OfflinePackageRowDto>>>> MyOfflinePackages(CancellationToken ct)
+    {
+        var result = await Mediator.Send(new GetMyOfflinePackagesQuery(), ct);
+        return Ok(Success(result));
+    }
+
+    /// <summary>Tệp đã mã hoá của một gói ngoại tuyến. Giải mã bằng khoá và IV nhận lúc xin gói.</summary>
+    [HttpGet("digital/offline-packages/{packageId:guid}/file")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> OfflinePackageFile(Guid packageId, CancellationToken ct)
+    {
+        var file = await Mediator.Send(new DownloadOfflinePackageQuery(packageId), ct);
+        return File(file.Content, file.ContentType, file.FileName);
+    }
+
+    /// <summary>Bạn đọc đang bật loại thông báo nào (đẩy và email); thông báo hệ thống luôn bật.</summary>
+    [HttpGet("notifications/settings")]
+    [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<NotificationSettingDto>>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<IReadOnlyList<NotificationSettingDto>>>> NotificationSettings(CancellationToken ct)
+    {
+        var result = await Mediator.Send(new GetMyNotificationSettingsQuery(), ct);
+        return Ok(Success(result));
+    }
+
+    /// <summary>Bật/tắt từng loại thông báo: <c>{ "settings": { "NEWS": false, "DUE_SOON": true } }</c>.</summary>
+    [HttpPut("notifications/settings")]
+    [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<NotificationSettingDto>>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<IReadOnlyList<NotificationSettingDto>>>> UpdateNotificationSettings(
+        [FromBody] UpdateMyNotificationSettingsCommand command, CancellationToken ct)
+    {
+        var result = await Mediator.Send(command, ct);
+        return Ok(Success(result, "Đã lưu tuỳ chọn thông báo."));
     }
 
     // ---------------------------------------------------------------

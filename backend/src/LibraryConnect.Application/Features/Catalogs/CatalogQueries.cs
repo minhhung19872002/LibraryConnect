@@ -63,7 +63,8 @@ public class GetCatalogItemsQueryHandler : IRequestHandler<GetCatalogItemsQuery,
                     entity.Code.ToLower().Contains(keyword) ||
                     entity.Name.ToLower().Contains(keyword) ||
                     (entity.NameEn != null && entity.NameEn.ToLower().Contains(keyword)))
-                .WhereIf(_request.IsActive.HasValue, entity => entity.IsActive == _request.IsActive!.Value);
+                .WhereIf(_request.IsActive.HasValue, entity => entity.IsActive == _request.IsActive!.Value)
+                .WhereIf(_request.UpdatedSince is not null, entity => (entity.UpdatedAt ?? entity.CreatedAt) >= _request.UpdatedSince);
 
             // A hierarchical catalogue can be browsed level by level; ParentId == null lists the roots.
             if (definition.IsHierarchical && !_request.AsTree)

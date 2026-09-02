@@ -315,6 +315,7 @@ public class SearchLoansQueryHandler : IRequestHandler<SearchLoansQuery, PagedRe
         var loans = LoanQuery.Base(_db)
             .WhereIf(request.ReaderId is not null, loan => loan.ReaderId == request.ReaderId)
             .WhereIf(request.ItemId is not null, loan => loan.ItemId == request.ItemId)
+            .WhereIf(request.UpdatedSince is not null, loan => (loan.UpdatedAt ?? loan.CreatedAt) >= request.UpdatedSince)
             .WhereIf(request.WarehouseId is not null, loan => loan.Item!.WarehouseId == request.WarehouseId)
             .WhereIf(request.ReaderTypeId is not null,
                 loan => loan.Reader!.ReaderTypeId == request.ReaderTypeId)

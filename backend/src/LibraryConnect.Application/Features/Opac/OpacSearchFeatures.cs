@@ -43,6 +43,7 @@ public class OpacSearchQueryHandler : IRequestHandler<OpacSearchQuery, PagedResu
         }
 
         records = OpacQueryBuilder.ApplyFilter(records, request.Filter);
+        records = OpacQueryBuilder.ApplyUpdatedSince(records, request.UpdatedSince);
         records = OpacQueryBuilder.ApplySort(records, request.Sort, request.Keyword);
 
         var result = await records
@@ -102,6 +103,7 @@ public class OpacAdvancedSearchQueryHandler
             .Where(OpacQueryBuilder.Combine(request.Clauses));
 
         records = OpacQueryBuilder.ApplyFilter(records, request.Filter);
+        records = OpacQueryBuilder.ApplyUpdatedSince(records, request.UpdatedSince);
 
         // Mệnh đề đầu tiên quyết định thứ tự "liên quan nhất": nó là thứ người tra cứu gõ trước.
         var leadTerm = request.Clauses
@@ -230,6 +232,7 @@ public class OpacFacetsQueryHandler
         }
 
         records = OpacQueryBuilder.ApplyFilter(records, request.Filter);
+        records = OpacQueryBuilder.ApplyUpdatedSince(records, request.UpdatedSince);
 
         // Bộ đếm tính trên tối đa CountLimit biểu ghi đầu tiên khớp điều kiện, cùng ngưỡng với con
         // số tổng ở danh sách kết quả. Trên kho lớn, một câu hỏi rộng khớp hàng trăm nghìn biểu ghi

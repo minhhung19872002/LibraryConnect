@@ -680,10 +680,13 @@ public class CirculationDeskService : ICirculationDeskService
                 await _db.SaveChangesAsync(ct);
 
                 await _notifications.SendAsync(nextHold.ReaderId,
+                    NotificationKinds.HoldReady,
                     "Tài liệu đặt giữ đã sẵn sàng",
                     $"Tài liệu \"{item.Bib?.Title}\" bạn đặt giữ đã có tại {row.HoldPickupWarehouse}. " +
                     $"Vui lòng đến nhận trước ngày {nextHold.ExpireDate:dd/MM/yyyy}.",
-                    ct: ct);
+                    "/tai-khoan",
+                    new Dictionary<string, string> { ["holdId"] = nextHold.Id.ToString() },
+                    ct);
             }
         }
 

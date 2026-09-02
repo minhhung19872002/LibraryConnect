@@ -20,6 +20,13 @@ public class PagedResult<T>
     /// </summary>
     public bool TotalCountCapped { get; set; }
 
+    /// <summary>
+    /// Giờ máy chủ lúc trả lời. Ứng dụng di động ghi lại làm mốc cho lần hỏi sau bằng
+    /// <c>updatedSince</c>, thay vì dùng đồng hồ của điện thoại — đồng hồ ấy có thể sai vài phút và
+    /// bỏ sót đúng những dòng vừa đổi.
+    /// </summary>
+    public DateTimeOffset ServerTime { get; set; } = DateTimeOffset.UtcNow;
+
     public int TotalPages => PageSize <= 0 ? 0 : (int)Math.Ceiling(TotalCount / (double)PageSize);
     public bool HasPrevious => Page > 1;
     public bool HasNext => Page < TotalPages;
@@ -67,6 +74,13 @@ public abstract class PagedRequest
 
     /// <summary>Free-text filter applied to the columns each query decides are searchable.</summary>
     public string? Keyword { get; set; }
+
+    /// <summary>
+    /// Chỉ lấy những dòng đổi từ thời điểm này (đồng bộ delta cho ứng dụng di động). Mỗi danh sách
+    /// tự quyết cột nào là "đổi": biểu ghi và danh mục dùng <c>updated_at</c>, thông báo dùng
+    /// <c>created_at</c>. Bỏ trống là lấy toàn bộ như trước.
+    /// </summary>
+    public DateTimeOffset? UpdatedSince { get; set; }
 
     /// <summary>Property name to sort by; each handler validates it against a whitelist.</summary>
     public string? SortBy { get; set; }

@@ -48,6 +48,7 @@ public class LibraryConnectDbContext : DbContext, IApplicationDbContext
     public DbSet<BackupJob> BackupJobs => Set<BackupJob>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<DeviceToken> DeviceTokens => Set<DeviceToken>();
+    public DbSet<NotificationPreference> NotificationPreferences => Set<NotificationPreference>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<LoginHistory> LoginHistories => Set<LoginHistory>();
     public DbSet<CodeSequence> CodeSequences => Set<CodeSequence>();
@@ -126,6 +127,7 @@ public class LibraryConnectDbContext : DbContext, IApplicationDbContext
     public DbSet<DigitalDocumentFile> DigitalDocumentFiles => Set<DigitalDocumentFile>();
     public DbSet<DigitalAccessRequest> DigitalAccessRequests => Set<DigitalAccessRequest>();
     public DbSet<DigitalAccessLog> DigitalAccessLogs => Set<DigitalAccessLog>();
+    public DbSet<DigitalOfflinePackage> DigitalOfflinePackages => Set<DigitalOfflinePackage>();
     public DbSet<DigitalUploadSession> DigitalUploadSessions => Set<DigitalUploadSession>();
 
     // ---- rdr ----
@@ -143,6 +145,7 @@ public class LibraryConnectDbContext : DbContext, IApplicationDbContext
     public DbSet<Hold> Holds => Set<Hold>();
     public DbSet<Fine> Fines => Set<Fine>();
     public DbSet<Locker> Lockers => Set<Locker>();
+    public DbSet<CheckoutStation> CheckoutStations => Set<CheckoutStation>();
     public DbSet<LockerUsage> LockerUsages => Set<LockerUsage>();
     public DbSet<LibraryVisit> LibraryVisits => Set<LibraryVisit>();
 

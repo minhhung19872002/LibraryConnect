@@ -1,5 +1,6 @@
 using FluentValidation;
 using LibraryConnect.Application.Common.Exceptions;
+using LibraryConnect.Application.Common.Extensions;
 using LibraryConnect.Application.Common.Interfaces;
 using LibraryConnect.Application.Common.Models;
 using LibraryConnect.Application.Features.Circulation;
@@ -54,6 +55,9 @@ public class GetMyDigitalDocumentsQueryHandler
         {
             source = source.Where(document => document.AccessLevel != DigitalAccessLevel.Internal);
         }
+
+        source = source.WhereIf(request.UpdatedSince is not null,
+            document => (document.UpdatedAt ?? document.UploadAt) >= request.UpdatedSince);
 
         var total = await source.CountAsync(ct);
 

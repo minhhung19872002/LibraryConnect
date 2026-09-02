@@ -160,8 +160,15 @@ public class LibraryConnectFactory : WebApplicationFactory<Program>, IAsyncLifet
         {
             services.AddHttpClient("interlibrary")
                 .ConfigurePrimaryHttpMessageHandler(() => Server.CreateHandler());
+
+            // Phase 15: thông báo đẩy đi qua bộ ghi giả để phép thử đọc lại được đã gửi gì tới thiết bị
+            // nào — không có dự án Firebase nào trong bộ kiểm thử.
+            services.AddSingleton<LibraryConnect.Application.Common.Interfaces.IPushSender>(PushSender);
         });
     }
+
+    /// <summary>Mọi thông báo đẩy máy chủ định gửi trong bộ kiểm thử đều rơi vào đây.</summary>
+    public RecordingPushSender PushSender { get; } = new();
 
     /// <summary>Signs in and returns a client whose requests carry the resulting bearer token.</summary>
     public async Task<HttpClient> CreateAuthenticatedClientAsync(string username, string password)

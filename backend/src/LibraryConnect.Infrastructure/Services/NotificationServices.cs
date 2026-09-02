@@ -101,37 +101,66 @@ public class SmtpEmailSender : IEmailSender
 }
 
 /// <summary>
-/// Default notification channel: writes an in-app notification and, when the reader has an address,
-/// sends an email. The FCM channel of the mobile release plugs in behind the same interface.
+/// Kênh thông báo cho bạn đọc: luôn ghi một dòng thông báo trong ứng dụng, rồi gửi email nếu có địa
+/// chỉ và đẩy tới mọi thiết bị đang đăng ký (Phase 15). Bạn đọc tắt loại nào thì email và đẩy của
+/// loại ấy không đi, nhưng dòng trong ứng dụng vẫn có — đó là lịch sử, không phải tiếng chuông.
+/// Thiết bị mà Firebase báo không còn đăng ký thì bị đánh dấu ngừng ngay trong lượt gửi.
 /// </summary>
-public class EmailNotificationSender : INotificationSender
+public class ReaderNotificationSender : INotificationSender
 {
     private readonly IApplicationDbContext _db;
     private readonly IEmailSender _email;
+    private readonly IPushSender _push;
     private readonly IDateTimeProvider _clock;
+    private readonly ILogger<ReaderNotificationSender> _logger;
 
-    public EmailNotificationSender(IApplicationDbContext db, IEmailSender email, IDateTimeProvider clock)
+    public ReaderNotificationSender(
+        IApplicationDbContext db,
+        IEmailSender email,
+        IPushSender push,
+        IDateTimeProvider clock,
+        ILogger<ReaderNotificationSender> logger)
     {
         _db = db;
         _email = email;
+        _push = push;
         _clock = clock;
+        _logger = logger;
     }
 
-    public string Channel => "EMAIL";
+    public string Channel => _push.IsConfigured ? "EMAIL+PUSH" : "EMAIL";
 
-    public async Task SendAsync(Guid readerId, string title, string body, string? link = null, CancellationToken ct = default)
+    public Task SendAsync(Guid readerId, string title, string body, string? link = null, CancellationToken ct = default) =>
+        SendAsync(readerId, NotificationKinds.System, title, body, link, null, ct);
+
+    public async Task SendAsync(
+        Guid readerId,
+        string kind,
+        string title,
+        string body,
+        string? link,
+        IReadOnlyDictionary<string, string>? data,
+        CancellationToken ct = default)
     {
-        _db.Notifications.Add(new Notification
+        var notification = new Notification
         {
             ReaderId = readerId,
-            Type = "SYSTEM",
+            Type = kind,
             Title = title,
             Body = body,
             Link = link,
             CreatedAt = _clock.Now
-        });
+        };
 
+        _db.Notifications.Add(notification);
         await _db.SaveChangesAsync(ct);
+
+        var enabled = await Application.Features.Opac.NotificationPreferenceRules.IsEnabledAsync(_db, readerId, kind, ct);
+
+        if (!enabled)
+        {
+            return;
+        }
 
         var email = await _db.Readers
             .Where(r => r.Id == readerId)
@@ -141,6 +170,50 @@ public class EmailNotificationSender : INotificationSender
         if (!string.IsNullOrWhiteSpace(email))
         {
             await _email.SendAsync(new EmailMessage(new[] { email }, title, body), ct);
+        }
+
+        if (!_push.IsConfigured)
+        {
+            return;
+        }
+
+        var tokens = await _db.DeviceTokens
+            .Where(device => device.ReaderId == readerId && device.IsActive)
+            .Select(device => device.Token)
+            .ToListAsync(ct);
+
+        if (tokens.Count == 0)
+        {
+            return;
+        }
+
+        var payload = new Dictionary<string, string>(data ?? new Dictionary<string, string>())
+        {
+            ["kind"] = kind,
+            ["notificationId"] = notification.Id.ToString(),
+        };
+
+        if (!string.IsNullOrWhiteSpace(link))
+        {
+            payload["link"] = link;
+        }
+
+        var result = await _push.SendAsync(tokens, title, body, payload, ct);
+
+        if (result.DeadTokens.Count > 0)
+        {
+            var dead = await _db.DeviceTokens
+                .Where(device => result.DeadTokens.Contains(device.Token))
+                .ToListAsync(ct);
+
+            foreach (var device in dead)
+            {
+                device.IsActive = false;
+                device.LastSeenAt = _clock.Now;
+            }
+
+            await _db.SaveChangesAsync(ct);
+            _logger.LogInformation("Gỡ {Count} mã thiết bị không còn đăng ký của bạn đọc {ReaderId}", dead.Count, readerId);
         }
     }
 }

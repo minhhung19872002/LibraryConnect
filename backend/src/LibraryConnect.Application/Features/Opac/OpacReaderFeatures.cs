@@ -275,6 +275,7 @@ public class GetMyNotificationsQueryHandler
         return await _db.Notifications.AsNoTracking()
             .Where(notification => notification.ReaderId == readerId)
             .WhereIf(query.UnreadOnly, notification => !notification.IsRead)
+            .WhereIf(query.Request.UpdatedSince is not null, notification => notification.CreatedAt >= query.Request.UpdatedSince)
             .OrderByDescending(notification => notification.CreatedAt)
             .Select(notification => new ReaderNotificationDto(
                 notification.Id,

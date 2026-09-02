@@ -579,6 +579,58 @@ public class CirculationController : ApiControllerBase
         var file = await Mediator.Send(query, ct);
         return File(file.Content, file.ContentType, file.FileName);
     }
+
+    // ---------------------------------------------------------------
+    // Trạm mượn tự phục vụ (Phase 15, mục 3.2)
+    // ---------------------------------------------------------------
+
+    /// <summary>Danh sách trạm mượn tự phục vụ kèm nội dung mã QR để in.</summary>
+    [HttpGet("stations")]
+    [RequirePermission(PermissionCodes.CirculationPolicyView)]
+    [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<CheckoutStationDto>>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<IReadOnlyList<CheckoutStationDto>>>> Stations(
+        [FromQuery] bool includeInactive, CancellationToken ct)
+    {
+        var result = await Mediator.Send(new GetCheckoutStationsQuery(includeInactive), ct);
+        return Ok(Success(result));
+    }
+
+    /// <summary>Thêm hoặc sửa một trạm (có <c>id</c> là sửa).</summary>
+    [HttpPost("stations")]
+    [RequirePermission(PermissionCodes.CirculationPolicyManage)]
+    [ProducesResponseType(typeof(ApiResponse<CheckoutStationDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<CheckoutStationDto>>> SaveStation(
+        [FromBody] SaveCheckoutStationCommand command, CancellationToken ct)
+    {
+        var result = await Mediator.Send(command, ct);
+        return Ok(Success(result, $"Đã lưu trạm {result.Code}."));
+    }
+
+    [HttpDelete("stations/{id:guid}")]
+    [RequirePermission(PermissionCodes.CirculationPolicyManage)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse>> DeleteStation(Guid id, CancellationToken ct)
+    {
+        await Mediator.Send(new DeleteCheckoutStationCommand(id), ct);
+        return Ok(SuccessMessage("Đã xoá trạm."));
+    }
+
+    /// <summary>Ảnh PNG mã QR của một trạm để in và dán tại kho.</summary>
+    [HttpGet("stations/{id:guid}/qr.png")]
+    [RequirePermission(PermissionCodes.CirculationPolicyView)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> StationQr(Guid id, [FromQuery] int size, CancellationToken ct)
+    {
+        var stations = await Mediator.Send(new GetCheckoutStationsQuery(true), ct);
+        var station = stations.FirstOrDefault(row => row.Id == id)
+                      ?? throw new LibraryConnect.Application.Common.Exceptions.NotFoundException("trạm mượn", id);
+
+        var pixels = size is < 120 or > 1200 ? 480 : size;
+        var png = LibraryConnect.Reporting.Barcodes.BarcodeRenderer.Render(
+            station.QrContent, LibraryConnect.Domain.Enums.BarcodeType.QrCode, pixels, pixels);
+
+        return File(png, "image/png", $"tram-{station.Code}.png");
+    }
 }
 
 public class ScanRequest

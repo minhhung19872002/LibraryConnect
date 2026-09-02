@@ -292,7 +292,7 @@ Cập nhật lần cuối: 02/09/2026, sau đợt hoàn thiện (bảo mật, b�
 | VII.5.7 | Thống kê ấn phẩm được mượn nhiều nhất | **Có** | Lọc theo dạng tài liệu, kho và môn loại |
 | VII.5 | Mỗi báo cáo có bảng, biểu đồ, xuất PDF và Excel | **Có** | Bảy báo cáo đều đủ ba dạng đầu ra, xuất đúng bộ lọc đang xem |
 | XI.4 | Nhóm `/api/reader/*` phần lưu thông | **Có** | Đăng nhập bằng số thẻ, thẻ điện tử, sách đang mượn, lịch sử, xin gia hạn, đặt giữ và hủy đặt giữ, tra tiền phạt, mượn tự phục vụ — mỗi endpoint đều có kiểm thử tích hợp |
-| XI.2 | Mượn tự phục vụ có xác thực vị trí | **Có** | Tắt sẵn khi cài đặt; bật bằng `CIRCULATION.SELF_CHECKOUT_ENABLED`, mã điểm quét khai ở `CIRCULATION.SELF_CHECKOUT_TOKENS` |
+| XI.2 | Mượn tự phục vụ có xác thực vị trí | **Có** | Tắt sẵn khi cài đặt; bật bằng `CIRCULATION.SELF_CHECKOUT_ENABLED`; ba cách xác thực vị trí theo `CIRCULATION.SELF_CHECKOUT_VERIFY_MODE`: không kiểm, Wi-Fi thư viện, hoặc quét mã QR trạm mượn ký bằng khoá của thư viện (màn hình Lưu thông → Trạm mượn in được mã); phiếu xác thực có hạn 15 phút; kiểm thử tích hợp cho cả hai chế độ và bảy mã lỗi |
 
 ---
 

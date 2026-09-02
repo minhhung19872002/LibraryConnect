@@ -141,6 +141,13 @@ public static class OpacQueryBuilder
         return combined!;
     }
 
+    /// <summary>
+    /// Đồng bộ delta cho ứng dụng di động (Phase 15, mục 3.4): chỉ những biểu ghi đổi từ mốc này. Biểu
+    /// ghi chưa sửa lần nào thì mốc là lúc tạo.
+    /// </summary>
+    public static IQueryable<BibRecord> ApplyUpdatedSince(IQueryable<BibRecord> records, DateTimeOffset? since) =>
+        records.WhereIf(since is not null, bib => (bib.UpdatedAt ?? bib.CreatedAt) >= since);
+
     /// <summary>Bộ lọc bên trái kết quả: năm, ngôn ngữ, dạng tài liệu, kho, bộ sưu tập…</summary>
     public static IQueryable<BibRecord> ApplyFilter(IQueryable<BibRecord> records, OpacFilter filter)
     {

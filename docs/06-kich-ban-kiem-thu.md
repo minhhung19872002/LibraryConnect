@@ -644,11 +644,26 @@ Số liệu ghi trong cột kết quả là số đo lần bàn giao; hội đ�
 
 ---
 
+## Nhóm 2.7 — Phân hệ XI: Ứng dụng di động (Phase 15)
+
+Bước 1 — backend bổ sung cho ứng dụng. Mỗi dòng có phép thử tích hợp trong `MobileBackendTests`.
+
+| Mã | Chức năng | Bước thực hiện | Kết quả mong đợi | Kết quả thực tế | Đạt |
+|---|---|---|---|---|---|
+| MB.01 | Phiên bản ứng dụng | `GET /api/public/app-version?platform=ios` | `minVersion`, `latestVersion`, `updateUrl`, `forceUpdate`, `serverTime` theo tham số `MOBILE.APP_*` | Đạt | Đạt |
+| MB.02 | Đồng bộ delta | `GET /api/public/news?updatedSince=<ngày mai>`; `GET /api/catalogs/document-types/items?updatedSince=<30 năm trước>`; `GET /api/search?updatedSince=<ngày mai>` | Mốc tương lai → rỗng; mốc rất xa → đủ như không lọc; mọi trang trả `serverTime` | Đạt | Đạt |
+| MB.03 | Tuỳ chọn thông báo | `GET/PUT /api/reader/notifications/settings` với `{ "settings": { "NEWS": false, "due_soon": false, "SYSTEM": false } }` | Mặc định bật hết; NEWS và DUE_SOON tắt (chữ thường vẫn hiểu); SYSTEM không có trong danh sách và không tắt được | Đạt | Đạt |
+| MB.04 | Thông báo đẩy và thiết bị chết | Bạn đọc đăng ký hai mã thiết bị (một mã Firebase sẽ báo không còn đăng ký) → xin đọc tài liệu hạn chế → cán bộ duyệt | Một lượt đẩy tới cả hai mã kèm `data.kind = DIGITAL_REQUEST` và `data.link`; mã chết bị đánh dấu `is_active = false`; dòng thông báo trong ứng dụng có `type = DIGITAL_REQUEST`; tắt loại này rồi thì từ chối yêu cầu sau không đẩy nữa nhưng vẫn ghi dòng | Đạt | Đạt |
+| MB.05 | Xác thực vị trí bằng Wi-Fi | Đặt `VERIFY_MODE = WIFI_SSID`, SSID hợp lệ "LC-Thu-Vien"; gửi SSID lạ; mượn không phiếu; gửi SSID đúng; mượn với phiếu bị sửa; mượn với phiếu đúng | 409 `WIFI_MISMATCH`; 409 `LOCATION_REQUIRED`; nhận phiếu chế độ WIFI_SSID hạn > 10 phút; 409 `LOCATION_INVALID`; mượn thành công, phiếu mượn ghi "xác thực tại lc-thu-vien" | Đạt | Đạt |
+| MB.06 | Xác thực vị trí bằng mã QR trạm | Tạo trạm ở `POST /api/circulation/stations`, tải `qr.png`; đặt `VERIFY_MODE = QR_STATION`; quét mã thật, mã bịa, mã của trang web lạ; tắt trạm rồi quét lại | Mã QR dạng `LCST1|MÃ|chữ-ký`, ảnh PNG hợp lệ; phiếu mang mã và tên trạm; 409 `STATION_UNKNOWN` cho hai mã sai; 409 `STATION_INACTIVE` sau khi tắt | Đạt | Đạt |
+| MB.07 | Gói đọc ngoại tuyến | Tài liệu cho tải: `POST /api/reader/digital/{id}/offline-package` → tải `downloadUrl` → giải mã AES-256-CBC bằng khoá/IV nhận được; tài liệu chỉ đọc trực tuyến; bạn đọc khác tải gói | Khoá 32 byte, IV 16 byte, hạn ≥ 6 ngày; tệp tải về không bắt đầu bằng `%PDF`, giải mã ra đúng PDF có SHA-256 bằng `checksum`; 403 "chỉ đọc trực tuyến"; người khác 404; danh sách gói ghi `downloadedAt` | Đạt | Đạt |
+| MB.08 | Ảnh theo kích thước | `GET /api/public/covers/{id}?w=120` rồi gọi lại kèm `If-None-Match` | Dấu bản kết thúc bằng `-120x0`, khác dấu bản bản đủ; lần hai 304 | Đạt | Đạt |
+
 ## Cách chạy bộ kiểm thử tự động
 
 ```bash
 cd backend
-dotnet test                 # 566 unit test + 380 integration test
+dotnet test                 # 577 unit test + 388 integration test
 ```
 
 Integration test tự khởi tạo một container PostgreSQL 16 và một container MinIO riêng, chạy

@@ -106,3 +106,22 @@ public class DigitalAccessLog : BaseEntity
     public int? DurationSeconds { get; set; }
     public DateTimeOffset OccurredAt { get; set; }
 }
+
+/// <summary>
+/// Gói tài liệu số cấp cho ứng dụng đọc ngoại tuyến (Phase 15, mục 3.3): tệp gốc được mã hoá AES bằng
+/// một khoá riêng cho từng lần cấp, kèm hạn dùng. Hết hạn thì máy chủ không phát tệp nữa và ứng dụng tự
+/// xoá; thu hồi được từng gói.
+/// </summary>
+public class DigitalOfflinePackage : BaseEntity
+{
+    public Guid DocumentId { get; set; }
+    public DigitalDocument? Document { get; set; }
+    public Guid ReaderId { get; set; }
+    public string KeyBase64 { get; set; } = string.Empty;
+    public string IvBase64 { get; set; } = string.Empty;
+    public DateTimeOffset ExpiresAt { get; set; }
+    public DateTimeOffset? DownloadedAt { get; set; }
+    public long? SizeBytes { get; set; }
+    public string? Checksum { get; set; }
+    public bool IsRevoked { get; set; }
+}

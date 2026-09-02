@@ -390,6 +390,38 @@ và `locationToken` là nội dung mã QR dán tại kho:
 Mã điểm mượn là cách xác thực bạn đọc đang đứng trong thư viện. Thư viện chưa dán mã QR thì để trống
 tham số khai báo trong hệ thống, khi đó máy chủ bỏ qua bước kiểm tra vị trí.
 
+**Xác thực vị trí (Phase 15).** Ứng dụng di động đi hai bước, và máy chủ giữ toàn bộ quy tắc:
+
+| Method | Đường dẫn | Chức năng |
+|---|---|---|
+| POST | `/api/reader/loans/self-checkout/verify` | Nộp thứ điện thoại thấy — `ssid` (tên Wi-Fi) hoặc `qrContent` (mã QR trạm vừa quét) — nhận về `verificationToken` có hạn |
+| POST | `/api/reader/loans/self-checkout` | Nộp `barcodes` kèm `verificationToken` |
+
+Cách kiểm do tham số `CIRCULATION.SELF_CHECKOUT_VERIFY_MODE` quyết: `NONE` (không kiểm), `WIFI_SSID`
+(SSID phải nằm trong `MOBILE.SELF_CHECKOUT_WIFI_SSID`), `QR_STATION` (mã QR phải là của một trạm đang
+hoạt động trong `Lưu thông → Trạm mượn`, ký bằng khoá của thư viện). Phiếu sống
+`CIRCULATION.SELF_CHECKOUT_QR_TTL_MINUTES` phút (mặc định 15). Không đạt thì 409 với mã trong
+`errors[0].code` để ứng dụng hiện đúng màn hình:
+
+| Mã | Nghĩa |
+|---|---|
+| `SELF_CHECKOUT_DISABLED` | Thư viện chưa mở mượn tự phục vụ |
+| `LOCATION_REQUIRED` | Chưa xác thực vị trí (thiếu SSID / chưa quét QR / thiếu phiếu) |
+| `WIFI_MISMATCH` | Không phải Wi-Fi của thư viện |
+| `STATION_UNKNOWN` | Mã QR không phải trạm của thư viện này, hoặc chữ ký sai |
+| `STATION_INACTIVE` | Trạm đang tạm ngừng |
+| `LOCATION_INVALID` | Phiếu bị sửa, sai chế độ hoặc của người khác |
+| `LOCATION_EXPIRED` | Phiếu quá hạn — quét lại |
+
+```json
+{ "ssid": "LC-Thu-Vien" }
+→ { "mode": "WIFI_SSID", "verificationToken": "eyJ…​.k3Q", "expiresAt": "2026-09-03T08:15:00+07:00" }
+{ "barcodes": ["LC000123"], "verificationToken": "eyJ….k3Q" }
+```
+
+Phiếu mượn ghi rõ đã xác thực ở đâu (`note`: "Mượn tự phục vụ · xác thực tại KHOMO-01"), loại
+`SelfCheckout` và kênh `Mobile` — phân biệt được với mượn tại quầy trong mọi báo cáo.
+
 ### 4.6. Tài liệu số
 
 | Method | Đường dẫn | Chức năng | Màn hình |
@@ -403,6 +435,9 @@ tham số khai báo trong hệ thống, khi đó máy chủ bỏ qua bước ki�
 | POST | `/api/reader/digital/{id}/request` | Gửi yêu cầu đọc tài liệu hạn chế | Chi tiết |
 | GET | `/api/reader/digital/requests` | Trạng thái các yêu cầu đã gửi | Tài liệu số |
 | GET | `/api/reader/digital/history` | Lịch sử xem và tải | Lịch sử |
+| POST | `/api/reader/digital/{id}/offline-package` | Xin gói đọc ngoại tuyến: khoá AES-256-CBC, IV, hạn dùng, địa chỉ tệp đã mã hoá *(Phase 15)* | Tài liệu số |
+| GET | `/api/reader/digital/offline-packages` | Các gói đã cấp, kèm hết hạn / thu hồi | Quản lý tải về |
+| GET | `/api/reader/digital/offline-packages/{packageId}/file` | Tệp đã mã hoá của gói (chỉ chủ gói, chưa hết hạn) | Nền |
 
 Đối tượng `permission` trong phần chi tiết cho ứng dụng biết chính xác phải vẽ gì:
 
@@ -426,6 +461,23 @@ tham số khai báo trong hệ thống, khi đó máy chủ bỏ qua bước ki�
 cũng kiểm lại bộ quy tắc này ở từng endpoint đọc và tải, nên sửa dữ liệu ở máy khách không mở thêm
 được quyền gì.
 
+**Đọc ngoại tuyến (Phase 15).** Gói chỉ cấp khi `permission.canDownload` — tài liệu cho tải về hoặc
+yêu cầu được duyệt kèm quyền tải; tài liệu chỉ đọc trực tuyến trả 403 *"Tài liệu này chỉ đọc trực
+tuyến, thư viện không cho tải về máy."* Mỗi gói một khoá riêng; tệp tải về là bản mã hoá
+(AES-256-CBC, PKCS7), ứng dụng cất khoá trong kho bảo mật của hệ điều hành và giải mã khi đọc.
+Hạn dùng theo `DIGITAL.OFFLINE_PACKAGE_DAYS` (mặc định 7 ngày), không dài hơn hạn của quyền đọc đã
+duyệt. Lượt cấp ghi vào lịch sử với hành động `OfflineDownload`.
+
+```json
+{
+  "packageId": "…", "documentId": "…", "title": "Giáo trình Cơ sở dữ liệu",
+  "fileName": "csdl.pdf", "mimeType": "application/pdf", "sizeBytes": 812345,
+  "checksum": "<sha256 của tệp gốc>", "algorithm": "AES-256-CBC",
+  "keyBase64": "…", "ivBase64": "…", "expiresAt": "2026-09-10T00:00:00+07:00",
+  "downloadUrl": "/api/reader/digital/offline-packages/<packageId>/file"
+}
+```
+
 ### 4.7. Thông báo và thiết bị
 
 | Method | Đường dẫn | Chức năng |
@@ -433,11 +485,28 @@ cũng kiểm lại bộ quy tắc này ở từng endpoint đọc và tải, nê
 | GET | `/api/reader/notifications` | Danh sách thông báo |
 | POST | `/api/reader/notifications/{id}/read` | Đánh dấu một thông báo đã đọc |
 | POST | `/api/reader/notifications/read-all` | Đánh dấu tất cả đã đọc |
-| POST | `/api/reader/devices` | Đăng ký thiết bị nhận thông báo đẩy |
-| DELETE | `/api/reader/devices` | Gỡ đăng ký khi đăng xuất |
+| POST | `/api/reader/devices` | Đăng ký thiết bị nhận thông báo đẩy (`token`, `platform`, `deviceName`, `appVersion`) |
+| DELETE | `/api/reader/devices?token=` | Gỡ đăng ký khi đăng xuất |
+| GET | `/api/reader/notifications/settings` | Bạn đọc đang bật loại thông báo nào *(Phase 15)* |
+| PUT | `/api/reader/notifications/settings` | Bật/tắt từng loại: `{ "settings": { "NEWS": false } }` |
 
-Hai endpoint thiết bị đã sẵn sàng nhận và lưu mã thiết bị. Phần gửi thông báo đẩy qua Firebase sẽ nối
-vào ở đợt phát triển ứng dụng; hiện tại thông báo đi bằng email và hiện trong danh sách trên.
+**Thông báo đẩy (Phase 15).** Máy chủ gửi qua Firebase Cloud Messaging (API HTTP v1) khi khai
+`LC_Fcm__ProjectId` và `LC_Fcm__ServiceAccountFile`; để trống thì chỉ có email và dòng trong ứng dụng.
+Mỗi thông báo mang `type` — cũng là khoá trong bảng tuỳ chọn — và thông báo đẩy mang `data.kind`,
+`data.link`, `data.notificationId` để ứng dụng bấm vào là mở đúng màn hình:
+
+| `kind` | Khi nào | `link` |
+|---|---|---|
+| `DUE_SOON` | Job hằng ngày, trước hạn `CIRCULATION.DUE_SOON_DAYS` ngày | `/tai-khoan` |
+| `OVERDUE` | Ngày đầu tiên quá hạn | `/tai-khoan` |
+| `HOLD_READY` | Sách đặt giữ vừa được trả về | `/tai-khoan` (+ `holdId`) |
+| `DIGITAL_REQUEST` | Yêu cầu đọc được duyệt / từ chối | `/tai-lieu-so/{id}` |
+| `CARD_RENEWAL` | Gia hạn thẻ được duyệt | `/tai-khoan` |
+| `NEWS` | Tin mới đăng (chỉ đẩy, không ghi dòng trong ứng dụng) | `/tin-tuc/{slug}` |
+| `SYSTEM` | Không tắt được | tuỳ |
+
+Thiết bị mà Firebase trả `UNREGISTERED` bị đánh dấu ngừng ngay trong lượt gửi; ứng dụng đăng ký lại
+mã mới ở lần mở sau.
 
 ### 4.8. Nội dung công khai
 
@@ -451,6 +520,7 @@ vào ở đợt phát triển ứng dụng; hiện tại thông báo đi bằng 
 | GET | `/api/public/pages/{slug}` | Nội dung một trang tĩnh |
 | GET | `/api/public/menus` | Cây menu điều hướng |
 | GET | `/api/public/media/{objectName}` | Ảnh dùng trong nội dung |
+| GET | `/api/public/app-version?platform=android|ios` | `minVersion`, `latestVersion`, `updateUrl`, `forceUpdate`, `serverTime` *(Phase 15)* |
 
 Nhóm này **không cần đăng nhập**, dùng để dựng màn hình chào và phần giới thiệu của ứng dụng.
 
@@ -466,7 +536,31 @@ cứng trong ứng dụng — cùng một bản cài đặt phải dùng lại �
 | POST | `/api/reader/reviews` | Gửi nhận xét về tài liệu (chờ cán bộ duyệt) |
 | POST | `/api/reader/cart/email` | Gửi danh sách tài liệu về email trong hồ sơ |
 
-### 4.10. Danh sách kiểm tra khi viết ứng dụng
+### 4.10. Đồng bộ delta và ảnh theo kích thước *(Phase 15)*
+
+Mọi danh sách phân trang nhận thêm `updatedSince=<ISO 8601>` và trả về `serverTime`. Ứng dụng ghi
+`serverTime` của lần trước làm mốc cho lần sau — không dùng đồng hồ điện thoại. Áp dụng cho:
+
+| Danh sách | Cột làm mốc |
+|---|---|
+| `/api/search`, `/api/search/advanced` | biểu ghi: `updated_at` (chưa sửa thì `created_at`) |
+| `/api/catalogs/{catalog}/items` | danh mục: như trên |
+| `/api/public/news` | bản tin: như trên |
+| `/api/reader/notifications` | `created_at` |
+| `/api/reader/loans/current`, `/loans/history` | lượt mượn: `updated_at` |
+| `/api/reader/digital` | tài liệu số: `updated_at` (chưa sửa thì lúc tải lên) |
+
+Ảnh bìa và ảnh nội dung nhận `?w=` và `?h=`: máy chủ thu nhỏ vừa khung, giữ tỉ lệ, không phóng to,
+tối đa 2.000 điểm ảnh mỗi chiều; dấu bản (`ETag`) mang cả kích thước nên bản nhỏ và bản đủ không
+lẫn nhau trong bộ nhớ đệm. Bìa dựng sẵn là SVG, trả nguyên vì tự co giãn.
+
+```
+GET /api/public/covers/{bibId}?w=120        # danh sách
+GET /api/public/covers/{bibId}?w=600        # chi tiết
+GET /api/public/media/cms/anh-tin.jpg?w=400
+```
+
+### 4.11. Danh sách kiểm tra khi viết ứng dụng
 
 1. Lưu `accessToken` và `refreshToken` vào vùng lưu trữ có mã hóa của hệ điều hành, không lưu ở nơi
    đọc được bằng plain text.

@@ -141,17 +141,20 @@ public class SaveCmsNewsCommandHandler : IRequestHandler<SaveCmsNewsCommand, Gui
     private readonly IHtmlSanitizer _sanitizer;
     private readonly ICurrentUser _currentUser;
     private readonly IDateTimeProvider _clock;
+    private readonly IBackgroundJobService _jobs;
 
     public SaveCmsNewsCommandHandler(
         IApplicationDbContext db,
         IHtmlSanitizer sanitizer,
         ICurrentUser currentUser,
-        IDateTimeProvider clock)
+        IDateTimeProvider clock,
+        IBackgroundJobService jobs)
     {
         _db = db;
         _sanitizer = sanitizer;
         _currentUser = currentUser;
         _clock = clock;
+        _jobs = jobs;
     }
 
     public async Task<Guid> Handle(SaveCmsNewsCommand command, CancellationToken ct)
@@ -188,6 +191,8 @@ public class SaveCmsNewsCommandHandler : IRequestHandler<SaveCmsNewsCommand, Gui
             : command.Author.Trim();
         item.IsFeatured = command.IsFeatured;
 
+        var wasPublished = item.IsPublished;
+
         if (command.IsPublished)
         {
             item.PublishedAt = command.PublishedAt ?? item.PublishedAt ?? _clock.Now;
@@ -201,6 +206,13 @@ public class SaveCmsNewsCommandHandler : IRequestHandler<SaveCmsNewsCommand, Gui
         }
 
         await _db.SaveChangesAsync(ct);
+
+        // Phase 15: bản tin vừa lên trang thì đẩy tới điện thoại bạn đọc, chạy nền để cán bộ không chờ.
+        if (item.IsPublished && !wasPublished)
+        {
+            var newsId = item.Id;
+            _jobs.Enqueue<INewsPushJob>(job => job.PushAsync(newsId));
+        }
         return item.Id;
     }
 }
@@ -230,11 +242,13 @@ public class PublishCmsNewsCommandHandler : IRequestHandler<PublishCmsNewsComman
 {
     private readonly IApplicationDbContext _db;
     private readonly IDateTimeProvider _clock;
+    private readonly IBackgroundJobService _jobs;
 
-    public PublishCmsNewsCommandHandler(IApplicationDbContext db, IDateTimeProvider clock)
+    public PublishCmsNewsCommandHandler(IApplicationDbContext db, IDateTimeProvider clock, IBackgroundJobService jobs)
     {
         _db = db;
         _clock = clock;
+        _jobs = jobs;
     }
 
     public async Task Handle(PublishCmsNewsCommand command, CancellationToken ct)
@@ -242,6 +256,7 @@ public class PublishCmsNewsCommandHandler : IRequestHandler<PublishCmsNewsComman
         var item = await _db.CmsNews.FirstOrDefaultAsync(news => news.Id == command.Id, ct)
                    ?? throw new NotFoundException("bản tin", command.Id);
 
+        var wasPublished = item.IsPublished;
         item.IsPublished = command.Publish;
 
         if (command.Publish)
@@ -250,6 +265,12 @@ public class PublishCmsNewsCommandHandler : IRequestHandler<PublishCmsNewsComman
         }
 
         await _db.SaveChangesAsync(ct);
+
+        if (item.IsPublished && !wasPublished)
+        {
+            var newsId = item.Id;
+            _jobs.Enqueue<INewsPushJob>(job => job.PushAsync(newsId));
+        }
     }
 }
 

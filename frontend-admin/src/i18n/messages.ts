@@ -114,6 +114,7 @@ export const messages = {
     circulation: 'Lưu thông',
     circulationDesk: 'Quầy lưu thông',
     circulationPolicies: 'Chính sách lưu thông',
+    circulationStations: 'Trạm mượn tự phục vụ',
     circulationHolds: 'Đặt giữ chỗ',
     circulationFines: 'Tiền phạt',
     circulationLockers: 'Cổng và tủ gửi đồ',

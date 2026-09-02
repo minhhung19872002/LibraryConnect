@@ -1,6 +1,7 @@
 import { api } from '@/api/client';
 import type { PagedResult } from '@/types/api';
 import type {
+  CheckoutStationDto,
   CheckoutResultDto,
   CirculationPolicyDto,
   CirculationReportFilter,
@@ -128,6 +129,18 @@ export const circulationApi = {
     api.post<number>('/circulation/visits/close-open', {}, { params: { date } }),
 
   // --- Tủ gửi đồ ----------------------------------------------------------
+  stations: (includeInactive = true) =>
+    api.get<CheckoutStationDto[]>('/circulation/stations', { params: { includeInactive } }),
+  saveStation: (payload: {
+    id?: string;
+    code: string;
+    name: string;
+    warehouseId?: string | null;
+    location?: string;
+    isActive: boolean;
+  }) => api.post<CheckoutStationDto>('/circulation/stations', payload),
+  deleteStation: (id: string) => api.delete<null>(`/circulation/stations/${id}`),
+
   lockerMap: (params: Record<string, unknown>) =>
     api.get<LockerMapDto>('/circulation/lockers', { params }),
 

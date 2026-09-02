@@ -68,3 +68,18 @@ public class BackupOptions
     public bool AutoEnabled { get; set; } = true;
     public bool IncludeObjectStorage { get; set; } = true;
 }
+
+/// <summary>
+/// Firebase Cloud Messaging (Phase 15). Khai bằng biến môi trường <c>LC_Fcm__ProjectId</c> và
+/// <c>LC_Fcm__ServiceAccountFile</c> (đường dẫn tệp JSON tài khoản dịch vụ, gắn vào container) hoặc
+/// <c>LC_Fcm__ServiceAccountJson</c> (nội dung tệp). Để trống là không đẩy thông báo, không lỗi.
+/// </summary>
+public class FcmOptions
+{
+    public const string SectionName = "Fcm";
+
+    public bool Enabled { get; set; } = true;
+    public string ProjectId { get; set; } = string.Empty;
+    public string ServiceAccountFile { get; set; } = string.Empty;
+    public string ServiceAccountJson { get; set; } = string.Empty;
+}

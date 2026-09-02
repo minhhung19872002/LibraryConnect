@@ -211,12 +211,14 @@ public class ApproveDigitalRequestCommandHandler
 
         await _notifications.SendAsync(
             request.ReaderId,
+            NotificationKinds.DigitalRequest,
             "Yêu cầu đọc tài liệu đã được duyệt",
             $"Bạn được đọc tài liệu \"{request.Document?.Title}\" tới hết ngày "
             + $"{request.ExpireAt:dd/MM/yyyy}"
             + (request.MaxViews is { } limit ? $", tối đa {limit} lượt xem." : ".")
             + (command.AllowDownload ? " Bạn được tải tệp về." : string.Empty),
             $"/tai-lieu-so/{request.DocumentId}",
+            new Dictionary<string, string> { ["documentId"] = request.DocumentId.ToString() },
             ct);
 
         return await _db.DigitalAccessRequests
@@ -279,9 +281,11 @@ public class RejectDigitalRequestCommandHandler : IRequestHandler<RejectDigitalR
 
         await _notifications.SendAsync(
             request.ReaderId,
+            NotificationKinds.DigitalRequest,
             "Yêu cầu đọc tài liệu bị từ chối",
             $"Tài liệu \"{request.Document?.Title}\": {request.RejectReason}",
-            null,
+            $"/tai-lieu-so/{request.DocumentId}",
+            new Dictionary<string, string> { ["documentId"] = request.DocumentId.ToString() },
             ct);
     }
 }

@@ -42,6 +42,7 @@ import { CirculationPolicyPage } from '@/modules/circulation/CirculationPolicyPa
 import { HoldsPage } from '@/modules/circulation/HoldsPage';
 import { FinesPage } from '@/modules/circulation/FinesPage';
 import { LockersAndGatePage } from '@/modules/circulation/LockersAndGatePage';
+import { CheckoutStationsPage } from '@/modules/circulation/CheckoutStationsPage';
 import { CirculationReportsPage } from '@/modules/circulation/CirculationReportsPage';
 import { DigitalDocumentsPage } from '@/modules/digital/DigitalDocumentsPage';
 import { DigitalRequestsPage } from '@/modules/digital/DigitalRequestsPage';
@@ -294,6 +295,14 @@ function AppRoutes() {
           element={
             <RequirePermissionRoute permission={PERMISSIONS.circulation.lockerManage}>
               <LockersAndGatePage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/luu-thong/tram-muon"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.circulation.policyView}>
+              <CheckoutStationsPage />
             </RequirePermissionRoute>
           }
         />

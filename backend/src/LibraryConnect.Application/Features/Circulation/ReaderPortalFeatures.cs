@@ -46,6 +46,7 @@ public class GetMyLoansQueryHandler : IRequestHandler<GetMyLoansQuery, PagedResu
         return _mediator.Send(new SearchLoansQuery(new LoanListRequest
         {
             ReaderId = readerId,
+            UpdatedSince = query.Request.UpdatedSince,
             ActiveOnly = query.CurrentOnly ? true : null,
             Page = query.Request.Page,
             PageSize = query.Request.PageSize,
@@ -86,8 +87,11 @@ public class RenewMyLoanCommandHandler : IRequestHandler<RenewMyLoanCommand, Loa
 public class SelfCheckoutCommand : IRequest<CheckoutResultDto>
 {
     public List<string> Barcodes { get; set; } = new();
-    /// <summary>Nội dung mã QR dán tại kho.</summary>
+    /// <summary>Nội dung mã QR dán tại kho (cách cũ: danh sách mã tĩnh trong tham số).</summary>
     public string? LocationToken { get; set; }
+
+    /// <summary>Phiếu xác thực vị trí do <c>POST /api/reader/loans/self-checkout/verify</c> cấp.</summary>
+    public string? VerificationToken { get; set; }
 }
 
 public class SelfCheckoutCommandValidator : AbstractValidator<SelfCheckoutCommand>
@@ -107,15 +111,18 @@ public class SelfCheckoutCommandHandler : IRequestHandler<SelfCheckoutCommand, C
     private readonly ICirculationDeskService _desk;
     private readonly ISystemParameterService _parameters;
     private readonly ICurrentUser _currentUser;
+    private readonly IDateTimeProvider _clock;
 
     public SelfCheckoutCommandHandler(
         ICirculationDeskService desk,
         ISystemParameterService parameters,
-        ICurrentUser currentUser)
+        ICurrentUser currentUser,
+        IDateTimeProvider clock)
     {
         _desk = desk;
         _parameters = parameters;
         _currentUser = currentUser;
+        _clock = clock;
     }
 
     public async Task<CheckoutResultDto> Handle(SelfCheckoutCommand command, CancellationToken ct)
@@ -124,8 +131,14 @@ public class SelfCheckoutCommandHandler : IRequestHandler<SelfCheckoutCommand, C
 
         if (!await _parameters.GetAsync(EnabledParameter, false, ct))
         {
-            throw new ConflictException("Thư viện chưa mở chức năng mượn tự phục vụ.");
+            throw new ConflictException(
+                "Thư viện chưa mở chức năng mượn tự phục vụ.", SelfCheckoutErrorCodes.Disabled);
         }
+
+        // Phase 15: chế độ xác thực vị trí (NONE / WIFI_SSID / QR_STATION) do máy chủ quyết; ứng dụng
+        // nộp phiếu đã được cấp ở bước xác thực. Chế độ NONE thì rơi xuống cách cũ bên dưới.
+        var place = await SelfCheckoutVerification.RequireAsync(
+            _parameters, command.VerificationToken, readerId, _clock.Now, ct);
 
         var tokens = await _parameters.GetAsync(LocationTokensParameter, string.Empty, ct);
 
@@ -150,7 +163,7 @@ public class SelfCheckoutCommandHandler : IRequestHandler<SelfCheckoutCommand, C
             Barcodes = command.Barcodes,
             LoanType = LoanType.SelfCheckout,
             Channel = LoanChannel.Mobile,
-            Note = "Mượn tự phục vụ"
+            Note = place is null ? "Mượn tự phục vụ" : $"Mượn tự phục vụ · xác thực tại {place}"
         }, ct);
     }
 }

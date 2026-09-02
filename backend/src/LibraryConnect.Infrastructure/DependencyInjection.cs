@@ -26,6 +26,7 @@ public static class DependencyInjection
         services.Configure<RedisOptions>(configuration.GetSection(RedisOptions.SectionName));
         services.Configure<SmtpOptions>(configuration.GetSection(SmtpOptions.SectionName));
         services.Configure<BackupOptions>(configuration.GetSection(BackupOptions.SectionName));
+        services.Configure<FcmOptions>(configuration.GetSection(FcmOptions.SectionName));
 
         var connectionString = configuration.GetConnectionString("Default")
             ?? throw new InvalidOperationException(
@@ -45,7 +46,10 @@ public static class DependencyInjection
         services.AddScoped<IAuditService, AuditService>();
         services.AddScoped<ICodeGenerator, CodeGenerator>();
         services.AddScoped<IEmailSender, SmtpEmailSender>();
-        services.AddScoped<INotificationSender, EmailNotificationSender>();
+        services.AddScoped<INotificationSender, ReaderNotificationSender>();
+        services.AddScoped<IPushSender, FcmPushSender>();
+        services.AddSingleton<IImageResizer, SkiaImageResizer>();
+        services.AddHttpClient("fcm", client => client.Timeout = TimeSpan.FromSeconds(20));
         services.AddScoped<IBackgroundJobService, HangfireBackgroundJobService>();
         services.AddScoped<IBackupService, PostgresBackupService>();
         services.AddSingleton<IHtmlSanitizer, HtmlSanitizerService>();

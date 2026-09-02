@@ -86,8 +86,12 @@ public class ExceptionHandlingMiddleware
         ForbiddenException forbidden =>
             (StatusCodes.Status403Forbidden, ApiResponse.Fail(forbidden.Message)),
 
+        // Mã lỗi (nếu có) đi kèm để ứng dụng khách rẽ nhánh theo mã chứ không theo câu chữ —
+        // câu chữ tiếng Việt là để hiện cho người, mã là để cho máy (Phase 15, mục 3.2).
         ConflictException conflict =>
-            (StatusCodes.Status409Conflict, ApiResponse.Fail(conflict.Message)),
+            (StatusCodes.Status409Conflict, conflict.Code is null
+                ? ApiResponse.Fail(conflict.Message)
+                : ApiResponse.Fail(conflict.Message, new[] { new ApiError { Field = string.Empty, Message = conflict.Message, Code = conflict.Code } })),
 
         DomainException domain =>
             (StatusCodes.Status400BadRequest, ApiResponse.Fail(domain.Message)),

@@ -63,7 +63,7 @@ public enum DigitalAccessLevel
 
 public enum DigitalFileType { Original, Preview, Thumbnail, OcrText }
 
-public enum DigitalAccessAction { View, Download, Print }
+public enum DigitalAccessAction { View, Download, Print, OfflineDownload }
 
 public enum AccessRequestStatus { Pending, Approved, Rejected, Expired, Revoked }
 

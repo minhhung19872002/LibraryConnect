@@ -68,6 +68,20 @@ public class CirculationDailyJobs : ICirculationDailyJobs
             await _db.SaveChangesAsync();
         }
 
+        // Phase 15: báo ngay ngày đầu quá hạn, gộp theo bạn đọc. Ứng dụng bấm vào là mở "Sách của tôi".
+        foreach (var group in loans.GroupBy(loan => loan.ReaderId))
+        {
+            var titles = group.Select(loan => $"• {loan.BibTitle} — hạn trả {loan.DueDate:dd/MM/yyyy}");
+
+            await _notifications.SendAsync(group.Key,
+                NotificationKinds.Overdue,
+                "Tài liệu đã quá hạn trả",
+                $"Bạn có {group.Count()} tài liệu đã quá hạn trả:\n{string.Join("\n", titles)}\n" +
+                "Vui lòng mang tới trả sớm để không bị tính thêm phí.",
+                "/tai-khoan",
+                null);
+        }
+
         _logger.LogInformation("Đánh dấu quá hạn: {Count} lượt mượn", loans.Count);
     }
 
@@ -101,10 +115,13 @@ public class CirculationDailyJobs : ICirculationDailyJobs
                 .Select(loan => $"• {loan.BibTitle} (mã vạch {loan.Barcode}) — hạn trả {loan.DueDate:dd/MM/yyyy}");
 
             await _notifications.SendAsync(group.Key,
+                NotificationKinds.DueSoon,
                 "Nhắc hạn trả tài liệu",
                 $"Thư viện xin nhắc {group.First().ReaderName} có {group.Count()} tài liệu sắp đến hạn trả:\n" +
                 string.Join("\n", lines) +
-                "\nBạn đọc có thể mang tài liệu tới trả hoặc gia hạn trên trang tra cứu.");
+                "\nBạn đọc có thể mang tài liệu tới trả hoặc gia hạn trên trang tra cứu.",
+                "/tai-khoan",
+                null);
         }
 
         _logger.LogInformation(

@@ -161,6 +161,7 @@ public class GetPublicNewsQueryHandler
 
         return await news
             .WhereIf(request.CategoryId is not null, item => item.CategoryId == request.CategoryId)
+            .WhereIf(request.UpdatedSince is not null, item => (item.UpdatedAt ?? item.CreatedAt) >= request.UpdatedSince)
             .OrderByDescending(item => item.PublishedAt)
             .Select(item => new OpacHomeNewsDto(
                 item.Id,

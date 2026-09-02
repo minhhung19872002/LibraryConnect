@@ -41,6 +41,7 @@ public static class DependencyInjection
         services.AddScoped<Features.Circulation.ICirculationCalendarProvider, Features.Circulation.CirculationCalendarProvider>();
         services.AddScoped<Features.Circulation.ICirculationDeskService, Features.Circulation.CirculationDeskService>();
         services.AddScoped<Features.Circulation.ICirculationDailyJobs, Features.Circulation.CirculationDailyJobs>();
+        services.AddScoped<Features.Cms.INewsPushJob, Features.Cms.NewsPushJob>();
         services.AddScoped<Features.Readers.IReaderImportRunner, Features.Readers.ReaderImportRunner>();
         services.AddScoped<Features.Digital.IDigitalAccessEvaluator, Features.Digital.DigitalAccessEvaluator>();
         services.AddScoped<Features.Digital.DigitalAccessRecorder>();

@@ -225,3 +225,37 @@ public class CodeSequenceConfiguration : IEntityTypeConfiguration<CodeSequence>
         builder.Property(x => x.CurrentValue).HasColumnName("current_value");
     }
 }
+
+public class NotificationPreferenceConfiguration : IEntityTypeConfiguration<NotificationPreference>
+{
+    public void Configure(EntityTypeBuilder<NotificationPreference> builder)
+    {
+        builder.Property(x => x.Kind).HasMaxLength(50).IsRequired();
+        builder.HasIndex(x => new { x.ReaderId, x.Kind }).IsUnique().HasFilter("deleted_at IS NULL")
+            .HasDatabaseName("ux_notification_preferences_reader_kind");
+    }
+}
+
+public class CheckoutStationConfiguration : IEntityTypeConfiguration<LibraryConnect.Domain.Entities.Cir.CheckoutStation>
+{
+    public void Configure(EntityTypeBuilder<LibraryConnect.Domain.Entities.Cir.CheckoutStation> builder)
+    {
+        builder.Property(x => x.Code).HasMaxLength(50).IsRequired();
+        builder.Property(x => x.Name).HasMaxLength(200).IsRequired();
+        builder.Property(x => x.Location).HasMaxLength(500);
+        builder.HasIndex(x => x.Code).IsUnique().HasFilter("deleted_at IS NULL")
+            .HasDatabaseName("ux_checkout_stations_code");
+    }
+}
+
+public class DigitalOfflinePackageConfiguration : IEntityTypeConfiguration<LibraryConnect.Domain.Entities.Dig.DigitalOfflinePackage>
+{
+    public void Configure(EntityTypeBuilder<LibraryConnect.Domain.Entities.Dig.DigitalOfflinePackage> builder)
+    {
+        builder.Property(x => x.KeyBase64).HasMaxLength(100).IsRequired();
+        builder.Property(x => x.IvBase64).HasMaxLength(50).IsRequired();
+        builder.Property(x => x.Checksum).HasMaxLength(128);
+        builder.HasOne(x => x.Document).WithMany().HasForeignKey(x => x.DocumentId).OnDelete(DeleteBehavior.Cascade);
+        builder.HasIndex(x => new { x.ReaderId, x.ExpiresAt }).HasDatabaseName("ix_digital_offline_packages_reader");
+    }
+}

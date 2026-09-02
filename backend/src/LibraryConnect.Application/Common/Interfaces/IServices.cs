@@ -85,6 +85,76 @@ public interface INotificationSender
 {
     string Channel { get; }
     Task SendAsync(Guid readerId, string title, string body, string? link = null, CancellationToken ct = default);
+
+    /// <summary>
+    /// Gửi kèm loại thông báo, để bạn đọc tắt được từng loại trên ứng dụng và để ứng dụng biết bấm vào
+    /// thì mở màn hình nào. <paramref name="data"/> đi theo thông báo đẩy nguyên vẹn.
+    /// </summary>
+    Task SendAsync(
+        Guid readerId,
+        string kind,
+        string title,
+        string body,
+        string? link,
+        IReadOnlyDictionary<string, string>? data,
+        CancellationToken ct = default);
+}
+
+/// <summary>Các loại thông báo bạn đọc bật/tắt được. Giá trị lưu vào cột <c>type</c> và bảng tuỳ chọn.</summary>
+public static class NotificationKinds
+{
+    public const string DueSoon = "DUE_SOON";
+    public const string Overdue = "OVERDUE";
+    public const string HoldReady = "HOLD_READY";
+    public const string DigitalRequest = "DIGITAL_REQUEST";
+    public const string CardRenewal = "CARD_RENEWAL";
+    public const string News = "NEWS";
+    public const string System = "SYSTEM";
+
+    public static readonly IReadOnlyList<string> All = new[]
+    {
+        DueSoon, Overdue, HoldReady, DigitalRequest, CardRenewal, News, System,
+    };
+
+    public static string Label(string kind) => kind switch
+    {
+        DueSoon => "Sắp đến hạn trả",
+        Overdue => "Đã quá hạn",
+        HoldReady => "Sách đặt giữ đã sẵn sàng",
+        DigitalRequest => "Yêu cầu đọc tài liệu số",
+        CardRenewal => "Gia hạn thẻ",
+        News => "Tin tức mới",
+        _ => "Thông báo hệ thống",
+    };
+}
+
+/// <summary>Kết quả gửi một lượt thông báo đẩy: mã thiết bị nào đã chết thì trả về để gỡ.</summary>
+public record PushResult(int Sent, IReadOnlyList<string> DeadTokens, string? Error = null);
+
+/// <summary>
+/// Gửi thông báo đẩy tới thiết bị di động. Bản Firebase Cloud Messaging nằm ở tầng hạ tầng; chưa cấu
+/// hình thì bỏ qua lặng lẽ để không làm hỏng job nhắc hạn.
+/// </summary>
+public interface IPushSender
+{
+    bool IsConfigured { get; }
+
+    Task<PushResult> SendAsync(
+        IReadOnlyList<string> tokens,
+        string title,
+        string body,
+        IReadOnlyDictionary<string, string>? data,
+        CancellationToken ct = default);
+}
+
+/// <summary>Thu nhỏ ảnh bìa và ảnh nội dung theo kích thước ứng dụng xin (Phase 15, mục 3.5).</summary>
+public interface IImageResizer
+{
+    /// <summary>
+    /// Trả về ảnh đã thu về vừa khung <paramref name="width"/> × <paramref name="height"/>, giữ tỉ lệ.
+    /// Ảnh SVG hoặc ảnh không đọc được thì trả nguyên.
+    /// </summary>
+    (byte[] Content, string ContentType) Resize(byte[] content, string contentType, int? width, int? height);
 }
 
 /// <summary>Writes audit rows that the EF interceptor cannot infer, such as logins and exports.</summary>

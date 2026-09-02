@@ -30,3 +30,14 @@ public class DeviceToken : BaseEntity
     public DateTimeOffset? LastSeenAt { get; set; }
     public bool IsActive { get; set; } = true;
 }
+
+/// <summary>
+/// Bạn đọc bật hay tắt từng loại thông báo đẩy (Phase 15). Không có dòng nào nghĩa là bật; chỉ lưu
+/// những loại đã tắt hoặc đã bật lại rõ ràng.
+/// </summary>
+public class NotificationPreference : BaseEntity
+{
+    public Guid ReaderId { get; set; }
+    public string Kind { get; set; } = string.Empty;
+    public bool Enabled { get; set; } = true;
+}

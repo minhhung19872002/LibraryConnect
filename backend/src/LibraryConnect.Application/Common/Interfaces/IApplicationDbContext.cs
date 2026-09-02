@@ -32,6 +32,7 @@ public interface IApplicationDbContext
     DbSet<BackupJob> BackupJobs { get; }
     DbSet<Notification> Notifications { get; }
     DbSet<DeviceToken> DeviceTokens { get; }
+    DbSet<NotificationPreference> NotificationPreferences { get; }
     DbSet<RefreshToken> RefreshTokens { get; }
     DbSet<LoginHistory> LoginHistories { get; }
 
@@ -109,6 +110,7 @@ public interface IApplicationDbContext
     DbSet<DigitalDocumentFile> DigitalDocumentFiles { get; }
     DbSet<DigitalAccessRequest> DigitalAccessRequests { get; }
     DbSet<DigitalAccessLog> DigitalAccessLogs { get; }
+    DbSet<DigitalOfflinePackage> DigitalOfflinePackages { get; }
     DbSet<DigitalUploadSession> DigitalUploadSessions { get; }
 
     // ---- rdr ----
@@ -126,6 +128,7 @@ public interface IApplicationDbContext
     DbSet<Hold> Holds { get; }
     DbSet<Fine> Fines { get; }
     DbSet<Locker> Lockers { get; }
+    DbSet<CheckoutStation> CheckoutStations { get; }
     DbSet<LockerUsage> LockerUsages { get; }
     DbSet<LibraryVisit> LibraryVisits { get; }
 

@@ -56,7 +56,7 @@ huống lỗi; phải tự tay dựng đúng bối cảnh ấy trong phép thử
 **Lệnh chạy đúng:**
 
 ```bash
-cd backend  && dotnet test                 # 566 unit + 380 integration
+cd backend  && dotnet test                 # 577 unit + 388 integration
 cd frontend-admin && npx tsc -b && npx vitest run    # 211 test
 cd frontend-opac  && npx tsc -b && npx vitest run    #  85 test
 ```

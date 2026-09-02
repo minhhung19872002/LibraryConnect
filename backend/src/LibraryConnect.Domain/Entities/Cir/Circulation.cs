@@ -180,3 +180,17 @@ public class LibraryVisit : BaseEntity
     public string? Gate { get; set; }
     public string? Purpose { get; set; }
 }
+
+/// <summary>
+/// Trạm mượn tự phục vụ (Phase 15, mục 3.2): một mã QR dán tại kho, bạn đọc quét trước khi tự mượn để
+/// chứng minh mình đang đứng trong thư viện. Nội dung QR gồm mã trạm và chữ ký HMAC, nên chụp lại mã
+/// đem về nhà vẫn cần đúng khoá của thư viện mới sinh ra được — và cán bộ tắt trạm là mã hết tác dụng.
+/// </summary>
+public class CheckoutStation : BaseEntity
+{
+    public string Code { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public Guid? WarehouseId { get; set; }
+    public string? Location { get; set; }
+    public bool IsActive { get; set; } = true;
+}

@@ -414,6 +414,13 @@ export const menuTree: MenuNode[] = [
         permissions: [PERMISSIONS.circulation.policyView],
       },
       {
+        key: 'circulation-stations',
+        label: messages.menu.circulationStations,
+        icon: <ContainerOutlined />,
+        path: '/luu-thong/tram-muon',
+        permissions: [PERMISSIONS.circulation.policyView],
+      },
+      {
         key: 'circulation-reports',
         label: messages.menu.circulationReports,
         icon: <BarChartOutlined />,

@@ -298,6 +298,18 @@ export interface GateScanResultDto {
 // VII.3 — Tủ gửi đồ
 // ---------------------------------------------------------------------------------------------
 
+/** Trạm mượn tự phục vụ (Phase 15): một mã QR dán tại kho. */
+export interface CheckoutStationDto {
+  id: string;
+  code: string;
+  name: string;
+  warehouseId: string | null;
+  warehouseName: string | null;
+  location: string | null;
+  isActive: boolean;
+  qrContent: string;
+}
+
 export interface LockerRowDto {
   id: string;
   code: string;

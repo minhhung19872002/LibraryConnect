@@ -30,6 +30,18 @@ public class PublicController : ApiControllerBase
         return Ok(Success(result));
     }
 
+    /// <summary>
+    /// Phiên bản ứng dụng di động (Phase 15): thấp hơn <c>minVersion</c> thì ứng dụng chặn và yêu cầu cập
+    /// nhật; <c>updateUrl</c> theo <c>platform</c> = android | ios.
+    /// </summary>
+    [HttpGet("app-version")]
+    [ProducesResponseType(typeof(ApiResponse<AppVersionDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<AppVersionDto>>> AppVersion([FromQuery] string? platform, CancellationToken ct)
+    {
+        var result = await Mediator.Send(new GetAppVersionQuery(platform), ct);
+        return Ok(Success(result));
+    }
+
     /// <summary>Nội dung trang chủ: sách mới, sách được mượn nhiều, tin tức, banner và liên kết.</summary>
     [HttpGet("home")]
     [ProducesResponseType(typeof(ApiResponse<OpacHomeDto>), StatusCodes.Status200OK)]
@@ -180,33 +192,45 @@ public class PublicController : ApiControllerBase
     [HttpGet("covers/{bibId:guid}.svg")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Cover(Guid bibId, CancellationToken ct)
+    public async Task<IActionResult> Cover(Guid bibId, [FromQuery] int? w, [FromQuery] int? h, CancellationToken ct)
     {
         var cover = await Mediator.Send(new GetBibCoverQuery(bibId), ct);
 
-        if (Request.Headers.IfNoneMatch.Contains(cover.ETag))
+        // Phase 15: ứng dụng xin bản nhỏ (?w=120) cho danh sách và bản lớn cho trang chi tiết. Dấu bản
+        // mang cả kích thước, nếu không trình duyệt đưa bản nhỏ đã giữ ra chỗ cần bản lớn.
+        var etag = w is > 0 || h is > 0 ? cover.ETag.TrimEnd('"') + $"-{w ?? 0}x{h ?? 0}\"" : cover.ETag;
+
+        if (Request.Headers.IfNoneMatch.Contains(etag))
         {
             return StatusCode(StatusCodes.Status304NotModified);
         }
 
-        Response.Headers.ETag = cover.ETag;
+        var (content, contentType) = HttpContext.RequestServices
+            .GetRequiredService<LibraryConnect.Application.Common.Interfaces.IImageResizer>()
+            .Resize(cover.Content, cover.ContentType, w, h);
+
+        Response.Headers.ETag = etag;
         Response.Headers.CacheControl = "public, max-age=604800";
 
-        return File(cover.Content, cover.ContentType);
+        return File(content, contentType);
     }
 
     /// <summary>Ảnh dùng trong nội dung: logo, banner, ảnh tin, ảnh album.</summary>
     [HttpGet("media/{**objectName}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Media(string objectName, CancellationToken ct)
+    public async Task<IActionResult> Media(string objectName, [FromQuery] int? w, [FromQuery] int? h, CancellationToken ct)
     {
         var media = await Mediator.Send(new GetCmsMediaQuery(objectName), ct);
+
+        var (content, contentType) = HttpContext.RequestServices
+            .GetRequiredService<LibraryConnect.Application.Common.Interfaces.IImageResizer>()
+            .Resize(media.Content, media.ContentType, w, h);
 
         // Ảnh nội dung đổi thì đổi cả tên tệp (mỗi lần tải lên sinh mã ngẫu nhiên mới), nên trình
         // duyệt giữ bao lâu cũng được — không có chuyện xem phải ảnh cũ.
         Response.Headers.CacheControl = "public, max-age=604800";
 
-        return File(media.Content, media.ContentType);
+        return File(content, contentType);
     }
 }
