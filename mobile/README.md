@@ -24,7 +24,7 @@ lib/
 │   ├── router/                  # go_router, chuyển hướng theo trạng thái đăng nhập
 │   ├── theme/                   # Bảng màu giấy ngà / xanh rêu, Be Vietnam Pro + Lora, viên trạng thái
 │   └── widgets/                 # AppShell (thanh điều hướng dưới)
-├── features/<tên>/presentation  # Mỗi chức năng một thư mục: auth, home, account, …
+├── features/<tên>/{data,presentation}  # auth, home, account, search, scan, bib, …
 ├── l10n/                        # app_vi.arb (mặc định), app_en.arb → sinh mã bằng gen-l10n
 └── shared/models/               # Model freezed + json_serializable
 ```
@@ -96,6 +96,7 @@ flutter gen-l10n                                            # tự chạy khi `f
 |---|---|---|
 | 1 | Backend bổ sung 3.1–3.6 | Xong (commit `8575c34`) |
 | 2 | Khung dự án: cấu trúc, chủ đề, định tuyến, API client, đăng nhập, đa ngôn ngữ | Xong — đăng nhập đầu-cuối xanh trên máy ảo Android 16 (MB.09) |
-| 3–10 | Tra cứu, quét mã, danh mục, thẻ, sách của tôi, tự mượn, tài liệu số, thông báo, đóng gói | Chưa |
+| 3 | Tra cứu (gợi ý, không dấu, facet, sắp xếp, nâng cao, tìm gần đây) + quét mã + chi tiết 5 thẻ | Xong — MB.10–MB.12; camera thật chưa kiểm |
+| 4–10 | Danh mục, trang chủ, tin tức, thẻ, sách của tôi, tự mượn, tài liệu số, thông báo, đóng gói | Chưa |
 
 Chưa bước nào chạy được trên **máy thật**: máy phát triển không có điện thoại kết nối. Mỗi bước ghi rõ điều này trong báo cáo.

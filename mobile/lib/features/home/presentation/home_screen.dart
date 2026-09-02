@@ -79,6 +79,26 @@ class HomeScreen extends ConsumerWidget {
               padding: const EdgeInsets.all(16),
               sliver: SliverList.list(
                 children: [
+                  // Ô tìm kiếm lớn: chạm là sang màn hình tra cứu, gõ ở đó.
+                  Card(
+                    child: ListTile(
+                      key: const Key('home-search'),
+                      leading: const Icon(Icons.search),
+                      title: Text(
+                        l10n.searchFromHome,
+                        style: const TextStyle(color: LcColors.muted),
+                      ),
+                      onTap: () => context.go(Routes.searchPath),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  FilledButton.tonalIcon(
+                    key: const Key('home-scan'),
+                    onPressed: () => context.go(Routes.scan),
+                    icon: const Icon(Icons.qr_code_scanner),
+                    label: Text(l10n.scanFromHome),
+                  ),
+                  const SizedBox(height: 12),
                   if (settings.hasError)
                     _ErrorCard(
                       error: settings.error,

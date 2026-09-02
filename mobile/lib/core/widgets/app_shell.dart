@@ -14,6 +14,12 @@ class AppShell extends StatelessWidget {
 
   static const _tabs = [
     (path: Routes.home, icon: Icons.home_outlined, selected: Icons.home),
+    (path: Routes.searchPath, icon: Icons.search, selected: Icons.saved_search),
+    (
+      path: Routes.scan,
+      icon: Icons.qr_code_scanner,
+      selected: Icons.qr_code_scanner,
+    ),
     (path: Routes.account, icon: Icons.person_outline, selected: Icons.person),
   ];
 
@@ -29,7 +35,12 @@ class AppShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = L10n.of(context);
-    final labels = [l10n.tabHome, l10n.tabAccount];
+    final labels = [
+      l10n.tabHome,
+      l10n.tabSearch,
+      l10n.tabScan,
+      l10n.tabAccount,
+    ];
 
     return Scaffold(
       body: child,
