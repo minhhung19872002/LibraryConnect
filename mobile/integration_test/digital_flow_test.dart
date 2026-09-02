@@ -73,7 +73,11 @@ void main() {
     // Tài khoản → Tài liệu số: danh sách thật.
     await tester.tap(find.text('Tài khoản').last);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Tài liệu số').first);
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('account-digital')),
+      300,
+    );
+    await tester.tap(find.byKey(const Key('account-digital')));
     await _waitFor(tester, find.byKey(const Key('digital-search')));
     await _waitFor(tester, find.textContaining(publicTitle));
 

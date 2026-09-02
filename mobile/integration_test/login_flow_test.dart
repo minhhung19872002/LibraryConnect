@@ -27,6 +27,24 @@ void main() {
     app.main();
     await tester.pumpAndSettle(const Duration(seconds: 2));
 
+    // Máy có thể còn phiên từ phép thử trước (bộ chạy chung một lần cài): đăng xuất trước.
+    await _waitFor(
+      tester,
+      find.byKey(const Key('home-search')),
+      timeout: const Duration(seconds: 20),
+    );
+    if (find.byKey(const Key('home-bell')).evaluate().isNotEmpty) {
+      await tester.tap(find.text('Tài khoản').last);
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(find.byKey(const Key('sign-out')), 300);
+      await tester.tap(find.byKey(const Key('sign-out')));
+      await _waitFor(
+        tester,
+        find.byKey(const Key('home-search')),
+        timeout: const Duration(seconds: 20),
+      );
+    }
+
     // Trang chủ tải tên thư viện từ máy chủ.
     await _waitFor(
       tester,
@@ -60,9 +78,15 @@ void main() {
     // Tab Tài khoản: tên bạn đọc và số thẻ, rồi đăng xuất.
     await tester.tap(find.byIcon(Icons.person_outline));
     await tester.pumpAndSettle();
-    expect(find.text(card), findsOneWidget);
+    // Hồ sơ tải từ máy chủ sau khi vào tab: đợi số thẻ hiện ra thay vì đòi có ngay.
+    await _waitFor(
+      tester,
+      find.text(card),
+      timeout: const Duration(seconds: 15),
+    );
 
-    await tester.tap(find.text('Đăng xuất'));
+    await tester.scrollUntilVisible(find.byKey(const Key('sign-out')), 300);
+    await tester.tap(find.byKey(const Key('sign-out')));
     await _waitFor(
       tester,
       find.byIcon(Icons.login),

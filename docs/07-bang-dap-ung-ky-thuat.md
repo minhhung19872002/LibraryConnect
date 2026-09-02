@@ -330,6 +330,30 @@ Cập nhật lần cuối: 02/09/2026, sau đợt hoàn thiện (bảo mật, b�
 | V.4 | Báo cáo có bảng, biểu đồ, xuất PDF và Excel | **Có** | Cả bốn báo cáo, xuất đúng bộ lọc đang hiển thị, có ghi nhật ký ai xuất |
 | XI.4 | Nhóm `/api/reader/digital/*` | **Có** | Danh sách tài liệu xem được, chi tiết kèm quyền của chính người gọi, mở trình đọc, xem từng trang, tải về, gửi yêu cầu, tra trạng thái yêu cầu và lịch sử xem — mỗi endpoint đều có kiểm thử tích hợp |
 
+### B14. Phân hệ XI — Ứng dụng di động (Flutter, `mobile/`)
+
+| Mã | Yêu cầu E-HSMT | Đáp ứng | Tên chức năng / chứng minh |
+|---|---|---|---|
+| XI.1.1 | Tra cứu cơ bản, nâng cao, theo ISBN, quét mã vạch, quét QR | **Có** | Màn hình Tra cứu (phạm vi, gợi ý, gõ không dấu, facet, sắp xếp, nâng cao VÀ/HOẶC/KHÔNG), màn hình Quét mã nhận ISBN-10/13, ĐKCB, QR (mobile_scanner) kèm nhập tay — MB.10, MB.11, MB.30, MB.31 |
+| XI.1.2 | Duyệt theo chủ đề, đề mục, tác giả | **Có** | Duyệt danh mục: cây chủ đề và phân loại DDC bung từng cấp, tác giả A–Z, bộ sưu tập, lọc tại chỗ không dấu — MB.15 |
+| XI.1.3 | Duyệt theo chuyên ngành, môn học | **Có** | Ngành → môn → tài liệu kèm nhãn giáo trình / tham khảo — MB.15 |
+| XI.1.4 | Danh mục luận văn / luận án; ấn phẩm định kỳ | **Có** | Hai danh sách phân trang có ô tìm — MB.15 |
+| XI.1.5 | Chi tiết tài liệu, tình trạng sẵn có, vị trí kho | **Có** | Năm thẻ: Thông tin (ISBD), Bản in (kho · giá · tình trạng), Tài liệu số, MARC dạng bảng, Nhận xét; nút đặt giữ đổi theo tình trạng thật — MB.10, MB.12 |
+| XI.1.6 | Tin tức, thông tin thư viện, giờ mở cửa, bản đồ | **Có** | Trang chủ, tin tức và trang tĩnh dựng HTML, nút Gọi và Chỉ đường — MB.13, MB.14 |
+| XI.2.1 | Đọc tài liệu số trong ứng dụng; tải về vùng ngoại tuyến mã hoá, tự hết hạn | **Có** | Trình đọc trang ảnh máy chủ đóng chữ chìm, tìm trong văn bản, đánh dấu trang; gói AES-256-CBC lưu mã hoá, tự hết hạn — MB.21, MB.22 |
+| XI.2.2 | Mượn sách giấy tự phục vụ có xác thực vị trí | **Có** | Xác thực NONE / Wi-Fi / QR trạm rồi quét mã vạch liên tiếp, phiếu tóm tắt; máy chủ kiểm chính sách — MB.19, MB.20 |
+| XI.2.3 | Đặt giữ chỗ, vị trí hàng đợi, thông báo khi sẵn sàng | **Có** | Đặt giữ từ chi tiết, thẻ Đặt giữ trong Sách của tôi kèm vị trí và hủy; thông báo HOLD_READY của máy chủ — MB.17, MB.32 |
+| XI.2.4 | Gửi yêu cầu tài liệu số hạn chế; lịch sử xem/tải | **Có** | Nút Gửi yêu cầu kèm lý do, thẻ Yêu cầu và Lịch sử — MB.23 |
+| XI.2.5 | Lịch sử mượn trả; xin gia hạn | **Có** | Sách của tôi: Đang mượn (gia hạn do máy chủ quyết, hiện đúng câu từ chối), Lịch sử có lọc — MB.16, MB.32 |
+| XI.2.6 | Đổi mật mã; gia hạn thẻ | **Có** | Tài khoản: đổi mật khẩu, cập nhật liên hệ; màn hình Thẻ có nút gửi yêu cầu gia hạn và danh sách yêu cầu — MB.18, MB.25 |
+| XI.2.7 | Thẻ thư viện điện tử (mã vạch/QR) | **Có** | Mã vạch Code 128 + QR số thẻ, sáng màn hình, đọc được khi mất mạng, thẻ hết hiệu lực ẩn mã — MB.18 |
+| XI.2.8 | Thông báo đẩy (FCM) | **Có một phần** | Dịch vụ đẩy đăng ký token, hiện thông báo, mở đúng màn hình; danh sách và cài đặt loại thông báo chạy thật — MB.24. Nhận đẩy thật chưa kiểm vì môi trường phát triển chưa có cấu hình Firebase |
+| XI.2.9 | Chế độ ngoại tuyến: kết quả tra cứu gần đây và thẻ điện tử | **Có** | Bản lưu kèm giờ cho thẻ, đang mượn, kết quả tra cứu, cài đặt thư viện; dải "Không có kết nối" — MB.18, MB.28 |
+| XI.3.1 | Dùng chung REST API, JWT, tự làm mới token | **Có** | `ApiClient` (Dio) làm mới token qua `/reader/auth/refresh`, hết phiên thì về đăng nhập — MB.09 |
+| XI.3.2 | Sáng/tối, cỡ chữ điều chỉnh được | **Có** | Cài đặt lưu trên máy, cỡ chữ nhân với cỡ chữ hệ điều hành; soi tràn chữ ở 160% — MB.27 |
+| XI.3.3 | Đồng bộ dữ liệu trung tâm (mục 2.7) | **Có** | Sửa trên web thấy ngay trên ứng dụng; `updatedSince` + `serverTime` cho đồng bộ delta — MB.33 |
+| XI.3.4 | Build APK và IPA, hướng dẫn cấu hình endpoint | **Có một phần** | APK và AAB dựng được (`flutter build apk --release`, `appbundle`), endpoint qua `--dart-define`, khoá ký qua `key.properties`; IPA chưa dựng (không có máy Mac), cấu hình iOS đã sẵn — `mobile/README.md` |
+
 ---
 
 ## B10. Liên thư viện — Z39.50, SRU và OAI-PMH
@@ -458,4 +482,4 @@ Cập nhật lần cuối: 02/09/2026, sau đợt hoàn thiện (bảo mật, b�
 | D10 | Phân hệ VIII — Quản trị nội dung | **Có** | Chi tiết ở mục B11 |
 | D11 | Phân hệ IX — Tra cứu OPAC | **Có** | Chi tiết ở mục B12. Trang tra cứu là ứng dụng riêng, chạy ở đường dẫn gốc |
 | D12 | Phân hệ X — Tài liệu môn học | **Có** | Chi tiết ở mục B13 |
-| D13 | Phân hệ XI — Ứng dụng di động | **Đợt sau** | Nhóm endpoint `/api/reader/*` được hoàn thiện và kiểm thử trong đợt web này để ứng dụng cắm vào không phải sửa backend |
+| D13 | Phân hệ XI — Ứng dụng di động | **Có** (Android đã dựng và kiểm trên máy ảo; iOS: mã dùng chung, chưa dựng vì thiếu máy Mac) | Chi tiết ở mục B14. Ứng dụng Flutter trong `mobile/`, gọi nhóm `/api/reader/*`, `/api/search/*`, `/api/browse/*`, `/api/public/*`; 76 phép thử đơn vị/widget và 12 luồng đầu-cuối trên máy ảo với máy chủ Docker thật (`docs/06`, MB.01–MB.33) |

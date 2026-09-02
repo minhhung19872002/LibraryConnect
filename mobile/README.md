@@ -47,10 +47,18 @@ flutter run -d emulator-5554 --dart-define=LC_PROFILE=dev --dart-define=LC_API_B
 # Điện thoại thật cùng Wi-Fi: thay bằng IP của máy phát triển
 flutter run --dart-define=LC_API_BASE_URL=http://192.168.1.20/api
 
-# Bản phát hành
+# Bản phát hành (ký bằng android/key.properties nếu có — xem android/key.properties.example; không có thì ký khoá debug)
 flutter build apk --release --dart-define=LC_PROFILE=prod --dart-define=LC_API_BASE_URL=https://thuvien.example.edu.vn/api
 flutter build appbundle --release --dart-define=LC_PROFILE=prod --dart-define=LC_API_BASE_URL=https://thuvien.example.edu.vn/api
+# Ghim chứng chỉ (tuỳ chọn): --dart-define=LC_CERT_PINS=<SHA-256 base64 của chứng chỉ máy chủ>
+# Đầu ra: build/app/outputs/flutter-apk/app-release.apk, build/app/outputs/bundle/release/app-release.aab
+
+# iOS (cần máy Mac + Xcode; bundle id vn.bluestar.libraryconnect, Info.plist đã khai quyền camera/Face ID/vị trí)
+flutter build ipa --release --dart-define=LC_PROFILE=prod --dart-define=LC_API_BASE_URL=https://thuvien.example.edu.vn/api
 ```
+
+Biểu tượng ứng dụng: `assets/icon/app_icon.png` (+ `app_icon_foreground.png` cho adaptive icon); đổi
+ảnh rồi chạy `dart run flutter_launcher_icons`.
 
 Bản **debug** cho phép HTTP không mã hoá (để gọi máy chủ phát triển); bản **release** chỉ HTTPS.
 
@@ -62,6 +70,20 @@ mọi thứ khác vẫn hoạt động. Để bật:
 1. Tạo dự án Firebase, thêm ứng dụng Android `vn.bluestar.libraryconnect` và iOS cùng ID.
 2. Đặt `google-services.json` vào `android/app/` và `GoogleService-Info.plist` vào `ios/Runner/`.
 3. Phía máy chủ khai `LC_Fcm__ProjectId` và `LC_Fcm__ServiceAccountFile` (xem `.env.example`).
+
+## 12 luồng đầu-cuối (PROMPT-MOBILE mục 6) ↔ tệp phép thử
+
+| Luồng | Tệp trong `integration_test/` |
+|---|---|
+| 1 Đăng nhập → thẻ → đăng xuất | `login_flow_test.dart`, `my_library_flow_test.dart` |
+| 2 Tra cứu không dấu → chi tiết → bản in | `search_scan_flow_test.dart` |
+| 3 Nâng cao → facet → sắp xếp; 5 Quét ISBN | `catalog_flows_test.dart` |
+| 4 Quét ĐKCB | `search_scan_flow_test.dart` (nhập tay cùng đường với camera) |
+| 6 Đặt giữ → hủy; 7 Gia hạn; 12 Đồng bộ `updatedSince` | `holds_renew_sync_flow_test.dart` (từ chối gia hạn: `my_library_flow_test.dart`) |
+| 8 Mượn tự phục vụ | `self_checkout_flow_test.dart` |
+| 9 Tài liệu số công khai / hạn chế; 10 Gói ngoại tuyến | `digital_flow_test.dart` |
+| 11 Thông báo → mở đúng màn hình | `account_notifications_flow_test.dart` (đẩy FCM thật chưa kiểm) |
+| Trang chủ / duyệt / tin; chế độ tối + chữ lớn | `home_browse_news_flow_test.dart`, `ui_modes_flow_test.dart` |
 
 ## Chạy kiểm thử
 
@@ -82,6 +104,9 @@ flutter test integration_test -d <device> --dart-define=LC_API_BASE_URL=http://1
   incremental ném "different roots" cho mọi plugin Kotlin. Cùng ổ thì bỏ dòng này được.
 - `flutter_secure_storage` giữ bản 10 và `permission_handler` giữ bản 12: bản mới hơn đòi `compileSdk 37` mà SDK chỉ có `android-37.0`, Gradle không tìm thấy.
 - `flutter_local_notifications` cần `isCoreLibraryDesugaringEnabled = true` + `desugar_jdk_libs`.
+- Vừa chạy `flutter drive`/`flutter test integration_test` xong mà dựng bản release báo
+  `package dev.flutter.plugins.integration_test does not exist`: `GeneratedPluginRegistrant.java` còn
+  dòng đăng ký plugin của bản thử; chạy lại lệnh build (Flutter sinh lại tệp) là hết.
 - APK debug gộp mọi ABI nặng ~195 MB; máy ảo phải còn hơn 400 MB trống. Máy ảo thử nghiệm: `LC_Pixel` (Android 16,
   Pixel 9, ổ dữ liệu 8 GB), tạo bằng `avdmanager create avd -n LC_Pixel -k "system-images;android-36;google_apis_playstore;x86_64" -d pixel_9`.
 
@@ -115,6 +140,6 @@ flutter gen-l10n                                            # tự chạy khi `f
 | 7 | Tài liệu số: danh sách + toàn văn, trình đọc trang ảnh có chữ chìm, tìm trong văn bản, đánh dấu trang, gói ngoại tuyến mã hoá tự hết hạn, xin quyền, lịch sử, chặn chụp màn hình (Android) | Xong — MB.21–MB.23 |
 | 8 | Thông báo (danh sách, mở đúng màn hình, cài đặt loại), dịch vụ đẩy FCM (tắt lặng lẽ khi thiếu Firebase), tài khoản đầy đủ, khoá sinh trắc học, cài đặt lưu máy | Xong — MB.24–MB.26; đẩy thật chưa kiểm |
 | 9 | Ngoại tuyến (dải mất mạng, bộ đệm đang mượn/tra cứu/cài đặt, phông đóng gói), ghim chứng chỉ, chế độ tối + cỡ chữ lớn soi tràn chữ, đo khởi động lạnh | Xong — MB.27–MB.29; máy thật chưa đo |
-| 10 | Kiểm thử đầy đủ, đóng gói APK/AAB, tài liệu | Chưa |
+| 10 | 12 luồng đầu-cuối (MB.09–MB.33), APK/AAB release, biểu tượng, ký bằng `key.properties`, tài liệu 01/06/07 | Xong — iOS chưa dựng |
 
 Chưa bước nào chạy được trên **máy thật**: máy phát triển không có điện thoại kết nối. Mỗi bước ghi rõ điều này trong báo cáo.

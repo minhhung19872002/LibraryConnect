@@ -830,8 +830,9 @@ class _AdvancedSearchPageState extends State<_AdvancedSearchPage> {
               children: [
                 if (i > 0)
                   SizedBox(
-                    width: 96,
+                    width: 118,
                     child: DropdownButtonFormField<Connector>(
+                      isExpanded: true,
                       initialValue: _clauses[i].connector,
                       items: [
                         for (final c in Connector.values)
@@ -845,10 +846,11 @@ class _AdvancedSearchPageState extends State<_AdvancedSearchPage> {
                     ),
                   )
                 else
-                  const SizedBox(width: 96),
+                  const SizedBox(width: 118),
                 const SizedBox(width: 8),
                 Expanded(
                   child: DropdownButtonFormField<SearchScope>(
+                    isExpanded: true,
                     initialValue: _clauses[i].field,
                     items: [
                       for (final s in SearchScope.values)

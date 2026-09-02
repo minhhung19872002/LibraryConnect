@@ -182,6 +182,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                   ),
                   const Divider(height: 1),
                   ListTile(
+                    key: const Key('account-digital'),
                     leading: const Icon(Icons.picture_as_pdf_outlined),
                     title: Text(l10n.digitalTitle),
                     trailing: const Icon(Icons.chevron_right),

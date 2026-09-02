@@ -25,6 +25,7 @@ hành, giám sát và xử lý sự cố xem `02-tai-lieu-quan-tri.md`.
 13. [Liên thư viện](#13-liên-thư-viện)
 14. [Quy trình nghiệp vụ mẫu](#14-quy-trình-nghiệp-vụ-mẫu)
 15. [Câu hỏi thường gặp](#15-câu-hỏi-thường-gặp)
+16. [Ứng dụng di động cho bạn đọc](#16-ứng-dụng-di-động-cho-bạn-đọc-phân-hệ-xi)
 
 ---
 
@@ -585,3 +586,50 @@ trang lại là tem lệch.
 **Bạn đọc báo không đăng nhập được?**
 Kiểm tra trạng thái thẻ trong hồ sơ: hết hạn hoặc đang tạm khóa thì đăng nhập được nhưng không mượn
 được; nếu chưa từng đặt mật khẩu, cán bộ đặt lại mật khẩu giúp trong màn hình hồ sơ bạn đọc.
+
+## 16. Ứng dụng di động cho bạn đọc (Phân hệ XI)
+
+Ứng dụng **LibraryConnect** trên điện thoại dùng chung tài khoản bạn đọc (số thẻ + mật khẩu) và
+dữ liệu với trang tra cứu. Cài từ tệp APK do thư viện phát (Android 8.0 trở lên); bản iOS dùng cùng
+mã nguồn, thư viện dựng khi có máy Mac. Ảnh minh hoạ: `docs/images/mobile/`.
+
+### 16.1. Không cần đăng nhập
+
+- **Trang chủ**: tên thư viện, ô tìm kiếm, nút quét mã, sách mới bổ sung, sách được mượn nhiều, tin
+  tức, lối tắt duyệt danh mục, thông tin thư viện với nút *Gọi* và *Chỉ đường*.
+- **Tra cứu**: gõ không dấu vẫn tìm thấy; chọn phạm vi (nhan đề, tác giả, chủ đề, ISBN…); nút bộ lọc
+  mở facet do máy chủ đếm; sắp xếp; biểu tượng *nâng cao* cho nhiều điều kiện VÀ / HOẶC / KHÔNG.
+- **Quét mã**: chĩa camera vào mã ISBN trên bìa, mã vạch trên gáy sách hoặc mã QR; quét xong mở thẳng
+  chi tiết. Không đọc được mã thì bấm biểu tượng bàn phím để nhập tay.
+- **Chi tiết tài liệu**: thẻ *Bản in* cho biết từng bản ở kho nào, giá nào, còn rảnh không; thẻ *MARC*
+  bày biểu ghi dạng bảng; *Trích dẫn* xuất APA/MLA/Chicago/BibTeX; *Chia sẻ* gửi đường dẫn.
+- **Duyệt danh mục**: chủ đề, phân loại DDC, tác giả A–Z, bộ sưu tập, ngành → môn học → tài liệu,
+  luận văn/luận án, ấn phẩm định kỳ. Ô lọc tại chỗ gõ không dấu.
+- **Tài liệu số công khai** đọc được ngay; tài liệu nội bộ cần đăng nhập.
+
+### 16.2. Sau khi đăng nhập
+
+- **Thẻ thư viện** (Tài khoản → Thẻ thư viện, hoặc biểu tượng thẻ ở Sách của tôi): mã vạch và QR số
+  thẻ cỡ lớn để quét ở quầy và cổng; màn hình tự sáng; **vẫn mở được khi không có mạng** (bản lưu kèm
+  giờ cập nhật). Thẻ hết hạn hoặc bị khoá thì chỉ hiện trạng thái. Nút *Gửi yêu cầu gia hạn thẻ*.
+- **Sách của tôi**: *Đang mượn* (hạn trả, số ngày quá hạn và tiền phạt dự kiến do máy chủ tính, nút
+  *Gia hạn* — thư viện quyết và ứng dụng hiện đúng lý do nếu bị từ chối), *Lịch sử*, *Đặt giữ* (vị trí
+  hàng đợi, nơi nhận, nút hủy), *Tiền phạt* (nộp tại quầy, ứng dụng không thu tiền).
+- **Đặt giữ chỗ**: ở chi tiết tài liệu bấm *Đặt giữ chỗ* (còn bản rảnh) hoặc *Xếp hàng đợi* (hết bản).
+- **Mượn tự phục vụ** (Sách của tôi → nút nổi): bước 1 xác nhận đang ở thư viện theo cách thư viện
+  cấu hình (nối Wi-Fi thư viện hoặc quét mã QR trạm dán ở cửa kho), bước 2 quét mã vạch từng cuốn — mỗi
+  cuốn phản hồi màu xanh/đỏ kèm rung, bước 3 phiếu mượn tóm tắt.
+- **Tài liệu số**: đọc trực tuyến (trang có chữ chìm số thẻ của bạn — không chia sẻ), tìm trong văn
+  bản, đánh dấu trang; tài liệu cho tải có nút *Tải đọc ngoại tuyến* — bản ngoại tuyến mã hoá, tự hết
+  hạn, đọc được khi mất mạng trong thẻ *Ngoại tuyến*; tài liệu hạn chế: *Gửi yêu cầu truy cập* kèm lý
+  do, theo dõi ở thẻ *Yêu cầu*.
+- **Thông báo**: chuông trên trang chủ và Tài khoản; chạm một thông báo mở đúng màn hình (sách đặt giữ
+  đã sẵn sàng, yêu cầu tài liệu số được duyệt…); thẻ *Cài đặt* bật/tắt từng loại.
+- **Tài khoản**: hồ sơ, cập nhật email/điện thoại, đổi mật khẩu, khoá ứng dụng bằng vân tay/khuôn mặt,
+  chủ đề sáng/tối, cỡ chữ, ngôn ngữ (Tiếng Việt mặc định, English), phiên bản, đăng xuất.
+
+### 16.3. Khi mất mạng
+
+Dải "Không có kết nối" hiện trên đầu mọi màn hình. Thẻ điện tử, danh sách đang mượn, kết quả tra cứu
+vừa xem và tài liệu số đã tải vẫn mở được từ bản lưu, có ghi giờ cập nhật; các nút ghi (gia hạn, đặt
+giữ…) tạm vô hiệu cho tới khi có mạng.

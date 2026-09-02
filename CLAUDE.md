@@ -13,8 +13,12 @@
 ### A.1. Đã xong tới đâu
 
 Phần **web đã dựng xong toàn bộ Phase 1–14**: mười phân hệ I–X chạy thật, `docker compose up -d` là
-lên hệ thống hoàn chỉnh. Phân hệ XI (mobile) đang làm theo `PROMPT-MOBILE-LIBRARYCONNECT.md`: bước 1 (backend) và
-bước 2 (khung ứng dụng Flutter, đăng nhập đầu-cuối trên máy ảo) đã xong — tiến độ ở `mobile/README.md`.
+lên hệ thống hoàn chỉnh. **Phân hệ XI (ứng dụng di động Flutter, `mobile/`) đã làm xong cả 10 bước** của
+`PROMPT-MOBILE-LIBRARYCONNECT.md` trên Android: 76 phép thử đơn vị/widget, 12 luồng đầu-cuối chạy trên
+máy ảo với máy chủ Docker thật (`docs/06`, MB.01–MB.33), APK/AAB release dựng được. Chưa có: bản iOS
+(không có máy Mac), kiểm trên máy thật, nhận thông báo đẩy FCM thật, quét bằng camera thật — ghi rõ
+trong `docs/06`/`docs/07`, không đánh "Đạt". Cách làm việc, cạm bẫy dựng Android, cách chụp ảnh bằng
+`flutter drive`: `mobile/README.md`.
 
 Sau khi xong Phase 14 đã chạy thêm **một đợt rà soát chất lượng toàn diện** — mở hệ thống như người
 dùng thật, đi hết từng màn hình, cố tình đi đường sai, gọi thẳng API không qua giao diện, và nạp dữ
@@ -183,6 +187,17 @@ docker compose run --rm -d --name lc-api-kiem -e LC_DB_NAME=lc_kiem -e LC_SEED_D
 24. **Con số giống nhau chưa chắc là bằng chứng.** 96.737 dòng nhật ký cùng một IP trông như lỗi
     proxy, hoá ra là vì mọi yêu cầu trên máy phát triển đều từ một máy. Phải dựng một nguồn thứ hai
     (container khác) mới tách được "lỗi" khỏi "bối cảnh".
+
+25. **`flutter test integration_test` gỡ ứng dụng sau khi chạy.** Phiên "chuẩn bị" bằng phép thử không
+    còn khi cài bản thường — mất một giờ đi tìm "lỗi mất phiên khi ngoại tuyến" không tồn tại. Muốn
+    giữ phiên cho kiểm bằng adb thì cài bản thường và đăng nhập trên đó.
+26. **Chiều cao cố định là tràn chữ chờ sẵn.** Kệ sách cao 218 điểm tràn 16 điểm ở cỡ chữ 160%. Cái gì
+    chứa chữ thì chiều cao theo `MediaQuery.textScalerOf`, và phải chụp thử ở cỡ chữ lớn nhất.
+27. **Gói bên thứ ba cũng gọi ra ngoài.** `google_fonts` tải phông từ fonts.gstatic.com mỗi lần mở
+    ứng dụng; mất mạng là đổi phông. Đóng gói phông vào tài nguyên và tắt tải lúc chạy.
+28. **Đồng hồ thiết bị không phải mốc đồng bộ.** Máy ảo lệch vài chục giây so với máy chủ nên
+    `updatedSince` tính từ điện thoại bỏ sót đúng bản ghi vừa sửa. Máy chủ trả `serverTime` là để dùng.
+
 ---
 
 ## 0. VAI TRÒ VÀ NHIỆM VỤ

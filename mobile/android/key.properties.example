@@ -1,0 +1,8 @@
+# Sao chép thành android/key.properties (đã nằm trong .gitignore) rồi điền giá trị thật.
+# Tạo khoá ký bản phát hành (một lần, giữ tệp .jks ngoài kho mã):
+#   keytool -genkey -v -keystore libraryconnect-release.jks -keyalg RSA -keysize 2048 -validity 10000 -alias libraryconnect
+# storeFile tính từ thư mục android/.
+storeFile=libraryconnect-release.jks
+storePassword=<mật khẩu kho khoá>
+keyAlias=libraryconnect
+keyPassword=<mật khẩu khoá>

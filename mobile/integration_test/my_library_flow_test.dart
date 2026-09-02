@@ -36,8 +36,19 @@ void main() {
     await _waitFor(tester, find.byKey(const Key('home-search')));
 
     // Tab Sách của tôi khi chưa đăng nhập → rẽ sang đăng nhập rồi quay lại đúng tab.
+    // (Máy còn phiên của phép thử trước thì đăng xuất trước.)
     await tester.tap(find.text('Sách của tôi').last);
     await tester.pumpAndSettle();
+    if (find.text('Đăng nhập bạn đọc').evaluate().isEmpty) {
+      await tester.tap(find.text('Tài khoản').last);
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(find.byKey(const Key('sign-out')), 300);
+      await tester.tap(find.byKey(const Key('sign-out')));
+      await _waitFor(tester, find.byKey(const Key('home-search')));
+      await _waitFor(tester, find.text('Sách của tôi'));
+      await tester.tap(find.text('Sách của tôi').last);
+      await tester.pumpAndSettle();
+    }
     await _waitFor(tester, find.text('Đăng nhập bạn đọc'));
     await tester.enterText(find.byType(TextFormField).at(0), card);
     await tester.enterText(find.byType(TextFormField).at(1), password);
@@ -76,7 +87,8 @@ void main() {
     // Đăng xuất từ tab Tài khoản.
     await tester.tap(find.text('Tài khoản').last);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Đăng xuất'));
+    await tester.scrollUntilVisible(find.byKey(const Key('sign-out')), 300);
+    await tester.tap(find.byKey(const Key('sign-out')));
     await _waitFor(tester, find.byKey(const Key('home-search')));
   });
 }

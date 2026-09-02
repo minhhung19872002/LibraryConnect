@@ -154,9 +154,9 @@ Nhờ vậy sản phẩm triển khai lại được cho khách hàng khác ch�
 
 ## 6. Tình trạng triển khai
 
-Đợt build hiện tại xây dựng phần **Web** (backend API + Admin SPA + OPAC SPA). Ứng dụng di động
-(Phân hệ XI) thuộc đợt sau; backend đã hoàn thiện sẵn nhóm endpoint `/api/reader/*` để ứng dụng cắm
-vào mà không phải sửa lại — xem `mobile/README.md`.
+Phần **Web** (backend API + Admin SPA + OPAC SPA) và **ứng dụng di động Android** (Phân hệ XI,
+Flutter trong `mobile/`) đã dựng và kiểm thử; bản iOS dùng cùng mã nguồn, chờ máy Mac để dựng IPA.
+Hướng dẫn dựng, cấu hình endpoint và chạy 12 luồng đầu-cuối: `mobile/README.md`.
 
 | Phase | Nội dung | Trạng thái |
 |---|---|---|
@@ -174,7 +174,7 @@ vào mà không phải sửa lại — xem `mobile/README.md`.
 | 12 | Phân hệ VIII, IX — Quản trị nội dung và trang tra cứu OPAC (tra cứu không dấu, facet, duyệt danh mục, trích dẫn, trang cá nhân bạn đọc, trình đọc tài liệu số, tìm ở thư viện khác, SEO) | ✅ Hoàn thành |
 | 13 | Phân hệ X — Tài liệu môn học (ngành, môn học nhiều-nhiều, gán giáo trình và tài liệu tham khảo, nhập từ Excel, 3 báo cáo, duyệt theo ngành trên trang tra cứu) | ✅ Hoàn thành |
 | 14 | Hoàn thiện web: dữ liệu minh họa, hiệu năng trên 500.000 biểu ghi, rà soát bảo mật, 7 tài liệu bàn giao, cấu hình chạy thật, script sao lưu/phục hồi | ✅ Hoàn thành |
-| 15 | Ứng dụng di động (Phân hệ XI) | ⏳ Đợt sau — nhóm endpoint `/api/reader/*` đã hoàn thiện, kiểm thử và mô tả trong `docs/05-api-reference.md` |
+| 15 | Ứng dụng di động (Phân hệ XI): tra cứu, quét mã, duyệt, thẻ điện tử, sách của tôi, đặt giữ, gia hạn, mượn tự phục vụ, tài liệu số + ngoại tuyến, thông báo, tài khoản | ✅ Android dựng và kiểm trên máy ảo (12 luồng đầu-cuối, `docs/06` MB.01–MB.33); iOS chưa dựng (không có máy Mac); thông báo đẩy thật và máy thật chưa kiểm |
 
 Bộ dữ liệu minh họa đi kèm bản cài đặt: 200 biểu ghi thư mục, 500 ĐKCB, 50 bạn đọc, 100 lượt mượn
 trả, 5 đầu ấn phẩm định kỳ với 113 số, 6 tài liệu số và 52 liên kết tài liệu môn học — đủ để demo
