@@ -13,7 +13,8 @@
 ### A.1. Đã xong tới đâu
 
 Phần **web đã dựng xong toàn bộ Phase 1–14**: mười phân hệ I–X chạy thật, `docker compose up -d` là
-lên hệ thống hoàn chỉnh. Phân hệ XI (mobile) chưa làm, đúng như phạm vi đã chốt ở mục 0.2.
+lên hệ thống hoàn chỉnh. Phân hệ XI (mobile) đang làm theo `PROMPT-MOBILE-LIBRARYCONNECT.md`: bước 1 (backend) và
+bước 2 (khung ứng dụng Flutter, đăng nhập đầu-cuối trên máy ảo) đã xong — tiến độ ở `mobile/README.md`.
 
 Sau khi xong Phase 14 đã chạy thêm **một đợt rà soát chất lượng toàn diện** — mở hệ thống như người
 dùng thật, đi hết từng màn hình, cố tình đi đường sai, gọi thẳng API không qua giao diện, và nạp dữ
