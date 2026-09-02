@@ -5,7 +5,11 @@ import 'package:go_router/go_router.dart';
 import '../../features/account/presentation/account_screen.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/bib/presentation/bib_detail_screen.dart';
+import '../../features/browse/data/browse_api.dart';
+import '../../features/browse/presentation/browse_hub_screen.dart';
+import '../../features/browse/presentation/browse_list_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
+import '../../features/home/presentation/news_screens.dart';
 import '../../features/scan/presentation/scan_screen.dart';
 import '../../features/search/data/search_params.dart';
 import '../../features/search/presentation/search_screen.dart';
@@ -24,14 +28,50 @@ class Routes {
   static const searchPath = '/tra-cuu';
   static const scan = '/quet-ma';
   static const bibPath = '/tai-lieu';
+  static const browse = '/danh-muc';
+  static const news = '/tin-tuc';
+  static const pagePath = '/trang';
 
   static String bib(String id) => '$bibPath/$id';
+  static String newsItem(String slug) => '$news/$slug';
+  static String page(String slug) => '$pagePath/$slug';
 
-  static String search({String? keyword, SearchScope? scope}) => Uri(
+  /// Một cấp của danh mục duyệt; [parent] là mã cha (cây) hoặc mã ngành (môn học).
+  static String browseKind(BrowseKind kind, {String? parent, String? name}) =>
+      Uri(
+        path: '$browse/${kind.slug}',
+        queryParameters: {'cha': ?parent, 'ten': ?name},
+      ).toString();
+
+  static String courseDocuments(
+    String majorId,
+    String courseId,
+    String courseName,
+  ) => Uri(
+    path: '$browse/nganh/$majorId/mon/$courseId',
+    queryParameters: {'ten': courseName},
+  ).toString();
+
+  /// Tra cứu theo từ khoá, hoặc theo một bộ lọc có mã (`filterKey=subjectId`, `filterValue=…`)
+  /// kèm nhãn để hiện "Đang lọc: …".
+  static String search({
+    String? keyword,
+    SearchScope? scope,
+    String? sort,
+    String? filterKey,
+    String? filterValue,
+    String? label,
+  }) => Uri(
     path: searchPath,
     queryParameters: {
       if (keyword != null && keyword.isNotEmpty) 'q': keyword,
       if (scope != null && scope != SearchScope.all) 'scope': scope.wire,
+      'sort': ?sort,
+      if (filterKey != null && filterValue != null) ...{
+        'fk': filterKey,
+        'fv': filterValue,
+        'nhan': ?label,
+      },
     },
   ).toString();
 
@@ -87,6 +127,55 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) =>
             BibDetailScreen(id: state.pathParameters['id']!),
       ),
+      GoRoute(
+        path: Routes.browse,
+        parentNavigatorKey: _rootKey,
+        builder: (context, state) => const BrowseHubScreen(),
+        routes: [
+          GoRoute(
+            path: 'nganh/:majorId/mon/:courseId',
+            parentNavigatorKey: _rootKey,
+            builder: (context, state) => CourseDocumentsScreen(
+              majorId: state.pathParameters['majorId']!,
+              courseId: state.pathParameters['courseId']!,
+              courseName: state.uri.queryParameters['ten'] ?? '',
+            ),
+          ),
+          GoRoute(
+            path: ':kind',
+            parentNavigatorKey: _rootKey,
+            builder: (context, state) {
+              final kind = BrowseKind.fromSlug(state.pathParameters['kind']);
+              if (kind == null) return const BrowseHubScreen();
+              return BrowseListScreen(
+                key: ValueKey(state.uri.toString()),
+                kind: kind,
+                parent: state.uri.queryParameters['cha'],
+                parentName: state.uri.queryParameters['ten'],
+              );
+            },
+          ),
+        ],
+      ),
+      GoRoute(
+        path: Routes.news,
+        parentNavigatorKey: _rootKey,
+        builder: (context, state) => const NewsListScreen(),
+        routes: [
+          GoRoute(
+            path: ':slug',
+            parentNavigatorKey: _rootKey,
+            builder: (context, state) =>
+                NewsDetailScreen(slug: state.pathParameters['slug']!),
+          ),
+        ],
+      ),
+      GoRoute(
+        path: '${Routes.pagePath}/:slug',
+        parentNavigatorKey: _rootKey,
+        builder: (context, state) =>
+            StaticPageScreen(slug: state.pathParameters['slug']!),
+      ),
       ShellRoute(
         builder: (context, state, child) =>
             AppShell(location: state.matchedLocation, child: child),
@@ -101,6 +190,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               key: ValueKey(state.uri.query),
               initialKeyword: state.uri.queryParameters['q'],
               initialScope: state.uri.queryParameters['scope'],
+              initialSort: state.uri.queryParameters['sort'],
+              initialFilterKey: state.uri.queryParameters['fk'],
+              initialFilterValue: state.uri.queryParameters['fv'],
+              initialFilterLabel: state.uri.queryParameters['nhan'],
             ),
           ),
           GoRoute(

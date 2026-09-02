@@ -475,4 +475,134 @@ class L10nEn extends L10n {
   String itemsInStock(int count) {
     return '$count copies';
   }
+
+  @override
+  String get browseTitle => 'Browse';
+
+  @override
+  String get browseSubjects => 'Subjects';
+
+  @override
+  String get browseClassifications => 'DDC classes';
+
+  @override
+  String get browseAuthors => 'Authors';
+
+  @override
+  String get browseCollections => 'Collections';
+
+  @override
+  String get browseMajors => 'Majors';
+
+  @override
+  String get browseCourses => 'Courses';
+
+  @override
+  String get browseTheses => 'Theses & dissertations';
+
+  @override
+  String get browseSerials => 'Serials';
+
+  @override
+  String get browseFilterHint => 'Filter this list…';
+
+  @override
+  String get browseEmpty => 'Nothing here.';
+
+  @override
+  String bibCountLabel(int count) {
+    return '$count documents';
+  }
+
+  @override
+  String filteringBy(String label) {
+    return 'Filtering: $label';
+  }
+
+  @override
+  String get newBooks => 'New arrivals';
+
+  @override
+  String get popularBooks => 'Most borrowed';
+
+  @override
+  String get latestNews => 'News';
+
+  @override
+  String get viewAll => 'View all';
+
+  @override
+  String get quickLinks => 'Useful links';
+
+  @override
+  String get statistics => 'Collection';
+
+  @override
+  String get statBibs => 'records';
+
+  @override
+  String get statItems => 'copies';
+
+  @override
+  String get statDigital => 'digital files';
+
+  @override
+  String get statReaders => 'readers';
+
+  @override
+  String get callAction => 'Call';
+
+  @override
+  String get directionsAction => 'Directions';
+
+  @override
+  String get newsTitle => 'News';
+
+  @override
+  String get newsEmpty => 'No news yet.';
+
+  @override
+  String get pagesTitle => 'About the library';
+
+  @override
+  String get allCategories => 'All';
+
+  @override
+  String get relatedNews => 'Related news';
+
+  @override
+  String viewCount(int count) {
+    return '$count views';
+  }
+
+  @override
+  String receivedIssues(int count) {
+    return '$count issues received';
+  }
+
+  @override
+  String latestIssue(String no, String date) {
+    return 'Latest issue: $no ($date)';
+  }
+
+  @override
+  String get courseDocsTitle => 'Course materials';
+
+  @override
+  String get thesesHint => 'Search theses…';
+
+  @override
+  String get serialsHint => 'Search serials…';
+
+  @override
+  String get topAuthors => 'Authors with most documents';
+
+  @override
+  String get letterAll => 'Top';
+
+  @override
+  String get browseShortcuts => 'Browse by';
+
+  @override
+  String get featured => 'Featured';
 }

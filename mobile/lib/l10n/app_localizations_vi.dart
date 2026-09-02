@@ -474,4 +474,134 @@ class L10nVi extends L10n {
   String itemsInStock(int count) {
     return '$count bản in';
   }
+
+  @override
+  String get browseTitle => 'Duyệt danh mục';
+
+  @override
+  String get browseSubjects => 'Chủ đề';
+
+  @override
+  String get browseClassifications => 'Phân loại DDC';
+
+  @override
+  String get browseAuthors => 'Tác giả';
+
+  @override
+  String get browseCollections => 'Bộ sưu tập';
+
+  @override
+  String get browseMajors => 'Ngành đào tạo';
+
+  @override
+  String get browseCourses => 'Môn học';
+
+  @override
+  String get browseTheses => 'Luận văn / Luận án';
+
+  @override
+  String get browseSerials => 'Ấn phẩm định kỳ';
+
+  @override
+  String get browseFilterHint => 'Lọc trong danh sách…';
+
+  @override
+  String get browseEmpty => 'Không có mục nào.';
+
+  @override
+  String bibCountLabel(int count) {
+    return '$count tài liệu';
+  }
+
+  @override
+  String filteringBy(String label) {
+    return 'Đang lọc: $label';
+  }
+
+  @override
+  String get newBooks => 'Sách mới bổ sung';
+
+  @override
+  String get popularBooks => 'Được mượn nhiều';
+
+  @override
+  String get latestNews => 'Tin tức';
+
+  @override
+  String get viewAll => 'Xem tất cả';
+
+  @override
+  String get quickLinks => 'Liên kết hữu ích';
+
+  @override
+  String get statistics => 'Kho tài liệu';
+
+  @override
+  String get statBibs => 'biểu ghi';
+
+  @override
+  String get statItems => 'bản in';
+
+  @override
+  String get statDigital => 'tài liệu số';
+
+  @override
+  String get statReaders => 'bạn đọc';
+
+  @override
+  String get callAction => 'Gọi';
+
+  @override
+  String get directionsAction => 'Chỉ đường';
+
+  @override
+  String get newsTitle => 'Tin tức';
+
+  @override
+  String get newsEmpty => 'Chưa có tin nào.';
+
+  @override
+  String get pagesTitle => 'Thông tin thư viện';
+
+  @override
+  String get allCategories => 'Tất cả';
+
+  @override
+  String get relatedNews => 'Tin liên quan';
+
+  @override
+  String viewCount(int count) {
+    return '$count lượt xem';
+  }
+
+  @override
+  String receivedIssues(int count) {
+    return '$count số đã nhận';
+  }
+
+  @override
+  String latestIssue(String no, String date) {
+    return 'Số mới nhất: $no ($date)';
+  }
+
+  @override
+  String get courseDocsTitle => 'Tài liệu môn học';
+
+  @override
+  String get thesesHint => 'Tìm luận văn, luận án…';
+
+  @override
+  String get serialsHint => 'Tìm báo, tạp chí…';
+
+  @override
+  String get topAuthors => 'Tác giả có nhiều tài liệu';
+
+  @override
+  String get letterAll => 'Nổi bật';
+
+  @override
+  String get browseShortcuts => 'Duyệt theo';
+
+  @override
+  String get featured => 'Nổi bật';
 }

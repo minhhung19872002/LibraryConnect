@@ -960,6 +960,246 @@ abstract class L10n {
   /// In vi, this message translates to:
   /// **'{count} bản in'**
   String itemsInStock(int count);
+
+  /// No description provided for @browseTitle.
+  ///
+  /// In vi, this message translates to:
+  /// **'Duyệt danh mục'**
+  String get browseTitle;
+
+  /// No description provided for @browseSubjects.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chủ đề'**
+  String get browseSubjects;
+
+  /// No description provided for @browseClassifications.
+  ///
+  /// In vi, this message translates to:
+  /// **'Phân loại DDC'**
+  String get browseClassifications;
+
+  /// No description provided for @browseAuthors.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tác giả'**
+  String get browseAuthors;
+
+  /// No description provided for @browseCollections.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bộ sưu tập'**
+  String get browseCollections;
+
+  /// No description provided for @browseMajors.
+  ///
+  /// In vi, this message translates to:
+  /// **'Ngành đào tạo'**
+  String get browseMajors;
+
+  /// No description provided for @browseCourses.
+  ///
+  /// In vi, this message translates to:
+  /// **'Môn học'**
+  String get browseCourses;
+
+  /// No description provided for @browseTheses.
+  ///
+  /// In vi, this message translates to:
+  /// **'Luận văn / Luận án'**
+  String get browseTheses;
+
+  /// No description provided for @browseSerials.
+  ///
+  /// In vi, this message translates to:
+  /// **'Ấn phẩm định kỳ'**
+  String get browseSerials;
+
+  /// No description provided for @browseFilterHint.
+  ///
+  /// In vi, this message translates to:
+  /// **'Lọc trong danh sách…'**
+  String get browseFilterHint;
+
+  /// No description provided for @browseEmpty.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không có mục nào.'**
+  String get browseEmpty;
+
+  /// No description provided for @bibCountLabel.
+  ///
+  /// In vi, this message translates to:
+  /// **'{count} tài liệu'**
+  String bibCountLabel(int count);
+
+  /// No description provided for @filteringBy.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đang lọc: {label}'**
+  String filteringBy(String label);
+
+  /// No description provided for @newBooks.
+  ///
+  /// In vi, this message translates to:
+  /// **'Sách mới bổ sung'**
+  String get newBooks;
+
+  /// No description provided for @popularBooks.
+  ///
+  /// In vi, this message translates to:
+  /// **'Được mượn nhiều'**
+  String get popularBooks;
+
+  /// No description provided for @latestNews.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tin tức'**
+  String get latestNews;
+
+  /// No description provided for @viewAll.
+  ///
+  /// In vi, this message translates to:
+  /// **'Xem tất cả'**
+  String get viewAll;
+
+  /// No description provided for @quickLinks.
+  ///
+  /// In vi, this message translates to:
+  /// **'Liên kết hữu ích'**
+  String get quickLinks;
+
+  /// No description provided for @statistics.
+  ///
+  /// In vi, this message translates to:
+  /// **'Kho tài liệu'**
+  String get statistics;
+
+  /// No description provided for @statBibs.
+  ///
+  /// In vi, this message translates to:
+  /// **'biểu ghi'**
+  String get statBibs;
+
+  /// No description provided for @statItems.
+  ///
+  /// In vi, this message translates to:
+  /// **'bản in'**
+  String get statItems;
+
+  /// No description provided for @statDigital.
+  ///
+  /// In vi, this message translates to:
+  /// **'tài liệu số'**
+  String get statDigital;
+
+  /// No description provided for @statReaders.
+  ///
+  /// In vi, this message translates to:
+  /// **'bạn đọc'**
+  String get statReaders;
+
+  /// No description provided for @callAction.
+  ///
+  /// In vi, this message translates to:
+  /// **'Gọi'**
+  String get callAction;
+
+  /// No description provided for @directionsAction.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chỉ đường'**
+  String get directionsAction;
+
+  /// No description provided for @newsTitle.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tin tức'**
+  String get newsTitle;
+
+  /// No description provided for @newsEmpty.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chưa có tin nào.'**
+  String get newsEmpty;
+
+  /// No description provided for @pagesTitle.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thông tin thư viện'**
+  String get pagesTitle;
+
+  /// No description provided for @allCategories.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tất cả'**
+  String get allCategories;
+
+  /// No description provided for @relatedNews.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tin liên quan'**
+  String get relatedNews;
+
+  /// No description provided for @viewCount.
+  ///
+  /// In vi, this message translates to:
+  /// **'{count} lượt xem'**
+  String viewCount(int count);
+
+  /// No description provided for @receivedIssues.
+  ///
+  /// In vi, this message translates to:
+  /// **'{count} số đã nhận'**
+  String receivedIssues(int count);
+
+  /// No description provided for @latestIssue.
+  ///
+  /// In vi, this message translates to:
+  /// **'Số mới nhất: {no} ({date})'**
+  String latestIssue(String no, String date);
+
+  /// No description provided for @courseDocsTitle.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tài liệu môn học'**
+  String get courseDocsTitle;
+
+  /// No description provided for @thesesHint.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tìm luận văn, luận án…'**
+  String get thesesHint;
+
+  /// No description provided for @serialsHint.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tìm báo, tạp chí…'**
+  String get serialsHint;
+
+  /// No description provided for @topAuthors.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tác giả có nhiều tài liệu'**
+  String get topAuthors;
+
+  /// No description provided for @letterAll.
+  ///
+  /// In vi, this message translates to:
+  /// **'Nổi bật'**
+  String get letterAll;
+
+  /// No description provided for @browseShortcuts.
+  ///
+  /// In vi, this message translates to:
+  /// **'Duyệt theo'**
+  String get browseShortcuts;
+
+  /// No description provided for @featured.
+  ///
+  /// In vi, this message translates to:
+  /// **'Nổi bật'**
+  String get featured;
 }
 
 class _L10nDelegate extends LocalizationsDelegate<L10n> {

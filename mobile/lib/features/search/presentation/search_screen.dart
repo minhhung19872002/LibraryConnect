@@ -37,10 +37,24 @@ String sortLabel(L10n l10n, SortOrder sort) => switch (sort) {
 /// Màn hình tra cứu: ô tìm + phạm vi, gợi ý khi gõ, tìm gần đây, kết quả cuộn vô hạn, facet,
 /// sắp xếp, tra cứu nâng cao. Mở bằng `/tra-cuu?q=…&scope=…` là chạy ngay.
 class SearchScreen extends ConsumerStatefulWidget {
-  const SearchScreen({super.key, this.initialKeyword, this.initialScope});
+  const SearchScreen({
+    super.key,
+    this.initialKeyword,
+    this.initialScope,
+    this.initialSort,
+    this.initialFilterKey,
+    this.initialFilterValue,
+    this.initialFilterLabel,
+  });
 
   final String? initialKeyword;
   final String? initialScope;
+  final String? initialSort;
+
+  /// Lọc theo mã (chủ đề, tác giả, bộ sưu tập…) đến từ trang duyệt danh mục.
+  final String? initialFilterKey;
+  final String? initialFilterValue;
+  final String? initialFilterLabel;
 
   @override
   ConsumerState<SearchScreen> createState() => _SearchScreenState();
@@ -51,6 +65,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   final _focus = FocusNode();
   final _scroll = ScrollController();
   SearchScope _scope = SearchScope.all;
+  SearchFilter _filter = const SearchFilter();
+  String? _filterLabel;
   Timer? _debounce;
   List<Suggestion> _suggestions = const [];
   bool _typing = false;
@@ -62,9 +78,18 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     _scope = SearchScope.parse(widget.initialScope);
     _scroll.addListener(_onScroll);
 
+    if (widget.initialFilterKey case final key?
+        when widget.initialFilterValue != null) {
+      _filter = const SearchFilter().set(key, widget.initialFilterValue);
+      _filterLabel = widget.initialFilterLabel;
+    }
+
     final keyword = widget.initialKeyword?.trim() ?? '';
-    if (keyword.isNotEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _submit(keyword));
+    final hasSort = widget.initialSort != null;
+    if (keyword.isNotEmpty || !_filter.isEmpty || hasSort) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _submit(keyword, allowEmpty: true),
+      );
     }
   }
 
@@ -118,9 +143,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     });
   }
 
-  void _submit(String keyword) {
+  void _submit(String keyword, {bool allowEmpty = false}) {
     final term = keyword.trim();
-    if (term.isEmpty) return;
+    // Cho phép từ khoá rỗng khi đang lọc theo mã hoặc chỉ muốn xem "mới nhất" / "mượn nhiều".
+    if (term.isEmpty && !allowEmpty && _filter.isEmpty) return;
     _debounce?.cancel();
     _focus.unfocus();
     setState(() {
@@ -129,6 +155,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     });
     if (_text.text != term) _text.text = term;
     final current = ref.read(searchControllerProvider).query;
+    final sort = widget.initialSort != null && current == null
+        ? SortOrder.parse(widget.initialSort)
+        : current?.sort ?? SortOrder.relevance;
     ref
         .read(searchControllerProvider.notifier)
         .run(
@@ -136,11 +165,25 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             SearchParams(
               keyword: term,
               scope: _scope,
-              sort: current?.sort ?? SortOrder.relevance,
+              sort: sort,
+              filter: _filter,
             ),
           ),
+          remember: term.isNotEmpty,
         );
     if (_scroll.hasClients) _scroll.jumpTo(0);
+  }
+
+  void _clearFilterLabel() {
+    setState(() {
+      _filter = const SearchFilter();
+      _filterLabel = null;
+    });
+    if (_text.text.trim().isEmpty) {
+      ref.read(searchControllerProvider.notifier).clear();
+    } else {
+      _submit(_text.text);
+    }
   }
 
   void _clear() {
@@ -234,6 +277,19 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               ),
             ),
           ),
+          if (_filterLabel case final label?)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: InputChip(
+                  key: const Key('filter-chip'),
+                  avatar: const Icon(Icons.filter_alt, size: 18),
+                  label: Text(l10n.filteringBy(label)),
+                  onDeleted: _clearFilterLabel,
+                ),
+              ),
+            ),
           SizedBox(
             height: 48,
             child: ListView(

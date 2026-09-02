@@ -242,7 +242,7 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
                                         Icons.person_outline,
                                         size: 16,
                                       ),
-                                      onPressed: () => context.push(
+                                      onPressed: () => context.go(
                                         Routes.search(
                                           keyword: author.name,
                                           scope: SearchScope.author,
@@ -519,7 +519,7 @@ class _TermChips extends StatelessWidget {
         ActionChip(
           label: Text(term.name),
           onPressed: () =>
-              context.push(Routes.search(keyword: term.name, scope: scope)),
+              context.go(Routes.search(keyword: term.name, scope: scope)),
         ),
     ],
   );
