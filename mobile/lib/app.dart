@@ -7,6 +7,7 @@ import 'core/auth/auth_controller.dart';
 import 'core/config/env.dart';
 import 'core/push/push_service.dart';
 import 'core/config/settings_provider.dart';
+import 'core/network/connectivity.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'l10n/app_localizations.dart';
@@ -110,7 +111,27 @@ class LibraryConnectApp extends ConsumerWidget {
               (systemScale * display.textScale).clamp(0.8, 2.4),
             ),
           ),
-          child: child ?? const SizedBox.shrink(),
+          // Dải "Không có kết nối" nằm trên mọi màn hình, kể cả hộp thoại và trình đọc.
+          child: Consumer(
+            builder: (context, ref, _) {
+              final online = ref.watch(onlineProvider).value ?? true;
+              final body = child ?? const SizedBox.shrink();
+              if (online) return body;
+              // Dải đã chiếm phần thanh trạng thái, màn hình bên dưới không cộng thêm lần nữa.
+              return Column(
+                children: [
+                  const OfflineBanner(),
+                  Expanded(
+                    child: MediaQuery.removePadding(
+                      context: context,
+                      removeTop: true,
+                      child: body,
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
         );
 
         // Chặn khi phiên bản thấp hơn ngưỡng thư viện yêu cầu (Phase 15, mục 3.6).

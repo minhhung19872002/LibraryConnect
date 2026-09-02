@@ -2,15 +2,29 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../shared/models/settings_models.dart';
 import '../api/api_client.dart';
+import '../api/api_exception.dart';
+import '../network/offline_cache.dart';
 
 /// Thông tin thư viện — gọi ngay khi mở ứng dụng; tên và logo lấy từ đây, không viết cứng.
 final publicSettingsProvider = FutureProvider<PublicSettings>((ref) async {
   final api = ref.watch(apiClientProvider);
-  return api.get<PublicSettings>(
-    '/public/settings',
-    anonymous: true,
-    decode: (json) => PublicSettings.fromJson(json as Map<String, dynamic>),
-  );
+  final cache = ref.watch(offlineCacheProvider);
+  try {
+    final settings = await api.get<PublicSettings>(
+      '/public/settings',
+      anonymous: true,
+      decode: (json) => PublicSettings.fromJson(json as Map<String, dynamic>),
+    );
+    await cache.put('public.settings', settings.toJson());
+    return settings;
+  } on ApiException catch (error) {
+    // Mất mạng: tên thư viện và cấu hình từ bản lưu, không hiện "LibraryConnect" chung chung.
+    if (!error.isNetwork && error.kind != ApiErrorKind.timeout) rethrow;
+    final cached = await cache.get('public.settings');
+    final data = cached?.value;
+    if (data is Map<String, dynamic>) return PublicSettings.fromJson(data);
+    rethrow;
+  }
 });
 
 /// Kiểm phiên bản lúc khởi động (Phase 15, mục 3.6).

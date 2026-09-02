@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/api/api_client.dart';
+import '../../../core/api/api_exception.dart';
+import '../../../core/network/offline_cache.dart';
 import '../../../shared/models/catalog_models.dart';
 import '../../../shared/models/reader_models.dart';
 
@@ -96,9 +98,26 @@ final profileProvider = FutureProvider.autoDispose<ReaderProfile>(
   (ref) => ref.watch(readerApiProvider).profile(),
 );
 
-final currentLoansProvider = FutureProvider.autoDispose<Paged<LoanRow>>(
-  (ref) => ref.watch(readerApiProvider).currentLoans(),
-);
+/// Đang mượn: lấy từ máy chủ và lưu bản mới nhất; mất mạng thì trả bản lưu kèm giờ (đặc tả 5).
+/// Lỗi khác mạng (401, 403) đi tiếp như thường — không che bằng bản cũ.
+final currentLoansProvider =
+    FutureProvider.autoDispose<CachedValue<Paged<LoanRow>>>((ref) async {
+      final cache = ref.watch(offlineCacheProvider);
+      try {
+        final page = await ref.watch(readerApiProvider).currentLoans();
+        await cache.putPaged('loans.current', page, (LoanRow l) => l.toJson());
+        return CachedValue(page, DateTime.now());
+      } on ApiException catch (error) {
+        if (!error.isNetwork && error.kind != ApiErrorKind.timeout) rethrow;
+        final cached = await cache.getPaged('loans.current', LoanRow.fromJson);
+        if (cached == null) rethrow;
+        return cached;
+      }
+    });
+
+/// Khác null khi màn hình đang hiện bản lưu (không có mạng lúc mở).
+bool isStale(CachedValue<Object?> value) =>
+    DateTime.now().difference(value.savedAt) > const Duration(seconds: 5);
 
 final holdsProvider = FutureProvider.autoDispose<Paged<HoldRow>>(
   (ref) => ref.watch(readerApiProvider).holds(),

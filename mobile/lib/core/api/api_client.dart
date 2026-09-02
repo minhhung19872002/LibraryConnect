@@ -1,7 +1,10 @@
+import 'dart:convert';
 import 'dart:async';
 import 'dart:io';
 
+import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../auth/token_store.dart';
@@ -32,6 +35,26 @@ class ApiClient {
     _dio.interceptors.add(
       QueuedInterceptorsWrapper(onRequest: _onRequest, onError: _onError),
     );
+    _applyCertificatePins();
+  }
+
+  /// Ghim chứng chỉ TLS khi build có `LC_CERT_PINS`: chỉ chấp nhận chứng chỉ máy chủ có SHA-256
+  /// (base64) nằm trong danh sách. Không đặt thì tin kho gốc hệ điều hành như thường.
+  void _applyCertificatePins() {
+    final pins = Env.certificatePins
+        .split(',')
+        .map((p) => p.trim())
+        .where((p) => p.isNotEmpty)
+        .toSet();
+    if (pins.isEmpty) return;
+    final adapter = _dio.httpClientAdapter;
+    if (adapter is IOHttpClientAdapter) {
+      adapter.validateCertificate = (cert, host, port) {
+        if (cert == null) return false;
+        final fingerprint = base64Encode(sha256.convert(cert.der).bytes);
+        return pins.contains(fingerprint);
+      };
+    }
   }
 
   final Dio _dio;

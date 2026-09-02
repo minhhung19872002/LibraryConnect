@@ -226,6 +226,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                   leading: const Icon(Icons.brightness_6_outlined),
                   title: Text(l10n.theme),
                   trailing: DropdownButton<ThemeMode>(
+                    key: const Key('theme-dropdown'),
                     value: display.theme,
                     underline: const SizedBox.shrink(),
                     items: [

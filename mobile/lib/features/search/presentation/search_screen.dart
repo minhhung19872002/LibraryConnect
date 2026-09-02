@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/router/app_router.dart';
@@ -448,6 +449,23 @@ class _ResultsView extends ConsumerWidget {
     if (pages == null) return const SizedBox.shrink();
 
     final filterCount = state.query!.filter.values.length;
+    final offlineNote = state.offlineSavedAt == null
+        ? null
+        : Padding(
+            key: const Key('search-offline-note'),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: Card(
+              color: LcColors.warnSoft,
+              child: ListTile(
+                leading: const Icon(Icons.cloud_off, color: LcColors.warn),
+                title: Text(
+                  l10n.cardOfflineNote(
+                    DateFormat('HH:mm dd/MM').format(state.offlineSavedAt!),
+                  ),
+                ),
+              ),
+            ),
+          );
     final header = Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 8, 0),
       child: Row(
@@ -530,7 +548,11 @@ class _ResultsView extends ConsumerWidget {
       padding: const EdgeInsets.only(bottom: 24),
       itemCount: pages.items.length + 2,
       itemBuilder: (context, index) {
-        if (index == 0) return header;
+        if (index == 0) {
+          return offlineNote == null
+              ? header
+              : Column(children: [offlineNote, header]);
+        }
         if (index == pages.items.length + 1) {
           if (state.moreError != null) {
             return ListTile(

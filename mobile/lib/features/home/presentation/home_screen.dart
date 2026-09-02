@@ -64,7 +64,7 @@ class HomeScreen extends ConsumerWidget {
                       error: home.error,
                       onRetry: () => ref.invalidate(homeProvider),
                     ),
-                  if (home.isLoading && !home.hasValue)
+                  if (home.isLoading && !home.hasValue && !home.hasError)
                     const Padding(
                       padding: EdgeInsets.all(24),
                       child: Center(child: CircularProgressIndicator()),
@@ -312,8 +312,10 @@ class _Shelf extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _SectionTitle(title, onViewAll: onViewAll, viewAllLabel: l10n.viewAll),
+        // Chiều cao theo cỡ chữ: bìa 150 + hai dòng nhan đề + một dòng tác giả. Cố định 218 là tràn
+        // 16 điểm ảnh khi bạn đọc đặt chữ 160% (bắt được ở MB.27).
         SizedBox(
-          height: 218,
+          height: 156 + 68 * MediaQuery.textScalerOf(context).scale(1),
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: items.length,

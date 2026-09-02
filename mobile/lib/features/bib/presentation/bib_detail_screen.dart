@@ -458,7 +458,7 @@ class _InfoTab extends StatelessWidget {
           Text(l10n.relatedLabel, style: theme.textTheme.labelLarge),
           const SizedBox(height: 6),
           SizedBox(
-            height: 210,
+            height: 156 + 40 * MediaQuery.textScalerOf(context).scale(1),
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: bib.related.length,

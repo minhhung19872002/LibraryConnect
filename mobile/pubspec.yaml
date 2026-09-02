@@ -58,5 +58,7 @@ dev_dependencies:
     sdk: flutter
 
 flutter:
+  assets:
+    - assets/google_fonts/
   uses-material-design: true
   generate: true

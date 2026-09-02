@@ -173,31 +173,53 @@ class _CurrentLoansTabState extends ConsumerState<_CurrentLoansTab> {
     return _Async(
       value: loans,
       onRetry: () => ref.invalidate(currentLoansProvider),
-      builder: (page) => page.items.isEmpty
-          ? _Empty(l10n.noLoans)
-          : RefreshIndicator(
-              onRefresh: () async {
-                ref.invalidate(currentLoansProvider);
-                await ref.read(currentLoansProvider.future);
-              },
-              child: ListView.builder(
-                padding: const EdgeInsets.all(12),
-                itemCount: page.items.length,
-                itemBuilder: (context, index) {
-                  final loan = page.items[index];
-                  return _LoanCard(
-                    loan: loan,
-                    trailing: FilledButton.tonal(
-                      key: Key('renew-${loan.id}'),
-                      onPressed: _renewing.contains(loan.id)
-                          ? null
-                          : () => _renew(loan),
-                      child: Text(l10n.renewAction),
-                    ),
-                  );
+      builder: (cached) {
+        final page = cached.value;
+        final stale = isStale(cached);
+        return page.items.isEmpty && !stale
+            ? _Empty(l10n.noLoans)
+            : RefreshIndicator(
+                onRefresh: () async {
+                  ref.invalidate(currentLoansProvider);
+                  await ref.read(currentLoansProvider.future);
                 },
-              ),
-            ),
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(12),
+                  itemCount: page.items.length + (stale ? 1 : 0),
+                  itemBuilder: (context, index) {
+                    if (stale && index == 0) {
+                      return Card(
+                        key: const Key('loans-offline-note'),
+                        color: LcColors.warnSoft,
+                        margin: const EdgeInsets.only(bottom: 10),
+                        child: ListTile(
+                          leading: const Icon(
+                            Icons.cloud_off,
+                            color: LcColors.warn,
+                          ),
+                          title: Text(
+                            l10n.cardOfflineNote(
+                              DateFormat('HH:mm dd/MM').format(cached.savedAt),
+                            ),
+                          ),
+                        ),
+                      );
+                    }
+                    final loan = page.items[stale ? index - 1 : index];
+                    return _LoanCard(
+                      loan: loan,
+                      trailing: FilledButton.tonal(
+                        key: Key('renew-${loan.id}'),
+                        onPressed: _renewing.contains(loan.id) || stale
+                            ? null
+                            : () => _renew(loan),
+                        child: Text(l10n.renewAction),
+                      ),
+                    );
+                  },
+                ),
+              );
+      },
     );
   }
 }

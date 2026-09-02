@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../shared/models/auth_models.dart';
@@ -99,6 +100,9 @@ class AuthController extends Notifier<AuthState> {
         ),
       );
     } on ApiException catch (error) {
+      debugPrint(
+        'LC restore: ${error.kind} ${error.statusCode} ${error.message}',
+      );
       // Mất mạng lúc mở ứng dụng thì vẫn coi là đã đăng nhập: thẻ điện tử và danh sách đang mượn
       // đọc từ bộ nhớ đệm; lượt gọi tiếp theo sẽ làm mới token khi có mạng.
       if (error.isNetwork || error.kind == ApiErrorKind.timeout) {

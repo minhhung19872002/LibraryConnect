@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/api/api_exception.dart';
+import '../../../core/network/offline_cache.dart';
 import '../../../shared/models/catalog_models.dart';
 import '../data/recent_searches.dart';
 import '../data/search_api.dart';
@@ -42,6 +44,11 @@ class SearchQuery {
           ),
         );
 
+  /// Khoá bộ đệm ngoại tuyến: từ khoá + phạm vi + sắp xếp + bộ lọc (nâng cao: các mệnh đề).
+  String get cacheKey => basic != null
+      ? '${basic!.keyword.trim().toLowerCase()}|${basic!.scope.wire}|${basic!.sort.wire}|${basic!.filter.toQuery()}'
+      : 'adv|${advanced!.toJson(1)}';
+
   /// Tham số dùng để lấy facet: tra cứu nâng cao lấy facet trên từ khoá ghép của các mệnh đề.
   SearchParams get facetParams =>
       basic ??
@@ -60,10 +67,14 @@ class SearchState {
     this.loadingMore = false,
     this.error,
     this.moreError,
+    this.offlineSavedAt,
   });
 
   final SearchQuery? query;
   final Paged<SearchResult>? pages;
+
+  /// Khác null khi kết quả là bản lưu vì không có mạng.
+  final DateTime? offlineSavedAt;
   final bool loading;
   final bool loadingMore;
   final Object? error;
@@ -89,6 +100,7 @@ class SearchState {
     loadingMore: loadingMore ?? this.loadingMore,
     error: clearErrors ? null : (error ?? this.error),
     moreError: clearErrors ? null : (moreError ?? this.moreError),
+    offlineSavedAt: offlineSavedAt,
   );
 }
 
@@ -107,12 +119,36 @@ class SearchController extends Notifier<SearchState> {
       await ref.read(recentSearchesProvider.notifier).add(query.label);
     }
 
+    final cache = ref.read(offlineCacheProvider);
+    final cacheKey = 'search.${query.cacheKey}';
     try {
       final page = await _fetch(query, 1);
       if (generation != _generation) return;
       state = SearchState(query: query, pages: page);
+      await cache.putPaged(cacheKey, page, (SearchResult r) => r.toJson());
     } catch (error) {
       if (generation != _generation) return;
+      // Mất mạng mà đã từng tra đúng câu này: hiện bản lưu kèm giờ (đặc tả 5, "kết quả gần đây").
+      if (error is ApiException &&
+          (error.isNetwork || error.kind == ApiErrorKind.timeout)) {
+        final cached = await cache.getPaged(cacheKey, SearchResult.fromJson);
+        if (generation != _generation) return;
+        if (cached != null) {
+          state = SearchState(
+            query: query,
+            pages: Paged(
+              items: cached.value.items,
+              totalCount: cached.value.totalCount,
+              totalCountCapped: cached.value.totalCountCapped,
+              page: cached.value.page,
+              pageSize: cached.value.pageSize,
+              hasNext: false,
+            ),
+            offlineSavedAt: cached.savedAt,
+          );
+          return;
+        }
+      }
       state = SearchState(query: query, error: error);
     }
   }

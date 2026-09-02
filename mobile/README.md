@@ -70,6 +70,8 @@ flutter analyze                      # 0 issue
 dart format --set-exit-if-changed lib test
 flutter test                         # unit + widget
 flutter test integration_test -d <device> --dart-define=LC_API_BASE_URL=http://10.0.2.2/api   # luồng đầu-cuối, cần máy chủ Docker đang chạy
+# Lưu ý: `flutter test` gỡ ứng dụng sau khi chạy. Muốn giữ phiên trên máy ảo để kiểm bằng adb (tắt mạng…)
+# thì cài bản thường (`flutter build apk --debug` + `adb install -r`) rồi đăng nhập trên đó.
 ```
 
 ## Dựng Android — những chỗ đã vấp
@@ -112,6 +114,7 @@ flutter gen-l10n                                            # tự chạy khi `f
 | 6 | Mượn tự phục vụ: xác thực NONE / Wi-Fi / QR trạm, quét sách liên tiếp, phiếu tóm tắt | Xong — MB.19–MB.20 |
 | 7 | Tài liệu số: danh sách + toàn văn, trình đọc trang ảnh có chữ chìm, tìm trong văn bản, đánh dấu trang, gói ngoại tuyến mã hoá tự hết hạn, xin quyền, lịch sử, chặn chụp màn hình (Android) | Xong — MB.21–MB.23 |
 | 8 | Thông báo (danh sách, mở đúng màn hình, cài đặt loại), dịch vụ đẩy FCM (tắt lặng lẽ khi thiếu Firebase), tài khoản đầy đủ, khoá sinh trắc học, cài đặt lưu máy | Xong — MB.24–MB.26; đẩy thật chưa kiểm |
-| 9–10 | Ngoại tuyến, hiệu năng, chế độ tối, đóng gói, tài liệu | Chưa |
+| 9 | Ngoại tuyến (dải mất mạng, bộ đệm đang mượn/tra cứu/cài đặt, phông đóng gói), ghim chứng chỉ, chế độ tối + cỡ chữ lớn soi tràn chữ, đo khởi động lạnh | Xong — MB.27–MB.29; máy thật chưa đo |
+| 10 | Kiểm thử đầy đủ, đóng gói APK/AAB, tài liệu | Chưa |
 
 Chưa bước nào chạy được trên **máy thật**: máy phát triển không có điện thoại kết nối. Mỗi bước ghi rõ điều này trong báo cáo.
