@@ -423,6 +423,49 @@ public class MobileBackendTests
         }
     }
 
+    [Fact]
+    public async Task Tim_trong_van_ban_tra_dung_trang_va_khong_lo_tai_lieu_han_che()
+    {
+        var staff = await StaffAsync();
+        var (reader, _, _) = await ReaderClientAsync(staff, "Bạn đọc tìm trong văn bản");
+        var open = await UploadAndWaitAsync(staff, "Cơ sở dữ liệu phân tán", new Dictionary<string, string>
+        {
+            ["accessLevel"] = "Public",
+        });
+        // Hạn chế và không cho xem thử trang nào (tải lên không nhận previewPages, phải sửa sau):
+        // chưa được duyệt thì không đọc, nên cũng không tìm.
+        var locked = await UploadAndWaitAsync(staff, "Tài liệu hạn chế tìm chữ", new Dictionary<string, string>
+        {
+            ["accessLevel"] = "Restricted",
+        });
+        (await staff.PutAsJsonAsync($"/api/digital/documents/{locked.Document.Id}", new
+        {
+            id = locked.Document.Id,
+            title = locked.Document.Title,
+            accessLevel = "Restricted",
+            allowDownload = false,
+            allowPrint = false,
+            watermarkEnabled = true,
+            previewPages = 0,
+        })).EnsureSuccessStatusCode();
+
+        var hits = await ReadAsync<IReadOnlyList<DigitalTextHitDto>>(
+            await reader.GetAsync($"/api/reader/digital/{open.Document.Id}/find?q=co%20so%20du%20lieu"));
+        hits.Should().NotBeEmpty("gõ không dấu vẫn tìm được chữ có dấu trong lớp chữ PDF");
+        hits[0].Page.Should().Be(1);
+        hits[0].Snippet.Should().Contain("Cơ sở dữ liệu");
+
+        var none = await ReadAsync<IReadOnlyList<DigitalTextHitDto>>(
+            await reader.GetAsync($"/api/reader/digital/{open.Document.Id}/find?q=khongcochunay"));
+        none.Should().BeEmpty();
+
+        var tooShort = await reader.GetAsync($"/api/reader/digital/{open.Document.Id}/find?q=a");
+        tooShort.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+        var forbidden = await reader.GetAsync($"/api/reader/digital/{locked.Document.Id}/find?q=tai%20lieu");
+        forbidden.StatusCode.Should().Be(HttpStatusCode.Forbidden, "không đọc được thì cũng không tìm được");
+    }
+
     private static async Task SetParametersAsync(HttpClient staff, params (string Key, string Value)[] values)
     {
         var response = await staff.PutAsJsonAsync("/api/admin/parameters", new

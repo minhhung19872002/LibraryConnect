@@ -601,6 +601,7 @@ class _DigitalTab extends StatelessWidget {
             doc.requiresRequest ? l10n.requiresRequest : doc.accessLevelLabel,
             tone: doc.requiresRequest ? PillTone.warn : PillTone.neutral,
           ),
+          onTap: () => context.push(Routes.digitalDoc(doc.id)),
         );
       },
     );

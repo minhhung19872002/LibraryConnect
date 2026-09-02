@@ -9,6 +9,8 @@ import '../../features/browse/data/browse_api.dart';
 import '../../features/browse/presentation/browse_hub_screen.dart';
 import '../../features/browse/presentation/browse_list_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
+import '../../features/digital/presentation/digital_library_screen.dart';
+import '../../features/digital/presentation/digital_reader_screen.dart';
 import '../../features/home/presentation/news_screens.dart';
 import '../../features/my_library/presentation/card_screen.dart';
 import '../../features/my_library/presentation/my_library_screen.dart';
@@ -37,6 +39,15 @@ class Routes {
   static const myLibrary = '/sach-cua-toi';
   static const card = '/the-thu-vien';
   static const selfCheckout = '/muon-tu-phuc-vu';
+  static const digital = '/tai-lieu-so';
+
+  static String digitalDoc(String id) => '$digital/$id';
+
+  /// Trình đọc; [offlinePackageId] khác null là đọc gói trên máy, không cần mạng.
+  static String digitalRead(String id, {String? offlinePackageId}) => Uri(
+    path: '$digital/$id/doc',
+    queryParameters: {'goi': ?offlinePackageId},
+  ).toString();
 
   static String bib(String id) => '$bibPath/$id';
   static String newsItem(String slug) => '$news/$slug';
@@ -191,6 +202,29 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: Routes.selfCheckout,
         parentNavigatorKey: _rootKey,
         builder: (context, state) => const SelfCheckoutScreen(),
+      ),
+      GoRoute(
+        path: Routes.digital,
+        parentNavigatorKey: _rootKey,
+        builder: (context, state) => const DigitalLibraryScreen(),
+        routes: [
+          GoRoute(
+            path: ':id',
+            parentNavigatorKey: _rootKey,
+            builder: (context, state) =>
+                DigitalDetailScreen(id: state.pathParameters['id']!),
+            routes: [
+              GoRoute(
+                path: 'doc',
+                parentNavigatorKey: _rootKey,
+                builder: (context, state) => DigitalReaderScreen(
+                  documentId: state.pathParameters['id']!,
+                  offlinePackageId: state.uri.queryParameters['goi'],
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
       ShellRoute(
         builder: (context, state, child) =>

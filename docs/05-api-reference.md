@@ -430,6 +430,8 @@ Phiếu mượn ghi rõ đã xác thực ở đâu (`note`: "Mượn tự phục
 | POST | `/api/reader/digital/search` | Cùng danh sách nhưng đủ bộ lọc: định dạng, khoảng ngày, tìm toàn văn | Tài liệu số |
 | GET | `/api/reader/digital/{id}` | Chi tiết kèm quyền đọc của chính bạn đọc | Chi tiết |
 | GET | `/api/reader/digital/{id}/read` | Mở phiên đọc trực tuyến | Trình đọc |
+
+> Phase 15: `GET /api/reader/digital/{id}/find?q=` — tìm một cụm từ (≥ 2 ký tự, không phân biệt hoa thường và dấu) trong lớp chữ của tài liệu, trả `[{page, snippet}]`; quyền và giới hạn xem thử kiểm y như khi mở trang (403 nếu không đọc được).
 | GET | `/api/reader/digital/{id}/pages/{page}` | Một trang dạng ảnh đã đóng chữ chìm | Trình đọc |
 | GET | `/api/reader/digital/{id}/download` | Tải tệp gốc, nếu được phép | Chi tiết |
 | POST | `/api/reader/digital/{id}/request` | Gửi yêu cầu đọc tài liệu hạn chế | Chi tiết |

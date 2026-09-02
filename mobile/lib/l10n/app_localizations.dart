@@ -1764,6 +1764,354 @@ abstract class L10n {
   /// In vi, this message translates to:
   /// **'Xem Sách của tôi'**
   String get openMyLibrary;
+
+  /// No description provided for @digitalTitle.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tài liệu số'**
+  String get digitalTitle;
+
+  /// No description provided for @digitalSearchHint.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tìm tài liệu số…'**
+  String get digitalSearchHint;
+
+  /// No description provided for @digitalFullText.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tìm trong toàn văn'**
+  String get digitalFullText;
+
+  /// No description provided for @digitalAll.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tất cả'**
+  String get digitalAll;
+
+  /// No description provided for @digitalTabLibrary.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thư viện'**
+  String get digitalTabLibrary;
+
+  /// No description provided for @digitalTabOffline.
+  ///
+  /// In vi, this message translates to:
+  /// **'Ngoại tuyến'**
+  String get digitalTabOffline;
+
+  /// No description provided for @digitalTabRequests.
+  ///
+  /// In vi, this message translates to:
+  /// **'Yêu cầu'**
+  String get digitalTabRequests;
+
+  /// No description provided for @digitalTabHistory.
+  ///
+  /// In vi, this message translates to:
+  /// **'Lịch sử'**
+  String get digitalTabHistory;
+
+  /// No description provided for @accessPublic.
+  ///
+  /// In vi, this message translates to:
+  /// **'Công khai'**
+  String get accessPublic;
+
+  /// No description provided for @accessInternal.
+  ///
+  /// In vi, this message translates to:
+  /// **'Nội bộ'**
+  String get accessInternal;
+
+  /// No description provided for @accessRestricted.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hạn chế'**
+  String get accessRestricted;
+
+  /// No description provided for @accessForbidden.
+  ///
+  /// In vi, this message translates to:
+  /// **'Cấm'**
+  String get accessForbidden;
+
+  /// No description provided for @readAction.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đọc'**
+  String get readAction;
+
+  /// No description provided for @downloadOffline.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tải đọc ngoại tuyến'**
+  String get downloadOffline;
+
+  /// No description provided for @downloadingPackage.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đang tải gói…'**
+  String get downloadingPackage;
+
+  /// No description provided for @offlineSaved.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã lưu để đọc ngoại tuyến, hạn đến {date}.'**
+  String offlineSaved(String date);
+
+  /// No description provided for @offlineExpired.
+  ///
+  /// In vi, this message translates to:
+  /// **'Gói đã hết hạn'**
+  String get offlineExpired;
+
+  /// No description provided for @offlineExpires.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hết hạn {date}'**
+  String offlineExpires(String date);
+
+  /// No description provided for @offlineDelete.
+  ///
+  /// In vi, this message translates to:
+  /// **'Xóa khỏi máy'**
+  String get offlineDelete;
+
+  /// No description provided for @offlineDeleted.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã xóa gói ngoại tuyến.'**
+  String get offlineDeleted;
+
+  /// No description provided for @offlineEmpty.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chưa có tài liệu nào tải về máy.'**
+  String get offlineEmpty;
+
+  /// No description provided for @offlineReadNote.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bản ngoại tuyến — đọc không cần mạng, tự hết hạn.'**
+  String get offlineReadNote;
+
+  /// No description provided for @offlineNoSearch.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bản ngoại tuyến không tìm được trong văn bản.'**
+  String get offlineNoSearch;
+
+  /// No description provided for @requestAccess.
+  ///
+  /// In vi, this message translates to:
+  /// **'Gửi yêu cầu truy cập'**
+  String get requestAccess;
+
+  /// No description provided for @requestReasonHint.
+  ///
+  /// In vi, this message translates to:
+  /// **'Lý do sử dụng (bắt buộc)'**
+  String get requestReasonHint;
+
+  /// No description provided for @requestSent.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã gửi yêu cầu, thư viện sẽ duyệt và báo lại.'**
+  String get requestSent;
+
+  /// No description provided for @requestStatusPending.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chờ duyệt'**
+  String get requestStatusPending;
+
+  /// No description provided for @requestStatusApproved.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã duyệt'**
+  String get requestStatusApproved;
+
+  /// No description provided for @requestStatusRejected.
+  ///
+  /// In vi, this message translates to:
+  /// **'Từ chối'**
+  String get requestStatusRejected;
+
+  /// No description provided for @requestStatusExpired.
+  ///
+  /// In vi, this message translates to:
+  /// **'Hết hạn'**
+  String get requestStatusExpired;
+
+  /// No description provided for @requestStatusRevoked.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã thu hồi'**
+  String get requestStatusRevoked;
+
+  /// No description provided for @requestsEmpty.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chưa gửi yêu cầu nào.'**
+  String get requestsEmpty;
+
+  /// No description provided for @historyEmpty.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chưa xem hay tải tài liệu số nào.'**
+  String get historyEmpty;
+
+  /// No description provided for @actionView.
+  ///
+  /// In vi, this message translates to:
+  /// **'Xem'**
+  String get actionView;
+
+  /// No description provided for @actionDownload.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tải'**
+  String get actionDownload;
+
+  /// No description provided for @actionPrint.
+  ///
+  /// In vi, this message translates to:
+  /// **'In'**
+  String get actionPrint;
+
+  /// No description provided for @actionOfflineDownload.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tải ngoại tuyến'**
+  String get actionOfflineDownload;
+
+  /// No description provided for @pagesLabel2.
+  ///
+  /// In vi, this message translates to:
+  /// **'{count} trang'**
+  String pagesLabel2(int count);
+
+  /// No description provided for @previewOnly.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chỉ xem thử {count} trang đầu'**
+  String previewOnly(int count);
+
+  /// No description provided for @pageOf.
+  ///
+  /// In vi, this message translates to:
+  /// **'Trang {page}/{total}'**
+  String pageOf(int page, int total);
+
+  /// No description provided for @goToPage.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đến trang'**
+  String get goToPage;
+
+  /// No description provided for @bookmarkAdd.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đánh dấu trang'**
+  String get bookmarkAdd;
+
+  /// No description provided for @bookmarkRemove.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bỏ đánh dấu'**
+  String get bookmarkRemove;
+
+  /// No description provided for @bookmarks.
+  ///
+  /// In vi, this message translates to:
+  /// **'Trang đã đánh dấu'**
+  String get bookmarks;
+
+  /// No description provided for @bookmarksEmpty.
+  ///
+  /// In vi, this message translates to:
+  /// **'Chưa đánh dấu trang nào.'**
+  String get bookmarksEmpty;
+
+  /// No description provided for @findInText.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tìm trong văn bản'**
+  String get findInText;
+
+  /// No description provided for @findHint.
+  ///
+  /// In vi, this message translates to:
+  /// **'Nhập từ cần tìm…'**
+  String get findHint;
+
+  /// No description provided for @findNoHit.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không thấy trong phần được xem.'**
+  String get findNoHit;
+
+  /// No description provided for @findHits.
+  ///
+  /// In vi, this message translates to:
+  /// **'{count} chỗ khớp'**
+  String findHits(int count);
+
+  /// No description provided for @watermarkNote.
+  ///
+  /// In vi, this message translates to:
+  /// **'Trang có chữ chìm số thẻ của bạn, không chia sẻ.'**
+  String get watermarkNote;
+
+  /// No description provided for @secureNote.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tài liệu không cho tải: đã chặn chụp màn hình.'**
+  String get secureNote;
+
+  /// No description provided for @noPermission.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bạn chưa được phép đọc tài liệu này.'**
+  String get noPermission;
+
+  /// No description provided for @sizeLabel.
+  ///
+  /// In vi, this message translates to:
+  /// **'{size}'**
+  String sizeLabel(String size);
+
+  /// No description provided for @digitalOpenError.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không mở được tài liệu.'**
+  String get digitalOpenError;
+
+  /// No description provided for @collectionLabel.
+  ///
+  /// In vi, this message translates to:
+  /// **'Bộ sưu tập'**
+  String get collectionLabel;
+
+  /// No description provided for @checksumMismatch.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tệp tải về không khớp mã kiểm, đã bỏ.'**
+  String get checksumMismatch;
+
+  /// No description provided for @loadingPage.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đang tải trang {page}…'**
+  String loadingPage(int page);
+
+  /// No description provided for @digitalSignInHint.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đăng nhập để xem tài liệu nội bộ và gửi yêu cầu truy cập.'**
+  String get digitalSignInHint;
 }
 
 class _L10nDelegate extends LocalizationsDelegate<L10n> {

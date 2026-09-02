@@ -244,6 +244,20 @@ public class ReaderPortalController : ApiControllerBase
         return File(file.Content, file.ContentType);
     }
 
+    /// <summary>
+    /// Tìm một cụm từ trong văn bản của tài liệu: trả về các trang có nó kèm đoạn trích. Quyền và
+    /// giới hạn xem thử kiểm y như khi mở trang. Không phân biệt hoa thường và dấu.
+    /// </summary>
+    [HttpGet("digital/{id:guid}/find")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<DigitalTextHitDto>>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<IReadOnlyList<DigitalTextHitDto>>>> FindInDigital(
+        Guid id, [FromQuery] string q, CancellationToken ct)
+    {
+        var result = await Mediator.Send(new FindInDigitalDocumentQuery(id, q), ct);
+        return Ok(Success(result));
+    }
+
     /// <summary>Tải tài liệu số về, nếu được phép.</summary>
     [HttpGet("digital/{id:guid}/download")]
     [AllowAnonymous]

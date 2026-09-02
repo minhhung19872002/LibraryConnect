@@ -56,6 +56,29 @@ public class DocumentProcessor : IDocumentProcessor
         }
     }
 
+    public Task<IReadOnlyList<string>> ExtractPageTextsAsync(
+        byte[] content, string mimeType, CancellationToken ct = default)
+    {
+        if (!CanRenderPages(mimeType))
+        {
+            return Task.FromResult<IReadOnlyList<string>>(Array.Empty<string>());
+        }
+
+        ct.ThrowIfCancellationRequested();
+
+        using var stream = new MemoryStream(content, writable: false);
+        using var pdf = PdfDocument.Open(stream);
+        var pages = new List<string>(pdf.NumberOfPages);
+
+        foreach (var page in pdf.GetPages())
+        {
+            ct.ThrowIfCancellationRequested();
+            pages.Add(page.Text);
+        }
+
+        return Task.FromResult<IReadOnlyList<string>>(pages);
+    }
+
     public Task<DocumentInspection> InspectAsync(
         byte[] content, string mimeType, CancellationToken ct = default)
     {

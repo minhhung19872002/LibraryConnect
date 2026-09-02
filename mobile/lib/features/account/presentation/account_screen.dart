@@ -61,6 +61,13 @@ class AccountScreen extends ConsumerWidget {
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () => context.push(Routes.selfCheckout),
                   ),
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: const Icon(Icons.picture_as_pdf_outlined),
+                    title: Text(l10n.digitalTitle),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => context.push(Routes.digital),
+                  ),
                 ],
               ),
             ),

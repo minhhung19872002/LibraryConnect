@@ -40,6 +40,9 @@ class TokenStore {
 
   final SecureKeyValue _storage;
 
+  /// Kho bí mật dùng chung cho các phần khác cần cất khoá (gói đọc ngoại tuyến).
+  SecureKeyValue get storage => _storage;
+
   static const _accessKey = 'lc.access_token';
   static const _refreshKey = 'lc.refresh_token';
   static const _cardKey = 'lc.card';

@@ -83,6 +83,16 @@ flutter test integration_test -d <device> --dart-define=LC_API_BASE_URL=http://1
 - APK debug gộp mọi ABI nặng ~195 MB; máy ảo phải còn hơn 400 MB trống. Máy ảo thử nghiệm: `LC_Pixel` (Android 16,
   Pixel 9, ổ dữ liệu 8 GB), tạo bằng `avdmanager create avd -n LC_Pixel -k "system-images;android-36;google_apis_playstore;x86_64" -d pixel_9`.
 
+## Ảnh chụp màn hình làm bằng chứng
+
+Phép thử đầu-cuối tự chụp qua `flutter drive` (trình điều khiển `test_driver/integration_test.dart` ghi
+vào `build/screenshots/`); chạy bằng `flutter test` thì các điểm chụp bị bỏ qua. Ảnh đã chọn nằm ở
+`docs/images/mobile/`.
+
+```bash
+flutter drive --driver=test_driver/integration_test.dart   --target=integration_test/digital_flow_test.dart -d emulator-5556   --dart-define=LC_API_BASE_URL=http://10.0.2.2/api
+```
+
 ## Sinh mã
 
 ```bash
@@ -100,6 +110,7 @@ flutter gen-l10n                                            # tự chạy khi `f
 | 4 | Trang chủ đầy đủ, bảy danh mục duyệt (cây, A–Z, ngành → môn → tài liệu, luận văn, ấn phẩm định kỳ), tin tức, trang tĩnh | Xong — MB.13–MB.15 |
 | 5 | Thẻ điện tử (mã vạch + QR, ngoại tuyến, yêu cầu gia hạn thẻ), Sách của tôi (đang mượn + gia hạn, lịch sử, đặt giữ + hủy, tiền phạt) | Xong — MB.16–MB.18 |
 | 6 | Mượn tự phục vụ: xác thực NONE / Wi-Fi / QR trạm, quét sách liên tiếp, phiếu tóm tắt | Xong — MB.19–MB.20 |
-| 7–10 | Tài liệu số, thông báo, đóng gói | Chưa |
+| 7 | Tài liệu số: danh sách + toàn văn, trình đọc trang ảnh có chữ chìm, tìm trong văn bản, đánh dấu trang, gói ngoại tuyến mã hoá tự hết hạn, xin quyền, lịch sử, chặn chụp màn hình (Android) | Xong — MB.21–MB.23 |
+| 8–10 | Thông báo đẩy, tài khoản, đóng gói | Chưa |
 
 Chưa bước nào chạy được trên **máy thật**: máy phát triển không có điện thoại kết nối. Mỗi bước ghi rõ điều này trong báo cáo.

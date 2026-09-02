@@ -36,4 +36,10 @@ public interface IDocumentProcessor
 
     /// <summary>Nhận dạng ký tự tiếng Việt trên một ảnh trang.</summary>
     Task<string> RecognizeTextAsync(byte[] pageImagePng, CancellationToken ct = default);
+
+    /// <summary>
+    /// Văn bản sẵn có của từng trang, theo thứ tự trang (phần tử 0 là trang 1). Định dạng không có
+    /// trang hoặc không có lớp chữ thì trả danh sách rỗng — dùng cho "tìm trong văn bản" của trình đọc.
+    /// </summary>
+    Task<IReadOnlyList<string>> ExtractPageTextsAsync(byte[] content, string mimeType, CancellationToken ct = default);
 }

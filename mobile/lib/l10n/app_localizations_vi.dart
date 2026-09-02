@@ -942,4 +942,197 @@ class L10nVi extends L10n {
 
   @override
   String get openMyLibrary => 'Xem Sách của tôi';
+
+  @override
+  String get digitalTitle => 'Tài liệu số';
+
+  @override
+  String get digitalSearchHint => 'Tìm tài liệu số…';
+
+  @override
+  String get digitalFullText => 'Tìm trong toàn văn';
+
+  @override
+  String get digitalAll => 'Tất cả';
+
+  @override
+  String get digitalTabLibrary => 'Thư viện';
+
+  @override
+  String get digitalTabOffline => 'Ngoại tuyến';
+
+  @override
+  String get digitalTabRequests => 'Yêu cầu';
+
+  @override
+  String get digitalTabHistory => 'Lịch sử';
+
+  @override
+  String get accessPublic => 'Công khai';
+
+  @override
+  String get accessInternal => 'Nội bộ';
+
+  @override
+  String get accessRestricted => 'Hạn chế';
+
+  @override
+  String get accessForbidden => 'Cấm';
+
+  @override
+  String get readAction => 'Đọc';
+
+  @override
+  String get downloadOffline => 'Tải đọc ngoại tuyến';
+
+  @override
+  String get downloadingPackage => 'Đang tải gói…';
+
+  @override
+  String offlineSaved(String date) {
+    return 'Đã lưu để đọc ngoại tuyến, hạn đến $date.';
+  }
+
+  @override
+  String get offlineExpired => 'Gói đã hết hạn';
+
+  @override
+  String offlineExpires(String date) {
+    return 'Hết hạn $date';
+  }
+
+  @override
+  String get offlineDelete => 'Xóa khỏi máy';
+
+  @override
+  String get offlineDeleted => 'Đã xóa gói ngoại tuyến.';
+
+  @override
+  String get offlineEmpty => 'Chưa có tài liệu nào tải về máy.';
+
+  @override
+  String get offlineReadNote =>
+      'Bản ngoại tuyến — đọc không cần mạng, tự hết hạn.';
+
+  @override
+  String get offlineNoSearch => 'Bản ngoại tuyến không tìm được trong văn bản.';
+
+  @override
+  String get requestAccess => 'Gửi yêu cầu truy cập';
+
+  @override
+  String get requestReasonHint => 'Lý do sử dụng (bắt buộc)';
+
+  @override
+  String get requestSent => 'Đã gửi yêu cầu, thư viện sẽ duyệt và báo lại.';
+
+  @override
+  String get requestStatusPending => 'Chờ duyệt';
+
+  @override
+  String get requestStatusApproved => 'Đã duyệt';
+
+  @override
+  String get requestStatusRejected => 'Từ chối';
+
+  @override
+  String get requestStatusExpired => 'Hết hạn';
+
+  @override
+  String get requestStatusRevoked => 'Đã thu hồi';
+
+  @override
+  String get requestsEmpty => 'Chưa gửi yêu cầu nào.';
+
+  @override
+  String get historyEmpty => 'Chưa xem hay tải tài liệu số nào.';
+
+  @override
+  String get actionView => 'Xem';
+
+  @override
+  String get actionDownload => 'Tải';
+
+  @override
+  String get actionPrint => 'In';
+
+  @override
+  String get actionOfflineDownload => 'Tải ngoại tuyến';
+
+  @override
+  String pagesLabel2(int count) {
+    return '$count trang';
+  }
+
+  @override
+  String previewOnly(int count) {
+    return 'Chỉ xem thử $count trang đầu';
+  }
+
+  @override
+  String pageOf(int page, int total) {
+    return 'Trang $page/$total';
+  }
+
+  @override
+  String get goToPage => 'Đến trang';
+
+  @override
+  String get bookmarkAdd => 'Đánh dấu trang';
+
+  @override
+  String get bookmarkRemove => 'Bỏ đánh dấu';
+
+  @override
+  String get bookmarks => 'Trang đã đánh dấu';
+
+  @override
+  String get bookmarksEmpty => 'Chưa đánh dấu trang nào.';
+
+  @override
+  String get findInText => 'Tìm trong văn bản';
+
+  @override
+  String get findHint => 'Nhập từ cần tìm…';
+
+  @override
+  String get findNoHit => 'Không thấy trong phần được xem.';
+
+  @override
+  String findHits(int count) {
+    return '$count chỗ khớp';
+  }
+
+  @override
+  String get watermarkNote =>
+      'Trang có chữ chìm số thẻ của bạn, không chia sẻ.';
+
+  @override
+  String get secureNote => 'Tài liệu không cho tải: đã chặn chụp màn hình.';
+
+  @override
+  String get noPermission => 'Bạn chưa được phép đọc tài liệu này.';
+
+  @override
+  String sizeLabel(String size) {
+    return '$size';
+  }
+
+  @override
+  String get digitalOpenError => 'Không mở được tài liệu.';
+
+  @override
+  String get collectionLabel => 'Bộ sưu tập';
+
+  @override
+  String get checksumMismatch => 'Tệp tải về không khớp mã kiểm, đã bỏ.';
+
+  @override
+  String loadingPage(int page) {
+    return 'Đang tải trang $page…';
+  }
+
+  @override
+  String get digitalSignInHint =>
+      'Đăng nhập để xem tài liệu nội bộ và gửi yêu cầu truy cập.';
 }

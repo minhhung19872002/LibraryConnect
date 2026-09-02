@@ -1,3 +1,4 @@
+using System.Globalization;
 using LibraryConnect.Application.Common.Exceptions;
 using LibraryConnect.Application.Common.Interfaces;
 using LibraryConnect.Domain.Entities.Dig;
@@ -358,5 +359,104 @@ public class DigitalAccessRecorder
         {
             request.ViewCount++;
         }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+// Phase 15 — tìm trong văn bản của một tài liệu (trình đọc trên ứng dụng)
+// -------------------------------------------------------------------------------------------------
+
+/// <summary>Một chỗ khớp: trang và đoạn văn quanh từ tìm.</summary>
+public record DigitalTextHitDto(int Page, string Snippet);
+
+/// <summary>
+/// Tìm một cụm từ trong lớp chữ của tài liệu, trả về các trang có nó. Quyền đọc và giới hạn xem thử
+/// kiểm y như khi mở trang: không đọc được thì cũng không tìm được, và không lộ trang ngoài phần
+/// được xem. Không phân biệt hoa thường và dấu ("co so du lieu" tìm được "Cơ sở dữ liệu").
+/// </summary>
+public record FindInDigitalDocumentQuery(Guid DocumentId, string Term)
+    : IRequest<IReadOnlyList<DigitalTextHitDto>>;
+
+public class FindInDigitalDocumentQueryHandler
+    : IRequestHandler<FindInDigitalDocumentQuery, IReadOnlyList<DigitalTextHitDto>>
+{
+    private const int MaxHits = 200;
+    private const int SnippetRadius = 60;
+
+    private readonly IApplicationDbContext _db;
+    private readonly IFileStorage _storage;
+    private readonly IDocumentProcessor _processor;
+    private readonly IDigitalAccessEvaluator _access;
+
+    public FindInDigitalDocumentQueryHandler(
+        IApplicationDbContext db,
+        IFileStorage storage,
+        IDocumentProcessor processor,
+        IDigitalAccessEvaluator access)
+    {
+        _db = db;
+        _storage = storage;
+        _processor = processor;
+        _access = access;
+    }
+
+    public async Task<IReadOnlyList<DigitalTextHitDto>> Handle(FindInDigitalDocumentQuery query, CancellationToken ct)
+    {
+        var term = query.Term?.Trim() ?? string.Empty;
+
+        if (term.Length < 2)
+        {
+            throw new Common.Exceptions.ValidationException("q", "Nhập ít nhất 2 ký tự để tìm.");
+        }
+
+        var document = await _db.DigitalDocuments
+            .FirstOrDefaultAsync(row => row.Id == query.DocumentId, ct)
+            ?? throw new NotFoundException("tài liệu số", query.DocumentId);
+
+        if (!_processor.CanRenderPages(document.MimeType))
+        {
+            throw new ConflictException("Định dạng này không tìm trong văn bản được.");
+        }
+
+        var permission = await _access.EvaluateAsync(document, ct);
+
+        if (!permission.CanRead)
+        {
+            throw new ForbiddenException(permission.Reason);
+        }
+
+        await using var stream = await _storage.DownloadAsync(DigitalStorage.Bucket, document.FilePath, ct);
+        using var buffer = new MemoryStream();
+        await stream.CopyToAsync(buffer, ct);
+
+        var pages = await _processor.ExtractPageTextsAsync(buffer.ToArray(), document.MimeType, ct);
+        var limit = permission.ReadablePages is { } readable ? Math.Min(readable, pages.Count) : pages.Count;
+        var compare = CultureInfo.InvariantCulture.CompareInfo;
+        const CompareOptions options = CompareOptions.IgnoreCase | CompareOptions.IgnoreNonSpace;
+        var hits = new List<DigitalTextHitDto>();
+
+        for (var index = 0; index < limit && hits.Count < MaxHits; index++)
+        {
+            var text = pages[index];
+            var start = 0;
+
+            while (hits.Count < MaxHits)
+            {
+                var at = compare.IndexOf(text, term, start, options);
+
+                if (at < 0)
+                {
+                    break;
+                }
+
+                var from = Math.Max(0, at - SnippetRadius);
+                var to = Math.Min(text.Length, at + term.Length + SnippetRadius);
+                var snippet = text[from..to].Replace('\n', ' ').Replace('\r', ' ').Trim();
+                hits.Add(new DigitalTextHitDto(index + 1, (from > 0 ? "…" : "") + snippet + (to < text.Length ? "…" : "")));
+                start = at + Math.Max(1, term.Length);
+            }
+        }
+
+        return hits;
     }
 }

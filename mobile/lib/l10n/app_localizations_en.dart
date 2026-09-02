@@ -944,4 +944,200 @@ class L10nEn extends L10n {
 
   @override
   String get openMyLibrary => 'Open My library';
+
+  @override
+  String get digitalTitle => 'Digital library';
+
+  @override
+  String get digitalSearchHint => 'Search digital documents…';
+
+  @override
+  String get digitalFullText => 'Full-text search';
+
+  @override
+  String get digitalAll => 'All';
+
+  @override
+  String get digitalTabLibrary => 'Library';
+
+  @override
+  String get digitalTabOffline => 'Offline';
+
+  @override
+  String get digitalTabRequests => 'Requests';
+
+  @override
+  String get digitalTabHistory => 'History';
+
+  @override
+  String get accessPublic => 'Public';
+
+  @override
+  String get accessInternal => 'Internal';
+
+  @override
+  String get accessRestricted => 'Restricted';
+
+  @override
+  String get accessForbidden => 'Forbidden';
+
+  @override
+  String get readAction => 'Read';
+
+  @override
+  String get downloadOffline => 'Download for offline';
+
+  @override
+  String get downloadingPackage => 'Downloading package…';
+
+  @override
+  String offlineSaved(String date) {
+    return 'Saved for offline reading until $date.';
+  }
+
+  @override
+  String get offlineExpired => 'Package expired';
+
+  @override
+  String offlineExpires(String date) {
+    return 'Expires $date';
+  }
+
+  @override
+  String get offlineDelete => 'Delete from device';
+
+  @override
+  String get offlineDeleted => 'Offline package deleted.';
+
+  @override
+  String get offlineEmpty => 'No documents downloaded yet.';
+
+  @override
+  String get offlineReadNote =>
+      'Offline copy — no network needed, expires automatically.';
+
+  @override
+  String get offlineNoSearch =>
+      'Text search is not available in the offline copy.';
+
+  @override
+  String get requestAccess => 'Request access';
+
+  @override
+  String get requestReasonHint => 'Reason for use (required)';
+
+  @override
+  String get requestSent =>
+      'Request sent; the library will review it and let you know.';
+
+  @override
+  String get requestStatusPending => 'Pending';
+
+  @override
+  String get requestStatusApproved => 'Approved';
+
+  @override
+  String get requestStatusRejected => 'Rejected';
+
+  @override
+  String get requestStatusExpired => 'Expired';
+
+  @override
+  String get requestStatusRevoked => 'Revoked';
+
+  @override
+  String get requestsEmpty => 'No requests sent.';
+
+  @override
+  String get historyEmpty => 'No digital views or downloads yet.';
+
+  @override
+  String get actionView => 'View';
+
+  @override
+  String get actionDownload => 'Download';
+
+  @override
+  String get actionPrint => 'Print';
+
+  @override
+  String get actionOfflineDownload => 'Offline download';
+
+  @override
+  String pagesLabel2(int count) {
+    return '$count pages';
+  }
+
+  @override
+  String previewOnly(int count) {
+    return 'Preview of the first $count pages only';
+  }
+
+  @override
+  String pageOf(int page, int total) {
+    return 'Page $page/$total';
+  }
+
+  @override
+  String get goToPage => 'Go to page';
+
+  @override
+  String get bookmarkAdd => 'Bookmark page';
+
+  @override
+  String get bookmarkRemove => 'Remove bookmark';
+
+  @override
+  String get bookmarks => 'Bookmarked pages';
+
+  @override
+  String get bookmarksEmpty => 'No bookmarks yet.';
+
+  @override
+  String get findInText => 'Find in text';
+
+  @override
+  String get findHint => 'Type a word…';
+
+  @override
+  String get findNoHit => 'Not found in the readable part.';
+
+  @override
+  String findHits(int count) {
+    return '$count matches';
+  }
+
+  @override
+  String get watermarkNote =>
+      'Pages carry your card number as a watermark; do not share.';
+
+  @override
+  String get secureNote => 'Download not allowed: screenshots are blocked.';
+
+  @override
+  String get noPermission => 'You are not allowed to read this document.';
+
+  @override
+  String sizeLabel(String size) {
+    return '$size';
+  }
+
+  @override
+  String get digitalOpenError => 'Could not open the document.';
+
+  @override
+  String get collectionLabel => 'Collection';
+
+  @override
+  String get checksumMismatch =>
+      'The downloaded file failed its checksum and was discarded.';
+
+  @override
+  String loadingPage(int page) {
+    return 'Loading page $page…';
+  }
+
+  @override
+  String get digitalSignInHint =>
+      'Sign in to read internal documents and request access.';
 }

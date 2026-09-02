@@ -560,6 +560,12 @@ class BrowseShortcuts extends StatelessWidget {
       spacing: 8,
       runSpacing: 8,
       children: [
+        ActionChip(
+          key: const Key('home-digital'),
+          avatar: const Icon(Icons.picture_as_pdf_outlined, size: 18),
+          label: Text(L10n.of(context).digitalTitle),
+          onPressed: () => context.push(Routes.digital),
+        ),
         for (final kind in BrowseKind.values)
           ActionChip(
             avatar: Icon(browseIcon(kind), size: 18),
