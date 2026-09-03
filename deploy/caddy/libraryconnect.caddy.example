@@ -1,0 +1,30 @@
+# LibraryConnect sau Caddy dùng chung của máy chủ. Chép thành <ten-mien>.caddy vào thư mục sites của
+# Caddy, thay tên miền, rồi `docker exec proxy-caddy caddy reload --config /etc/caddy/Caddyfile`.
+# Caddy phải tham gia mạng `libraryconnect_libraryconnect` (docker network connect, và khai trong
+# compose của proxy để còn sau khi dựng lại).
+thuvien.example.edu.vn {
+	encode zstd gzip
+
+	# Tài liệu API và bảng điều khiển tác vụ nền: lc-nginx đã chặn theo IP thật, chặn thêm ở đây
+	# để chắc. /health cũng không cần lộ ra ngoài.
+	@chan path /swagger /swagger/* /hangfire /hangfire/* /health /health/*
+	respond @chan 404
+
+	# Dùng tên container đầy đủ: Caddy nằm trong nhiều mạng, tên ngắn "nginx" có thể trùng.
+	reverse_proxy lc-nginx:80 {
+		# Nhập biểu ghi và tải tài liệu số có thể chạy lâu.
+		transport http {
+			read_timeout 600s
+			write_timeout 600s
+		}
+	}
+
+	request_body {
+		max_size 512MB
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}

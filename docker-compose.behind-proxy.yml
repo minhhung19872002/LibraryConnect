@@ -1,0 +1,16 @@
+# =============================================================================
+# LibraryConnect — lớp thứ ba, dùng khi máy chủ đã có một proxy khác giữ cổng 80/443 và lo HTTPS
+# (Caddy, Traefik, Nginx của máy chủ dùng chung nhiều ứng dụng).
+#
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.behind-proxy.yml up -d
+#
+# Nginx của LibraryConnect không mở cổng nào ra máy chủ và không cần chứng thư; proxy phía trước
+# tham gia mạng `libraryconnect_libraryconnect` rồi chuyển tiếp tới `lc-nginx:80`.
+# Mẫu cấu hình cho Caddy nằm ở deploy/caddy/libraryconnect.caddy.example; xem docs/04 mục 5.3.
+# =============================================================================
+
+services:
+  nginx:
+    ports: !override []
+    volumes: !override
+      - ./deploy/nginx/nginx.behind-proxy.conf:/etc/nginx/conf.d/default.conf:ro

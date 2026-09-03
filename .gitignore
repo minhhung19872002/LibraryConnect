@@ -29,7 +29,8 @@ Thumbs.db
 
 # Data
 deploy/data/
-backups/
+/backups/
+deploy/backups/
 
 # Khóa riêng và chứng thư HTTPS không đưa vào Git
 deploy/nginx/certs/*.pem
