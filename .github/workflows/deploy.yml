@@ -15,8 +15,10 @@ on:
     paths-ignore: ['docs/**', '*.md']
   workflow_dispatch:
 
+# Dùng chung nhóm với workflow kia: cả hai đều đụng tới máy chủ thật. Đã gặp một lượt kiểm iOS
+# đăng nhập được (máy chủ trả 200) rồi đứng im, vì Deploy khởi động lại `lc-api` đúng lúc ấy.
 concurrency:
-  group: deploy-production
+  group: lc-production-server
   cancel-in-progress: false
 
 env:

@@ -19,9 +19,11 @@ on:
     paths: ['mobile/**', '.github/workflows/ios.yml']
   workflow_dispatch:
 
+# Dùng chung nhóm với workflow kia: cả hai đều đụng tới máy chủ thật. Đã gặp một lượt kiểm iOS
+# đăng nhập được (máy chủ trả 200) rồi đứng im, vì Deploy khởi động lại `lc-api` đúng lúc ấy.
 concurrency:
-  group: ios-${{ github.ref }}
-  cancel-in-progress: true
+  group: lc-production-server
+  cancel-in-progress: false
 
 env:
   FLUTTER_VERSION: 3.47.2
