@@ -291,6 +291,34 @@ Sau khi lên, sửa dải IP trong hai khối `location /swagger` và `location 
 
 ---
 
+## 5.1b. Máy chủ đã có proxy khác giữ cổng 80/443
+
+Máy chủ dùng chung nhiều ứng dụng thường đã có một proxy (Caddy, Traefik, Nginx của máy) chiếm cổng
+80/443 và tự lo chứng thư. Khi ấy không dùng `nginx.prod.conf` (có TLS) mà chồng thêm **lớp thứ ba**:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.behind-proxy.yml up -d
+```
+
+Lớp này tắt cổng ngoài của `lc-nginx` và thay cấu hình bằng `deploy/nginx/nginx.behind-proxy.conf`:
+chỉ HTTP trong mạng Docker, lấy IP thật từ `X-Forwarded-For` (để giới hạn tốc độ và chặn
+`/swagger`, `/hangfire` vẫn tính trên người dùng chứ không phải trên proxy), và truyền tiếp
+`X-Forwarded-Proto` của proxy phía trước. Không cần chứng thư trong `deploy/nginx/certs`.
+
+Phía proxy, với Caddy: chép `deploy/caddy/libraryconnect.caddy.example` vào thư mục site của Caddy,
+thay tên miền, cho Caddy tham gia mạng `libraryconnect_libraryconnect` rồi reload:
+
+```bash
+docker network connect libraryconnect_libraryconnect proxy-caddy   # và khai trong compose của proxy
+docker exec proxy-caddy caddy reload --config /etc/caddy/Caddyfile
+```
+
+Đã triển khai theo cách này ngày 03/09/2026 tại `https://thuvien.bluestar.com.vn`: chứng thư
+Let's Encrypt cấp trong 10 giây sau reload, `/swagger`, `/hangfire`, `/health` trả 404 từ ngoài,
+SRU và OAI-PMH mở bình thường.
+
+---
+
 ## 5.2. Chuẩn bị cho kho dữ liệu lớn
 
 Với thư viện có trên 100.000 biểu ghi, kiểm lại ba tham số sau — đây là những chỗ đã đo được là điểm

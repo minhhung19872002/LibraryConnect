@@ -276,6 +276,24 @@ sửa một biểu ghi đã có thì không lưu được.
 
 ---
 
+## I. Đợt triển khai lên máy chủ thật (03/09/2026)
+
+Lần đầu dựng hệ thống từ một bản clone sạch trên máy khác, không phải từ thư mục làm việc.
+
+| Mã | Mức | Lỗi | Nguyên nhân | Sửa |
+|---|---|---|---|---|
+| I1 | Nghiêm trọng | Clone kho từ GitHub dựng ảnh API **không biên dịch được**: thiếu namespace `Features.Admin.Backups` | Dòng `backups/` trong `.gitignore` (dành cho thư mục bản sao lưu) khớp luôn thư mục mã nguồn `Features/Admin/Backups/`, mà Git trên Windows không phân biệt hoa thường. `BackupFeatures.cs` chưa bao giờ được commit, suốt từ phase 2. Mọi phép thử đều xanh vì chạy trên thư mục làm việc có sẵn tệp ấy. | Neo luật thành `/backups/` và `deploy/backups/`, đưa tệp vào Git (`d77b917`). |
+
+Bài học: **"build sạch" trên máy phát triển không chứng minh kho mã đầy đủ.** Thư mục làm việc luôn
+có mọi tệp; chỉ một bản clone mới lộ ra tệp nào chưa vào Git. Chưa có CI dựng từ clone sạch, nên lỗi
+này sống qua 14 phase. Việc nên làm: một bước CI `git clone` + `docker compose build`.
+
+Cùng đợt còn thêm lớp compose thứ ba `docker-compose.behind-proxy.yml` cho máy chủ đã có proxy giữ
+cổng 80/443 (mục 5.1b của `docs/04`), vì `nginx.prod.conf` giả định LibraryConnect là ứng dụng duy
+nhất trên máy.
+
+---
+
 ## Đ. Những chỗ đã thử phá nhưng hệ thống chịu được
 
 Ghi lại để biết chỗ nào đã kiểm và không phải kiểm lại — kèm bằng chứng, không ghi suông.
