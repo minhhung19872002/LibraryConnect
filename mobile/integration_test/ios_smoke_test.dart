@@ -124,7 +124,7 @@ void main() {
     await tester.pumpAndSettle();
   });
 
-  testWidgets('iOS: đăng nhập, tủ sách, thẻ điện tử, đăng xuất', (
+  testWidgets('iOS: đăng nhập, tủ sách, thẻ điện tử, chế độ tối, cỡ chữ lớn, đăng xuất', (
     tester,
   ) async {
     app.main();
@@ -164,44 +164,11 @@ void main() {
     await tester.tap(find.byType(BackButton).first);
     await tester.pumpAndSettle();
 
-    // Đăng xuất để lượt chạy sau bắt đầu từ trạng thái sạch.
+    // Chế độ tối và cỡ chữ lớn nhất. Hai tuỳ chọn này nằm trong thẻ Tài khoản, mà thẻ ấy thuộc
+    // nhóm cần đăng nhập (`_protected` của bộ định tuyến) — nên làm luôn ở đây, trong phiên vừa
+    // đăng nhập, thay vì mở một phiên thứ hai.
     await tester.tap(find.text('Tài khoản').last);
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(find.byKey(const Key('sign-out')), 300);
-    await tester.tap(find.byKey(const Key('sign-out')));
-    await _waitFor(tester, find.byKey(const Key('home-search')));
-    await shot('ios-12-da-dang-xuat');
-  });
-
-  testWidgets('iOS: chế độ tối và cỡ chữ lớn nhất', (tester) async {
-    app.main();
-    await tester.pumpAndSettle(const Duration(seconds: 2));
-    await _waitFor(tester, find.byKey(const Key('home-search')));
-
-    // Thẻ Tài khoản nằm trong nhóm cần đăng nhập (`_protected` của bộ định tuyến), khách bấm vào bị
-    // đưa sang trang đăng nhập — nên chỉnh chủ đề và cỡ chữ phải đăng nhập trước.
-    await tester.tap(find.text('Tài khoản').last);
-    await tester.pumpAndSettle();
-    if (find.text('Đăng nhập bạn đọc').evaluate().isNotEmpty) {
-      await tester.enterText(find.byType(TextFormField).at(0), card);
-      await tester.enterText(find.byType(TextFormField).at(1), password);
-      await tester.tap(find.widgetWithText(FilledButton, 'Đăng nhập'));
-      // Chờ lượt đăng nhập xong hẳn rồi mới chạm tiếp. Bấm sang thẻ khác khi nó còn đang bay là
-      // đổi trang ngay dưới chân bộ định tuyến: máy chủ trả 200 mà ứng dụng vẫn nằm ở trang đăng
-      // nhập, và phép thử chờ vô ích tới hết giờ.
-      await _waitForAny(tester, [
-        find.text('Cỡ chữ'),
-        find.byKey(const Key('home-bell')),
-      ]);
-    }
-
-    // Đăng nhập xong mà rơi về trang chủ thì tự sang thẻ Tài khoản.
-    if (find.text('Cỡ chữ').evaluate().isEmpty) {
-      await tester.tap(find.text('Tài khoản').last);
-      await tester.pumpAndSettle();
-    }
-
-    // Bật chế độ tối và kéo cỡ chữ lên hết nấc (0,85 – 1,6 trong ứng dụng, nhân lên cỡ chữ hệ điều hành).
     await _waitFor(tester, find.text('Cỡ chữ'));
     await tester.ensureVisible(find.byKey(const Key('theme-dropdown')));
     await tester.pumpAndSettle();
@@ -215,9 +182,9 @@ void main() {
     await tester.pumpAndSettle();
 
     // Đo chứ không nhìn: nền phải là bảng màu tối và một chữ cỡ 14 phải nở ra rõ rệt.
-    final context = tester.element(find.byType(Scaffold).first);
-    expect(Theme.of(context).brightness, Brightness.dark);
-    expect(MediaQuery.textScalerOf(context).scale(14), greaterThan(20));
+    final dark = tester.element(find.byType(Scaffold).first);
+    expect(Theme.of(dark).brightness, Brightness.dark);
+    expect(MediaQuery.textScalerOf(dark).scale(14), greaterThan(20));
     await shot('ios-13-toi-tai-khoan');
 
     // Ba màn hình dễ tràn chữ nhất ở cỡ chữ lớn: trang chủ, kết quả tra cứu, chi tiết.
@@ -258,33 +225,17 @@ void main() {
     await tester.pumpAndSettle();
     await tester.drag(find.byType(Slider), const Offset(-400, 0));
     await tester.pumpAndSettle();
-    final back = tester.element(find.byType(Scaffold).first);
-    expect(Theme.of(back).brightness, Brightness.light);
+    final light = tester.element(find.byType(Scaffold).first);
+    expect(Theme.of(light).brightness, Brightness.light);
 
-    await tester.ensureVisible(find.byKey(const Key('sign-out')));
+    // Đăng xuất để lượt chạy sau bắt đầu từ trạng thái sạch.
+    await tester.tap(find.text('Tài khoản').last);
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.byKey(const Key('sign-out')), 300);
     await tester.tap(find.byKey(const Key('sign-out')));
     await _waitFor(tester, find.byKey(const Key('home-search')));
+    await shot('ios-12-da-dang-xuat');
   });
-}
-
-/// Chờ **một trong** các dấu hiệu hiện ra — dùng khi một thao tác có thể dẫn tới vài màn hình khác nhau.
-Future<void> _waitForAny(
-  WidgetTester tester,
-  List<Finder> finders, {
-  Duration timeout = const Duration(seconds: 40),
-}) async {
-  final end = DateTime.now().add(timeout);
-  while (DateTime.now().isBefore(end)) {
-    await tester.pump(const Duration(milliseconds: 250));
-    if (finders.any((finder) => finder.evaluate().isNotEmpty)) {
-      await tester.pumpAndSettle();
-      return;
-    }
-  }
-  throw TestFailure(
-    'Không thấy màn hình nào trong ${finders.length} khả năng sau ${timeout.inSeconds} giây',
-  );
 }
 
 Future<void> _scrollTo(WidgetTester tester, Finder finder) async {
