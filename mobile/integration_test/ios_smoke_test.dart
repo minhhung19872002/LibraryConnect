@@ -178,13 +178,23 @@ void main() {
     await tester.pumpAndSettle(const Duration(seconds: 2));
     await _waitFor(tester, find.byKey(const Key('home-search')));
 
-    // Bật chế độ tối và kéo cỡ chữ lên hết nấc (0,85 – 1,6 trong ứng dụng, nhân lên cỡ chữ hệ điều hành).
+    // Thẻ Tài khoản nằm trong nhóm cần đăng nhập (`_protected` của bộ định tuyến), khách bấm vào bị
+    // đưa sang trang đăng nhập — nên chỉnh chủ đề và cỡ chữ phải đăng nhập trước.
     await tester.tap(find.text('Tài khoản').last);
     await tester.pumpAndSettle();
-    // Chờ nhãn của chính khối cài đặt: nếu màn hình Tài khoản chưa dựng xong thì câu báo lỗi nói
-    // đúng điều đó, thay vì "không tìm thấy nút chọn chủ đề" nghe như thiếu widget.
+    if (find.text('Đăng nhập bạn đọc').evaluate().isNotEmpty) {
+      await tester.enterText(find.byType(TextFormField).at(0), card);
+      await tester.enterText(find.byType(TextFormField).at(1), password);
+      await tester.tap(find.widgetWithText(FilledButton, 'Đăng nhập'));
+      await tester.pumpAndSettle(const Duration(seconds: 2));
+      if (find.text('Cỡ chữ').evaluate().isEmpty) {
+        await tester.tap(find.text('Tài khoản').last);
+        await tester.pumpAndSettle();
+      }
+    }
+
+    // Bật chế độ tối và kéo cỡ chữ lên hết nấc (0,85 – 1,6 trong ứng dụng, nhân lên cỡ chữ hệ điều hành).
     await _waitFor(tester, find.text('Cỡ chữ'));
-    await shot('ios-13a-tai-khoan');
     await tester.ensureVisible(find.byKey(const Key('theme-dropdown')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('theme-dropdown')));
@@ -242,6 +252,11 @@ void main() {
     await tester.pumpAndSettle();
     final back = tester.element(find.byType(Scaffold).first);
     expect(Theme.of(back).brightness, Brightness.light);
+
+    await tester.ensureVisible(find.byKey(const Key('sign-out')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('sign-out')));
+    await _waitFor(tester, find.byKey(const Key('home-search')));
   });
 }
 
