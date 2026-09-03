@@ -180,6 +180,30 @@ void main() {
     await _waitFor(tester, find.text('Tối'));
     await tester.tap(find.text('Tối').last);
     await tester.pumpAndSettle(const Duration(seconds: 1));
+    expect(
+      Theme.of(tester.element(find.byType(Scaffold).first)).brightness,
+      Brightness.dark,
+    );
+
+    // Đổi ngược lại rồi đổi lại lần nữa: chỉ đi một chiều thì không biết nút có thật sự điều khiển
+    // hay chủ đề chỉ tình cờ tối. Làm ở cỡ chữ thường, lúc nút chọn còn dễ chạm.
+    await tester.tap(find.byKey(const Key('theme-dropdown')));
+    await tester.pumpAndSettle();
+    await _waitFor(tester, find.text('Sáng'));
+    await tester.tap(find.text('Sáng').last);
+    await tester.pumpAndSettle(const Duration(seconds: 1));
+    expect(
+      Theme.of(tester.element(find.byType(Scaffold).first)).brightness,
+      Brightness.light,
+    );
+
+    await tester.tap(find.byKey(const Key('theme-dropdown')));
+    await tester.pumpAndSettle();
+    await _waitFor(tester, find.text('Tối'));
+    await tester.tap(find.text('Tối').last);
+    await tester.pumpAndSettle(const Duration(seconds: 1));
+
+    // Cỡ chữ lên hết nấc.
     await tester.scrollUntilVisible(find.byType(Slider), 300);
     await tester.drag(find.byType(Slider), const Offset(400, 0));
     await tester.pumpAndSettle();
@@ -215,23 +239,12 @@ void main() {
     await tester.tap(find.byType(BackButton).first);
     await tester.pumpAndSettle();
 
-    // Trả lại chế độ sáng và cỡ chữ thường — đổi được cả hai chiều mới là chạy đúng.
+    // Hạ cỡ chữ về thường trước khi đăng xuất, để bước cuối chạm đúng nút.
     await tester.tap(find.text('Tài khoản').last);
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('theme-dropdown')),
-      300,
-    );
-    await tester.tap(find.byKey(const Key('theme-dropdown')));
-    await tester.pumpAndSettle();
-    await _waitFor(tester, find.text('Sáng'));
-    await tester.tap(find.text('Sáng').last);
-    await tester.pumpAndSettle(const Duration(seconds: 1));
     await tester.scrollUntilVisible(find.byType(Slider), 300);
     await tester.drag(find.byType(Slider), const Offset(-400, 0));
     await tester.pumpAndSettle();
-    final light = tester.element(find.byType(Scaffold).first);
-    expect(Theme.of(light).brightness, Brightness.light);
 
     // Đăng xuất để lượt chạy sau bắt đầu từ trạng thái sạch.
     await tester.tap(find.text('Tài khoản').last);
