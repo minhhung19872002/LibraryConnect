@@ -181,6 +181,10 @@ void main() {
     // Bật chế độ tối và kéo cỡ chữ lên hết nấc (0,85 – 1,6 trong ứng dụng, nhân lên cỡ chữ hệ điều hành).
     await tester.tap(find.text('Tài khoản').last);
     await tester.pumpAndSettle();
+    // Chờ nhãn của chính khối cài đặt: nếu màn hình Tài khoản chưa dựng xong thì câu báo lỗi nói
+    // đúng điều đó, thay vì "không tìm thấy nút chọn chủ đề" nghe như thiếu widget.
+    await _waitFor(tester, find.text('Cỡ chữ'));
+    await shot('ios-13a-tai-khoan');
     await tester.ensureVisible(find.byKey(const Key('theme-dropdown')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('theme-dropdown')));
