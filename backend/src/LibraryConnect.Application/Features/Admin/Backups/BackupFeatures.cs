@@ -53,6 +53,7 @@ public static class BackupLabels
 
     public static string Status(BackupStatus status) => status switch
     {
+        BackupStatus.Pending => "Đã xếp hàng",
         BackupStatus.Running => "Đang chạy",
         BackupStatus.Success => "Thành công",
         BackupStatus.Failed => "Thất bại",
@@ -166,71 +167,32 @@ public record CreateBackupCommand(BackupType Type, bool IncludeObjectStorage, bo
 
 public class CreateBackupCommandHandler : IRequestHandler<CreateBackupCommand, BackupJobDto>
 {
-    private readonly IApplicationDbContext _db;
-    private readonly IBackupService _backups;
+    private readonly IBackupRunner _runner;
+    private readonly IBackgroundJobService _jobs;
     private readonly ICurrentUser _currentUser;
-    private readonly IDateTimeProvider _clock;
-    private readonly ISystemParameterService _parameters;
-    private readonly IAuditService _audit;
 
     public CreateBackupCommandHandler(
-        IApplicationDbContext db,
-        IBackupService backups,
-        ICurrentUser currentUser,
-        IDateTimeProvider clock,
-        ISystemParameterService parameters,
-        IAuditService audit)
+        IBackupRunner runner,
+        IBackgroundJobService jobs,
+        ICurrentUser currentUser)
     {
-        _db = db;
-        _backups = backups;
+        _runner = runner;
+        _jobs = jobs;
         _currentUser = currentUser;
-        _clock = clock;
-        _parameters = parameters;
-        _audit = audit;
     }
 
     public async Task<BackupJobDto> Handle(CreateBackupCommand request, CancellationToken ct)
     {
-        // The row is written before the dump starts so a crashed backup still leaves a trace the
-        // administrator can see, rather than disappearing silently.
-        var job = new BackupJob
-        {
-            Type = request.Type,
-            Status = BackupStatus.Running,
-            IncludesObjectStorage = request.IncludeObjectStorage,
-            StartedAt = _clock.Now,
-            IsAuto = request.IsAuto,
-            TriggeredBy = _currentUser.UserId,
-            TriggeredByName = request.IsAuto ? "Hệ thống (tự động)" : _currentUser.FullName ?? _currentUser.Username
-        };
+        var job = await _runner.QueueAsync(
+            request.Type,
+            request.IncludeObjectStorage,
+            request.IsAuto,
+            _currentUser.UserId,
+            _currentUser.FullName ?? _currentUser.Username,
+            ct);
 
-        _db.BackupJobs.Add(job);
-        await _db.SaveChangesAsync(ct);
-
-        var result = await _backups.CreateAsync(request.Type, request.IncludeObjectStorage, ct);
-
-        job.Status = result.Success ? BackupStatus.Success : BackupStatus.Failed;
-        job.FilePath = result.FilePath;
-        job.FileName = result.FilePath is null ? null : Path.GetFileName(result.FilePath);
-        job.SizeBytes = result.SizeBytes;
-        job.Checksum = result.Checksum;
-        job.Message = result.Message;
-        job.FinishedAt = _clock.Now;
-
-        await _db.SaveChangesAsync(ct);
-
-        if (result.Success)
-        {
-            var keepCount = await _parameters.GetAsync("BACKUP.KEEP_COUNT", 30, ct);
-            await _backups.PruneAsync(keepCount, ct);
-        }
-
-        await _audit.LogAsync(AuditAction.Backup, nameof(BackupJob), job.Id.ToString(), job.FileName,
-            result: result.Success,
-            message: result.Success
-                ? $"Sao lưu {BackupLabels.Type(request.Type)} thành công ({job.SizeBytes:N0} byte)"
-                : $"Sao lưu thất bại: {result.Message}",
-            ct: ct);
+        // Hangfire outlives this request, so the token of the request must not be handed to it.
+        _jobs.Enqueue<IBackupRunner>(runner => runner.RunAsync(job.Id, CancellationToken.None));
 
         return new BackupJobDto
         {
@@ -248,7 +210,7 @@ public class CreateBackupCommandHandler : IRequestHandler<CreateBackupCommand, B
             Message = job.Message,
             IsAuto = job.IsAuto,
             TriggeredByName = job.TriggeredByName,
-            FileAvailable = result.Success
+            FileAvailable = false
         };
     }
 }

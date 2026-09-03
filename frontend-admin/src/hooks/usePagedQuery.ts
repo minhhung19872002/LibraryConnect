@@ -6,13 +6,20 @@ import { api } from '@/api/client';
 import type { PagedRequest, PagedResult } from '@/types/api';
 import { messages } from '@/i18n/messages';
 
-interface UsePagedQueryOptions<TFilter> {
+interface UsePagedQueryOptions<TItem, TFilter> {
   /** Cache key prefix; the current filter is appended so each filter combination caches separately. */
   queryKey: string;
   url: string;
   initialFilter?: TFilter;
   pageSize?: number;
   enabled?: boolean;
+  /**
+   * Nhịp tự hỏi lại máy chủ, tính bằng mili giây; `false` là thôi hỏi.
+   *
+   * Dạng hàm nhận trang hiện tại, để màn hình chỉ hỏi lại khi còn việc đang chạy — xem
+   * `backupPollInterval` và `harvestPollInterval`.
+   */
+  refetchInterval?: number | false | ((items: TItem[] | undefined) => number | false);
 }
 
 /**
@@ -27,7 +34,8 @@ export function usePagedQuery<TItem, TFilter extends object = Record<string, nev
   initialFilter,
   pageSize = 20,
   enabled = true,
-}: UsePagedQueryOptions<TFilter>) {
+  refetchInterval,
+}: UsePagedQueryOptions<TItem, TFilter>) {
   const [request, setRequest] = useState<PagedRequest & Partial<TFilter>>({
     page: 1,
     pageSize,
@@ -39,6 +47,10 @@ export function usePagedQuery<TItem, TFilter extends object = Record<string, nev
     queryFn: () => api.get<PagedResult<TItem>>(url, { params: request }),
     placeholderData: keepPreviousData,
     enabled,
+    refetchInterval:
+      typeof refetchInterval === 'function'
+        ? (query) => refetchInterval(query.state.data?.items)
+        : refetchInterval,
   });
 
   /** Replaces the filter and returns to page 1, since the old page number no longer means anything. */

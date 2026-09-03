@@ -1,5 +1,7 @@
+using LibraryConnect.Application.Common.Exceptions;
 using LibraryConnect.Application.Common.Interfaces;
 using LibraryConnect.Application.Features.Admin.Backups;
+using LibraryConnect.Domain.Entities.Sys;
 using LibraryConnect.Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -18,6 +20,7 @@ namespace LibraryConnect.Infrastructure.Jobs;
 public class SystemMaintenanceJobs
 {
     private readonly ISender _sender;
+    private readonly IBackupRunner _runner;
     private readonly IApplicationDbContext _db;
     private readonly ISystemParameterService _parameters;
     private readonly IEmailSender _email;
@@ -26,6 +29,7 @@ public class SystemMaintenanceJobs
 
     public SystemMaintenanceJobs(
         ISender sender,
+        IBackupRunner runner,
         IApplicationDbContext db,
         ISystemParameterService parameters,
         IEmailSender email,
@@ -33,6 +37,7 @@ public class SystemMaintenanceJobs
         ILogger<SystemMaintenanceJobs> logger)
     {
         _sender = sender;
+        _runner = runner;
         _db = db;
         _parameters = parameters;
         _email = email;
@@ -50,7 +55,22 @@ public class SystemMaintenanceJobs
         }
 
         var includeFiles = await _parameters.GetAsync("BACKUP.INCLUDE_FILES", true);
-        var result = await _sender.Send(new CreateBackupCommand(BackupType.Full, includeFiles, IsAuto: true));
+
+        // Lượt này đã nằm trong Hangfire rồi, nên chạy thẳng chứ không xếp thêm một việc nữa: có
+        // vậy nhật ký của Hangfire mới hiện đúng thời gian chạy, và nhánh gửi thư dưới đây mới biết
+        // kết quả thật thay vì biết mỗi "đã xếp hàng".
+        BackupJob result;
+
+        try
+        {
+            result = await _runner.RunNowAsync(BackupType.Full, includeFiles, isAuto: true, CancellationToken.None);
+        }
+        catch (ConflictException ex)
+        {
+            // Quản trị viên đang tự sao lưu tay đúng giờ lịch chạy — không phải lỗi, bỏ qua lượt này.
+            _logger.LogInformation("Bỏ qua sao lưu tự động: {Message}", ex.Message);
+            return;
+        }
 
         if (result.Status == BackupStatus.Success)
         {

@@ -34,7 +34,10 @@ public class BackupsController : ApiControllerBase
     }
 
     /// <summary>
-    /// Sao lưu ngay bằng pg_dump. Với cơ sở dữ liệu lớn, thao tác có thể mất vài phút.
+    /// Xếp một lượt sao lưu vào hàng đợi nền (I.5).
+    ///
+    /// Trả về ngay khi đã ghi dòng nhật ký; pg_dump chạy trong Hangfire. Kho vài GB kèm kho đối
+    /// tượng chạy lâu hơn giới hạn 300 giây của proxy, nên không thể chờ trong lượt HTTP.
     /// </summary>
     [HttpPost]
     [RequirePermission(PermissionCodes.SystemBackupCreate)]
@@ -45,9 +48,8 @@ public class BackupsController : ApiControllerBase
         var result = await Mediator.Send(
             new CreateBackupCommand(body.Type, body.IncludeObjectStorage), ct);
 
-        return result.Status == BackupStatus.Success
-            ? Ok(Success(result, "Sao lưu thành công."))
-            : Ok(ApiResponse<BackupJobDto>.Fail(result.Message ?? "Sao lưu thất bại."));
+        return Ok(Success(result,
+            "Đã xếp lượt sao lưu vào hàng đợi. Tiến độ hiện ở bảng bên dưới, không cần giữ trang này mở."));
     }
 
     /// <summary>Tải bản sao lưu về máy. Thao tác được ghi vào nhật ký hệ thống.</summary>

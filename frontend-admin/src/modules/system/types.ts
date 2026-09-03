@@ -192,7 +192,7 @@ export interface AuditSetting {
 }
 
 export type BackupType = 'Full' | 'DataOnly' | 'Incremental';
-export type BackupStatus = 'Running' | 'Success' | 'Failed' | 'Restored';
+export type BackupStatus = 'Pending' | 'Running' | 'Success' | 'Failed' | 'Restored';
 
 export interface BackupJob {
   id: string;

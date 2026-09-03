@@ -83,7 +83,7 @@ public enum LockerStatus { Free, InUse, Broken, Locked }
 
 public enum BackupType { Full, DataOnly, Incremental }
 
-public enum BackupStatus { Running, Success, Failed, Restored }
+public enum BackupStatus { Pending, Running, Success, Failed, Restored }
 
 public enum AuditAction { Create, Update, Delete, Read, Login, LoginFailed, Logout, Export, Import, Approve, Restore, Backup, PermissionChange, ParameterChange }
 

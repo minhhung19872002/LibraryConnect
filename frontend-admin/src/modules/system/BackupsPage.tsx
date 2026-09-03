@@ -34,6 +34,7 @@ import { Can } from '@/components/PermissionGate';
 import { usePagedQuery } from '@/hooks/usePagedQuery';
 import { messages } from '@/i18n/messages';
 import { downloadFile, formatBytes, formatDateTime } from './helpers';
+import { backupPollInterval } from './backupPolling';
 import type { BackupJob, BackupStorage, BackupType } from './types';
 import { MAU } from '@/lib/palette';
 
@@ -50,7 +51,12 @@ export function BackupsPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [restoreTarget, setRestoreTarget] = useState<BackupJob | null>(null);
 
-  const list = usePagedQuery<BackupJob>({ queryKey: 'backups', url: '/admin/backups' });
+  // Sao lưu chạy nền từ khi sửa lỗi H9, nên bảng phải tự hỏi lại mới thấy lượt đang chạy xong.
+  const list = usePagedQuery<BackupJob>({
+    queryKey: 'backups',
+    url: '/admin/backups',
+    refetchInterval: backupPollInterval,
+  });
 
   const storage = useQuery({
     queryKey: ['backup-storage'],
@@ -300,6 +306,8 @@ function statusColor(status: BackupJob['status']): string {
       return 'green';
     case 'Failed':
       return 'red';
+    case 'Pending':
+      return 'default';
     case 'Running':
       return 'processing';
     case 'Restored':
@@ -318,8 +326,8 @@ function CreateBackupModal({ onClose, onCreated }: { onClose: () => void; onCrea
 
   const mutation = useMutation({
     mutationFn: () => api.post<BackupJob>('/admin/backups', { type, includeObjectStorage: includeFiles }),
-    onSuccess: async (job) => {
-      message.success(`Sao lưu thành công: ${job.fileName} (${formatBytes(job.sizeBytes)}).`);
+    onSuccess: async () => {
+      message.success('Đã xếp lượt sao lưu vào hàng đợi. Tiến độ hiện ở bảng bên dưới.');
       await onCreated();
     },
     onError: (error: unknown) => message.error(errorMessage(error)),
@@ -339,7 +347,7 @@ function CreateBackupModal({ onClose, onCreated }: { onClose: () => void; onCrea
         <Alert
           type="info"
           showIcon
-          message="Với cơ sở dữ liệu lớn, quá trình có thể mất vài phút. Vui lòng không đóng trình duyệt."
+          message="Sao lưu chạy ở tiến trình nền. Đóng trang này cũng không ảnh hưởng; trạng thái tự cập nhật ở bảng danh sách."
         />
 
         <div>
