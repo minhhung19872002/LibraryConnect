@@ -169,15 +169,17 @@ void main() {
     // đăng nhập, thay vì mở một phiên thứ hai.
     await tester.tap(find.text('Tài khoản').last);
     await tester.pumpAndSettle();
-    await _waitFor(tester, find.text('Cỡ chữ'));
-    await tester.ensureVisible(find.byKey(const Key('theme-dropdown')));
-    await tester.pumpAndSettle();
+    // Khối cài đặt nằm cuối trang: ListView chưa dựng widget ngoài tầm nhìn, nên phải cuộn tới
+    // chứ không chờ suông — chờ suông là chờ một widget chưa tồn tại.
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('theme-dropdown')),
+      300,
+    );
     await tester.tap(find.byKey(const Key('theme-dropdown')));
     await _waitFor(tester, find.text('Tối').last);
     await tester.tap(find.text('Tối').last);
     await tester.pumpAndSettle(const Duration(seconds: 1));
-    await tester.ensureVisible(find.byType(Slider));
-    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.byType(Slider), 300);
     await tester.drag(find.byType(Slider), const Offset(400, 0));
     await tester.pumpAndSettle();
 
@@ -215,14 +217,15 @@ void main() {
     // Trả lại chế độ sáng và cỡ chữ thường — đổi được cả hai chiều mới là chạy đúng.
     await tester.tap(find.text('Tài khoản').last);
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.byKey(const Key('theme-dropdown')));
-    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('theme-dropdown')),
+      300,
+    );
     await tester.tap(find.byKey(const Key('theme-dropdown')));
     await _waitFor(tester, find.text('Sáng').last);
     await tester.tap(find.text('Sáng').last);
     await tester.pumpAndSettle(const Duration(seconds: 1));
-    await tester.ensureVisible(find.byType(Slider));
-    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.byType(Slider), 300);
     await tester.drag(find.byType(Slider), const Offset(-400, 0));
     await tester.pumpAndSettle();
     final light = tester.element(find.byType(Scaffold).first);
