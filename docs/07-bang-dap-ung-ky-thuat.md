@@ -54,7 +54,7 @@ Cập nhật lần cuối: 02/09/2026, sau đợt hoàn thiện (bảo mật, b�
 | I.4.c | Xem chi tiết diff giá trị cũ/mới dạng JSON | **Có** | Nhật ký → Chi tiết | Kịch bản 2.3.10 |
 | I.4.d | Xuất nhật ký ra Excel / PDF | **Có** | Nhật ký → Xuất Excel / Xuất PDF | Kịch bản 2.3.14 |
 | I.4.e | Ghi log tự động qua interceptor, không viết thủ công ở từng chức năng | **Có** | EF Core `SaveChangesInterceptor`; ghi trong cùng transaction với thay đổi nghiệp vụ | `docs/02-tai-lieu-quan-tri.md` mục 3.1 |
-| I.5.a | Sao lưu thủ công, chọn Full / Data-only | **Có** | Sao lưu cơ sở dữ liệu → Sao lưu ngay | Kịch bản 2.6.1 |
+| I.5.a | Sao lưu thủ công, chọn Full / Data-only | **Có** | Sao lưu cơ sở dữ liệu → Sao lưu ngay. Lượt sao lưu **xếp vào hàng đợi Hangfire**, trả về ngay và không phụ thuộc giới hạn thời gian của proxy; màn hình tự cập nhật trạng thái từ bảng `backup_jobs` | Kịch bản 2.6.1, 2.6.9 |
 | I.5.b | Sao lưu tự động theo lịch cron, số bản giữ lại, gửi email khi lỗi | **Có** | Tham số → Cấu hình sao lưu; tác vụ nền Hangfire | Kịch bản 2.6.7, 2.6.8 |
 | I.5.c | Danh sách bản sao lưu: tên, dung lượng, thời gian, trạng thái; tải về, xóa, phục hồi | **Có** | Sao lưu cơ sở dữ liệu | Kịch bản 2.6.2 |
 | I.5.d | Phục hồi có cảnh báo 2 bước, yêu cầu nhập lại mật khẩu, ghi log | **Có** | Sao lưu → Phục hồi | Kịch bản 2.6.3, 2.6.4, 2.6.6 |
@@ -106,7 +106,7 @@ Cập nhật lần cuối: 02/09/2026, sau đợt hoàn thiện (bảo mật, b�
 | # | Yêu cầu | Đáp ứng | Chức năng tương ứng | Chứng minh |
 |---|---|---|---|---|
 | II.1 | Cài đặt giá trị ngầm định cho trường MARC 21 | **Có** | Bảng giá trị ngầm định theo dạng tài liệu, chỉ định được cả trường con lẫn vị trí ký tự của trường điều khiển; giá trị lấy được từ tham số hệ thống nên đổi tham số là biểu ghi mới đổi theo | Kịch bản BM.1, BM.2 |
-| II.2 | Thêm mới ấn phẩm bằng trình soạn MARC chuyên nghiệp | **Có** | Bảng nhập theo dòng Tag / Ind1 / Ind2 / trường con; gợi ý tên trường tiếng Việt; chọn chỉ thị theo ý nghĩa; tách chuỗi trường con dán từ hệ thống khác; kiểm tra tại chỗ; chọn mẫu biên mục theo dạng tài liệu; xem trước dạng ISBD; Ctrl+S để lưu | Kịch bản BM.4 → BM.6, BM.10 |
+| II.2 | Thêm mới ấn phẩm bằng trình soạn MARC chuyên nghiệp | **Có** | Bảng nhập theo dòng Tag / Ind1 / Ind2 / trường con; gợi ý tên trường tiếng Việt; chọn chỉ thị theo ý nghĩa; tách chuỗi trường con dán từ hệ thống khác; kiểm tra tại chỗ; chọn mẫu biên mục theo dạng tài liệu; **trình hướng dẫn nhập 008 theo từng vị trí**; **nhân bản trường bằng nút hoặc Ctrl+D**; **sắp xếp lại trường bằng kéo thả hoặc nút lên/xuống**; **xem trước ISBD ngay khi chưa lưu**; **lấy biểu ghi từ Z39.50 / theo ISBN ngay trên biểu mẫu**; Ctrl+S để lưu | Kịch bản BM.4 → BM.6, BM.10, BM.34 → BM.36 |
 | II.2b | Tạo đăng ký cá biệt sau khi lưu biểu ghi | **Có** | Tạo theo lô, mã vạch và số ĐKCB sinh liền nhau, ký hiệu xếp giá theo quy tắc cấu hình được của thư viện hoặc riêng của từng kho | Kịch bản BM.13 |
 | II.3 | Cập nhật, xóa, xem chi tiết ấn phẩm | **Có** | Bốn tab chi tiết; lịch sử giữ mọi phiên bản, xem khác biệt theo từng trường, khôi phục được; xóa mềm bắt buộc nhập lý do và bị chặn khi còn đăng ký cá biệt hoặc tài liệu số | Kịch bản BM.11, BM.12, BM.14, BM.15 |
 | II.4 | Hàng đợi biên mục chi tiết | **Có** | Bảng công việc năm cột kèm số việc; phân công hàng loạt với độ ưu tiên và hạn xử lý; cảnh báo quá hạn; duyệt hoặc trả lại kèm lý do bắt buộc; thống kê năng suất theo cán bộ | Kịch bản BM.17 → BM.20 |
