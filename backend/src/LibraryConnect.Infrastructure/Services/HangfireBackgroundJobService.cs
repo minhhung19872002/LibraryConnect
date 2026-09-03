@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using Hangfire;
+using Hangfire.Storage;
 using LibraryConnect.Application.Common.Interfaces;
 
 namespace LibraryConnect.Infrastructure.Services;
@@ -12,14 +13,29 @@ public class HangfireBackgroundJobService : IBackgroundJobService
 {
     private readonly IBackgroundJobClient _client;
     private readonly IRecurringJobManager _recurring;
+    private readonly JobStorage _storage;
 
-    public HangfireBackgroundJobService(IBackgroundJobClient client, IRecurringJobManager recurring)
+    public HangfireBackgroundJobService(
+        IBackgroundJobClient client, IRecurringJobManager recurring, JobStorage storage)
     {
         _client = client;
         _recurring = recurring;
+        _storage = storage;
     }
 
     public string Enqueue<T>(Expression<Func<T, Task>> methodCall) => _client.Enqueue(methodCall);
+
+    public BackgroundJobState? GetState(string jobId)
+    {
+        var details = _storage.GetMonitoringApi().JobDetails(jobId);
+
+        // Hangfire xoá bản ghi sau khi hết hạn lưu; lúc ấy coi như không còn biết gì.
+        var last = details?.History?.FirstOrDefault();
+
+        return last is null
+            ? null
+            : new BackgroundJobState(last.StateName, last.Reason, last.CreatedAt);
+    }
 
     public string Schedule<T>(Expression<Func<T, Task>> methodCall, TimeSpan delay) =>
         _client.Schedule(methodCall, delay);

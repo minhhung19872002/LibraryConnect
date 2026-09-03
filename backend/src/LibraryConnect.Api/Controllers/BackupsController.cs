@@ -70,14 +70,31 @@ public class BackupsController : ApiControllerBase
     /// </summary>
     [HttpPost("{id:guid}/restore")]
     [RequirePermission(PermissionCodes.SystemBackupRestore)]
-    [ProducesResponseType(typeof(ApiResponse<BackupJobDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<RestoreStatusDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<ApiResponse<BackupJobDto>>> Restore(
+    public async Task<ActionResult<ApiResponse<RestoreStatusDto>>> Restore(
         Guid id, [FromBody] RestoreBackupRequest body, CancellationToken ct)
     {
         var result = await Mediator.Send(new RestoreBackupCommand(id, body.ConfirmPassword), ct);
-        return Ok(Success(result, "Phục hồi cơ sở dữ liệu thành công. Vui lòng đăng nhập lại."));
+
+        return Ok(Success(result,
+            "Đã bắt đầu phục hồi. Trong lúc chạy, hệ thống tạm thời không dùng được; theo dõi tiến độ ngay trên màn hình này."));
+    }
+
+    /// <summary>
+    /// Tiến độ lượt phục hồi gần nhất (I.5).
+    ///
+    /// Đọc từ bộ nhớ đệm chứ không từ cơ sở dữ liệu: `pg_restore` ghi đè chính cơ sở dữ liệu ấy nên
+    /// mọi dòng ghi tiến độ vào đó đều bị xoá đúng lúc cần đọc nhất.
+    /// </summary>
+    [HttpGet("restore-status")]
+    [RequirePermission(PermissionCodes.SystemBackupRestore)]
+    [ProducesResponseType(typeof(ApiResponse<RestoreStatusDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<RestoreStatusDto?>>> RestoreStatus(CancellationToken ct)
+    {
+        var result = await Mediator.Send(new GetRestoreStatusQuery(), ct);
+        return Ok(Success(result));
     }
 
     /// <summary>Xóa một bản sao lưu khỏi máy chủ.</summary>

@@ -215,38 +215,40 @@ public class CreateBackupCommandHandler : IRequestHandler<CreateBackupCommand, B
     }
 }
 
-/// <summary>
-/// Phục hồi cơ sở dữ liệu (I.5). Destructive, so the caller has to re-enter their own password —
-/// holding the permission is not enough on its own.
-/// </summary>
-public record RestoreBackupCommand(Guid Id, string ConfirmPassword) : IRequest<BackupJobDto>;
+public record RestoreBackupCommand(Guid Id, string ConfirmPassword) : IRequest<RestoreStatusDto>;
 
-public class RestoreBackupCommandHandler : IRequestHandler<RestoreBackupCommand, BackupJobDto>
+public class RestoreBackupCommandHandler : IRequestHandler<RestoreBackupCommand, RestoreStatusDto>
 {
     private readonly IApplicationDbContext _db;
     private readonly IBackupService _backups;
+    private readonly IBackgroundJobService _jobs;
     private readonly IPasswordHasher _hasher;
     private readonly ICurrentUser _currentUser;
     private readonly IDateTimeProvider _clock;
+    private readonly ICacheService _cache;
     private readonly IAuditService _audit;
 
     public RestoreBackupCommandHandler(
         IApplicationDbContext db,
         IBackupService backups,
+        IBackgroundJobService jobs,
         IPasswordHasher hasher,
         ICurrentUser currentUser,
         IDateTimeProvider clock,
+        ICacheService cache,
         IAuditService audit)
     {
         _db = db;
         _backups = backups;
+        _jobs = jobs;
         _hasher = hasher;
         _currentUser = currentUser;
         _clock = clock;
+        _cache = cache;
         _audit = audit;
     }
 
-    public async Task<BackupJobDto> Handle(RestoreBackupCommand request, CancellationToken ct)
+    public async Task<RestoreStatusDto> Handle(RestoreBackupCommand request, CancellationToken ct)
     {
         var userId = _currentUser.UserId ?? throw new UnauthorizedException();
 
@@ -258,7 +260,7 @@ public class RestoreBackupCommandHandler : IRequestHandler<RestoreBackupCommand,
             throw new ValidationException("confirmPassword", "Mật khẩu xác nhận không đúng.");
         }
 
-        var job = await _db.BackupJobs.FirstOrDefaultAsync(j => j.Id == request.Id, ct)
+        var job = await _db.BackupJobs.AsNoTracking().FirstOrDefaultAsync(j => j.Id == request.Id, ct)
             ?? throw new NotFoundException("bản sao lưu", request.Id);
 
         if (job.Status != BackupStatus.Success || string.IsNullOrEmpty(job.FilePath))
@@ -271,36 +273,52 @@ public class RestoreBackupCommandHandler : IRequestHandler<RestoreBackupCommand,
             throw new ConflictException("Tệp sao lưu không còn tồn tại trên máy chủ.");
         }
 
+        var running = await _cache.GetAsync<RestoreStatusDto>(BackupRunner.RestoreStatusKey, ct);
+
+        if (running is { State: "Running" } && _clock.Now - running.StartedAt < TimeSpan.FromHours(6))
+        {
+            throw new ConflictException(
+                $"Đang có một lượt phục hồi chạy từ {running.StartedAt.ToLocalTime():HH:mm dd/MM/yyyy}. "
+                + "Chờ lượt ấy xong đã.");
+        }
+
         // Written before the restore starts: once pg_restore runs, this very row may be replaced by
         // the archive's own contents, so the record of the decision has to exist beforehand.
         await _audit.LogAsync(AuditAction.Restore, nameof(BackupJob), job.Id.ToString(), job.FileName,
             message: $"Bắt đầu phục hồi cơ sở dữ liệu từ '{job.FileName}'", ct: ct);
 
-        var result = await _backups.RestoreAsync(job.FilePath, ct);
-
-        if (!result.Success)
+        var status = new RestoreStatusDto
         {
-            await _audit.LogAsync(AuditAction.Restore, nameof(BackupJob), job.Id.ToString(), job.FileName,
-                result: false, message: result.Message, ct: ct);
-
-            throw new ConflictException(result.Message ?? "Phục hồi thất bại.");
-        }
-
-        return new BackupJobDto
-        {
-            Id = job.Id,
-            Type = job.Type,
-            TypeLabel = BackupLabels.Type(job.Type),
-            Status = BackupStatus.Restored,
-            StatusLabel = BackupLabels.Status(BackupStatus.Restored),
-            FileName = job.FileName,
-            SizeBytes = job.SizeBytes,
-            StartedAt = job.StartedAt,
-            FinishedAt = _clock.Now,
-            Message = result.Message,
-            FileAvailable = true
+            State = "Running",
+            ArchiveName = job.FileName ?? Path.GetFileName(job.FilePath),
+            StartedAt = _clock.Now,
+            StartedByName = _currentUser.FullName ?? _currentUser.Username
         };
+
+        await _cache.SetAsync(BackupRunner.RestoreStatusKey, status, TimeSpan.FromDays(2), ct);
+
+        var archivePath = job.FilePath!;
+        var archiveName = status.ArchiveName;
+
+        // Hangfire outlives this request, so the token of the request must not be handed to it.
+        _jobs.Enqueue<IBackupRunner>(runner =>
+            runner.RunRestoreAsync(archivePath, archiveName, CancellationToken.None));
+
+        return status;
     }
+}
+
+/// <summary>Tiến độ lượt phục hồi gần nhất (I.5). Trả về null khi chưa có lượt nào.</summary>
+public record GetRestoreStatusQuery : IRequest<RestoreStatusDto?>;
+
+public class GetRestoreStatusQueryHandler : IRequestHandler<GetRestoreStatusQuery, RestoreStatusDto?>
+{
+    private readonly ICacheService _cache;
+
+    public GetRestoreStatusQueryHandler(ICacheService cache) => _cache = cache;
+
+    public Task<RestoreStatusDto?> Handle(GetRestoreStatusQuery request, CancellationToken ct) =>
+        _cache.GetAsync<RestoreStatusDto>(BackupRunner.RestoreStatusKey, ct);
 }
 
 public record DeleteBackupCommand(Guid Id) : IRequest<Unit>;

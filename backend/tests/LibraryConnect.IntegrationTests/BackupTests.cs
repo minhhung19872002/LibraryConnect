@@ -5,6 +5,7 @@ using LibraryConnect.Application.Common.Interfaces;
 using LibraryConnect.Application.Common.Models;
 using LibraryConnect.Application.Features.Admin.Backups;
 using LibraryConnect.Domain.Entities.Sys;
+using LibraryConnect.Infrastructure.Configuration;
 using LibraryConnect.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -84,6 +85,10 @@ public class BackupTests
         job.FinishedAt.Should().NotBeNull();
     }
 
+    /// <summary>Mật khẩu hiện hành của tài khoản quản trị — bộ dựng đã đổi mật khẩu tạm ở lượt đăng nhập đầu.</summary>
+    private string AdminPasswordNow() =>
+        _factory.CurrentPassword(LibraryConnectFactory.AdminUsername, LibraryConnectFactory.AdminPassword);
+
     private Task<HttpClient> AdminAsync() => _factory.CreateAuthenticatedClientAsync(
         LibraryConnectFactory.AdminUsername, LibraryConnectFactory.AdminPassword);
 
@@ -140,5 +145,159 @@ public class BackupTests
 
         throw new Xunit.Sdk.XunitException(
             $"Bản sao lưu {id} vẫn chưa xong sau {timeout.TotalSeconds:N0} giây — không ai nhặt việc khỏi hàng đợi.");
+    }
+
+    // ------------------------------------------------------------------
+    // Phục hồi (I.5) — cùng lớp lỗi với sao lưu: chạy lâu hơn giới hạn của proxy.
+    //
+    // Không phép thử nào dưới đây để lượt phục hồi thật chạy: `pg_restore` sẽ ghi đè chính cơ sở dữ
+    // liệu mà cả bộ kiểm thử đang dùng chung. Mỗi phép thử dừng lại trước bước xếp việc.
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public async Task Restoring_with_the_wrong_password_is_refused_before_anything_is_queued()
+    {
+        var job = await SeedRestorableBackupAsync();
+        var client = await AdminAsync();
+
+        var response = await client.PostAsJsonAsync($"/api/admin/backups/{job}/restore",
+            new { confirmPassword = "sai-mat-khau" });
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+        // Sai mật khẩu thì không được đánh dấu là "đang phục hồi" — nếu không, lượt sau bị chặn oan.
+        var status = await RestoreStatusAsync();
+        (status?.State).Should().NotBe("Running");
+    }
+
+    [Fact]
+    public async Task Restoring_a_backup_that_never_succeeded_is_refused()
+    {
+        Guid id;
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
+            var job = new BackupJob
+            {
+                Type = BackupType.Full,
+                Status = BackupStatus.Failed,
+                StartedAt = DateTimeOffset.UtcNow,
+                FinishedAt = DateTimeOffset.UtcNow,
+                TriggeredByName = "Phép thử"
+            };
+
+            db.BackupJobs.Add(job);
+            await db.SaveChangesAsync(CancellationToken.None);
+            id = job.Id;
+        }
+
+        var client = await AdminAsync();
+
+        var response = await client.PostAsJsonAsync($"/api/admin/backups/{id}/restore",
+            new { confirmPassword = AdminPasswordNow() });
+
+        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
+    }
+
+    [Fact]
+    public async Task A_second_restore_is_refused_while_one_is_still_running()
+    {
+        var id = await SeedRestorableBackupAsync();
+        await SetRestoreStatusAsync(new RestoreStatusDto
+        {
+            State = "Running",
+            ArchiveName = "dang-chay.dump",
+            StartedAt = DateTimeOffset.UtcNow
+        });
+
+        var client = await AdminAsync();
+
+        var response = await client.PostAsJsonAsync($"/api/admin/backups/{id}/restore",
+            new { confirmPassword = AdminPasswordNow() });
+
+        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
+
+        await ClearRestoreStatusAsync();
+    }
+
+    [Fact]
+    public async Task The_restore_progress_is_readable_while_the_database_is_being_overwritten()
+    {
+        // Tiến độ nằm ngoài cơ sở dữ liệu, vì chính cơ sở dữ liệu đang bị ghi đè.
+        await SetRestoreStatusAsync(new RestoreStatusDto
+        {
+            State = "Running",
+            ArchiveName = "libraryconnect-full-20260903.dump",
+            StartedAt = DateTimeOffset.UtcNow,
+            StartedByName = "Quản trị viên"
+        });
+
+        var client = await AdminAsync();
+
+        var response = await client.GetAsync("/api/admin/backups/restore-status");
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var payload = await response.Content.ReadFromJsonAsync<ApiResponse<RestoreStatusDto>>(
+            LibraryConnectFactory.JsonOptions);
+
+        payload!.Data!.State.Should().Be("Running");
+        payload.Data.ArchiveName.Should().Be("libraryconnect-full-20260903.dump");
+
+        await ClearRestoreStatusAsync();
+    }
+
+    /// <summary>Một bản sao lưu "thành công" kèm tệp thật trên đĩa, đủ điều kiện để phục hồi.</summary>
+    private async Task<Guid> SeedRestorableBackupAsync()
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
+        var options = scope.ServiceProvider
+            .GetRequiredService<Microsoft.Extensions.Options.IOptions<BackupOptions>>().Value;
+
+        Directory.CreateDirectory(options.Directory);
+        var path = Path.Combine(options.Directory, $"kiem-thu-{Guid.NewGuid():N}.dump");
+        await File.WriteAllTextAsync(path, "khong-phai-dump-that");
+
+        var job = new BackupJob
+        {
+            Type = BackupType.Full,
+            Status = BackupStatus.Success,
+            FilePath = path,
+            FileName = Path.GetFileName(path),
+            SizeBytes = 20,
+            StartedAt = DateTimeOffset.UtcNow,
+            FinishedAt = DateTimeOffset.UtcNow,
+            TriggeredByName = "Phép thử"
+        };
+
+        db.BackupJobs.Add(job);
+        await db.SaveChangesAsync(CancellationToken.None);
+
+        return job.Id;
+    }
+
+    private async Task SetRestoreStatusAsync(RestoreStatusDto status)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var cache = scope.ServiceProvider.GetRequiredService<ICacheService>();
+
+        await cache.SetAsync(BackupRunner.RestoreStatusKey, status, TimeSpan.FromMinutes(10));
+    }
+
+    private async Task ClearRestoreStatusAsync()
+    {
+        using var scope = _factory.Services.CreateScope();
+        var cache = scope.ServiceProvider.GetRequiredService<ICacheService>();
+
+        await cache.RemoveAsync(BackupRunner.RestoreStatusKey);
+    }
+
+    private async Task<RestoreStatusDto?> RestoreStatusAsync()
+    {
+        using var scope = _factory.Services.CreateScope();
+        var cache = scope.ServiceProvider.GetRequiredService<ICacheService>();
+
+        return await cache.GetAsync<RestoreStatusDto>(BackupRunner.RestoreStatusKey);
     }
 }

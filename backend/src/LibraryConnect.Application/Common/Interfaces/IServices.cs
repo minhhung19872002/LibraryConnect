@@ -188,10 +188,24 @@ public interface ICodeGenerator
     Task<IReadOnlyList<string>> NextBatchAsync(string sequenceKey, int count, CancellationToken ct = default);
 }
 
+/// <summary>Trạng thái hiện tại của một việc đã xếp hàng đợi.</summary>
+/// <param name="Name">Tên trạng thái của Hangfire: Enqueued, Processing, Succeeded, Failed, Deleted.</param>
+/// <param name="Reason">Lý do kèm theo, thường chỉ có khi hỏng.</param>
+/// <param name="ChangedAt">Thời điểm chuyển sang trạng thái này.</param>
+public record BackgroundJobState(string Name, string? Reason, DateTimeOffset? ChangedAt);
+
 /// <summary>Enqueues long-running work (imports, backups, harvests) onto the Hangfire server.</summary>
 public interface IBackgroundJobService
 {
     string Enqueue<T>(System.Linq.Expressions.Expression<Func<T, Task>> methodCall);
+
+    /// <summary>
+    /// Trạng thái của một việc, đọc từ kho của Hangfire.
+    ///
+    /// Cần cho việc phục hồi cơ sở dữ liệu: lượt ấy ghi đè chính cơ sở dữ liệu nên không thể tự ghi
+    /// tiến độ vào đó — kho của Hangfire nằm ở schema riêng, không nằm trong bản sao lưu.
+    /// </summary>
+    BackgroundJobState? GetState(string jobId);
     string Schedule<T>(System.Linq.Expressions.Expression<Func<T, Task>> methodCall, TimeSpan delay);
     void AddOrUpdateRecurring<T>(string jobId, System.Linq.Expressions.Expression<Func<T, Task>> methodCall, string cronExpression);
     void RemoveRecurring(string jobId);

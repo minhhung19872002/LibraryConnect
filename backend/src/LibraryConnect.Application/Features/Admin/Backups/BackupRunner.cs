@@ -7,6 +7,23 @@ using Microsoft.Extensions.Logging;
 
 namespace LibraryConnect.Application.Features.Admin.Backups;
 
+/// <summary>
+/// Tiến độ của lượt phục hồi gần nhất.
+///
+/// Không giữ trong cơ sở dữ liệu được: `pg_restore` ghi đè chính cơ sở dữ liệu ấy, nên dòng nào ghi
+/// trước cũng bị xoá đúng lúc cần đọc nhất. Bộ nhớ đệm là dịch vụ riêng, lượt phục hồi không đụng tới.
+/// </summary>
+public class RestoreStatusDto
+{
+    /// <summary>Running | Succeeded | Failed.</summary>
+    public string State { get; set; } = string.Empty;
+    public string ArchiveName { get; set; } = string.Empty;
+    public string? Message { get; set; }
+    public DateTimeOffset StartedAt { get; set; }
+    public DateTimeOffset? FinishedAt { get; set; }
+    public string? StartedByName { get; set; }
+}
+
 /// <summary>Chạy một lượt sao lưu đã xếp hàng đợi (I.5).</summary>
 public interface IBackupRunner
 {
@@ -21,6 +38,15 @@ public interface IBackupRunner
     /// <summary>Xếp hàng rồi chạy luôn trong chính lượt gọi này — dùng cho lịch sao lưu tự động.</summary>
     Task<BackupJob> RunNowAsync(
         BackupType type, bool includeObjectStorage, bool isAuto, CancellationToken ct);
+
+    /// <summary>
+    /// Điểm vào của Hangfire cho lượt phục hồi.
+    ///
+    /// Nhận thẳng đường dẫn tệp chứ không nhận khoá dòng nhật ký: pg_restore ghi đè chính cơ sở dữ
+    /// liệu, nên đọc lại bảng nào ở giữa chừng cũng vô nghĩa. Mọi thứ cần biết đã nằm trong tham số,
+    /// mà tham số thì Hangfire giữ ở schema riêng — schema duy nhất bản sao lưu không đụng tới.
+    /// </summary>
+    Task RunRestoreAsync(string filePath, string archiveName, CancellationToken ct);
 }
 
 /// <summary>
@@ -42,11 +68,18 @@ public class BackupRunner : IBackupRunner
     /// </summary>
     private static readonly TimeSpan DeadAfter = TimeSpan.FromHours(6);
 
+    /// <summary>Khoá bộ nhớ đệm giữ tiến độ lượt phục hồi gần nhất.</summary>
+    public const string RestoreStatusKey = "backup:restore-status";
+
+    /// <summary>Giữ đủ lâu để quản trị viên quay lại xem kết quả, không giữ mãi.</summary>
+    private static readonly TimeSpan RestoreStatusTtl = TimeSpan.FromDays(2);
+
     private readonly IApplicationDbContext _db;
     private readonly IBackupService _backups;
     private readonly IDateTimeProvider _clock;
     private readonly ISystemParameterService _parameters;
     private readonly IAuditService _audit;
+    private readonly ICacheService _cache;
     private readonly ILogger<BackupRunner> _logger;
 
     public BackupRunner(
@@ -55,6 +88,7 @@ public class BackupRunner : IBackupRunner
         IDateTimeProvider clock,
         ISystemParameterService parameters,
         IAuditService audit,
+        ICacheService cache,
         ILogger<BackupRunner> logger)
     {
         _db = db;
@@ -62,6 +96,7 @@ public class BackupRunner : IBackupRunner
         _clock = clock;
         _parameters = parameters;
         _audit = audit;
+        _cache = cache;
         _logger = logger;
     }
 
@@ -131,6 +166,48 @@ public class BackupRunner : IBackupRunner
         var job = await QueueAsync(type, includeObjectStorage, isAuto, null, null, ct);
         await ExecuteAsync(job, ct);
         return job;
+    }
+
+    public async Task RunRestoreAsync(string filePath, string archiveName, CancellationToken ct)
+    {
+        _logger.LogWarning("Bắt đầu phục hồi cơ sở dữ liệu từ {Archive}", archiveName);
+
+        var status = await _cache.GetAsync<RestoreStatusDto>(RestoreStatusKey, ct)
+            ?? new RestoreStatusDto { ArchiveName = archiveName, StartedAt = _clock.Now };
+
+        BackupResult result;
+
+        try
+        {
+            result = await _backups.RestoreAsync(filePath, ct);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogError(ex, "Phục hồi từ {Archive} hỏng giữa chừng", archiveName);
+            result = new BackupResult(false, filePath, 0, null, ex.Message);
+        }
+
+        status.State = result.Success ? "Succeeded" : "Failed";
+        status.Message = result.Success
+            ? "Phục hồi hoàn tất. Đăng nhập lại để làm việc trên dữ liệu vừa khôi phục."
+            : result.Message;
+        status.FinishedAt = _clock.Now;
+
+        await _cache.SetAsync(RestoreStatusKey, status, RestoreStatusTtl, ct);
+
+        if (!result.Success)
+        {
+            // Không ném ra: Hangfire mặc định thử lại mười lần, mà chạy lại `pg_restore` hàng chục
+            // phút thì vô ích và làm màn hình nhảy trạng thái loạn xạ. Kết quả đã ghi vào bộ nhớ đệm.
+            _logger.LogError("Phục hồi từ {Archive} thất bại: {Message}", archiveName, result.Message);
+            return;
+        }
+
+        _logger.LogWarning("Phục hồi từ {Archive} hoàn tất", archiveName);
+
+        // Ghi sau khi phục hồi xong: dòng nào ghi trước cũng bị chính lượt phục hồi xoá mất.
+        await _audit.LogAsync(AuditAction.Restore, nameof(BackupJob), null, archiveName,
+            message: $"Phục hồi cơ sở dữ liệu từ '{archiveName}' hoàn tất", ct: ct);
     }
 
     private async Task ExecuteAsync(BackupJob job, CancellationToken ct)

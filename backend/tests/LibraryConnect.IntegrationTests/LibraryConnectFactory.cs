@@ -189,6 +189,15 @@ public class LibraryConnectFactory : WebApplicationFactory<Program>, IAsyncLifet
     /// </summary>
     private readonly ConcurrentDictionary<string, string> _currentPasswords = new();
 
+    /// <summary>
+    /// Mật khẩu đang dùng của một tài khoản.
+    ///
+    /// Phép thử nào phải nhập lại mật khẩu của chính mình — như bước xác nhận trước khi phục hồi —
+    /// thì cần đúng mật khẩu hiện hành, không phải mật khẩu tạm ban đầu.
+    /// </summary>
+    public string CurrentPassword(string username, string fallback) =>
+        _currentPasswords.GetValueOrDefault(username, fallback);
+
     public async Task<string> SignInAsync(HttpClient client, string username, string password)
     {
         var effective = _currentPasswords.GetValueOrDefault(username, password);

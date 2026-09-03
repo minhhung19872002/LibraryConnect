@@ -57,7 +57,7 @@ Cập nhật lần cuối: 02/09/2026, sau đợt hoàn thiện (bảo mật, b�
 | I.5.a | Sao lưu thủ công, chọn Full / Data-only | **Có** | Sao lưu cơ sở dữ liệu → Sao lưu ngay. Lượt sao lưu **xếp vào hàng đợi Hangfire**, trả về ngay và không phụ thuộc giới hạn thời gian của proxy; màn hình tự cập nhật trạng thái từ bảng `backup_jobs` | Kịch bản 2.6.1, 2.6.9 |
 | I.5.b | Sao lưu tự động theo lịch cron, số bản giữ lại, gửi email khi lỗi | **Có** | Tham số → Cấu hình sao lưu; tác vụ nền Hangfire | Kịch bản 2.6.7, 2.6.8 |
 | I.5.c | Danh sách bản sao lưu: tên, dung lượng, thời gian, trạng thái; tải về, xóa, phục hồi | **Có** | Sao lưu cơ sở dữ liệu | Kịch bản 2.6.2 |
-| I.5.d | Phục hồi có cảnh báo 2 bước, yêu cầu nhập lại mật khẩu, ghi log | **Có** | Sao lưu → Phục hồi | Kịch bản 2.6.3, 2.6.4, 2.6.6 |
+| I.5.d | Phục hồi có cảnh báo 2 bước, yêu cầu nhập lại mật khẩu, ghi log | **Có** | Sao lưu → Phục hồi. Lượt phục hồi **chạy ở tiến trình nền**, hộp thoại theo dõi tiến độ tại chỗ và không đóng được khi đang chạy; tiến độ đọc từ bộ nhớ đệm vì chính cơ sở dữ liệu đang bị ghi đè | Kịch bản 2.6.3, 2.6.4, 2.6.6, 2.6.11 |
 | I.5.e | Gọi `pg_dump` / `pg_restore` thật qua process | **Có** | `PostgresBackupService`; PostgreSQL client đóng gói sẵn trong ảnh API | `docs/03-sao-luu-phuc-hoi.md` mục 1 |
 | I.5.f | Sao lưu kèm tệp MinIO | **Có** | Tùy chọn *Sao lưu kèm tệp tài liệu số* | Kịch bản 2.6.1 |
 

@@ -27,10 +27,17 @@ dữ liệu của thư viện không bị khóa vào một định dạng riêng
    - *Chỉ dữ liệu* — không kèm cấu trúc bảng. Chỉ dùng khi nạp dữ liệu vào một hệ thống đã có sẵn
      cấu trúc cùng phiên bản.
 2. Chọn có **sao lưu kèm tệp tài liệu số** hay không.
-3. Bấm **Bắt đầu sao lưu** và chờ. Với cơ sở dữ liệu vài trăm nghìn biểu ghi, thao tác mất từ vài
-   giây đến vài phút.
+3. Bấm **Bắt đầu sao lưu**. Lượt sao lưu được **xếp vào hàng đợi nền**: lệnh trả về ngay, đóng trình
+   duyệt cũng không làm nó dừng. Với cơ sở dữ liệu vài trăm nghìn biểu ghi, `pg_dump` mất từ vài giây
+   đến vài phút.
 
-Kết quả hiển thị ngay trong danh sách: tên tệp, dung lượng, mã kiểm tra SHA-256 và người thực hiện.
+Danh sách tự cập nhật trong lúc chạy: trạng thái đi từ *Đã xếp hàng* → *Đang chạy* → *Thành công*,
+rồi hiện tên tệp, dung lượng, mã kiểm tra SHA-256 và người thực hiện. Đang có một lượt chưa xong thì
+lượt thứ hai bị từ chối — hai `pg_dump` cùng ghi một thư mục chỉ tranh nhau tài nguyên.
+
+**Bản sao lưu không chứa hàng đợi việc.** Schema `hangfire` bị loại ra khỏi bản dump: nó là danh sách
+việc đang chờ chứ không phải dữ liệu của thư viện, và phục hồi lại nó sẽ khiến những việc của hôm sao
+lưu chạy lại một lần nữa.
 
 **Quyền cần có:** `SYSTEM.BACKUP.CREATE`.
 
@@ -129,6 +136,15 @@ Quy trình gồm hai bước có chủ ý:
 
 Hệ thống chạy `pg_restore` với `--single-transaction --exit-on-error`: quá trình phục hồi hoặc thành
 công trọn vẹn, hoặc thất bại và **cơ sở dữ liệu giữ nguyên như trước**. Không có trạng thái nửa vời.
+
+Lượt phục hồi cũng chạy ở **tiến trình nền**, vì `pg_restore` một kho vài GB lâu hơn thời gian một
+lượt gọi HTTP được phép mở. Hộp thoại chuyển sang màn hình theo dõi và không đóng được khi đang chạy;
+nếu lỡ đóng trình duyệt, mở lại màn hình sao lưu là thấy tiếp. Tiến độ ấy đọc từ bộ nhớ đệm chứ không
+từ cơ sở dữ liệu — chính cơ sở dữ liệu đang bị ghi đè, nên mọi dòng ghi tiến độ vào đó đều bị xoá
+đúng lúc cần đọc nhất.
+
+Trong lúc phục hồi, **các màn hình khác tạm thời không dùng được**: `pg_restore` giữ khoá trên toàn bộ
+bảng cho tới khi giao dịch kết thúc.
 
 Sau khi phục hồi:
 

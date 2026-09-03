@@ -11,6 +11,9 @@ using Npgsql;
 
 namespace LibraryConnect.Infrastructure.Services;
 
+/// <summary>Phần thông tin kết nối mà pg_dump và pg_restore cần trên dòng lệnh.</summary>
+public record PostgresConnectionInfo(string Host, int Port, string Username, string Database);
+
 /// <summary>
 /// Real backup and restore through the PostgreSQL client tools.
 ///
@@ -48,6 +51,69 @@ public class PostgresBackupService : IBackupService
         _connection = new NpgsqlConnectionStringBuilder(connectionString);
     }
 
+    private PostgresConnectionInfo ConnectionInfo() => new(
+        _connection.Host ?? "localhost",
+        _connection.Port,
+        _connection.Username ?? string.Empty,
+        _connection.Database ?? string.Empty);
+
+    /// <summary>
+    /// Dòng lệnh của pg_dump.
+    ///
+    /// Schema `hangfire` bị loại ra: nó là hàng đợi việc đang chờ, không phải dữ liệu của thư viện.
+    /// Sao lưu nó vào thì phục hồi bản hôm qua sẽ làm sống lại những việc hôm qua đã chạy rồi —
+    /// nhắc hạn gửi lại, thu hoạch chạy lại. Và cũng vì loại nó ra mà lượt phục hồi mới tự chạy
+    /// được trong Hangfire: nếu không, nó xoá đúng bảng đang ghi nhận chính nó.
+    /// </summary>
+    public static List<string> BuildDumpArguments(
+        PostgresConnectionInfo connection, BackupType type, string filePath)
+    {
+        var arguments = new List<string>
+        {
+            "--format=custom",
+            "--compress=6",
+            "--no-owner",
+            "--no-privileges",
+            "--exclude-schema=hangfire",
+            $"--host={connection.Host}",
+            $"--port={connection.Port}",
+            $"--username={connection.Username}",
+            $"--dbname={connection.Database}",
+            $"--file={filePath}"
+        };
+
+        if (type == BackupType.DataOnly)
+        {
+            arguments.Add("--data-only");
+        }
+
+        return arguments;
+    }
+
+    /// <summary>
+    /// Dòng lệnh của pg_restore.
+    ///
+    /// Vẫn loại `hangfire` ở đây nữa, vì những bản sao lưu tạo trước thay đổi này còn mang schema ấy
+    /// bên trong. Cần pg_restore 15 trở lên cho `--exclude-schema`; ảnh API đóng gói client 16.
+    /// </summary>
+    public static List<string> BuildRestoreArguments(PostgresConnectionInfo connection, string filePath) => new()
+    {
+        "--clean",
+        "--if-exists",
+        "--no-owner",
+        "--no-privileges",
+        "--exclude-schema=hangfire",
+        // All-or-nothing: the restore runs inside one transaction and aborts on the first error,
+        // so a failed restore leaves the existing database untouched rather than half-replaced.
+        "--single-transaction",
+        "--exit-on-error",
+        $"--host={connection.Host}",
+        $"--port={connection.Port}",
+        $"--username={connection.Username}",
+        $"--dbname={connection.Database}",
+        filePath
+    };
+
     public async Task<BackupResult> CreateAsync(BackupType type, bool includeObjectStorage, CancellationToken ct = default)
     {
         Directory.CreateDirectory(_options.Directory);
@@ -57,23 +123,7 @@ public class PostgresBackupService : IBackupService
         var fileName = $"libraryconnect-{suffix}-{timestamp}{ArchiveExtension}";
         var filePath = Path.Combine(_options.Directory, fileName);
 
-        var arguments = new List<string>
-        {
-            "--format=custom",
-            "--compress=6",
-            "--no-owner",
-            "--no-privileges",
-            $"--host={_connection.Host}",
-            $"--port={_connection.Port}",
-            $"--username={_connection.Username}",
-            $"--dbname={_connection.Database}",
-            $"--file={filePath}"
-        };
-
-        if (type == BackupType.DataOnly)
-        {
-            arguments.Add("--data-only");
-        }
+        var arguments = BuildDumpArguments(ConnectionInfo(), type, filePath);
 
         var (exitCode, output) = await RunAsync(_options.PgDumpPath, arguments, ct);
 
@@ -109,22 +159,7 @@ public class PostgresBackupService : IBackupService
             return new BackupResult(false, filePath, 0, null, "Không tìm thấy tệp sao lưu.");
         }
 
-        var arguments = new List<string>
-        {
-            "--clean",
-            "--if-exists",
-            "--no-owner",
-            "--no-privileges",
-            // All-or-nothing: the restore runs inside one transaction and aborts on the first error,
-            // so a failed restore leaves the existing database untouched rather than half-replaced.
-            "--single-transaction",
-            "--exit-on-error",
-            $"--host={_connection.Host}",
-            $"--port={_connection.Port}",
-            $"--username={_connection.Username}",
-            $"--dbname={_connection.Database}",
-            filePath
-        };
+        var arguments = BuildRestoreArguments(ConnectionInfo(), filePath);
 
         var (exitCode, output) = await RunAsync(_options.PgRestorePath, arguments, ct);
 

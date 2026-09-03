@@ -35,7 +35,7 @@ import { usePagedQuery } from '@/hooks/usePagedQuery';
 import { messages } from '@/i18n/messages';
 import { downloadFile, formatBytes, formatDateTime } from './helpers';
 import { backupPollInterval } from './backupPolling';
-import type { BackupJob, BackupStorage, BackupType } from './types';
+import type { BackupJob, BackupStorage, BackupType, RestoreStatus } from './types';
 import { MAU } from '@/lib/palette';
 
 /**
@@ -392,17 +392,31 @@ function RestoreModal({
   onRestored: () => Promise<void>;
 }) {
   const { message } = App.useApp();
-  const [step, setStep] = useState<'warn' | 'confirm'>('warn');
+  const [step, setStep] = useState<'warn' | 'confirm' | 'running'>('warn');
   const [password, setPassword] = useState('');
 
+  const [watching, setWatching] = useState(false);
+
   const mutation = useMutation({
-    mutationFn: () => api.post(`/admin/backups/${job.id}/restore`, { confirmPassword: password }),
-    onSuccess: async () => {
-      message.success('Phục hồi thành công. Vui lòng đăng nhập lại để dữ liệu hiển thị chính xác.');
-      await onRestored();
+    mutationFn: () =>
+      api.post<RestoreStatus>(`/admin/backups/${job.id}/restore`, { confirmPassword: password }),
+    onSuccess: () => {
+      // Không đóng hộp thoại: phục hồi chạy hàng chục phút và trong lúc ấy hệ thống không dùng được,
+      // nên người bấm cần thấy nó chạy tới đâu ngay tại chỗ.
+      setWatching(true);
+      setStep('running');
     },
     onError: (error: unknown) => message.error(errorMessage(error)),
   });
+
+  const status = useQuery({
+    queryKey: ['restore-status'],
+    queryFn: () => api.get<RestoreStatus | null>('/admin/backups/restore-status'),
+    enabled: watching,
+    refetchInterval: (query) => (query.state.data?.state === 'Running' ? 3000 : false),
+  });
+
+  const done = status.data && status.data.state !== 'Running';
 
   return (
     <Modal
@@ -415,8 +429,21 @@ function RestoreModal({
       }
       onCancel={onClose}
       width={560}
+      closable={step !== 'running'}
+      maskClosable={step !== 'running'}
       footer={
-        step === 'warn' ? (
+        step === 'running' ? (
+          <Button
+            type="primary"
+            disabled={!done}
+            onClick={async () => {
+              await onRestored();
+              onClose();
+            }}
+          >
+            Đóng
+          </Button>
+        ) : step === 'warn' ? (
           <Space>
             <Button onClick={onClose}>{messages.actions.cancel}</Button>
             <Button danger type="primary" onClick={() => setStep('confirm')}>
@@ -439,7 +466,52 @@ function RestoreModal({
         )
       }
     >
-      {step === 'warn' ? (
+      {step === 'running' ? (
+        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+          {status.data?.state === 'Succeeded' ? (
+            <Alert type="success" showIcon message="Phục hồi hoàn tất" description={status.data.message} />
+          ) : status.data?.state === 'Failed' ? (
+            <Alert
+              type="error"
+              showIcon
+              message="Phục hồi thất bại — cơ sở dữ liệu giữ nguyên như trước"
+              description={status.data.message}
+            />
+          ) : (
+            <Alert
+              type="info"
+              showIcon
+              message="Đang phục hồi, đừng tắt máy chủ"
+              description={
+                'Quá trình chạy ở tiến trình nền và có thể mất nhiều phút. Trong lúc này các màn hình '
+                + 'khác tạm thời không dùng được. Đóng trình duyệt cũng không làm nó dừng.'
+              }
+            />
+          )}
+
+          <Progress
+            percent={done ? 100 : 60}
+            status={status.data?.state === 'Failed' ? 'exception' : done ? 'success' : 'active'}
+            showInfo={false}
+          />
+
+          <Descriptions bordered column={1} size="small">
+            <Descriptions.Item label="Tệp">{status.data?.archiveName ?? job.fileName}</Descriptions.Item>
+            <Descriptions.Item label="Bắt đầu">
+              {status.data ? formatDateTime(status.data.startedAt) : '—'}
+            </Descriptions.Item>
+            {status.data?.finishedAt && (
+              <Descriptions.Item label="Kết thúc">{formatDateTime(status.data.finishedAt)}</Descriptions.Item>
+            )}
+          </Descriptions>
+
+          {status.data?.state === 'Succeeded' && (
+            <Typography.Text type="secondary">
+              Đăng xuất rồi đăng nhập lại để làm việc trên dữ liệu vừa khôi phục.
+            </Typography.Text>
+          )}
+        </Space>
+      ) : step === 'warn' ? (
         <Space direction="vertical" size="middle" style={{ width: '100%' }}>
           <Alert
             type="warning"

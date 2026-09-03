@@ -222,3 +222,19 @@ export interface BackupStorage {
   keepCount: number;
   lastSuccessAt?: string;
 }
+
+export type RestoreState = 'Running' | 'Succeeded' | 'Failed';
+
+/**
+ * Tiến độ lượt phục hồi gần nhất.
+ *
+ * Máy chủ giữ ở bộ nhớ đệm chứ không trong cơ sở dữ liệu: chính cơ sở dữ liệu đang bị ghi đè.
+ */
+export interface RestoreStatus {
+  state: RestoreState;
+  archiveName: string;
+  message: string | null;
+  startedAt: string;
+  finishedAt: string | null;
+  startedByName: string | null;
+}
