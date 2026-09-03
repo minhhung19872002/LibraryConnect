@@ -684,6 +684,21 @@ Bước 1 — backend bổ sung cho ứng dụng. Mỗi dòng có phép thử t�
 | MB.32 | Đặt giữ → Sách của tôi → hủy; gia hạn thành công (luồng 6, 7) | Bạn đọc `TV2026000008`: Gia hạn phiếu `LC00000006`; tra "co so du lieu" → chi tiết có bản rảnh → Đặt giữ chỗ → thẻ Đặt giữ → Hủy → Đồng ý | Máy chủ trả "Đã gia hạn, hạn trả mới 17/09/2026." (lần chạy sau hết lượt thì trả câu từ chối, ứng dụng hiện nguyên câu); "Đã đặt giữ. Thư viện sẽ báo khi sách sẵn sàng."; thẻ Đặt giữ có dòng với nút Hủy; hủy xong viên "Đã hủy", mất nút. Gia hạn bị từ chối vì quá hạn: MB.16 | Đúng như mong đợi (`integration_test/holds_renew_sync_flow_test.dart`) | Đạt (máy ảo) |
 | MB.33 | Đồng bộ dữ liệu trung tâm — `updatedSince` (luồng 12) | Trong phép thử: gọi API cán bộ sửa nhan đề tài liệu số `f6c04211…` thêm hậu tố; ứng dụng tra tài liệu số theo hậu tố; gọi `GET /api/reader/digital?updatedSince=<mốc 5 giây trước>`; trả lại nhan đề gốc khi dọn | Ứng dụng hiện nhan đề mới ngay; `updatedSince` trả đúng 1 tài liệu vừa sửa kèm `serverTime` | Đúng như mong đợi | Đạt (máy ảo) |
 
+Bước 11 — **iOS**. Máy phát triển chạy Windows nên iOS chưa từng được biên dịch; ba dòng dưới đây chạy
+trên máy Mac của GitHub Actions (`.github/workflows/ios.yml`, lượt chạy 33730957017, Xcode 26.3,
+iPhone Simulator iOS 26.2), gọi vào **máy chủ thật** `https://thuvien.bluestar.com.vn`.
+
+| Mã | Chức năng | Bước thực hiện | Kết quả mong đợi | Kết quả thực tế | Đạt |
+|---|---|---|---|---|---|
+| MB.34 | Biên dịch bản phát hành iOS | `flutter build ios --release --no-codesign` trên macOS + Xcode 26.3 | Dựng xong, `Runner.app` mang đúng bundle id và ngưỡng iOS tối thiểu | `✓ Built build/ios/iphoneos/Runner.app (28.3MB)`; `CFBundleIdentifier = vn.bluestar.libraryconnect`; `MinimumOSVersion = 15.5`. Lỗi thật bắt được ở lượt đầu: `connectivity_plus` 7.3.1 gọi `NWPath.isUltraConstrained`, chỉ có trong SDK iOS mới nhất — phải chọn Xcode cao nhất của máy chủ; và Podfile tự viết làm Flutter 3.47 rẽ sang CocoaPods trong khi mọi gói đã là Swift Package | Đạt |
+| MB.35 | Chạy trên iPhone Simulator, phần công khai | Trang chủ → thẻ Tra cứu (chưa gõ) → gõ không dấu "co so du lieu" → chi tiết → thẻ Bản in → Trích dẫn → duyệt Chủ đề → tin tức | Dữ liệu thật từ máy chủ trên mọi màn hình; gõ không dấu ra tài liệu có dấu; năm thẻ chi tiết; bảng trích dẫn sáu chuẩn | Đúng như mong đợi. Ảnh `docs/images/mobile/ios-01…ios-08` | Đạt (máy ảo) |
+| MB.36 | Chạy trên iPhone Simulator, phần bạn đọc | Tủ sách → đăng nhập `TV2026000002` → xem Tủ sách → Tài khoản → Thẻ thư viện → đăng xuất | Đăng nhập được bằng thẻ thật; Tủ sách hiện số liệu máy chủ; thẻ điện tử dựng mã vạch CODE128 và QR tại máy; đăng xuất về trạng thái khách | Đúng như mong đợi. Ảnh `docs/images/mobile/ios-09…ios-12` | Đạt (máy ảo) |
+
+**Chưa chạy trên iOS:** ba luồng có ghi dữ liệu (đặt giữ, gia hạn, mượn tự phục vụ) — máy Mac của
+GitHub không có Docker nên không dựng được máy chủ riêng, mà chạy vào máy chủ thật thì sinh phiếu
+mượn thật; ba luồng ấy đã kiểm trên Android (MB.19–MB.20, MB.32). Cũng chưa kiểm: máy iPhone thật,
+camera, Face ID, thông báo đẩy, và bản IPA ký để phát hành (cần tài khoản Apple Developer).
+
 **Đối chiếu 12 luồng bắt buộc của PROMPT-MOBILE mục 6:** 1 → MB.09 + MB.18 · 2 → MB.10 · 3 → MB.30 · 4 → MB.11 · 5 → MB.31 · 6 → MB.32 · 7 → MB.32 (thành công) + MB.16 (từ chối) · 8 → MB.19, MB.20 · 9 → MB.21, MB.23 · 10 → MB.22 (gói ngoại tuyến; chế độ máy bay kiểm qua MB.28) · 11 → MB.24 (phần trong ứng dụng; **đẩy thật chưa kiểm**) · 12 → MB.33.
 
 **Chưa kiểm được trong đợt này (không có thiết bị):** quét mã bằng camera trên sách thật (đủ sáng/thiếu sáng), thẻ điện tử quét bằng máy quét ở quầy, xoay ngang trên máy thật, cỡ chữ hệ thống lớn nhất trên máy thật, nhận thông báo đẩy FCM thật, bản iOS.

@@ -352,7 +352,7 @@ Cập nhật lần cuối: 02/09/2026, sau đợt hoàn thiện (bảo mật, b�
 | XI.3.1 | Dùng chung REST API, JWT, tự làm mới token | **Có** | `ApiClient` (Dio) làm mới token qua `/reader/auth/refresh`, hết phiên thì về đăng nhập — MB.09 |
 | XI.3.2 | Sáng/tối, cỡ chữ điều chỉnh được | **Có** | Cài đặt lưu trên máy, cỡ chữ nhân với cỡ chữ hệ điều hành; soi tràn chữ ở 160% — MB.27 |
 | XI.3.3 | Đồng bộ dữ liệu trung tâm (mục 2.7) | **Có** | Sửa trên web thấy ngay trên ứng dụng; `updatedSince` + `serverTime` cho đồng bộ delta — MB.33 |
-| XI.3.4 | Build APK và IPA, hướng dẫn cấu hình endpoint | **Có một phần** | APK và AAB dựng được (`flutter build apk --release`, `appbundle`), endpoint qua `--dart-define`, khoá ký qua `key.properties`; IPA chưa dựng (không có máy Mac), cấu hình iOS đã sẵn — `mobile/README.md` |
+| XI.3.4 | Build APK và IPA, hướng dẫn cấu hình endpoint | **Có một phần** | APK và AAB dựng được (`flutter build apk --release`, `appbundle`), ký bằng khoá phát hành trong `key.properties`; **bản iOS dựng được** trên máy Mac của GitHub Actions (`flutter build ios --release --no-codesign`, Xcode 26.3 — `docs/06`, MB.34) và chạy thật trên iPhone Simulator (MB.35–MB.36); IPA ký để phát hành còn thiếu vì chưa có tài khoản Apple Developer. Endpoint qua `--dart-define` — `mobile/README.md` |
 
 ---
 
@@ -482,4 +482,4 @@ Cập nhật lần cuối: 02/09/2026, sau đợt hoàn thiện (bảo mật, b�
 | D10 | Phân hệ VIII — Quản trị nội dung | **Có** | Chi tiết ở mục B11 |
 | D11 | Phân hệ IX — Tra cứu OPAC | **Có** | Chi tiết ở mục B12. Trang tra cứu là ứng dụng riêng, chạy ở đường dẫn gốc |
 | D12 | Phân hệ X — Tài liệu môn học | **Có** | Chi tiết ở mục B13 |
-| D13 | Phân hệ XI — Ứng dụng di động | **Có** (Android đã dựng và kiểm trên máy ảo; iOS: mã dùng chung, chưa dựng vì thiếu máy Mac) | Chi tiết ở mục B14. Ứng dụng Flutter trong `mobile/`, gọi nhóm `/api/reader/*`, `/api/search/*`, `/api/browse/*`, `/api/public/*`; 76 phép thử đơn vị/widget và 12 luồng đầu-cuối trên máy ảo với máy chủ Docker thật (`docs/06`, MB.01–MB.33) |
+| D13 | Phân hệ XI — Ứng dụng di động | **Có** (Android dựng và kiểm trên máy ảo; iOS dựng và chạy trên iPhone Simulator của máy Mac GitHub Actions) | Chi tiết ở mục B14. Ứng dụng Flutter trong `mobile/`, gọi nhóm `/api/reader/*`, `/api/search/*`, `/api/browse/*`, `/api/public/*`; 76 phép thử đơn vị/widget và 12 luồng đầu-cuối trên máy ảo Android với máy chủ Docker thật (`docs/06`, MB.01–MB.33), thêm ba kịch bản iOS MB.34–MB.36 |

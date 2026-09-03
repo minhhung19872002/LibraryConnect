@@ -153,6 +153,8 @@ flutter gen-l10n                                            # tự chạy khi `f
 | 7 | Tài liệu số: danh sách + toàn văn, trình đọc trang ảnh có chữ chìm, tìm trong văn bản, đánh dấu trang, gói ngoại tuyến mã hoá tự hết hạn, xin quyền, lịch sử, chặn chụp màn hình (Android) | Xong — MB.21–MB.23 |
 | 8 | Thông báo (danh sách, mở đúng màn hình, cài đặt loại), dịch vụ đẩy FCM (tắt lặng lẽ khi thiếu Firebase), tài khoản đầy đủ, khoá sinh trắc học, cài đặt lưu máy | Xong — MB.24–MB.26; đẩy thật chưa kiểm |
 | 9 | Ngoại tuyến (dải mất mạng, bộ đệm đang mượn/tra cứu/cài đặt, phông đóng gói), ghim chứng chỉ, chế độ tối + cỡ chữ lớn soi tràn chữ, đo khởi động lạnh | Xong — MB.27–MB.29; máy thật chưa đo |
-| 10 | 12 luồng đầu-cuối (MB.09–MB.33), APK/AAB release, biểu tượng, ký bằng `key.properties`, tài liệu 01/06/07 | Xong — iOS chưa dựng |
+| 10 | 12 luồng đầu-cuối (MB.09–MB.33), APK/AAB release, biểu tượng, ký bằng `key.properties`, tài liệu 01/06/07 | Xong |
+| 11 | iOS: dựng bản phát hành không ký + chạy trên iPhone Simulator (MB.34–MB.36) qua `.github/workflows/ios.yml` | Xong — máy iPhone thật và IPA ký chưa có |
 
 Chưa bước nào chạy được trên **máy thật**: máy phát triển không có điện thoại kết nối. Mỗi bước ghi rõ điều này trong báo cáo.
+Android đã cài thử trên một máy Samsung của người dùng (lỗi I2 sổ lỗi sinh ra từ đó).
