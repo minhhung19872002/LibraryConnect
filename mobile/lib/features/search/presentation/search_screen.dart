@@ -10,6 +10,7 @@ import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/models/catalog_models.dart';
+import '../../home/presentation/home_screen.dart' show BrowseShortcuts;
 import '../data/recent_searches.dart';
 import '../data/search_api.dart';
 import '../data/search_params.dart';
@@ -372,39 +373,59 @@ class _IdleView extends ConsumerWidget {
     }
 
     final recent = ref.watch(recentSearchesProvider).value ?? const <String>[];
-    if (recent.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Text(
-            l10n.searchHintNoAccent,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-        ),
-      );
-    }
+    final theme = Theme.of(context);
 
+    // Chưa gõ gì thì trang vẫn phải có việc để làm: các lối duyệt danh mục và tìm gần đây. Một
+    // trang chỉ có dòng "gõ không dấu vẫn tìm thấy" bị người dùng đầu tiên hiểu là hỏng.
     return ListView(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 8, 0),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+          child: Text(
+            l10n.searchHintNoAccent,
+            style: theme.textTheme.bodyMedium?.copyWith(color: LcColors.muted),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 8, 4),
           child: Row(
             children: [
               Expanded(
                 child: Text(
-                  l10n.recentSearches,
-                  style: Theme.of(context).textTheme.labelLarge,
+                  l10n.browseShortcuts,
+                  style: theme.textTheme.labelLarge,
                 ),
               ),
               TextButton(
-                onPressed: () =>
-                    ref.read(recentSearchesProvider.notifier).clear(),
-                child: Text(l10n.clearAll),
+                onPressed: () => context.push(Routes.browse),
+                child: Text(l10n.viewAll),
               ),
             ],
           ),
         ),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          child: BrowseShortcuts(),
+        ),
+        if (recent.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 20, 8, 0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.recentSearches,
+                    style: theme.textTheme.labelLarge,
+                  ),
+                ),
+                TextButton(
+                  onPressed: () =>
+                      ref.read(recentSearchesProvider.notifier).clear(),
+                  child: Text(l10n.clearAll),
+                ),
+              ],
+            ),
+          ),
         for (final term in recent)
           ListTile(
             leading: const Icon(Icons.history),
