@@ -340,4 +340,48 @@ public class MarcTests
 
         return payload!.Data!;
     }
+
+    /// <summary>
+    /// II.2 — xem trước mô tả ISBD của biểu ghi **chưa lưu**.
+    ///
+    /// Trước khi có endpoint này, muốn đọc lại mô tả thư mục thì phải lưu biểu ghi xuống đã; nghĩa
+    /// là lưu rồi mới biết nó đọc sai chỗ nào.
+    /// </summary>
+    [Fact]
+    public async Task An_unsaved_record_can_be_previewed_as_a_bibliographic_description()
+    {
+        var client = await ClientAsync();
+
+        var response = await client.PostAsJsonAsync("/api/marc/preview",
+            new { marcJson = MarcJson.Serialize(SampleRecord()) });
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var payload = await response.Content.ReadFromJsonAsync<ApiResponse<MarcPreviewDto>>(
+            LibraryConnectFactory.JsonOptions);
+
+        payload!.Success.Should().BeTrue(payload.Message);
+
+        var preview = payload.Data!;
+        preview.Isbd.Should().NotBeEmpty();
+        preview.Isbd.Should().Contain(area => area.Label == "Nhan đề và thông tin trách nhiệm");
+        preview.Paragraph.Should().NotBeNullOrWhiteSpace();
+
+        // Mô tả phải nói về đúng biểu ghi vừa gửi lên, không phải một khung rỗng.
+        var title = SampleRecord().DataFields.First(field => field.Tag == "245")
+            .Subfields.First(subfield => subfield.Code == 'a').Value.TrimEnd(' ', '/', ':');
+
+        preview.Paragraph.Should().Contain(title);
+    }
+
+    /// <summary>Biểu ghi hỏng phải bị từ chối tử tế, không đổ lỗi 500.</summary>
+    [Fact]
+    public async Task Previewing_a_malformed_record_is_refused_with_a_readable_message()
+    {
+        var client = await ClientAsync();
+
+        var response = await client.PostAsJsonAsync("/api/marc/preview", new { marcJson = "{ khong-phai-json" });
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
 }

@@ -309,3 +309,49 @@ public class ValidateMarcRecordCommandHandler
         }).ToList()
     };
 }
+
+// ---------------------------------------------------------------------------
+
+/// <summary>Mô tả ISBD của một biểu ghi chưa lưu (II.2 — xem trước trước khi lưu).</summary>
+public class MarcPreviewDto
+{
+    public List<Cataloging.IsbdAreaDto> Isbd { get; set; } = new();
+
+    /// <summary>Cùng nội dung, gộp một đoạn — đúng cách nó xuất hiện trên phích mục lục.</summary>
+    public string Paragraph { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Xem trước mô tả thư mục của biểu ghi đang soạn (II.2).
+///
+/// A cataloguer proofreads by reading the description, not the tag table, and until now that was
+/// only possible after saving — which meant saving a record to find out it reads wrong. The record
+/// arrives as JSON straight from the editor, so nothing is written anywhere.
+/// </summary>
+public record PreviewMarcRecordCommand(string MarcJson) : IRequest<MarcPreviewDto>;
+
+public class PreviewMarcRecordCommandHandler
+    : IRequestHandler<PreviewMarcRecordCommand, MarcPreviewDto>
+{
+    public Task<MarcPreviewDto> Handle(PreviewMarcRecordCommand request, CancellationToken ct)
+    {
+        MarcRecord record;
+
+        try
+        {
+            record = MarcJson.Deserialize(request.MarcJson);
+        }
+        catch (MarcException exception)
+        {
+            throw new Common.Exceptions.ValidationException("MarcJson", exception.Message);
+        }
+
+        var areas = Cataloging.IsbdFormatter.Describe(record);
+
+        return Task.FromResult(new MarcPreviewDto
+        {
+            Isbd = areas.Select(area => new Cataloging.IsbdAreaDto(area.Label, area.Content)).ToList(),
+            Paragraph = Cataloging.IsbdFormatter.DescribeAsParagraph(record)
+        });
+    }
+}

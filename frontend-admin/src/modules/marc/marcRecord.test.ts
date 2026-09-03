@@ -16,6 +16,10 @@ import {
   setControlField,
   setLeaderPosition,
   formatFieldAsText,
+  duplicateDataField,
+  moveDataField,
+  getFieldRange,
+  setFieldRange,
 } from './marcRecord';
 import type { MarcFieldDefinition, MarcRecord } from './types';
 
@@ -262,5 +266,101 @@ describe('hiển thị dạng văn bản', () => {
     expect(
       formatFieldAsText({ tag: '650', ind1: ' ', ind2: '4', subfields: [{ code: 'a', value: 'Tin học' }] }),
     ).toBe('650 #4 $aTin học');
+  });
+});
+
+describe('nhân bản trường', () => {
+  it('đặt bản sao ngay dưới trường gốc', () => {
+    const result = duplicateDataField(record(), 0);
+
+    expect(result.dataFields).toHaveLength(4);
+    expect(result.dataFields[0]!.tag).toBe('245');
+    expect(result.dataFields[1]!.tag).toBe('245');
+    expect(result.dataFields[2]!.tag).toBe('650');
+  });
+
+  it('bản sao mang cùng nội dung nhưng không dùng chung mảng trường con', () => {
+    const original = record();
+    const result = duplicateDataField(original, 0);
+
+    expect(result.dataFields[1]).toEqual(original.dataFields[0]);
+
+    result.dataFields[1]!.subfields[0]!.value = 'Đã sửa';
+    expect(original.dataFields[0]!.subfields[0]!.value).toBe('Giáo trình');
+  });
+
+  it('bỏ qua chỉ số không có thật', () => {
+    const original = record();
+    expect(duplicateDataField(original, 9)).toEqual(original);
+  });
+});
+
+describe('sắp xếp lại trường', () => {
+  it('chuyển trường xuống dưới', () => {
+    const result = moveDataField(record(), 0, 2);
+
+    expect(result.dataFields.map((field) => field.subfields[0]!.value)).toEqual([
+      'Cơ sở dữ liệu',
+      'Tin học',
+      'Giáo trình',
+    ]);
+  });
+
+  it('chuyển trường lên trên', () => {
+    const result = moveDataField(record(), 2, 0);
+
+    expect(result.dataFields.map((field) => field.subfields[0]!.value)).toEqual([
+      'Tin học',
+      'Giáo trình',
+      'Cơ sở dữ liệu',
+    ]);
+  });
+
+  it('không đổi gì khi chỉ số nằm ngoài danh sách hoặc trùng nhau', () => {
+    const original = record();
+
+    expect(moveDataField(original, 1, 1)).toEqual(original);
+    expect(moveDataField(original, -1, 0)).toEqual(original);
+    expect(moveDataField(original, 0, 9)).toEqual(original);
+  });
+});
+
+describe('đọc ghi theo vị trí của trường độ dài cố định', () => {
+  const empty = ' '.repeat(40);
+
+  it('đọc đúng khoảng ký tự', () => {
+    const value = '240115s2023    vm a     b    000 0 vie d';
+
+    expect(getFieldRange(value, 6, 1, 40)).toBe('s');
+    expect(getFieldRange(value, 7, 4, 40)).toBe('2023');
+    expect(getFieldRange(value, 35, 3, 40)).toBe('vie');
+  });
+
+  it('ghi đúng khoảng và giữ nguyên độ dài', () => {
+    const result = setFieldRange(empty, 35, 3, 'eng', 40);
+
+    expect(result).toHaveLength(40);
+    expect(getFieldRange(result, 35, 3, 40)).toBe('eng');
+    expect(getFieldRange(result, 6, 1, 40)).toBe(' ');
+  });
+
+  it('đệm chuỗi ngắn và cắt chuỗi dài cho vừa khoảng', () => {
+    expect(getFieldRange(setFieldRange(empty, 7, 4, '20', 40), 7, 4, 40)).toBe('20  ');
+    expect(getFieldRange(setFieldRange(empty, 15, 3, 'vnmm', 40), 15, 3, 40)).toBe('vnm');
+  });
+
+  it('chuỗi dài không lấn sang vị trí kế bên', () => {
+    const value = setFieldRange('x'.repeat(40), 15, 3, 'vnmm', 40);
+
+    expect(getFieldRange(value, 15, 3, 40)).toBe('vnm');
+    expect(getFieldRange(value, 18, 1, 40)).toBe('x');
+  });
+
+  it('chuỗi ngắn hơn quy định được đệm trước khi ghi', () => {
+    const result = setFieldRange('240115', 35, 3, 'vie', 40);
+
+    expect(result).toHaveLength(40);
+    expect(getFieldRange(result, 0, 6, 40)).toBe('240115');
+    expect(getFieldRange(result, 35, 3, 40)).toBe('vie');
   });
 });

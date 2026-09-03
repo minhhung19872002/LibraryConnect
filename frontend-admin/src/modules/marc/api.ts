@@ -1,6 +1,7 @@
 import { api, http } from '@/api/client';
 import type {
   MarcFieldDefinition,
+  MarcPreview,
   MarcRecord,
   MarcValidationResult,
   ParseMarcFileResult,
@@ -21,6 +22,10 @@ export const marcApi = {
 
   validate: (record: MarcRecord) =>
     api.post<MarcValidationResult>('/marc/validate', { marcJson: JSON.stringify(record) }),
+
+  /** Mô tả ISBD của biểu ghi chưa lưu, để đọc soát trước khi ghi xuống (II.2). */
+  preview: (record: MarcRecord) =>
+    api.post<MarcPreview>('/marc/preview', { marcJson: JSON.stringify(record) }),
 
   /** Đọc tệp .mrc hoặc .xml mà không ghi gì vào cơ sở dữ liệu. */
   async parseFile(file: File): Promise<ParseMarcFileResult> {

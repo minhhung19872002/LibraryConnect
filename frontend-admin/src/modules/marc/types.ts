@@ -118,3 +118,15 @@ export interface SaveMarcFieldPayload {
   indicators: MarcIndicatorDefinition[];
   subfields: MarcSubfieldDefinition[];
 }
+
+/** Một vùng mô tả ISBD của biểu ghi đang soạn. */
+export interface IsbdArea {
+  label: string;
+  content: string;
+}
+
+export interface MarcPreview {
+  isbd: IsbdArea[];
+  /** Cùng nội dung, gộp một đoạn — đúng cách nó xuất hiện trên phích mục lục. */
+  paragraph: string;
+}

@@ -85,7 +85,7 @@ export function RemoteSearchPage() {
       interLibraryApi.prepareRecord(record.targetId, record.marcJson),
     onSuccess: (marcJson) => {
       // Chuyển sang trình soạn MARC kèm biểu ghi đã chuẩn bị; cán bộ hiệu đính rồi mới lưu.
-      navigate('/bien-muc/bieu-ghi/moi', { state: { marcJson, from: 'interlibrary' } });
+      navigate('/bien-muc/moi', { state: { marcJson, from: 'interlibrary' } });
     },
     onError: (error) =>
       message.error(error instanceof ApiRequestError ? error.message : 'Không chuẩn bị được.'),

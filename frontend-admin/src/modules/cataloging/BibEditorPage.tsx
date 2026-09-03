@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   App,
   Button,
@@ -14,7 +14,14 @@ import {
   Tooltip,
   Typography,
 } from 'antd';
-import { ArrowLeftOutlined, SafetyCertificateOutlined, SaveOutlined } from '@ant-design/icons';
+import {
+  ArrowLeftOutlined,
+  BarcodeOutlined,
+  CloudDownloadOutlined,
+  ReadOutlined,
+  SafetyCertificateOutlined,
+  SaveOutlined,
+} from '@ant-design/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { PageHeader } from '@/components/PageHeader';
 import { errorMessage } from '@/api/formErrors';
@@ -22,7 +29,9 @@ import { ApiRequestError } from '@/api/client';
 import { MarcEditor, MarcValidationSummary } from '@/modules/marc/MarcEditor';
 import { marcApi } from '@/modules/marc/api';
 import { formatRecordAsText } from '@/modules/marc/marcRecord';
-import type { MarcRecord, MarcValidationResult } from '@/modules/marc/types';
+import type { MarcPreview, MarcRecord, MarcValidationResult } from '@/modules/marc/types';
+import type { RemoteSearchField } from '@/modules/interlibrary/types';
+import { RemoteRecordPicker } from './RemoteRecordPicker';
 import { catalogingApi, parseMarc } from './api';
 import { useCatalogOptions, toOptions } from './useCatalogOptions';
 import { RECORD_STATUS_LABELS, type RecordStatus } from './types';
@@ -80,15 +89,25 @@ export function BibEditorPage() {
     enabled: isEdit,
   });
 
+  // Biểu ghi gửi kèm khi điều hướng từ trang tra cứu liên thư viện: bỏ qua bước chọn dạng tài liệu
+  // vì khung biểu ghi đã có sẵn từ thư viện nguồn.
+  const handedOver = (useLocation().state as { marcJson?: string } | null)?.marcJson;
+
   // Rebuilding the skeleton after the cataloguer has started typing would throw their work away,
   // so it is only fetched while the chooser is still open.
-  const [started, setStarted] = useState(isEdit);
+  const [started, setStarted] = useState(isEdit || Boolean(handedOver));
 
   const blank = useQuery({
     queryKey: ['bib-blank', documentTypeId, templateId],
     queryFn: () => catalogingApi.blank(documentTypeId, templateId),
-    enabled: !isEdit && !started,
+    enabled: !isEdit && !started && !handedOver,
   });
+
+  useEffect(() => {
+    if (!isEdit && handedOver) {
+      setRecord(parseMarc(handedOver));
+    }
+  }, [handedOver, isEdit]);
 
   useEffect(() => {
     if (isEdit && existing.data) {
@@ -176,6 +195,17 @@ export function BibEditorPage() {
   }, [record, save]);
 
   const preview = useMemo(() => (record ? formatRecordAsText(record) : ''), [record]);
+
+  const [isbd, setIsbd] = useState<MarcPreview | null>(null);
+  const [pickerField, setPickerField] = useState<RemoteSearchField | null>(null);
+
+  // Đọc soát mô tả thư mục **trước khi lưu** (II.2): trước đây phải lưu xuống rồi mới xem được,
+  // nghĩa là lưu rồi mới biết nó đọc sai chỗ nào.
+  const describe = useMutation({
+    mutationFn: () => marcApi.preview(record!),
+    onSuccess: setIsbd,
+    onError: (error: unknown) => message.error(errorMessage(error)),
+  });
 
   if ((isEdit && existing.isLoading) || (!isEdit && blank.isLoading) || !record) {
     return (
@@ -266,6 +296,19 @@ export function BibEditorPage() {
           <Space wrap>
             <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/bien-muc')}>
               Về danh sách
+            </Button>
+            <Button icon={<CloudDownloadOutlined />} onClick={() => setPickerField('Any')}>
+              Lấy từ Z39.50
+            </Button>
+            <Button icon={<BarcodeOutlined />} onClick={() => setPickerField('Isbn')}>
+              Lấy từ ISBN
+            </Button>
+            <Button
+              icon={<ReadOutlined />}
+              loading={describe.isPending}
+              onClick={() => describe.mutate()}
+            >
+              Xem trước ISBD
             </Button>
             <Button
               icon={<SafetyCertificateOutlined />}
@@ -390,6 +433,34 @@ export function BibEditorPage() {
               </Card>
             )}
 
+            {isbd && (
+              <Card
+                size="small"
+                title="Mô tả thư mục (ISBD)"
+                extra={
+                  <Button type="link" size="small" onClick={() => setIsbd(null)}>
+                    Ẩn
+                  </Button>
+                }
+              >
+                <Space direction="vertical" size={8} style={{ width: '100%' }}>
+                  {isbd.isbd.map((area) => (
+                    <div key={area.label}>
+                      <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                        {area.label}
+                      </Typography.Text>
+                      <Typography.Paragraph style={{ marginBottom: 0 }}>{area.content}</Typography.Paragraph>
+                    </div>
+                  ))}
+
+                  <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                    Gộp một đoạn, đúng cách nó lên phích mục lục
+                  </Typography.Text>
+                  <Typography.Paragraph style={{ marginBottom: 0 }}>{isbd.paragraph}</Typography.Paragraph>
+                </Space>
+              </Card>
+            )}
+
             <Card size="small" title="Biểu ghi ở dạng văn bản">
               <Typography.Paragraph
                 style={{ ...MONOSPACE, whiteSpace: 'pre-wrap', fontSize: 12, marginBottom: 0 }}
@@ -400,6 +471,17 @@ export function BibEditorPage() {
           </Space>
         </Col>
       </Row>
+
+      <RemoteRecordPicker
+        open={pickerField !== null}
+        initialField={pickerField ?? 'Any'}
+        onClose={() => setPickerField(null)}
+        onPicked={(next) => {
+          setRecord(next);
+          setValidation(null);
+          setIsbd(null);
+        }}
+      />
     </Space>
   );
 }

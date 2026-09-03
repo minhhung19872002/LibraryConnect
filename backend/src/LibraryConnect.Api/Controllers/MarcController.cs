@@ -96,6 +96,21 @@ public class MarcController : ApiControllerBase
     }
 
     /// <summary>
+    /// Xem trước mô tả ISBD của biểu ghi đang soạn, chưa lưu (II.2).
+    ///
+    /// Không ghi gì xuống cơ sở dữ liệu: biểu ghi đi thẳng từ trình soạn lên, đọc xong trả về mô tả.
+    /// </summary>
+    [HttpPost("preview")]
+    [RequirePermission(PermissionCodes.CatalogBibView)]
+    [ProducesResponseType(typeof(ApiResponse<MarcPreviewDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<MarcPreviewDto>>> Preview(
+        [FromBody] ValidateMarcRequest request, CancellationToken ct)
+    {
+        var result = await Mediator.Send(new PreviewMarcRecordCommand(request.MarcJson), ct);
+        return Ok(Success(result));
+    }
+
+    /// <summary>
     /// Đọc một tệp trao đổi biểu ghi (.mrc theo ISO 2709 hoặc .xml theo MARCXML) và trả về các biểu
     /// ghi kèm kết quả kiểm tra. Không ghi gì vào cơ sở dữ liệu — dùng để xem trước trước khi nhập.
     /// </summary>

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   AutoComplete,
@@ -7,6 +7,7 @@ import {
   Collapse,
   Empty,
   Input,
+  Modal,
   Popconfirm,
   Select,
   Space,
@@ -15,10 +16,15 @@ import {
   Typography,
 } from 'antd';
 import {
+  ArrowDownOutlined,
+  ArrowUpOutlined,
+  CopyOutlined,
   DeleteOutlined,
+  HolderOutlined,
   InfoCircleOutlined,
   PlusOutlined,
   ScissorOutlined,
+  SlidersOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
 import type {
@@ -31,6 +37,8 @@ import {
   addSubfield,
   buildFieldFromDefinition,
   displayIndicator,
+  duplicateDataField,
+  moveDataField,
   findDefinition,
   groupIssuesByField,
   insertDataField,
@@ -47,6 +55,7 @@ import {
   updateSubfield,
 } from './marcRecord';
 import { LeaderEditor } from './LeaderEditor';
+import { Control008Wizard } from './Control008Wizard';
 import { MAU } from '@/lib/palette';
 
 interface MarcEditorProps {
@@ -74,6 +83,38 @@ const MONOSPACE = { fontFamily: 'ui-monospace, Consolas, monospace' } as const;
  */
 export function MarcEditor({ record, onChange, definitions, issues = [], readOnly }: MarcEditorProps) {
   const [newTag, setNewTag] = useState('');
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+
+  /** Trường đang được gõ, để Ctrl+D biết nhân bản cái nào. */
+  const focusedIndex = useRef<number | null>(null);
+
+  // Ctrl+D nhân bản trường đang gõ (đặc tả II.2). Nghe ở cấp cửa sổ vì con trỏ lúc ấy nằm trong một
+  // ô nhập bên trong trường, không phải trên chính khối trường.
+  useEffect(() => {
+    if (readOnly) {
+      return undefined;
+    }
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== 'd') {
+        return;
+      }
+
+      const index = focusedIndex.current;
+
+      if (index === null) {
+        return;
+      }
+
+      // Ctrl+D của trình duyệt là "đánh dấu trang" — ở màn hình biên mục thì nhân bản dòng hữu ích hơn.
+      event.preventDefault();
+      onChange(duplicateDataField(record, index));
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [onChange, readOnly, record]);
 
   const grouped = useMemo(() => groupIssuesByField(issues), [issues]);
   const occurrences = useMemo(() => occurrenceNumbers(record), [record]);
@@ -185,6 +226,11 @@ export function MarcEditor({ record, onChange, definitions, issues = [], readOnl
                       ) : undefined
                     }
                   />
+                  {field.tag === '008' && (
+                    <Button icon={<SlidersOutlined />} onClick={() => setWizardOpen(true)}>
+                      Trình hướng dẫn
+                    </Button>
+                  )}
                   <Typography.Text type="secondary">{definition?.name}</Typography.Text>
                   {!readOnly && field.tag !== '001' && field.tag !== '008' && (
                     <Button
@@ -250,6 +296,22 @@ export function MarcEditor({ record, onChange, definitions, issues = [], readOnl
                 key={`${field.tag}-${index}`}
                 field={field}
                 index={index}
+                isDragging={dragIndex === index}
+                canMoveUp={index > 0}
+                canMoveDown={index < record.dataFields.length - 1}
+                onFocusRow={() => {
+                  focusedIndex.current = index;
+                }}
+                onDuplicate={() => onChange(duplicateDataField(record, index))}
+                onMove={(to) => onChange(moveDataField(record, index, to))}
+                onDragStart={() => setDragIndex(index)}
+                onDragEnd={() => setDragIndex(null)}
+                onDropOn={() => {
+                  if (dragIndex !== null) {
+                    onChange(moveDataField(record, dragIndex, index));
+                  }
+                  setDragIndex(null);
+                }}
                 definitions={definitions}
                 issues={grouped.get(issueKey(field.tag, occurrences[index]!)) ?? []}
                 readOnly={readOnly}
@@ -271,6 +333,24 @@ export function MarcEditor({ record, onChange, definitions, issues = [], readOnl
           </Space>
         )}
       </Card>
+
+      <Modal
+        open={wizardOpen}
+        onCancel={() => setWizardOpen(false)}
+        onOk={() => setWizardOpen(false)}
+        title="Trường 008 — thông tin mã hóa độ dài cố định"
+        okText="Xong"
+        cancelText="Đóng"
+        width={880}
+        destroyOnHidden
+      >
+        <Control008Wizard
+          value={record.controlFields.find((field) => field.tag === '008')?.value ?? ''}
+          leader={record.leader}
+          onChange={(value) => onChange(setControlField(record, '008', value))}
+          readOnly={readOnly}
+        />
+      </Modal>
     </Space>
   );
 }
@@ -281,6 +361,15 @@ interface DataFieldRowProps {
   definitions: MarcFieldDefinition[];
   issues: MarcValidationIssue[];
   readOnly?: boolean;
+  isDragging: boolean;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
+  onFocusRow: () => void;
+  onDuplicate: () => void;
+  onMove: (to: number) => void;
+  onDragStart: () => void;
+  onDragEnd: () => void;
+  onDropOn: () => void;
   onChange: (change: Partial<MarcDataField>) => void;
   onChangeSubfield: (subfieldIndex: number, change: { code?: string; value?: string }) => void;
   onSplitSubfield: (subfieldIndex: number, text: string) => void;
@@ -291,9 +380,19 @@ interface DataFieldRowProps {
 
 function DataFieldRow({
   field,
+  index,
   definitions,
   issues,
   readOnly,
+  isDragging,
+  canMoveUp,
+  canMoveDown,
+  onFocusRow,
+  onDuplicate,
+  onMove,
+  onDragStart,
+  onDragEnd,
+  onDropOn,
   onChange,
   onChangeSubfield,
   onSplitSubfield,
@@ -324,14 +423,37 @@ function DataFieldRow({
 
   return (
     <div
+      onFocusCapture={onFocusRow}
+      onDragOver={(event) => {
+        // Không chặn mặc định thì trình duyệt từ chối thả.
+        event.preventDefault();
+      }}
+      onDrop={(event) => {
+        event.preventDefault();
+        onDropOn();
+      }}
       style={{
         border: `1px solid ${hasError ? MAU.loiVien : MAU.vien}`,
         borderRadius: 6,
         padding: 10,
         background: hasError ? MAU.loiNhat : undefined,
+        opacity: isDragging ? 0.5 : undefined,
       }}
     >
       <Space align="center" wrap style={{ marginBottom: 8 }}>
+        {!readOnly && (
+          <Tooltip title="Kéo để đổi chỗ trường">
+            <span
+              draggable
+              onDragStart={onDragStart}
+              onDragEnd={onDragEnd}
+              style={{ cursor: 'grab', color: MAU.chuMo, padding: '0 2px' }}
+            >
+              <HolderOutlined />
+            </span>
+          </Tooltip>
+        )}
+
         <Tooltip title={definition?.description ?? undefined}>
           <Tag color={definition ? 'blue' : 'default'} style={{ ...MONOSPACE, width: 48, textAlign: 'center' }}>
             {field.tag}
@@ -363,14 +485,36 @@ function DataFieldRow({
         />
 
         {!readOnly && (
-          <Popconfirm
-            title="Xóa trường này khỏi biểu ghi?"
-            okText="Xóa"
-            cancelText="Không"
-            onConfirm={onRemove}
-          >
-            <Button type="text" danger icon={<DeleteOutlined />} />
-          </Popconfirm>
+          <>
+            {/* Kéo thả không dùng được bằng bàn phím, nên vẫn phải có nút lên xuống (mục 6.6). */}
+            <Tooltip title="Chuyển lên trên">
+              <Button
+                type="text"
+                icon={<ArrowUpOutlined />}
+                disabled={!canMoveUp}
+                onClick={() => onMove(index - 1)}
+              />
+            </Tooltip>
+            <Tooltip title="Chuyển xuống dưới">
+              <Button
+                type="text"
+                icon={<ArrowDownOutlined />}
+                disabled={!canMoveDown}
+                onClick={() => onMove(index + 1)}
+              />
+            </Tooltip>
+            <Tooltip title="Nhân bản trường (Ctrl+D)">
+              <Button type="text" icon={<CopyOutlined />} onClick={onDuplicate} />
+            </Tooltip>
+            <Popconfirm
+              title="Xóa trường này khỏi biểu ghi?"
+              okText="Xóa"
+              cancelText="Không"
+              onConfirm={onRemove}
+            >
+              <Button type="text" danger icon={<DeleteOutlined />} />
+            </Popconfirm>
+          </>
         )}
       </Space>
 

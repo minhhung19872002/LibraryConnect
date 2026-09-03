@@ -125,6 +125,84 @@ export function insertDataField(record: MarcRecord, field: MarcDataField): MarcR
   return { ...record, dataFields: fields };
 }
 
+/**
+ * Nhân bản một trường, đặt bản sao ngay dưới bản gốc (Ctrl+D, đặc tả II.2).
+ *
+ * Cataloguing a record with five subject headings means typing 650 five times; copying the field
+ * that is already shaped correctly and editing one subfield is how the work is actually done. The
+ * copy is deep: sharing the subfield array would make editing one row change the other.
+ */
+export function duplicateDataField(record: MarcRecord, index: number): MarcRecord {
+  const source = record.dataFields[index];
+
+  if (!source) {
+    return record;
+  }
+
+  const copy: MarcDataField = {
+    tag: source.tag,
+    ind1: source.ind1,
+    ind2: source.ind2,
+    subfields: source.subfields.map((subfield) => ({ ...subfield })),
+  };
+
+  const fields = [...record.dataFields];
+  fields.splice(index + 1, 0, copy);
+
+  return { ...record, dataFields: fields };
+}
+
+/**
+ * Đổi chỗ một trường trong danh sách (kéo thả, đặc tả II.2).
+ *
+ * MARC has no rule that fields must be in tag order, and cataloguers do reorder repeated fields so
+ * the main one comes first. Insertion still sorts by tag; this is the manual override.
+ */
+export function moveDataField(record: MarcRecord, from: number, to: number): MarcRecord {
+  const count = record.dataFields.length;
+
+  if (from === to || from < 0 || to < 0 || from >= count || to >= count) {
+    return record;
+  }
+
+  const fields = [...record.dataFields];
+  const [moved] = fields.splice(from, 1);
+  fields.splice(to, 0, moved!);
+
+  return { ...record, dataFields: fields };
+}
+
+/**
+ * Đọc một khoảng ký tự của trường độ dài cố định (008, 006, 007).
+ *
+ * Fixed-length fields carry meaning by position, and a record from an older system can arrive
+ * shorter than the standard says, so every read pads first — otherwise position 35 of a 20-character
+ * string is `undefined` and the wizard shows a blank where it should show a language code.
+ */
+export function getFieldRange(value: string, start: number, length: number, total: number): string {
+  return value.padEnd(total, ' ').slice(start, start + length);
+}
+
+/**
+ * Ghi một khoảng ký tự, giữ nguyên tổng độ dài.
+ *
+ * `length` là bề rộng của khoảng, không phải của chuỗi truyền vào: chuỗi ngắn được đệm khoảng
+ * trắng, chuỗi dài bị cắt. Thiếu tham số ấy thì gõ thừa một ký tự vào ô mã nước sẽ lấn sang vị trí
+ * kế bên, và 008 sai lệch kiểu đó không báo lỗi ở đâu cả.
+ */
+export function setFieldRange(
+  value: string,
+  start: number,
+  length: number,
+  text: string,
+  total: number,
+): string {
+  const padded = value.padEnd(total, ' ').slice(0, total);
+  const fitted = text.padEnd(length, ' ').slice(0, length);
+
+  return padded.slice(0, start) + fitted + padded.slice(start + length);
+}
+
 export function removeDataField(record: MarcRecord, index: number): MarcRecord {
   return { ...record, dataFields: record.dataFields.filter((_, position) => position !== index) };
 }
