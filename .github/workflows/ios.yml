@@ -2,7 +2,7 @@
 #
 # Máy phát triển chạy Windows nên không dựng được iOS; đây là chỗ duy nhất trong quy trình có
 # macOS + Xcode. Hai việc:
-#   1. `ios-build`  — dựng bản phát hành iOS (không ký). Bắt các lỗi cấu trúc: CocoaPods, ngưỡng
+#   1. `ios-build`  — dựng bản phát hành iOS (không ký). Bắt các lỗi cấu trúc: Swift Package Manager,
 #      iOS tối thiểu, gói không có bản iOS, mã Swift/ObjC của plugin.
 #   2. `ios-simulator` — chạy thật trên iPhone Simulator, gọi vào máy chủ thật, chụp ảnh từng màn
 #      hình làm bằng chứng nghiệm thu (E-HSMT mục 2.7).
@@ -37,6 +37,16 @@ jobs:
         working-directory: mobile
     steps:
       - uses: actions/checkout@v4
+      # `connectivity_plus` 7 gọi `NWPath.isUltraConstrained`, chỉ có trong SDK iOS mới nhất; Xcode
+      # mặc định của ảnh máy chủ có thể cũ hơn. Chọn bản Xcode cao nhất đang cài và in ra SDK để
+      # nhật ký nói rõ bản dựng chạy trên nền nào.
+      - name: Chọn Xcode mới nhất
+        working-directory: .
+        run: |
+          ls -d /Applications/Xcode*.app
+          sudo xcode-select -s "$(ls -d /Applications/Xcode*.app | sort -V | tail -1)"
+          xcodebuild -version
+          xcodebuild -showsdks | grep -i -E "iphoneos|iphonesimulator"
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
@@ -58,9 +68,6 @@ jobs:
           /usr/libexec/PlistBuddy -c 'Print :MinimumOSVersion' "$APP/Info.plist"
           /usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Info.plist"
           /usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Info.plist"
-      - name: Podfile.lock (danh sách pod đã khoá)
-        if: always()
-        run: test -f ios/Podfile.lock && head -60 ios/Podfile.lock || echo "chưa sinh Podfile.lock"
 
   ios-simulator:
     name: Chạy trên iPhone Simulator
@@ -71,6 +78,16 @@ jobs:
         working-directory: mobile
     steps:
       - uses: actions/checkout@v4
+      # `connectivity_plus` 7 gọi `NWPath.isUltraConstrained`, chỉ có trong SDK iOS mới nhất; Xcode
+      # mặc định của ảnh máy chủ có thể cũ hơn. Chọn bản Xcode cao nhất đang cài và in ra SDK để
+      # nhật ký nói rõ bản dựng chạy trên nền nào.
+      - name: Chọn Xcode mới nhất
+        working-directory: .
+        run: |
+          ls -d /Applications/Xcode*.app
+          sudo xcode-select -s "$(ls -d /Applications/Xcode*.app | sort -V | tail -1)"
+          xcodebuild -version
+          xcodebuild -showsdks | grep -i -E "iphoneos|iphonesimulator"
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
