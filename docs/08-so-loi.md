@@ -283,6 +283,12 @@ Lần đầu dựng hệ thống từ một bản clone sạch trên máy khác,
 | Mã | Mức | Lỗi | Nguyên nhân | Sửa |
 |---|---|---|---|---|
 | I1 | Nghiêm trọng | Clone kho từ GitHub dựng ảnh API **không biên dịch được**: thiếu namespace `Features.Admin.Backups` | Dòng `backups/` trong `.gitignore` (dành cho thư mục bản sao lưu) khớp luôn thư mục mã nguồn `Features/Admin/Backups/`, mà Git trên Windows không phân biệt hoa thường. `BackupFeatures.cs` chưa bao giờ được commit, suốt từ phase 2. Mọi phép thử đều xanh vì chạy trên thư mục làm việc có sẵn tệp ấy. | Neo luật thành `/backups/` và `deploy/backups/`, đưa tệp vào Git (`d77b917`). |
+| I2 | Nặng | Ứng dụng di động **vỡ giao diện trên Samsung thật** (ảnh người dùng gửi): nhãn thanh điều hướng gãy hai dòng; thẻ "Bản in" ép ĐKCB thành cột vài ký tự; hai nút dưới bảng trích dẫn bị thanh điều hướng hệ thống che; chip tác giả bị cắt cụt | Máy để cỡ chữ lớn (≈1,3) và thu phóng màn hình, bề rộng hữu dụng chỉ 360dp. Phase 15 chỉ soi cỡ chữ lớn trên máy ảo Pixel 9 **411dp** — chưa bao giờ ở 360dp, là bề rộng phổ biến nhất của điện thoại Việt Nam. `ListTile.trailing` nhận trọn bề rộng nó đòi; bảng trích dẫn không cuộn và không chừa vùng an toàn dưới; cột cạnh ảnh bìa chỉ còn ~200dp. Tái hiện đúng bằng `wm density 480` + `font_scale 1.3` trên máy ảo. | Thanh điều hướng ghim cỡ chữ 1,0 và nhãn "Tủ sách"; viên trạng thái xuống dưới ĐKCB; bảng trích dẫn cuộn được + `useSafeArea`; chip tác giả và viên trạng thái xuống dưới hàng ảnh bìa. Kiểm lại ở 360dp/1,3 trước và sau, ảnh trong `docs/images/mobile/`. |
+| I3 | Vừa | CI đỏ: `/health/ready` trả **503** trên runner sạch dù phép thử xanh trên máy dev suốt từ phase 1 | Kiểm tra sẵn sàng thêm Redis hễ có chuỗi kết nối (mặc định `localhost:6379`), bỏ qua `Redis:Enabled=false` mà bộ kiểm thử đã đặt. Máy dev tình cờ có Redis ở cổng ấy nên xanh; runner GitHub không có nên đỏ. Một bản cài cố ý không dùng Redis cũng báo "không sẵn sàng". | Chỉ thêm kiểm tra Redis khi `Enabled` = true. Chạy đỏ trên CI (run 33713284557) trước khi sửa. |
+
+Bài học thứ hai của đợt: **máy ảo mặc định không phải điện thoại của người dùng.** Cỡ chữ lớn đã soi
+ở phase 15 nhưng ở bề rộng 411dp; máy 360dp với cỡ chữ 1,3 là một cấu hình khác hẳn, và đó là máy
+thật của người dùng đầu tiên. Từ nay soi ở `wm density 480` + `font_scale 1.3` trước khi phát hành.
 
 Bài học: **"build sạch" trên máy phát triển không chứng minh kho mã đầy đủ.** Thư mục làm việc luôn
 có mọi tệp; chỉ một bản clone mới lộ ra tệp nào chưa vào Git. Chưa có CI dựng từ clone sạch, nên lỗi

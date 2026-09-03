@@ -37,7 +37,7 @@ void main() {
 
     // Tab Sách của tôi khi chưa đăng nhập → rẽ sang đăng nhập rồi quay lại đúng tab.
     // (Máy còn phiên của phép thử trước thì đăng xuất trước.)
-    await tester.tap(find.text('Sách của tôi').last);
+    await tester.tap(find.text('Tủ sách').last);
     await tester.pumpAndSettle();
     if (find.text('Đăng nhập bạn đọc').evaluate().isEmpty) {
       await tester.tap(find.text('Tài khoản').last);
@@ -45,8 +45,8 @@ void main() {
       await tester.scrollUntilVisible(find.byKey(const Key('sign-out')), 300);
       await tester.tap(find.byKey(const Key('sign-out')));
       await _waitFor(tester, find.byKey(const Key('home-search')));
-      await _waitFor(tester, find.text('Sách của tôi'));
-      await tester.tap(find.text('Sách của tôi').last);
+      await _waitFor(tester, find.text('Tủ sách'));
+      await tester.tap(find.text('Tủ sách').last);
       await tester.pumpAndSettle();
     }
     await _waitFor(tester, find.text('Đăng nhập bạn đọc'));

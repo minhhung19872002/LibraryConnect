@@ -154,6 +154,7 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       showDragHandle: true,
       builder: (_) => _CitationSheet(bibId: bib.id),
     );
@@ -230,51 +231,51 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
                                     style: theme.textTheme.bodySmall,
                                   ),
                                 ),
-                              const SizedBox(height: 8),
-                              Wrap(
-                                spacing: 6,
-                                runSpacing: 4,
-                                children: [
-                                  for (final author in bib.authors)
-                                    ActionChip(
-                                      label: Text(author.name),
-                                      avatar: const Icon(
-                                        Icons.person_outline,
-                                        size: 16,
-                                      ),
-                                      onPressed: () => context.go(
-                                        Routes.search(
-                                          keyword: author.name,
-                                          scope: SearchScope.author,
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Wrap(
-                                spacing: 6,
-                                runSpacing: 4,
-                                children: [
-                                  AvailabilityPill(
-                                    itemCount: bib.itemCount,
-                                    availableItemCount: bib.availableItemCount,
-                                  ),
-                                  if (bib.itemCount > 0)
-                                    StatusPill(
-                                      l10n.itemsInStock(bib.itemCount),
-                                    ),
-                                  if (bib.digitalDocuments.isNotEmpty)
-                                    StatusPill(
-                                      l10n.digitalCount(
-                                        bib.digitalDocuments.length,
-                                      ),
-                                    ),
-                                ],
-                              ),
                             ],
                           ),
                         ),
+                      ],
+                    ),
+                    // Chip tác giả và viên trạng thái nằm dưới hàng ảnh bìa, dùng trọn bề rộng:
+                    // cột bên phải ảnh chỉ còn ~200dp trên máy 360dp, tên tác giả ở cỡ chữ lớn
+                    // bị cắt cụt (thấy trên Samsung).
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      children: [
+                        for (final author in bib.authors)
+                          ActionChip(
+                            label: Text(
+                              author.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            avatar: const Icon(Icons.person_outline, size: 16),
+                            onPressed: () => context.go(
+                              Routes.search(
+                                keyword: author.name,
+                                scope: SearchScope.author,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      children: [
+                        AvailabilityPill(
+                          itemCount: bib.itemCount,
+                          availableItemCount: bib.availableItemCount,
+                        ),
+                        if (bib.itemCount > 0)
+                          StatusPill(l10n.itemsInStock(bib.itemCount)),
+                        if (bib.digitalDocuments.isNotEmpty)
+                          StatusPill(
+                            l10n.digitalCount(bib.digitalDocuments.length),
+                          ),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -547,24 +548,44 @@ class _ItemsTab extends StatelessWidget {
           item.warehouseName,
           if (item.shelfName case final s? when s.isNotEmpty) s,
         ].where((p) => p.isNotEmpty).join(' · ');
-        return ListTile(
-          leading: const Icon(Icons.menu_book_outlined),
-          title: Text(
-            item.callNumber == null || item.callNumber!.isEmpty
-                ? item.barcode
-                : '${item.barcode} · ${item.callNumber}',
-          ),
-          subtitle: Column(
+        // Viên trạng thái nằm dưới chứ không ở `trailing`: ListTile cấp cho trailing đúng bề rộng
+        // nó đòi, còn lại mới tới nhan đề — "Chưa đưa ra phục vụ" ở cỡ chữ lớn trên máy 360dp
+        // chiếm gần hết, ĐKCB bị ép xuống cột vài ký tự (thấy trên Samsung).
+        final theme = Theme.of(context);
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(location),
-              if (item.dueDate case final due?)
-                Text(l10n.dueBack(date.format(due.toLocal()))),
+              const Padding(
+                padding: EdgeInsets.only(top: 2, right: 16),
+                child: Icon(Icons.menu_book_outlined),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.callNumber == null || item.callNumber!.isEmpty
+                          ? item.barcode
+                          : '${item.barcode} · ${item.callNumber}',
+                      style: theme.textTheme.bodyLarge,
+                    ),
+                    Text(location, style: theme.textTheme.bodyMedium),
+                    if (item.dueDate case final due?)
+                      Text(
+                        l10n.dueBack(date.format(due.toLocal())),
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                    const SizedBox(height: 6),
+                    StatusPill(
+                      item.statusLabel,
+                      tone: item.isAvailable ? PillTone.good : PillTone.warn,
+                    ),
+                  ],
+                ),
+              ),
             ],
-          ),
-          trailing: StatusPill(
-            item.statusLabel,
-            tone: item.isAvailable ? PillTone.good : PillTone.warn,
           ),
         );
       },
@@ -901,12 +922,16 @@ class _CitationSheetState extends ConsumerState<_CitationSheet> {
     final l10n = L10n.of(context);
     final citation = ref.watch(_citationProvider((widget.bibId, _style)));
 
-    return Padding(
+    // Cuộn được và chừa vùng an toàn dưới: ở cỡ chữ lớn bảng này cao hơn nửa màn hình, hai nút
+    // cuối bị thanh điều hướng của hệ thống che mất (thấy trên Samsung).
+    return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(
         20,
         0,
         20,
-        MediaQuery.viewInsetsOf(context).bottom + 20,
+        MediaQuery.viewInsetsOf(context).bottom +
+            MediaQuery.viewPaddingOf(context).bottom +
+            20,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -949,7 +974,9 @@ class _CitationSheetState extends ConsumerState<_CitationSheet> {
                   child: SelectableText(value.content),
                 ),
                 const SizedBox(height: 12),
-                Row(
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
                   children: [
                     FilledButton.tonalIcon(
                       onPressed: () async {
@@ -964,7 +991,6 @@ class _CitationSheetState extends ConsumerState<_CitationSheet> {
                       icon: const Icon(Icons.copy),
                       label: Text(l10n.copyAction),
                     ),
-                    const SizedBox(width: 8),
                     OutlinedButton.icon(
                       onPressed: () => SharePlus.instance.share(
                         ShareParams(text: value.content),

@@ -71,15 +71,15 @@ void main() {
     await _waitFor(tester, find.byKey(const Key('home-search')));
 
     // Máy có thể còn phiên của bạn đọc khác từ lần chạy trước (khách thì chạm tab là ra đăng nhập).
-    await tester.tap(find.text('Sách của tôi').last);
+    await tester.tap(find.text('Tủ sách').last);
     await tester.pumpAndSettle();
     if (find.text('Đăng nhập bạn đọc').evaluate().isEmpty) {
       await tester.tap(find.text('Tài khoản').last);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Đăng xuất'));
       await _waitFor(tester, find.byKey(const Key('home-search')));
-      await _waitFor(tester, find.text('Sách của tôi'));
-      await tester.tap(find.text('Sách của tôi').last);
+      await _waitFor(tester, find.text('Tủ sách'));
+      await tester.tap(find.text('Tủ sách').last);
       await tester.pumpAndSettle();
     }
     await _waitFor(tester, find.text('Đăng nhập bạn đọc'));

@@ -21,7 +21,7 @@ class L10nVi extends L10n {
   String get tabScan => 'Quét mã';
 
   @override
-  String get tabMyLibrary => 'Sách của tôi';
+  String get tabMyLibrary => 'Tủ sách';
 
   @override
   String get tabAccount => 'Tài khoản';

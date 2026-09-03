@@ -124,7 +124,7 @@ abstract class L10n {
   /// No description provided for @tabMyLibrary.
   ///
   /// In vi, this message translates to:
-  /// **'Sách của tôi'**
+  /// **'Tủ sách'**
   String get tabMyLibrary;
 
   /// No description provided for @tabAccount.

@@ -348,7 +348,9 @@ static void AddRateLimiting(WebApplicationBuilder builder)
 
 static void AddHealthChecks(WebApplicationBuilder builder)
 {
-    var redis = builder.Configuration.GetSection(RedisOptions.SectionName)["ConnectionString"];
+    var redisSection = builder.Configuration.GetSection(RedisOptions.SectionName);
+    var redis = redisSection["ConnectionString"];
+    var redisEnabled = redisSection.GetValue("Enabled", true);
 
     var checks = builder.Services.AddHealthChecks()
         .AddNpgSql(
@@ -356,7 +358,11 @@ static void AddHealthChecks(WebApplicationBuilder builder)
             name: "postgresql",
             tags: new[] { "ready" });
 
-    if (!string.IsNullOrWhiteSpace(redis))
+    // A deployment that runs without Redis (Redis:Enabled=false — the cache degrades to memory)
+    // must not report 503 on /health/ready because of it. The default connection string is
+    // localhost:6379, so without this guard readiness depends on whatever happens to listen there:
+    // green on the development machine, red on a clean CI runner.
+    if (redisEnabled && !string.IsNullOrWhiteSpace(redis))
     {
         checks.AddRedis(redis, name: "redis", tags: new[] { "ready" });
     }

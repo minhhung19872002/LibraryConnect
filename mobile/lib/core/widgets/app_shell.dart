@@ -50,17 +50,24 @@ class AppShell extends StatelessWidget {
 
     return Scaffold(
       body: child,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
-        onDestinationSelected: (index) => context.go(_tabs[index].path),
-        destinations: [
-          for (var index = 0; index < _tabs.length; index++)
-            NavigationDestination(
-              icon: Icon(_tabs[index].icon),
-              selectedIcon: Icon(_tabs[index].selected),
-              label: labels[index],
-            ),
-        ],
+      // Năm nhãn chia nhau 360dp trên máy hẹp; để cỡ chữ hệ thống phóng nhãn lên là "Trang chủ" và
+      // "Sách của tôi" gãy hai dòng (thấy trên Samsung để cỡ chữ lớn). Thanh điều hướng giữ cỡ
+      // chữ chuẩn — biểu tượng đã mang nghĩa, nội dung màn hình vẫn phóng theo người dùng.
+      bottomNavigationBar: MediaQuery.withClampedTextScaling(
+        maxScaleFactor: 1.0,
+        child: NavigationBar(
+          selectedIndex: _index,
+          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+          onDestinationSelected: (index) => context.go(_tabs[index].path),
+          destinations: [
+            for (var index = 0; index < _tabs.length; index++)
+              NavigationDestination(
+                icon: Icon(_tabs[index].icon),
+                selectedIcon: Icon(_tabs[index].selected),
+                label: labels[index],
+              ),
+          ],
+        ),
       ),
     );
   }

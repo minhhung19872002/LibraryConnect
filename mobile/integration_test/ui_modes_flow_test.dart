@@ -41,7 +41,7 @@ void main() {
     } catch (_) {}
 
     // Đăng nhập bạn đọc có phiếu quá hạn (nhiều nhãn cảnh báo — dễ lộ tràn chữ).
-    await tester.tap(find.text('Sách của tôi').last);
+    await tester.tap(find.text('Tủ sách').last);
     await tester.pumpAndSettle();
     if (find.text('Đăng nhập bạn đọc').evaluate().isEmpty) {
       await tester.tap(find.text('Tài khoản').last);
@@ -49,8 +49,8 @@ void main() {
       await tester.scrollUntilVisible(find.byKey(const Key('sign-out')), 300);
       await tester.tap(find.byKey(const Key('sign-out')));
       await _waitFor(tester, find.byKey(const Key('home-search')));
-      await _waitFor(tester, find.text('Sách của tôi'));
-      await tester.tap(find.text('Sách của tôi').last);
+      await _waitFor(tester, find.text('Tủ sách'));
+      await tester.tap(find.text('Tủ sách').last);
       await tester.pumpAndSettle();
     }
     await _waitFor(tester, find.text('Đăng nhập bạn đọc'));
@@ -77,7 +77,7 @@ void main() {
     await shot(tester, 'mb-dark-account');
 
     // Sách của tôi ở chế độ tối + chữ lớn (và nạp bộ đệm đang mượn).
-    await tester.tap(find.text('Sách của tôi').last);
+    await tester.tap(find.text('Tủ sách').last);
     await _waitFor(tester, find.textContaining('Quá hạn'));
     await shot(tester, 'mb-dark-my-library');
 

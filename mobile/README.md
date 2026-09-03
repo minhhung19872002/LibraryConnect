@@ -110,6 +110,10 @@ flutter test integration_test -d <device> --dart-define=LC_API_BASE_URL=http://1
 - APK debug gộp mọi ABI nặng ~195 MB; máy ảo phải còn hơn 400 MB trống. Máy ảo thử nghiệm: `LC_Pixel` (Android 16,
   Pixel 9, ổ dữ liệu 8 GB), tạo bằng `avdmanager create avd -n LC_Pixel -k "system-images;android-36;google_apis_playstore;x86_64" -d pixel_9`.
 
+- **Soi ở bề rộng 360dp + cỡ chữ 1,3 trước khi phát hành** (lỗi I2 sổ lỗi): máy ảo Pixel 9 rộng 411dp nên
+  giấu hết lỗi tràn của điện thoại thật. Trên máy ảo: `adb shell wm density 480` và
+  `adb shell settings put system font_scale 1.3`; xong thì `wm density reset` + `font_scale 1.0`.
+
 ## Ảnh chụp màn hình làm bằng chứng
 
 Phép thử đầu-cuối tự chụp qua `flutter drive` (trình điều khiển `test_driver/integration_test.dart` ghi
