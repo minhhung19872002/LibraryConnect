@@ -39,6 +39,10 @@ void main() {
     'LC_TEST_PASSWORD',
     defaultValue: 'BanDoc@2025',
   );
+  const newsTitle = String.fromEnvironment(
+    'LC_TEST_NEWS_TITLE',
+    defaultValue: 'Thư viện mở cửa thứ Bảy',
+  );
   // Nhan đề chắc chắn có trong kho khi gõ không dấu "co so du lieu".
   const expectedTitle = String.fromEnvironment(
     'LC_TEST_TITLE',
@@ -76,7 +80,7 @@ void main() {
     await tester.tap(find.textContaining(expectedTitle).first);
     await _waitFor(tester, find.text('Thông tin'));
     await _waitFor(tester, find.textContaining('Bản in ('));
-    expect(find.text('Tài liệu số'), findsWidgets);
+    expect(find.textContaining('Tài liệu số'), findsWidgets);
     await shot('ios-04-chi-tiet');
 
     // Thẻ Bản in — chỗ đã vỡ trên máy hẹp, xem lại trên iOS.
@@ -97,6 +101,7 @@ void main() {
   });
 
   testWidgets('iOS: duyệt danh mục và tin tức', (tester) async {
+    await _toRoot(tester);
     await tester.tap(find.text('Trang chủ').last);
     await tester.pumpAndSettle();
     await _waitFor(tester, find.byKey(const Key('home-search')));
@@ -110,11 +115,10 @@ void main() {
     await tester.tap(find.byType(BackButton).first);
     await tester.pumpAndSettle();
 
-    // Tin tức: mở bài đầu tiên, nội dung HTML dựng thành chữ đọc được.
-    await _scrollTo(tester, find.textContaining('lượt xem'));
-    await tester.tap(find.textContaining('lượt xem').first);
-    await tester.pumpAndSettle(const Duration(seconds: 2));
-    await _waitFor(tester, find.byType(BackButton));
+    // Tin tức: mở bài, nội dung HTML dựng thành chữ đọc được.
+    await _scrollTo(tester, find.textContaining(newsTitle));
+    await tester.tap(find.textContaining(newsTitle).first);
+    await _waitFor(tester, find.textContaining('lượt xem'));
     await shot('ios-08-tin-tuc');
     await tester.tap(find.byType(BackButton).first);
     await tester.pumpAndSettle();
@@ -123,6 +127,7 @@ void main() {
   testWidgets('iOS: đăng nhập, tủ sách, thẻ điện tử, đăng xuất', (
     tester,
   ) async {
+    await _toRoot(tester);
     await tester.tap(find.text('Tủ sách').last);
     await tester.pumpAndSettle();
 
@@ -165,6 +170,16 @@ void main() {
     await _waitFor(tester, find.byKey(const Key('home-search')));
     await shot('ios-12-da-dang-xuat');
   });
+}
+
+/// Đóng mọi trang đã đẩy cho tới khi thanh điều hướng dưới hiện lại.
+Future<void> _toRoot(WidgetTester tester) async {
+  for (var i = 0; i < 6; i++) {
+    await tester.pumpAndSettle();
+    if (find.text('Trang chủ').evaluate().isNotEmpty) return;
+    if (find.byType(BackButton).evaluate().isEmpty) return;
+    await tester.tap(find.byType(BackButton).first);
+  }
 }
 
 Future<void> _scrollTo(WidgetTester tester, Finder finder) async {
