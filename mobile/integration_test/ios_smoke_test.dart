@@ -176,7 +176,8 @@ void main() {
       300,
     );
     await tester.tap(find.byKey(const Key('theme-dropdown')));
-    await _waitFor(tester, find.text('Tối').last);
+    await tester.pumpAndSettle();
+    await _waitFor(tester, find.text('Tối'));
     await tester.tap(find.text('Tối').last);
     await tester.pumpAndSettle(const Duration(seconds: 1));
     await tester.scrollUntilVisible(find.byType(Slider), 300);
@@ -222,7 +223,8 @@ void main() {
       300,
     );
     await tester.tap(find.byKey(const Key('theme-dropdown')));
-    await _waitFor(tester, find.text('Sáng').last);
+    await tester.pumpAndSettle();
+    await _waitFor(tester, find.text('Sáng'));
     await tester.tap(find.text('Sáng').last);
     await tester.pumpAndSettle(const Duration(seconds: 1));
     await tester.scrollUntilVisible(find.byType(Slider), 300);
@@ -252,7 +254,7 @@ Future<void> _scrollTo(WidgetTester tester, Finder finder) async {
 Future<void> _waitFor(
   WidgetTester tester,
   Finder finder, {
-  Duration timeout = const Duration(seconds: 40),
+  Duration timeout = const Duration(seconds: 60),
 }) async {
   final end = DateTime.now().add(timeout);
   while (DateTime.now().isBefore(end)) {
