@@ -47,7 +47,9 @@ flutter run -d emulator-5554 --dart-define=LC_PROFILE=dev --dart-define=LC_API_B
 # Điện thoại thật cùng Wi-Fi: thay bằng IP của máy phát triển
 flutter run --dart-define=LC_API_BASE_URL=http://192.168.1.20/api
 
-# Bản phát hành (ký bằng android/key.properties nếu có — xem android/key.properties.example; không có thì ký khoá debug)
+# Bản phát hành — PHẢI có android/key.properties + libraryconnect-release.jks (khoá ký phát hành, tạo 03/09/2026;
+# bản sao ngoài kho mã ở máy phát triển: %USERPROFILE%\.libraryconnect\; CI lấy từ secrets LC_ANDROID_*).
+# Không có tệp thì Gradle ký khoá debug của máy — bản ấy KHÔNG cài đè được lên bản đã phát hành.
 flutter build apk --release --dart-define=LC_PROFILE=prod --dart-define=LC_API_BASE_URL=https://thuvien.example.edu.vn/api
 flutter build appbundle --release --dart-define=LC_PROFILE=prod --dart-define=LC_API_BASE_URL=https://thuvien.example.edu.vn/api
 # Ghim chứng chỉ (tuỳ chọn): --dart-define=LC_CERT_PINS=<SHA-256 base64 của chứng chỉ máy chủ>

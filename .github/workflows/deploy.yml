@@ -6,7 +6,7 @@
 #                       forced command = deploy/scripts/gh-deploy.sh (khóa này không mở được shell)
 #   (GITHUB_TOKEN có sẵn) dùng để đẩy ảnh lên GHCR và để máy chủ kéo ảnh về (truyền qua stdin)
 #
-# Dựng APK: chưa có khóa ký phát hành trong CI nên APK ký bằng khóa debug, giống bản dựng tay.
+# Dựng APK: ký bằng khoá phát hành trong secrets LC_ANDROID_* (cùng khoá với máy phát triển).
 name: Deploy
 
 on:
@@ -93,6 +93,21 @@ jobs:
           flutter-version: 3.47.2
           cache: true
       - run: flutter pub get
+      # Khoá ký phát hành: cùng một khoá cho mọi bản dựng (CI lẫn máy phát triển), nếu không mỗi
+      # máy ký bằng khoá debug riêng và điện thoại từ chối cài đè ("Ứng dụng chưa được cài đặt").
+      # Bản sao khoá nằm ngoài kho mã ở máy phát triển; mất khoá là không cập nhật được app nữa.
+      - name: Khoá ký phát hành từ secrets
+        env:
+          KEYSTORE_BASE64: ${{ secrets.LC_ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          test -n "$KEYSTORE_BASE64" || { echo "Thiếu secret LC_ANDROID_KEYSTORE_BASE64"; exit 1; }
+          echo "$KEYSTORE_BASE64" | base64 -d > android/libraryconnect-release.jks
+          cat > android/key.properties <<EOF
+          storeFile=libraryconnect-release.jks
+          storePassword=${{ secrets.LC_ANDROID_KEYSTORE_PASSWORD }}
+          keyAlias=${{ secrets.LC_ANDROID_KEY_ALIAS }}
+          keyPassword=${{ secrets.LC_ANDROID_KEY_PASSWORD }}
+          EOF
       - name: Build release APK
         run: >
           flutter build apk --release
@@ -114,10 +129,10 @@ jobs:
         run: |
           gh release view mobile-latest --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 \
             || gh release create mobile-latest --repo "$GITHUB_REPOSITORY" --title "Ứng dụng di động — bản mới nhất" \
-                 --notes "Tự động dựng từ nhánh main. APK ký khóa debug, dùng để thử nghiệm." --latest=false
+                 --notes "Tự động dựng từ nhánh main. Ký bằng khoá phát hành LibraryConnect; cài đè được lên bản trước." --latest=false
           gh release upload mobile-latest LibraryConnect.apk --repo "$GITHUB_REPOSITORY" --clobber
           gh release edit mobile-latest --repo "$GITHUB_REPOSITORY" \
-            --notes "Dựng từ ${GITHUB_SHA} (run ${GITHUB_RUN_NUMBER}) lúc $(date -u +%FT%TZ). API: ${LC_API_BASE_URL}. APK ký khóa debug, dùng để thử nghiệm."
+            --notes "Dựng từ ${GITHUB_SHA} (run ${GITHUB_RUN_NUMBER}) lúc $(date -u +%FT%TZ). API: ${LC_API_BASE_URL}. Ký bằng khoá phát hành LibraryConnect; cài đè được lên bản trước."
 
   deploy:
     name: Máy chủ kéo bản mới
