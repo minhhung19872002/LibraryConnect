@@ -72,7 +72,7 @@ jobs:
   ios-simulator:
     name: Chạy trên iPhone Simulator
     runs-on: macos-15
-    timeout-minutes: 60
+    timeout-minutes: 45
     defaults:
       run:
         working-directory: mobile
@@ -114,7 +114,10 @@ jobs:
       - run: flutter devices
 
       # `flutter drive` để trình điều khiển nhận ảnh chụp; `flutter test` thì các điểm chụp bị bỏ qua.
+      # Hạn giờ riêng cho bước này: đã gặp một lượt máy ảo treo im lặng sau khi dựng xong, đốt trọn
+      # 60 phút của job rồi mới bị cắt. 25 phút là gấp đôi thời gian chạy thật.
       - name: Kiểm khói trên máy ảo, gọi máy chủ thật
+        timeout-minutes: 25
         run: >
           flutter drive
           --driver=test_driver/integration_test.dart
