@@ -186,11 +186,19 @@ void main() {
       await tester.enterText(find.byType(TextFormField).at(0), card);
       await tester.enterText(find.byType(TextFormField).at(1), password);
       await tester.tap(find.widgetWithText(FilledButton, 'Đăng nhập'));
-      await tester.pumpAndSettle(const Duration(seconds: 2));
-      if (find.text('Cỡ chữ').evaluate().isEmpty) {
-        await tester.tap(find.text('Tài khoản').last);
-        await tester.pumpAndSettle();
-      }
+      // Chờ lượt đăng nhập xong hẳn rồi mới chạm tiếp. Bấm sang thẻ khác khi nó còn đang bay là
+      // đổi trang ngay dưới chân bộ định tuyến: máy chủ trả 200 mà ứng dụng vẫn nằm ở trang đăng
+      // nhập, và phép thử chờ vô ích tới hết giờ.
+      await _waitForAny(tester, [
+        find.text('Cỡ chữ'),
+        find.byKey(const Key('home-bell')),
+      ]);
+    }
+
+    // Đăng nhập xong mà rơi về trang chủ thì tự sang thẻ Tài khoản.
+    if (find.text('Cỡ chữ').evaluate().isEmpty) {
+      await tester.tap(find.text('Tài khoản').last);
+      await tester.pumpAndSettle();
     }
 
     // Bật chế độ tối và kéo cỡ chữ lên hết nấc (0,85 – 1,6 trong ứng dụng, nhân lên cỡ chữ hệ điều hành).
@@ -258,6 +266,25 @@ void main() {
     await tester.tap(find.byKey(const Key('sign-out')));
     await _waitFor(tester, find.byKey(const Key('home-search')));
   });
+}
+
+/// Chờ **một trong** các dấu hiệu hiện ra — dùng khi một thao tác có thể dẫn tới vài màn hình khác nhau.
+Future<void> _waitForAny(
+  WidgetTester tester,
+  List<Finder> finders, {
+  Duration timeout = const Duration(seconds: 40),
+}) async {
+  final end = DateTime.now().add(timeout);
+  while (DateTime.now().isBefore(end)) {
+    await tester.pump(const Duration(milliseconds: 250));
+    if (finders.any((finder) => finder.evaluate().isNotEmpty)) {
+      await tester.pumpAndSettle();
+      return;
+    }
+  }
+  throw TestFailure(
+    'Không thấy màn hình nào trong ${finders.length} khả năng sau ${timeout.inSeconds} giây',
+  );
 }
 
 Future<void> _scrollTo(WidgetTester tester, Finder finder) async {
