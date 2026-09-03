@@ -101,9 +101,8 @@ void main() {
   });
 
   testWidgets('iOS: duyệt danh mục và tin tức', (tester) async {
-    await _toRoot(tester);
-    await tester.tap(find.text('Trang chủ').last);
-    await tester.pumpAndSettle();
+    app.main();
+    await tester.pumpAndSettle(const Duration(seconds: 2));
     await _waitFor(tester, find.byKey(const Key('home-search')));
 
     // Duyệt theo chủ đề: cây danh mục có ô lọc tại chỗ.
@@ -127,7 +126,9 @@ void main() {
   testWidgets('iOS: đăng nhập, tủ sách, thẻ điện tử, đăng xuất', (
     tester,
   ) async {
-    await _toRoot(tester);
+    app.main();
+    await tester.pumpAndSettle(const Duration(seconds: 2));
+    await _waitFor(tester, find.byKey(const Key('home-search')));
     await tester.tap(find.text('Tủ sách').last);
     await tester.pumpAndSettle();
 
@@ -170,16 +171,6 @@ void main() {
     await _waitFor(tester, find.byKey(const Key('home-search')));
     await shot('ios-12-da-dang-xuat');
   });
-}
-
-/// Đóng mọi trang đã đẩy cho tới khi thanh điều hướng dưới hiện lại.
-Future<void> _toRoot(WidgetTester tester) async {
-  for (var i = 0; i < 6; i++) {
-    await tester.pumpAndSettle();
-    if (find.text('Trang chủ').evaluate().isNotEmpty) return;
-    if (find.byType(BackButton).evaluate().isEmpty) return;
-    await tester.tap(find.byType(BackButton).first);
-  }
 }
 
 Future<void> _scrollTo(WidgetTester tester, Finder finder) async {
