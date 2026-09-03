@@ -1,0 +1,18 @@
+# =============================================================================
+# LibraryConnect — lớp dùng ảnh dựng sẵn từ GitHub Container Registry thay vì dựng tại chỗ.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml \
+#                  -f docker-compose.behind-proxy.yml -f docker-compose.ghcr.yml pull
+#   docker compose ... up -d --no-build
+#
+# Ảnh do .github/workflows/deploy.yml dựng và đẩy lên mỗi khi nhánh main đổi. Đặt LC_IMAGE_TAG
+# trong .env để ghim một bản cụ thể (mã commit) khi cần quay lại bản trước; để trống là `latest`.
+# =============================================================================
+
+services:
+  api:
+    image: ghcr.io/minhhung19872002/libraryconnect-api:${LC_IMAGE_TAG:-latest}
+  admin:
+    image: ghcr.io/minhhung19872002/libraryconnect-admin:${LC_IMAGE_TAG:-latest}
+  opac:
+    image: ghcr.io/minhhung19872002/libraryconnect-opac:${LC_IMAGE_TAG:-latest}

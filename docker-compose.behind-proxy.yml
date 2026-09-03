@@ -14,3 +14,9 @@ services:
     ports: !override []
     volumes: !override
       - ./deploy/nginx/nginx.behind-proxy.conf:/etc/nginx/conf.d/default.conf:ro
+
+  # Tệp tải về cho người dùng (APK Android) — deploy/scripts/gh-deploy.sh đặt bản mới nhất vào
+  # ./downloads, OPAC phục vụ tại /downloads/LibraryConnect.apk.
+  opac:
+    volumes:
+      - ./downloads:/usr/share/nginx/html/downloads:ro

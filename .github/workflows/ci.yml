@@ -1,0 +1,81 @@
+# Kiểm thử từ một bản clone sạch — chính là chỗ lỗi I1 (tệp chưa vào Git) lọt qua 14 phase.
+# Chạy cho mọi pull request và mọi lần đẩy lên main; deploy.yml gọi lại workflow này trước khi
+# dựng ảnh, nên không có gì lên máy chủ mà chưa qua đủ bốn việc dưới đây.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+    paths-ignore: ['docs/**', '*.md']
+  workflow_call:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend (.NET 8) — unit + integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Restore
+        run: dotnet restore backend/LibraryConnect.sln
+      - name: Build (warnings are errors)
+        run: dotnet build backend/LibraryConnect.sln -c Release --no-restore -warnaserror
+      # Integration tests dựng PostgreSQL bằng Testcontainers; runner của GitHub có sẵn Docker.
+      - name: Test
+        run: dotnet test backend/LibraryConnect.sln -c Release --no-build --logger "trx;LogFileName=results.trx"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-test-results
+          path: backend/**/TestResults/*.trx
+          retention-days: 7
+
+  frontend:
+    name: Frontend ${{ matrix.app }} — tsc + vitest
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [frontend-admin, frontend-opac]
+    defaults:
+      run:
+        working-directory: ${{ matrix.app }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ${{ matrix.app }}/package-lock.json
+      - run: npm ci
+      # `tsc --noEmit` không kiểm gì ở đây (tsconfig.json là tệp solution rỗng) — phải là `tsc -b`.
+      - run: npx tsc -b
+      - run: npx vitest run --config vitest.config.ts
+
+  mobile:
+    name: Mobile (Flutter) — analyze + format + test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.2
+          cache: true
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: dart format --set-exit-if-changed lib test
+      - run: flutter test

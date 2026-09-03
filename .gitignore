@@ -34,3 +34,6 @@ deploy/backups/
 
 # Khóa riêng và chứng thư HTTPS không đưa vào Git
 deploy/nginx/certs/*.pem
+
+# Rác của công cụ IDE, không phải workflow
+.github/modernize/
