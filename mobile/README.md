@@ -9,7 +9,7 @@ chủ quyết; ứng dụng hiển thị và gửi yêu cầu.
 |---|---|
 | Flutter package | `libraryconnect_mobile` |
 | Application ID Android / Bundle ID iOS | `vn.bluestar.libraryconnect` |
-| Nền tảng | Android 8.0+ (API 26), iOS 14+ |
+| Nền tảng | Android 8.0+ (API 26), iOS 15.5+ |
 | Flutter / Dart | 3.47 / 3.13 (kênh stable) |
 
 ## Cấu trúc
@@ -56,6 +56,9 @@ flutter build appbundle --release --dart-define=LC_PROFILE=prod --dart-define=LC
 # Đầu ra: build/app/outputs/flutter-apk/app-release.apk, build/app/outputs/bundle/release/app-release.aab
 
 # iOS (cần máy Mac + Xcode; bundle id vn.bluestar.libraryconnect, Info.plist đã khai quyền camera/Face ID/vị trí)
+# Ngưỡng iOS tối thiểu 15.5 — do mobile_scanner 7 và Firebase iOS SDK 12 đòi; đặt ở ios/Podfile,
+# ios/Flutter/AppFrameworkInfo.plist và IPHONEOS_DEPLOYMENT_TARGET trong project.pbxproj.
+flutter build ios --release --no-codesign   # kiểm biên dịch, không cần tài khoản Apple
 flutter build ipa --release --dart-define=LC_PROFILE=prod --dart-define=LC_API_BASE_URL=https://thuvien.example.edu.vn/api
 ```
 
@@ -112,6 +115,10 @@ flutter test integration_test -d <device> --dart-define=LC_API_BASE_URL=http://1
 - APK debug gộp mọi ABI nặng ~195 MB; máy ảo phải còn hơn 400 MB trống. Máy ảo thử nghiệm: `LC_Pixel` (Android 16,
   Pixel 9, ổ dữ liệu 8 GB), tạo bằng `avdmanager create avd -n LC_Pixel -k "system-images;android-36;google_apis_playstore;x86_64" -d pixel_9`.
 
+- **iOS dựng và chạy trên máy Mac của GitHub Actions** (`.github/workflows/ios.yml`): job `ios-build`
+  dựng bản phát hành không ký, job `ios-simulator` chạy `integration_test/ios_smoke_test.dart` trên
+  iPhone Simulator với máy chủ thật rồi tải ảnh chụp lên artifact `ios-screenshots`. Máy Mac ấy
+  không có Docker nên không dựng được máy chủ riêng: chỉ chạy các luồng không đổi dữ liệu.
 - **Soi ở bề rộng 360dp + cỡ chữ 1,3 trước khi phát hành** (lỗi I2 sổ lỗi): máy ảo Pixel 9 rộng 411dp nên
   giấu hết lỗi tràn của điện thoại thật. Trên máy ảo: `adb shell wm density 480` và
   `adb shell settings put system font_scale 1.3`; xong thì `wm density reset` + `font_scale 1.0`.

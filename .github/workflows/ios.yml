@@ -1,0 +1,121 @@
+# Kiểm ứng dụng di động trên iOS bằng máy Mac của GitHub Actions.
+#
+# Máy phát triển chạy Windows nên không dựng được iOS; đây là chỗ duy nhất trong quy trình có
+# macOS + Xcode. Hai việc:
+#   1. `ios-build`  — dựng bản phát hành iOS (không ký). Bắt các lỗi cấu trúc: CocoaPods, ngưỡng
+#      iOS tối thiểu, gói không có bản iOS, mã Swift/ObjC của plugin.
+#   2. `ios-simulator` — chạy thật trên iPhone Simulator, gọi vào máy chủ thật, chụp ảnh từng màn
+#      hình làm bằng chứng nghiệm thu (E-HSMT mục 2.7).
+#
+# Chỉ chạy những luồng KHÔNG đổi dữ liệu — xem chú thích đầu `integration_test/ios_smoke_test.dart`.
+# Ký và phát hành lên TestFlight cần tài khoản Apple Developer, chưa có.
+name: iOS
+
+on:
+  push:
+    branches: [main]
+    paths: ['mobile/**', '.github/workflows/ios.yml']
+  pull_request:
+    paths: ['mobile/**', '.github/workflows/ios.yml']
+  workflow_dispatch:
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: 3.47.2
+  LC_API_BASE_URL: https://thuvien.bluestar.com.vn/api
+
+jobs:
+  ios-build:
+    name: Dựng bản iOS (không ký)
+    runs-on: macos-15
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - run: flutter --version
+      - run: flutter pub get
+      - name: Bản dựng iOS phát hành
+        run: >
+          flutter build ios --release --no-codesign
+          --dart-define=LC_PROFILE=prod
+          --dart-define=LC_API_BASE_URL=${{ env.LC_API_BASE_URL }}
+          --dart-define=LC_APP_VERSION=1.0.0
+          --build-number=${{ github.run_number }}
+      - name: Kích thước và ngưỡng iOS của bản dựng
+        run: |
+          APP=build/ios/iphoneos/Runner.app
+          du -sh "$APP"
+          /usr/libexec/PlistBuddy -c 'Print :MinimumOSVersion' "$APP/Info.plist"
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Info.plist"
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Info.plist"
+      - name: Podfile.lock (danh sách pod đã khoá)
+        if: always()
+        run: test -f ios/Podfile.lock && head -60 ios/Podfile.lock || echo "chưa sinh Podfile.lock"
+
+  ios-simulator:
+    name: Chạy trên iPhone Simulator
+    runs-on: macos-15
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - run: flutter pub get
+
+      - name: Khởi động iPhone Simulator
+        id: sim
+        run: |
+          xcrun simctl list devices available
+          UDID=$(xcrun simctl list devices available --json | jq -r '
+            [ .devices
+              | to_entries[]
+              | select(.key | test("iOS"))
+              | .value[]
+              | select(.name | startswith("iPhone"))
+            ] | sort_by(.name) | last | .udid')
+          test -n "$UDID" && test "$UDID" != "null" || { echo "Không có iPhone Simulator nào"; exit 1; }
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl list devices | grep "$UDID"
+      - run: flutter devices
+
+      # `flutter drive` để trình điều khiển nhận ảnh chụp; `flutter test` thì các điểm chụp bị bỏ qua.
+      - name: Kiểm khói trên máy ảo, gọi máy chủ thật
+        run: >
+          flutter drive
+          --driver=test_driver/integration_test.dart
+          --target=integration_test/ios_smoke_test.dart
+          -d ${{ steps.sim.outputs.udid }}
+          --dart-define=LC_PROFILE=dev
+          --dart-define=LC_API_BASE_URL=${{ env.LC_API_BASE_URL }}
+
+      - name: Ảnh chụp làm bằng chứng
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-screenshots
+          path: mobile/build/screenshots/
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Nhật ký máy ảo khi hỏng
+        if: failure()
+        run: |
+          xcrun simctl spawn ${{ steps.sim.outputs.udid }} log show --last 3m --predicate 'process == "Runner"' --style compact | tail -100 || true
