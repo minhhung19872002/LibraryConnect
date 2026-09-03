@@ -51,19 +51,22 @@ public class InstallationTests
         _factory.SeededAdminForcedPasswordChange.Should().BeTrue(
             "tài khoản quản trị mặc định phải đổi mật khẩu ở lần đăng nhập đầu tiên");
 
-        var client = _factory.CreateClient();
-
-        // Mật khẩu mặc định nằm công khai trong tài liệu cài đặt, nên sau khi đã đổi thì nó phải
-        // hết tác dụng ngay.
-        var response = await client.PostAsJsonAsync("/api/auth/login",
-            new { username = LibraryConnectFactory.AdminUsername, password = LibraryConnectFactory.AdminPassword });
-
-        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-
+        // Đi đúng đường người dùng thật: đăng nhập bằng mật khẩu tạm rồi đổi (SignInAsync của
+        // fixture làm việc ấy nếu chưa ai đổi). Bài này phải tự làm bước đó, không được trông chờ
+        // một bài khác đã đổi trước — chạy riêng lớp InstallationTests thì không có bài nào như thế
+        // và khẳng định 401 bên dưới đỏ.
         var working = await _factory.CreateAuthenticatedClientAsync(
             LibraryConnectFactory.AdminUsername, LibraryConnectFactory.AdminPassword);
 
         (await working.GetAsync("/api/auth/me")).IsSuccessStatusCode.Should().BeTrue();
+
+        // Mật khẩu tạm nằm công khai trong tài liệu cài đặt, nên sau khi đã đổi thì nó phải hết
+        // tác dụng ngay.
+        var client = _factory.CreateClient();
+        var response = await client.PostAsJsonAsync("/api/auth/login",
+            new { username = LibraryConnectFactory.AdminUsername, password = LibraryConnectFactory.AdminPassword });
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
