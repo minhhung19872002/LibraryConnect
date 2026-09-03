@@ -128,7 +128,9 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
     final reader = ref.watch(currentReaderProvider);
     final display = ref.watch(displaySettingsProvider);
     final version = ref.watch(appVersionProvider).value;
-    final unread = ref.watch(unreadCountProvider).value ?? 0;
+    final unread = reader == null
+        ? 0
+        : ref.watch(unreadCountProvider).value ?? 0;
 
     return Scaffold(
       appBar: AppBar(

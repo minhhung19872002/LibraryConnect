@@ -125,7 +125,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return state.uri.queryParameters['tiep'] ?? Routes.home;
       }
 
-      final needsAuth = _protected.any(
+      final needsAuth = protectedRoutes.any(
         (prefix) => state.matchedLocation.startsWith(prefix),
       );
 
@@ -271,8 +271,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   );
 });
 
-const _protected = [
-  Routes.account,
+/// Những nhánh chỉ mở sau khi đăng nhập; khách bấm vào bị đưa sang trang đăng nhập kèm `tiep`.
+///
+/// **Thẻ Tài khoản cố ý không nằm trong danh sách này.** Màn hình ấy chứa chế độ tối và cỡ chữ —
+/// hai tuỳ chọn trợ năng, người chưa có thẻ thư viện cũng phải đổi được. Bản thân màn hình đã có
+/// nhánh cho khách (hiện thẻ mời đăng nhập thay cho hồ sơ), chỉ bộ định tuyến chặn mất.
+const protectedRoutes = [
   Routes.myLibrary,
   Routes.card,
   Routes.selfCheckout,
