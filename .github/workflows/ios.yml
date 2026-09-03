@@ -19,11 +19,9 @@ on:
     paths: ['mobile/**', '.github/workflows/ios.yml']
   workflow_dispatch:
 
-# Dùng chung nhóm với workflow kia: cả hai đều đụng tới máy chủ thật. Đã gặp một lượt kiểm iOS
-# đăng nhập được (máy chủ trả 200) rồi đứng im, vì Deploy khởi động lại `lc-api` đúng lúc ấy.
 concurrency:
-  group: lc-production-server
-  cancel-in-progress: false
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   FLUTTER_VERSION: 3.47.2
@@ -114,6 +112,20 @@ jobs:
           xcrun simctl bootstatus "$UDID" -b
           xcrun simctl list devices | grep "$UDID"
       - run: flutter devices
+
+      - name: Chờ máy chủ sẵn sàng
+        run: |
+          # Cùng một lần đẩy mã cũng chạy workflow Deploy, và nó khởi động lại `lc-api`. Một lượt
+          # kiểm đã đăng nhập được (máy chủ ghi 200) rồi đứng im vì trúng đúng lúc ấy. Chờ máy chủ
+          # trả lời đã rồi hãy chạy.
+          for i in $(seq 1 60); do
+            code=$(curl -s -o /dev/null -m 15 -w '%{http_code}' "${LC_API_BASE_URL}/public/settings" || echo 000)
+            if [ "$code" = "200" ]; then echo "máy chủ sẵn sàng sau $((i * 10)) giây"; exit 0; fi
+            echo "t=$((i * 10))s http=$code"
+            sleep 10
+          done
+          echo "::error::Máy chủ không trả 200 sau 10 phút"
+          exit 1
 
       # `flutter drive` để trình điều khiển nhận ảnh chụp; `flutter test` thì các điểm chụp bị bỏ qua.
       # Hạn giờ riêng cho bước này: đã gặp một lượt máy ảo treo im lặng sau khi dựng xong, đốt trọn
