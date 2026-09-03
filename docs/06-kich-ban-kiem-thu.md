@@ -65,7 +65,7 @@ Ký hiệu bám theo **Mục 5 phần 2 của E-HSMT**.
 | 2.6.7 | Sao lưu tự động | Đặt lịch cron, khởi động lại dịch vụ API, xem `/hangfire` | Tác vụ `libraryconnect:auto-backup` xuất hiện đúng lịch đã đặt | | | |
 | 2.6.8 | Giữ N bản gần nhất | Đặt *Số bản sao lưu giữ lại* = 3, sao lưu 4 lần | Chỉ còn 3 tệp trên đĩa; lịch sử vẫn hiển thị đủ 4 dòng, dòng cũ nhất báo tệp đã bị xóa | | | |
 | 2.6.9 | Sao lưu chạy nền, không chiếm lượt HTTP | Bấm **Sao lưu ngay** rồi đóng ngay hộp thoại; bấm **Sao lưu ngay** lần thứ hai khi lượt đầu chưa xong | Lượt đầu trả về tức thì với trạng thái *Đã xếp hàng*, bảng tự cập nhật sang *Đang chạy* rồi *Thành công* mà không cần bấm tải lại; lượt thứ hai bị từ chối 409 kèm câu chỉ chỗ xem tiến độ. Lượt treo quá 6 giờ (máy chủ bị khởi động lại giữa chừng) tự chuyển sang *Thất bại* thay vì khoá mọi lần sau | Đúng như mong đợi (`BackupTests`, ba phép thử đỏ trước khi sửa) | Đạt |
-| 2.6.9 | Cảnh báo khi hết dung lượng | Xem thẻ *Dung lượng bản sao lưu* trên màn hình Sao lưu | Hiển thị dung lượng đã dùng và còn trống; thanh tiến trình chuyển đỏ khi vượt 90% | | | |
+| 2.6.10 | Cảnh báo khi hết dung lượng | Xem thẻ *Dung lượng bản sao lưu* trên màn hình Sao lưu | Hiển thị dung lượng đã dùng và còn trống; thanh tiến trình chuyển đỏ khi vượt 90% | | | |
 
 ---
 
