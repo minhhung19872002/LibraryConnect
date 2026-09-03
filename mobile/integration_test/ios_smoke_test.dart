@@ -7,7 +7,8 @@ import 'package:libraryconnect_mobile/main.dart' as app;
 /// thật** `https://thuvien.bluestar.com.vn/api`.
 ///
 /// Chỉ đi những đường **không đổi dữ liệu**: xem trang chủ, tra cứu không dấu, chi tiết tài liệu,
-/// trích dẫn, duyệt danh mục, tin tức, đăng nhập – xem thẻ – xem tủ sách – đăng xuất. Ba luồng có
+/// trích dẫn, duyệt danh mục, tin tức, đăng nhập – xem thẻ – xem tủ sách – đăng xuất, và chế độ
+/// tối + cỡ chữ lớn nhất (chỉ đổi tuỳ chọn lưu trong máy, không gọi máy chủ). Ba luồng có
 /// ghi (đặt giữ, gia hạn, mượn tự phục vụ) **không** chạy ở đây vì máy Mac của GitHub không dựng
 /// được máy chủ riêng (không có Docker), mà chạy vào máy chủ thật thì sinh phiếu mượn thật. Ba
 /// luồng ấy đã kiểm trên Android với máy chủ Docker — xem `docs/06`, MB.19–MB.20 và MB.30–MB.31.
@@ -170,6 +171,75 @@ void main() {
     await tester.tap(find.byKey(const Key('sign-out')));
     await _waitFor(tester, find.byKey(const Key('home-search')));
     await shot('ios-12-da-dang-xuat');
+  });
+
+  testWidgets('iOS: chế độ tối và cỡ chữ lớn nhất', (tester) async {
+    app.main();
+    await tester.pumpAndSettle(const Duration(seconds: 2));
+    await _waitFor(tester, find.byKey(const Key('home-search')));
+
+    // Bật chế độ tối và kéo cỡ chữ lên hết nấc (0,85 – 1,6 trong ứng dụng, nhân lên cỡ chữ hệ điều hành).
+    await tester.tap(find.text('Tài khoản').last);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('theme-dropdown')),
+      300,
+    );
+    await tester.tap(find.byKey(const Key('theme-dropdown')));
+    await _waitFor(tester, find.text('Tối').last);
+    await tester.tap(find.text('Tối').last);
+    await tester.pumpAndSettle(const Duration(seconds: 1));
+    await tester.scrollUntilVisible(find.byType(Slider), 300);
+    await tester.drag(find.byType(Slider), const Offset(400, 0));
+    await tester.pumpAndSettle();
+
+    // Đo chứ không nhìn: nền phải là bảng màu tối và một chữ cỡ 14 phải nở ra rõ rệt.
+    final context = tester.element(find.byType(Scaffold).first);
+    expect(Theme.of(context).brightness, Brightness.dark);
+    expect(MediaQuery.textScalerOf(context).scale(14), greaterThan(20));
+    await shot('ios-13-toi-tai-khoan');
+
+    // Ba màn hình dễ tràn chữ nhất ở cỡ chữ lớn: trang chủ, kết quả tra cứu, chi tiết.
+    await tester.tap(find.text('Trang chủ').last);
+    await tester.pumpAndSettle();
+    await _waitFor(tester, find.text('Sách mới bổ sung'));
+    await shot('ios-14-toi-trang-chu');
+
+    await tester.tap(find.text('Tra cứu').last);
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('search-field')),
+      'co so du lieu',
+    );
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await _waitFor(tester, find.textContaining(expectedTitle));
+    await shot('ios-15-toi-ket-qua');
+
+    await tester.tap(find.textContaining(expectedTitle).first);
+    await _waitFor(tester, find.text('Thông tin'));
+    await shot('ios-16-toi-chi-tiet');
+    await tester.tap(find.textContaining('Bản in (').first);
+    await tester.pumpAndSettle(const Duration(seconds: 1));
+    await shot('ios-17-toi-ban-in');
+    await tester.tap(find.byType(BackButton).first);
+    await tester.pumpAndSettle();
+
+    // Trả lại chế độ sáng và cỡ chữ thường — đổi được cả hai chiều mới là chạy đúng.
+    await tester.tap(find.text('Tài khoản').last);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('theme-dropdown')),
+      300,
+    );
+    await tester.tap(find.byKey(const Key('theme-dropdown')));
+    await _waitFor(tester, find.text('Sáng').last);
+    await tester.tap(find.text('Sáng').last);
+    await tester.pumpAndSettle(const Duration(seconds: 1));
+    await tester.scrollUntilVisible(find.byType(Slider), 300);
+    await tester.drag(find.byType(Slider), const Offset(-400, 0));
+    await tester.pumpAndSettle();
+    final back = tester.element(find.byType(Scaffold).first);
+    expect(Theme.of(back).brightness, Brightness.light);
   });
 }
 
