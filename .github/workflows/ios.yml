@@ -122,7 +122,12 @@ jobs:
           set -o pipefail
           # Ghi ra tệp: khi GitHub cắt bước vì quá giờ, phần đuôi của nhật ký trên màn hình bị mất,
           # mà đúng phần đuôi ấy mới nói được nó kẹt ở đâu. Bước dưới in lại tệp này khi hỏng.
-          flutter drive -v             --driver=test_driver/integration_test.dart             --target=integration_test/ios_smoke_test.dart             -d ${{ steps.sim.outputs.udid }}             --dart-define=LC_PROFILE=dev             --dart-define=LC_API_BASE_URL=${{ env.LC_API_BASE_URL }} 2>&1 | tee drive.log
+          flutter drive \
+            --driver=test_driver/integration_test.dart \
+            --target=integration_test/ios_smoke_test.dart \
+            -d ${{ steps.sim.outputs.udid }} \
+            --dart-define=LC_PROFILE=dev \
+            --dart-define=LC_API_BASE_URL=${{ env.LC_API_BASE_URL }} 2>&1 | tee drive.log
 
       - name: Ảnh chụp làm bằng chứng
         if: always()
