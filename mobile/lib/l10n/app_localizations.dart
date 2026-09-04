@@ -2328,6 +2328,72 @@ abstract class L10n {
   /// In vi, this message translates to:
   /// **'Máy chủ'**
   String get serverLabel;
+
+  /// No description provided for @a11yLibraryLogo.
+  ///
+  /// In vi, this message translates to:
+  /// **'Biểu tượng thư viện'**
+  String get a11yLibraryLogo;
+
+  /// No description provided for @a11yCardBarcode.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mã vạch thẻ thư viện, số thẻ {number}'**
+  String a11yCardBarcode(String number);
+
+  /// No description provided for @a11yCardQr.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mã QR thẻ thư viện, số thẻ {number}'**
+  String a11yCardQr(String number);
+
+  /// No description provided for @a11yCover.
+  ///
+  /// In vi, this message translates to:
+  /// **'Ảnh bìa: {title}'**
+  String a11yCover(String title);
+
+  /// No description provided for @a11yScannerView.
+  ///
+  /// In vi, this message translates to:
+  /// **'Khung quét mã. Hướng máy ảnh vào mã vạch hoặc mã QR.'**
+  String get a11yScannerView;
+
+  /// No description provided for @a11yCheckoutScannerView.
+  ///
+  /// In vi, this message translates to:
+  /// **'Khung quét mã vạch sách. Hướng máy ảnh vào mã vạch trên gáy sách.'**
+  String get a11yCheckoutScannerView;
+
+  /// No description provided for @a11yOpenDetail.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mở chi tiết tài liệu'**
+  String get a11yOpenDetail;
+
+  /// No description provided for @a11yReaderPage.
+  ///
+  /// In vi, this message translates to:
+  /// **'Trang {page} trên {total} của tài liệu'**
+  String a11yReaderPage(int page, int total);
+
+  /// No description provided for @outline.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mục lục'**
+  String get outline;
+
+  /// No description provided for @outlineEmpty.
+  ///
+  /// In vi, this message translates to:
+  /// **'Tài liệu này không có mục lục.'**
+  String get outlineEmpty;
+
+  /// No description provided for @outlineOffline.
+  ///
+  /// In vi, this message translates to:
+  /// **'Mục lục lưu kèm gói ngoại tuyến.'**
+  String get outlineOffline;
 }
 
 class _L10nDelegate extends LocalizationsDelegate<L10n> {

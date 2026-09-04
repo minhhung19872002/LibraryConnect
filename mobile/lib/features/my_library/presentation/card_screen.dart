@@ -322,33 +322,45 @@ class _CardFace extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             if (card.isActive) ...[
-              Center(
-                child: BarcodeWidget(
-                  key: const Key('card-barcode'),
-                  barcode: Barcode.code128(),
-                  data: card.barcodeValue.isEmpty
-                      ? card.cardNumber
-                      : card.barcodeValue,
-                  width: double.infinity,
-                  height: 90,
-                  color: LcColors.ink,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    letterSpacing: 3,
-                    fontFamily: 'monospace',
+              // Trình đọc màn hình không đọc được vạch và ô vuông: hai mã đọc thành số thẻ.
+              Semantics(
+                label: l10n.a11yCardBarcode(card.cardNumber),
+                image: true,
+                excludeSemantics: true,
+                child: Center(
+                  child: BarcodeWidget(
+                    key: const Key('card-barcode'),
+                    barcode: Barcode.code128(),
+                    data: card.barcodeValue.isEmpty
+                        ? card.cardNumber
+                        : card.barcodeValue,
+                    width: double.infinity,
+                    height: 90,
+                    color: LcColors.ink,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      letterSpacing: 3,
+                      fontFamily: 'monospace',
+                    ),
                   ),
                 ),
               ),
               const SizedBox(height: 20),
-              Center(
-                child: BarcodeWidget(
-                  barcode: Barcode.qrCode(),
-                  data: card.barcodeValue.isEmpty
-                      ? card.cardNumber
-                      : card.barcodeValue,
-                  width: 180,
-                  height: 180,
-                  color: LcColors.ink,
-                  drawText: false,
+              Semantics(
+                label: l10n.a11yCardQr(card.cardNumber),
+                image: true,
+                excludeSemantics: true,
+                child: Center(
+                  child: BarcodeWidget(
+                    key: const Key('card-qr'),
+                    barcode: Barcode.qrCode(),
+                    data: card.barcodeValue.isEmpty
+                        ? card.cardNumber
+                        : card.barcodeValue,
+                    width: 180,
+                    height: 180,
+                    color: LcColors.ink,
+                    drawText: false,
+                  ),
                 ),
               ),
               const SizedBox(height: 12),

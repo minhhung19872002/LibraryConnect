@@ -198,16 +198,21 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                MobileScanner(
-                  controller: _scanner,
-                  onDetect: _onDetect,
-                  errorBuilder: (context, error) => _CameraError(
-                    message:
-                        error.errorCode ==
-                            MobileScannerErrorCode.permissionDenied
-                        ? l10n.scanCameraDenied
-                        : error.errorDetails?.message ?? error.errorCode.name,
-                    onEnter: _enterManually,
+                // Hình từ máy ảnh không có gì để đọc; trình đọc màn hình nghe được đây là khung
+                // quét và phải làm gì với nó.
+                Semantics(
+                  label: l10n.a11yScannerView,
+                  child: MobileScanner(
+                    controller: _scanner,
+                    onDetect: _onDetect,
+                    errorBuilder: (context, error) => _CameraError(
+                      message:
+                          error.errorCode ==
+                              MobileScannerErrorCode.permissionDenied
+                          ? l10n.scanCameraDenied
+                          : error.errorDetails?.message ?? error.errorCode.name,
+                      onEnter: _enterManually,
+                    ),
                   ),
                 ),
                 IgnorePointer(
@@ -413,16 +418,21 @@ class _StatusPanel extends StatelessWidget {
       ),
     };
 
-    return SafeArea(
-      top: false,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          border: const Border(top: BorderSide(color: LcColors.border)),
+    // liveRegion: kết quả mỗi lần quét (đang tra, không thấy, nhiều kết quả) được đọc lên ngay.
+    return Semantics(
+      liveRegion: true,
+      container: true,
+      child: SafeArea(
+        top: false,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            border: const Border(top: BorderSide(color: LcColors.border)),
+          ),
+          child: child,
         ),
-        child: child,
       ),
     );
   }

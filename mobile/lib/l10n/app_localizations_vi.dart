@@ -1248,4 +1248,47 @@ class L10nVi extends L10n {
 
   @override
   String get serverLabel => 'Máy chủ';
+
+  @override
+  String get a11yLibraryLogo => 'Biểu tượng thư viện';
+
+  @override
+  String a11yCardBarcode(String number) {
+    return 'Mã vạch thẻ thư viện, số thẻ $number';
+  }
+
+  @override
+  String a11yCardQr(String number) {
+    return 'Mã QR thẻ thư viện, số thẻ $number';
+  }
+
+  @override
+  String a11yCover(String title) {
+    return 'Ảnh bìa: $title';
+  }
+
+  @override
+  String get a11yScannerView =>
+      'Khung quét mã. Hướng máy ảnh vào mã vạch hoặc mã QR.';
+
+  @override
+  String get a11yCheckoutScannerView =>
+      'Khung quét mã vạch sách. Hướng máy ảnh vào mã vạch trên gáy sách.';
+
+  @override
+  String get a11yOpenDetail => 'Mở chi tiết tài liệu';
+
+  @override
+  String a11yReaderPage(int page, int total) {
+    return 'Trang $page trên $total của tài liệu';
+  }
+
+  @override
+  String get outline => 'Mục lục';
+
+  @override
+  String get outlineEmpty => 'Tài liệu này không có mục lục.';
+
+  @override
+  String get outlineOffline => 'Mục lục lưu kèm gói ngoại tuyến.';
 }

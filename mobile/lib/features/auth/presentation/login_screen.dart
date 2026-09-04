@@ -117,24 +117,31 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   children: [
                     Row(
                       children: [
-                        Container(
-                          width: 44,
-                          height: 44,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: LcColors.green,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            (settings?.libraryName ?? 'T')
-                                .trim()
-                                .characters
-                                .first
-                                .toUpperCase(),
-                            style: const TextStyle(
-                              color: LcColors.cream,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 18,
+                        // Ô chữ cái đầu là trang trí: trình đọc màn hình đọc "Biểu tượng thư
+                        // viện" thay vì một chữ "T" lơ lửng.
+                        Semantics(
+                          label: l10n.a11yLibraryLogo,
+                          image: true,
+                          excludeSemantics: true,
+                          child: Container(
+                            width: 44,
+                            height: 44,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: LcColors.green,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              (settings?.libraryName ?? 'T')
+                                  .trim()
+                                  .characters
+                                  .first
+                                  .toUpperCase(),
+                              style: const TextStyle(
+                                color: LcColors.cream,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 18,
+                              ),
                             ),
                           ),
                         ),
@@ -150,9 +157,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ],
                     ),
                     const SizedBox(height: 28),
-                    Text(
-                      l10n.loginTitle,
-                      style: Theme.of(context).textTheme.headlineSmall,
+                    Semantics(
+                      header: true,
+                      child: Text(
+                        l10n.loginTitle,
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
                     ),
                     const SizedBox(height: 6),
                     Text(
@@ -209,17 +219,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       dense: true,
                     ),
                     if (_error != null)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: LcColors.badSoft,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            _error!,
-                            style: const TextStyle(color: LcColors.bad),
+                      // liveRegion: trình đọc màn hình đọc câu từ chối của máy chủ ngay khi nó
+                      // hiện, không đợi người dùng dò tới.
+                      Semantics(
+                        liveRegion: true,
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Container(
+                            key: const Key('login-error'),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: LcColors.badSoft,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              _error!,
+                              style: const TextStyle(color: LcColors.bad),
+                            ),
                           ),
                         ),
                       ),

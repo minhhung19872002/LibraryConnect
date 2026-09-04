@@ -389,11 +389,15 @@ class _DigitalReaderScreenState extends ConsumerState<DigitalReaderScreen> {
             padding: const EdgeInsets.symmetric(vertical: 6),
             child: SafeArea(
               top: false,
-              child: Text(
-                l10n.pageOf(_page, source.pageCount),
-                key: const Key('page-indicator'),
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: LcColors.cream),
+              // liveRegion: lật trang là nghe "Trang n/N" mà không phải dò xuống đáy.
+              child: Semantics(
+                liveRegion: true,
+                child: Text(
+                  l10n.pageOf(_page, source.pageCount),
+                  key: const Key('page-indicator'),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: LcColors.cream),
+                ),
               ),
             ),
           ),
@@ -477,6 +481,12 @@ class _PageViewState extends State<_PageView>
               key: Key('page-${widget.page}'),
               fit: BoxFit.contain,
               gaplessPlayback: true,
+              // Ảnh trang không có lớp chữ cho trình đọc màn hình; ít nhất nó biết đang ở
+              // trang mấy. Nội dung chữ tìm được qua "Tìm trong văn bản".
+              semanticLabel: l10n.a11yReaderPage(
+                widget.page,
+                widget.source.pageCount,
+              ),
             ),
           ),
         );

@@ -436,22 +436,25 @@ class _SelfCheckoutScreenState extends ConsumerState<SelfCheckoutScreen> {
 
     return Column(
       children: [
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          color: _flash ?? theme.colorScheme.surface,
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
-          child: Row(
-            children: [
-              const Icon(Icons.verified_outlined, color: LcColors.good),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  '${place == null ? l10n.verifiedPlain : l10n.verifiedAt(place)} · ${l10n.verifiedUntil(until)}',
-                  key: const Key('verified-banner'),
-                  style: theme.textTheme.bodySmall,
+        Semantics(
+          liveRegion: true,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            color: _flash ?? theme.colorScheme.surface,
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+            child: Row(
+              children: [
+                const Icon(Icons.verified_outlined, color: LcColors.good),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '${place == null ? l10n.verifiedPlain : l10n.verifiedAt(place)} · ${l10n.verifiedUntil(until)}',
+                    key: const Key('verified-banner'),
+                    style: theme.textTheme.bodySmall,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
         SizedBox(
@@ -459,18 +462,21 @@ class _SelfCheckoutScreenState extends ConsumerState<SelfCheckoutScreen> {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              MobileScanner(
-                controller: _scanner,
-                onDetect: _onDetect,
-                errorBuilder: (context, error) => ColoredBox(
-                  color: LcColors.greenDark,
-                  child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Text(
-                        l10n.scanCameraDenied,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: LcColors.cream),
+              Semantics(
+                label: l10n.a11yCheckoutScannerView,
+                child: MobileScanner(
+                  controller: _scanner,
+                  onDetect: _onDetect,
+                  errorBuilder: (context, error) => ColoredBox(
+                    color: LcColors.greenDark,
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Text(
+                          l10n.scanCameraDenied,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: LcColors.cream),
+                        ),
                       ),
                     ),
                   ),
@@ -571,19 +577,26 @@ class _OutcomeTile extends StatelessWidget {
     final l10n = L10n.of(context);
     final loan = outcome.loan;
     final due = loan?.due;
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      color: outcome.ok ? LcColors.goodSoft : LcColors.badSoft,
-      child: ListTile(
-        leading: Icon(
-          outcome.ok ? Icons.check_circle : Icons.cancel,
-          color: outcome.ok ? LcColors.good : LcColors.bad,
-        ),
-        title: Text(loan?.title ?? outcome.barcode),
-        subtitle: Text(
-          outcome.ok
-              ? '${outcome.barcode} · ${l10n.checkoutOk(due == null ? loan!.dueDate : DateFormat('dd/MM/yyyy').format(due))}'
-              : '${outcome.barcode} · ${l10n.checkoutFailed}: ${outcome.message}',
+    // Mỗi cuốn vừa quét đọc thành một câu (nhan đề, mã vạch, mượn được hay vì sao không) và được
+    // đọc lên ngay khi hiện — người dùng trình đọc màn hình không thấy màu xanh/đỏ nháy.
+    return Semantics(
+      liveRegion: true,
+      child: MergeSemantics(
+        child: Card(
+          margin: const EdgeInsets.only(bottom: 8),
+          color: outcome.ok ? LcColors.goodSoft : LcColors.badSoft,
+          child: ListTile(
+            leading: Icon(
+              outcome.ok ? Icons.check_circle : Icons.cancel,
+              color: outcome.ok ? LcColors.good : LcColors.bad,
+            ),
+            title: Text(loan?.title ?? outcome.barcode),
+            subtitle: Text(
+              outcome.ok
+                  ? '${outcome.barcode} · ${l10n.checkoutOk(due == null ? loan!.dueDate : DateFormat('dd/MM/yyyy').format(due))}'
+                  : '${outcome.barcode} · ${l10n.checkoutFailed}: ${outcome.message}',
+            ),
+          ),
         ),
       ),
     );

@@ -36,6 +36,9 @@ class LcColors {
 class AppTheme {
   AppTheme._();
 
+  /// Vùng chạm tối thiểu (dp) theo PROMPT-MOBILE mục 5 và hướng dẫn Material.
+  static const double minTapTarget = 48;
+
   /// Be Vietnam Pro qua google_fonts: tải một lần rồi cache trên máy; thiếu mạng thì rơi về phông
   /// hệ thống, vẫn đủ dấu tiếng Việt.
   static TextTheme _text(TextTheme base, Color ink, Color muted) {
@@ -115,14 +118,31 @@ class AppTheme {
     Color ink,
     Color muted,
   ) {
+    // Trợ năng (PROMPT-MOBILE mục 5): vùng chạm tối thiểu 48dp cho mọi nút và chip, kể cả trên
+    // máy tính để bàn — Flutter mặc định co lại (`compact`) ở đó, và chính máy tính là nơi phép
+    // thử widget đo kích thước.
     final base = ThemeData(
       colorScheme: scheme,
       useMaterial3: true,
       brightness: scheme.brightness,
+      materialTapTargetSize: MaterialTapTargetSize.padded,
+      visualDensity: VisualDensity.standard,
     );
 
     return base.copyWith(
       scaffoldBackgroundColor: bg,
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(
+          minimumSize: const Size(minTapTarget, minTapTarget),
+          tapTargetSize: MaterialTapTargetSize.padded,
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          minimumSize: const Size(minTapTarget, minTapTarget),
+          tapTargetSize: MaterialTapTargetSize.padded,
+        ),
+      ),
       textTheme: _text(base.textTheme, ink, muted),
       appBarTheme: AppBarTheme(
         backgroundColor: paper,
@@ -190,6 +210,8 @@ class AppTheme {
           side: BorderSide.none,
         ),
         side: BorderSide.none,
+        // Chip cao ~32dp; `materialTapTargetSize: padded` của ThemeData cộng vùng chạm trong
+        // suốt lên đủ 48dp (ChipThemeData không có tham số riêng).
       ),
       dividerTheme: DividerThemeData(color: border, space: 1),
       navigationBarTheme: NavigationBarThemeData(
