@@ -355,4 +355,29 @@ public class CatalogQueueTests
         thieuLyDo.StatusCode.Should().Be(HttpStatusCode.BadRequest,
             "trả việc lại mà không nói vì sao thì cán bộ biên mục không biết sửa gì");
     }
+
+    /// <summary>Ô ghi chú của hộp thoại phân công (II.4) phải đi tới việc được giao.</summary>
+    [Fact]
+    public async Task Phan_cong_kem_ghi_chu_thi_ghi_chu_duoc_luu()
+    {
+        var client = await ClientAsync();
+        var bibId = await CreateRecordAsync(client, $"Sách ghi chú {Guid.NewGuid():N}");
+        var queueId = await EnqueueAsync(client, bibId);
+
+        var me = await client.GetFromJsonAsync<ApiResponse<CurrentUserProbe>>(
+            "/api/auth/me", LibraryConnectFactory.JsonOptions);
+
+        var response = await client.PostAsJsonAsync("/api/cataloging/queue/assign", new
+        {
+            ids = new[] { queueId },
+            assignedTo = me!.Data!.Id,
+            note = "  Ưu tiên bổ sung đề mục chủ đề  "
+        }, LibraryConnectFactory.JsonOptions);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var item = await FindAsync(client, queueId, "InProgress");
+
+        item.Note.Should().Be("Ưu tiên bổ sung đề mục chủ đề");
+    }
 }

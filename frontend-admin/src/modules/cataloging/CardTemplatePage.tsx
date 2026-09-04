@@ -8,9 +8,7 @@ import {
   Form,
   Input,
   InputNumber,
-  Modal,
   Popconfirm,
-  Radio,
   Select,
   Space,
   Table,
@@ -23,9 +21,9 @@ import { PageHeader } from '@/components/PageHeader';
 import { Can } from '@/components/PermissionGate';
 import { PERMISSIONS } from '@/api/permissions';
 import { applyApiError, errorMessage } from '@/api/formErrors';
-import { saveBlob } from '@/modules/marc/api';
 import { cardApi } from './api';
 import { CardDesigner } from './CardDesigner';
+import { PrintCardsModal } from './PrintCardsModal';
 import {
   CARD_TYPE_LABELS,
   defaultLayout,
@@ -166,11 +164,7 @@ export function CardTemplatePage() {
         }}
       />
 
-      <PrintModal
-        open={printOpen}
-        templates={templates.data ?? []}
-        onClose={() => setPrintOpen(false)}
-      />
+      <PrintCardsModal open={printOpen} onClose={() => setPrintOpen(false)} />
     </Space>
   );
 }
@@ -280,121 +274,5 @@ function TemplateDrawer({
         <CardDesigner widthMm={widthMm} heightMm={heightMm} layout={layout} onChange={setLayout} />
       </Form>
     </Drawer>
-  );
-}
-
-function PrintModal({
-  open,
-  templates,
-  onClose,
-}: {
-  open: boolean;
-  templates: CardTemplate[];
-  onClose: () => void;
-}) {
-  const { message } = App.useApp();
-  const [templateId, setTemplateId] = useState<string | undefined>();
-  const [cardTypes, setCardTypes] = useState<CardType[]>(['MAIN']);
-  const [multiplePerPage, setMultiplePerPage] = useState(true);
-  const [keyword, setKeyword] = useState('');
-
-  const print = useMutation({
-    mutationFn: () =>
-      cardApi.print({
-        bibIds: [],
-        filter: { keyword: keyword.trim() || undefined },
-        templateId,
-        cardTypes,
-        multiplePerPage,
-      }),
-    onSuccess: ({ blob, fileName }) => {
-      saveBlob(blob, fileName);
-      message.success(`Đã tạo tệp ${fileName}.`);
-      onClose();
-    },
-    onError: (error: unknown) => message.error(errorMessage(error)),
-  });
-
-  return (
-    <Modal
-      open={open}
-      title="In phích thư mục"
-      okText="Tạo tệp PDF"
-      cancelText="Hủy"
-      confirmLoading={print.isPending}
-      onCancel={onClose}
-      onOk={() => print.mutate()}
-      width={560}
-    >
-      <Space direction="vertical" size={14} style={{ width: '100%' }}>
-        <div>
-          <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-            Biểu ghi cần in
-          </Typography.Text>
-          <Input
-            value={keyword}
-            onChange={(event) => setKeyword(event.target.value)}
-            placeholder="Từ khóa lọc biểu ghi; bỏ trống để in toàn bộ"
-          />
-        </div>
-
-        <div>
-          <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-            Loại phích
-          </Typography.Text>
-          <Checkbox.Group
-            value={cardTypes}
-            onChange={(values) => setCardTypes(values as CardType[])}
-            options={Object.entries(CARD_TYPE_LABELS).map(([value, label]) => ({ value, label }))}
-            style={{ display: 'flex', flexDirection: 'column', gap: 4 }}
-          />
-          <Typography.Text type="secondary" style={{ fontSize: 11 }}>
-            Một biểu ghi có ba đề mục chủ đề sẽ cho ba phích chủ đề.
-          </Typography.Text>
-        </div>
-
-        <div>
-          <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-            Mẫu phích
-          </Typography.Text>
-          <Select
-            value={templateId}
-            onChange={setTemplateId}
-            options={templates.map((template) => ({
-              value: template.id,
-              label: `${template.name} (${template.widthMm}×${template.heightMm} mm)`,
-            }))}
-            placeholder="Dùng mẫu mặc định"
-            allowClear
-            style={{ width: '100%' }}
-          />
-        </div>
-
-        <div>
-          <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-            Cách xếp giấy
-          </Typography.Text>
-          <Radio.Group
-            value={multiplePerPage}
-            onChange={(event) => setMultiplePerPage(event.target.value)}
-          >
-            <Space direction="vertical">
-              <Radio value={true}>
-                Nhiều phích trên một tờ A4
-                <Typography.Text type="secondary" style={{ fontSize: 11, display: 'block' }}>
-                  In lên giấy A4 thường rồi cắt rời.
-                </Typography.Text>
-              </Radio>
-              <Radio value={false}>
-                Mỗi phích một trang đúng khổ
-                <Typography.Text type="secondary" style={{ fontSize: 11, display: 'block' }}>
-                  In thẳng lên bìa phích in sẵn.
-                </Typography.Text>
-              </Radio>
-            </Space>
-          </Radio.Group>
-        </div>
-      </Space>
-    </Modal>
   );
 }

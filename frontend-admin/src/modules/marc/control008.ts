@@ -29,8 +29,51 @@ export interface Control008Position {
   options?: Control008Option[];
   /** Chỉ hiện khi Leader/06 là `a` (tài liệu chữ viết) — nhóm vị trí riêng của sách. */
   booksOnly?: boolean;
+  /**
+   * Khối 18–34 của loại hình nào. Không khai thì là vị trí chung, hiện cho mọi loại hình;
+   * `booksOnly` là cách viết cũ của `material: 'books'`.
+   */
+  material?: Control008Material;
   /** Máy chủ tự ghi khi lưu, người dùng không cần sửa. */
   readOnly?: boolean;
+}
+
+/**
+ * Loại hình quyết định nghĩa của khối 18–34, theo bảng "008 — Configuration" của MARC 21:
+ * Leader/06 = a với Leader/07 ∈ {b, i, s} là ấn phẩm định kỳ; a với {a, c, d, m} là sách;
+ * e hoặc f là bản đồ. Luận văn là sách (mã `m` ở vị trí 24–27), không có khối riêng.
+ */
+export type Control008Material = 'books' | 'continuing' | 'maps' | 'other';
+
+export const CONTROL_008_MATERIAL_LABELS: Record<Control008Material, string> = {
+  books: 'Sách',
+  continuing: 'Ấn phẩm định kỳ',
+  maps: 'Bản đồ',
+  other: 'Loại hình khác',
+};
+
+export function materialOf(leader: string): Control008Material {
+  const padded = leader.padEnd(24, ' ');
+  const type = padded[6] ?? ' ';
+  const level = padded[7] ?? ' ';
+
+  if (type === 'e' || type === 'f') {
+    return 'maps';
+  }
+
+  if (type === 'a') {
+    return 'b' === level || 'i' === level || 's' === level ? 'continuing' : 'books';
+  }
+
+  return 'other';
+}
+
+/** Các vị trí của một loại hình: vị trí chung cộng khối 18–34 của đúng loại hình ấy. */
+export function positionsFor(material: Control008Material): Control008Position[] {
+  return CONTROL_008_POSITIONS.filter((entry) => {
+    const own = entry.material ?? (entry.booksOnly ? 'books' : undefined);
+    return own === undefined || own === material;
+  });
 }
 
 /** `#` trong tài liệu MARC là một khoảng trắng có nghĩa. */
@@ -165,6 +208,209 @@ export const CONTROL_008_POSITIONS: Control008Position[] = [
       { code: '|', label: '| — Không xác định' },
     ],
   },
+  // ---- Ấn phẩm định kỳ (Leader/06 = a, Leader/07 ∈ {b, i, s}) ----
+  {
+    start: 18,
+    length: 1,
+    label: '18 Kỳ hạn xuất bản',
+    material: 'continuing',
+    options: [
+      { code: BLANK, label: '# — Không xác định được kỳ hạn' },
+      { code: 'a', label: 'a — Hằng năm' },
+      { code: 'b', label: 'b — Hai tháng một kỳ' },
+      { code: 'c', label: 'c — Hai kỳ một tuần' },
+      { code: 'd', label: 'd — Nhật báo' },
+      { code: 'e', label: 'e — Hai tuần một kỳ' },
+      { code: 'f', label: 'f — Nửa năm một kỳ' },
+      { code: 'g', label: 'g — Hai năm một kỳ' },
+      { code: 'h', label: 'h — Ba năm một kỳ' },
+      { code: 'i', label: 'i — Ba kỳ một tuần' },
+      { code: 'j', label: 'j — Ba kỳ một tháng' },
+      { code: 'k', label: 'k — Cập nhật liên tục' },
+      { code: 'm', label: 'm — Hằng tháng' },
+      { code: 'q', label: 'q — Hằng quý' },
+      { code: 's', label: 's — Nửa tháng một kỳ' },
+      { code: 't', label: 't — Ba kỳ một năm' },
+      { code: 'u', label: 'u — Không rõ' },
+      { code: 'w', label: 'w — Hằng tuần' },
+      { code: 'z', label: 'z — Khác' },
+      { code: '|', label: '| — Không xác định' },
+    ],
+  },
+  {
+    start: 19,
+    length: 1,
+    label: '19 Tính đều đặn',
+    material: 'continuing',
+    options: [
+      { code: 'n', label: 'n — Không đều nhưng có quy luật' },
+      { code: 'r', label: 'r — Đều đặn' },
+      { code: 'u', label: 'u — Không rõ' },
+      { code: 'x', label: 'x — Hoàn toàn không đều' },
+      { code: '|', label: '| — Không xác định' },
+    ],
+  },
+  {
+    start: 21,
+    length: 1,
+    label: '21 Loại ấn phẩm định kỳ',
+    material: 'continuing',
+    options: [
+      { code: BLANK, label: '# — Không thuộc loại nào dưới đây' },
+      { code: 'd', label: 'd — Cơ sở dữ liệu cập nhật' },
+      { code: 'l', label: 'l — Tài liệu tờ rời cập nhật' },
+      { code: 'm', label: 'm — Tùng thư chuyên khảo' },
+      { code: 'n', label: 'n — Báo' },
+      { code: 'p', label: 'p — Tạp chí' },
+      { code: 'w', label: 'w — Trang web cập nhật' },
+      { code: '|', label: '| — Không xác định' },
+    ],
+  },
+  {
+    start: 22,
+    length: 1,
+    label: '22 Hình thức bản gốc',
+    material: 'continuing',
+    options: [
+      { code: BLANK, label: '# — Bản in thường' },
+      { code: 'a', label: 'a — Vi phim' },
+      { code: 'b', label: 'b — Vi phiếu' },
+      { code: 'd', label: 'd — Bản in chữ lớn' },
+      { code: 'e', label: 'e — Khổ báo' },
+      { code: 'o', label: 'o — Trực tuyến' },
+      { code: 'q', label: 'q — Điện tử, vật mang tin trực tiếp' },
+      { code: 's', label: 's — Điện tử' },
+      { code: '|', label: '| — Không xác định' },
+    ],
+  },
+  {
+    start: 23,
+    length: 1,
+    label: '23 Hình thức tài liệu',
+    material: 'continuing',
+    options: [
+      { code: BLANK, label: '# — Bản in thường' },
+      { code: 'a', label: 'a — Vi phim' },
+      { code: 'b', label: 'b — Vi phiếu' },
+      { code: 'd', label: 'd — Bản in chữ lớn' },
+      { code: 'o', label: 'o — Trực tuyến' },
+      { code: 'q', label: 'q — Điện tử, vật mang tin trực tiếp' },
+      { code: 's', label: 's — Điện tử' },
+      { code: '|', label: '| — Không xác định' },
+    ],
+  },
+  {
+    start: 24,
+    length: 1,
+    label: '24 Bản chất toàn bộ ấn phẩm',
+    hint: 'Một mã: a = tóm tắt, b = thư mục, c = mục lục, d = từ điển, e = bách khoa, p = kỷ yếu, # = không nêu.',
+    material: 'continuing',
+  },
+  {
+    start: 25,
+    length: 3,
+    label: '25–27 Bản chất nội dung',
+    hint: 'Tối đa ba mã, cùng bảng mã với vị trí 24.',
+    material: 'continuing',
+  },
+  { start: 28, length: 1, label: '28 Xuất bản của cơ quan nhà nước', material: 'continuing' },
+  { start: 29, length: 1, label: '29 Kỷ yếu hội nghị', material: 'continuing', options: YES_NO },
+  {
+    start: 33,
+    length: 1,
+    label: '33 Bảng chữ cái của nhan đề gốc',
+    material: 'continuing',
+    options: [
+      { code: BLANK, label: '# — Không có / không áp dụng' },
+      { code: 'a', label: 'a — La-tinh cơ bản' },
+      { code: 'b', label: 'b — La-tinh mở rộng' },
+      { code: 'c', label: 'c — Ki-rin' },
+      { code: 'd', label: 'd — Nhật' },
+      { code: 'e', label: 'e — Hán' },
+      { code: 'f', label: 'f — Ả Rập' },
+      { code: 'g', label: 'g — Hy Lạp' },
+      { code: 'h', label: 'h — Hê-brơ' },
+      { code: 'i', label: 'i — Thái' },
+      { code: 'j', label: 'j — Devanagari' },
+      { code: 'k', label: 'k — Hàn' },
+      { code: 'l', label: 'l — Tamil' },
+      { code: 'u', label: 'u — Không rõ' },
+      { code: 'z', label: 'z — Khác' },
+      { code: '|', label: '| — Không xác định' },
+    ],
+  },
+  {
+    start: 34,
+    length: 1,
+    label: '34 Quy ước lập tiêu đề',
+    material: 'continuing',
+    options: [
+      { code: '0', label: '0 — Tiêu đề kế tiếp (mỗi lần đổi tên một biểu ghi)' },
+      { code: '1', label: '1 — Tiêu đề mới nhất' },
+      { code: '2', label: '2 — Tiêu đề tích hợp' },
+      { code: '|', label: '| — Không xác định' },
+    ],
+  },
+
+  // ---- Bản đồ (Leader/06 = e hoặc f) ----
+  {
+    start: 18,
+    length: 4,
+    label: '18–21 Địa hình',
+    hint: 'Tối đa bốn mã: a = đường bình độ, b = tô bóng, e = tô màu theo độ cao, # = không.',
+    material: 'maps',
+  },
+  {
+    start: 22,
+    length: 2,
+    label: '22–23 Phép chiếu',
+    hint: 'Hai ký tự theo bảng mã MARC, ví dụ bd = Mercator; ## = không nêu.',
+    material: 'maps',
+  },
+  {
+    start: 25,
+    length: 1,
+    label: '25 Loại tài liệu bản đồ',
+    material: 'maps',
+    options: [
+      { code: 'a', label: 'a — Bản đồ đơn' },
+      { code: 'b', label: 'b — Bộ bản đồ' },
+      { code: 'c', label: 'c — Bản đồ định kỳ' },
+      { code: 'd', label: 'd — Quả địa cầu' },
+      { code: 'e', label: 'e — Tập bản đồ (atlas)' },
+      { code: 'f', label: 'f — Phụ bản rời của tài liệu khác' },
+      { code: 'g', label: 'g — Đóng kèm trong tài liệu khác' },
+      { code: 'u', label: 'u — Không rõ' },
+      { code: 'z', label: 'z — Khác' },
+      { code: '|', label: '| — Không xác định' },
+    ],
+  },
+  { start: 28, length: 1, label: '28 Xuất bản của cơ quan nhà nước', material: 'maps' },
+  {
+    start: 29,
+    length: 1,
+    label: '29 Hình thức tài liệu',
+    material: 'maps',
+    options: [
+      { code: BLANK, label: '# — Bản in thường' },
+      { code: 'a', label: 'a — Vi phim' },
+      { code: 'b', label: 'b — Vi phiếu' },
+      { code: 'd', label: 'd — Bản in chữ lớn' },
+      { code: 'o', label: 'o — Trực tuyến' },
+      { code: 'q', label: 'q — Điện tử, vật mang tin trực tiếp' },
+      { code: 'r', label: 'r — Bản in lại' },
+      { code: '|', label: '| — Không xác định' },
+    ],
+  },
+  { start: 31, length: 1, label: '31 Có bảng tra', material: 'maps', options: YES_NO },
+  {
+    start: 33,
+    length: 2,
+    label: '33–34 Đặc điểm định dạng riêng',
+    hint: 'Tối đa hai mã: e = bản khắc, j = tranh vẽ, k = bưu ảnh, n = trò chơi, p = câu đố, # = không.',
+    material: 'maps',
+  },
+
   {
     start: 35,
     length: 3,

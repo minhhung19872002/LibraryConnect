@@ -17,7 +17,7 @@ import {
   Tooltip,
   Typography,
 } from 'antd';
-import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
+import { DeleteOutlined, EditOutlined, PlusOutlined, StarOutlined } from '@ant-design/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { PageHeader } from '@/components/PageHeader';
 import { Can } from '@/components/PermissionGate';
@@ -27,6 +27,12 @@ import { marcApi } from '@/modules/marc/api';
 import { catalogingApi } from './api';
 import { useCatalogOptions, toOptions } from './useCatalogOptions';
 import type { MarcFieldDefault, MarcTemplate } from './types';
+import {
+  formatTemplateLines,
+  parseTemplateLines,
+  readTemplateFields,
+  TemplateLineError,
+} from './templateFields';
 
 const MONOSPACE = { fontFamily: 'ui-monospace, Consolas, monospace' } as const;
 
@@ -374,10 +380,32 @@ function DefaultDrawer({
 function TemplatesTab() {
   const { message } = App.useApp();
   const queryClient = useQueryClient();
+  const [editing, setEditing] = useState<MarcTemplate | null>(null);
+  const [open, setOpen] = useState(false);
 
   const templates = useQuery({
     queryKey: ['marc-templates', undefined],
     queryFn: () => catalogingApi.templates(undefined, true),
+  });
+
+  // Đặt mặc định là gửi lại nguyên mẫu với cờ bật; máy chủ tự hạ cờ của mẫu cũ cùng dạng tài liệu.
+  const setDefault = useMutation({
+    mutationFn: (row: MarcTemplate) =>
+      catalogingApi.saveTemplate(row.id, {
+        code: row.code,
+        name: row.name,
+        description: row.description,
+        documentTypeId: row.documentTypeId,
+        isDefault: true,
+        isActive: true,
+        fields: row.fields,
+        clearValues: false,
+      }),
+    onSuccess: async (_, row) => {
+      message.success(`Đã đặt "${row.name}" làm mẫu mặc định.`);
+      await queryClient.invalidateQueries({ queryKey: ['marc-templates'] });
+    },
+    onError: (error: unknown) => message.error(errorMessage(error)),
   });
 
   const remove = useMutation({
@@ -391,10 +419,25 @@ function TemplatesTab() {
 
   return (
     <Space direction="vertical" size={12} style={{ width: '100%' }}>
-      <Typography.Text type="secondary">
-        Mẫu biên mục quyết định khung trường của biểu ghi mới. Tạo mẫu mới bằng cách mở một biểu ghi
-        đã soạn ưng ý rồi lưu thành mẫu, hoặc sửa mẫu sẵn có ở đây.
-      </Typography.Text>
+      <Space style={{ justifyContent: 'space-between', width: '100%' }} align="start">
+        <Typography.Text type="secondary">
+          Mẫu biên mục quyết định khung trường của biểu ghi mới. Tạo mẫu ở đây, hoặc mở một biểu ghi
+          đã soạn ưng ý rồi bấm "Lưu thành mẫu" ngay trong trình soạn.
+        </Typography.Text>
+
+        <Can permission={PERMISSIONS.cataloging.template}>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => {
+              setEditing(null);
+              setOpen(true);
+            }}
+          >
+            Thêm mẫu
+          </Button>
+        </Can>
+      </Space>
 
       <Table<MarcTemplate>
         rowKey="id"
@@ -436,20 +479,46 @@ function TemplatesTab() {
           },
           {
             title: '',
-            width: 60,
+            width: 150,
             align: 'right',
             render: (_, row) => (
-              <Can permission={PERMISSIONS.cataloging.template}>
-                <Popconfirm
-                  title={`Xóa mẫu "${row.name}"?`}
-                  description="Biểu ghi đã tạo từ mẫu này không bị ảnh hưởng."
-                  okText="Xóa"
-                  cancelText="Không"
-                  onConfirm={() => remove.mutate(row.id)}
-                >
-                  <Button type="text" danger icon={<DeleteOutlined />} />
-                </Popconfirm>
-              </Can>
+              <Space size={0}>
+                {!row.isDefault && row.isActive && (
+                  <Can permission={PERMISSIONS.cataloging.template}>
+                    <Tooltip title="Đặt mặc định cho dạng tài liệu này">
+                      <Button
+                        type="text"
+                        icon={<StarOutlined />}
+                        loading={setDefault.isPending}
+                        onClick={() => setDefault.mutate(row)}
+                      />
+                    </Tooltip>
+                  </Can>
+                )}
+                <Can permission={PERMISSIONS.cataloging.template}>
+                  <Tooltip title="Sửa mẫu">
+                    <Button
+                      type="text"
+                      icon={<EditOutlined />}
+                      onClick={() => {
+                        setEditing(row);
+                        setOpen(true);
+                      }}
+                    />
+                  </Tooltip>
+                </Can>
+                <Can permission={PERMISSIONS.cataloging.template}>
+                  <Popconfirm
+                    title={`Xóa mẫu "${row.name}"?`}
+                    description="Biểu ghi đã tạo từ mẫu này không bị ảnh hưởng."
+                    okText="Xóa"
+                    cancelText="Không"
+                    onConfirm={() => remove.mutate(row.id)}
+                  >
+                    <Button type="text" danger icon={<DeleteOutlined />} />
+                  </Popconfirm>
+                </Can>
+              </Space>
             ),
           },
         ]}
@@ -458,7 +527,161 @@ function TemplatesTab() {
           rowExpandable: (row) => row.fieldCount > 0,
         }}
       />
+
+      <TemplateDrawer
+        open={open}
+        value={editing}
+        onClose={() => setOpen(false)}
+        onSaved={async () => {
+          setOpen(false);
+          await queryClient.invalidateQueries({ queryKey: ['marc-templates'] });
+        }}
+      />
     </Space>
+  );
+}
+
+/**
+ * Tạo hoặc sửa một mẫu biên mục.
+ *
+ * Khung trường soạn bằng văn bản mỗi dòng một trường — đúng dạng cán bộ đọc trên bản in MARC —
+ * thay vì một bảng thêm/bớt dòng: mẫu là thứ làm một lần rồi dùng nhiều năm, gõ mười dòng còn
+ * nhanh hơn bấm mười lần "thêm trường".
+ */
+function TemplateDrawer({
+  open,
+  value,
+  onClose,
+  onSaved,
+}: {
+  open: boolean;
+  value: MarcTemplate | null;
+  onClose: () => void;
+  onSaved: () => void | Promise<void>;
+}) {
+  const { message } = App.useApp();
+  const [form] = Form.useForm();
+  const documentTypes = useCatalogOptions('document-types', open);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    if (value) {
+      form.setFieldsValue({
+        ...value,
+        lines: formatTemplateLines(readTemplateFields(value.fields)),
+      });
+    } else {
+      form.resetFields();
+      form.setFieldsValue({
+        isActive: true,
+        isDefault: false,
+        lines: ['245 10 $a$b$c', '100 1# $a$e', '260 ## $a$b$c', '300 ## $a$c', '650 #4 $a'].join('\n'),
+      });
+    }
+  }, [open, value, form]);
+
+  const save = useMutation({
+    mutationFn: (values: Record<string, unknown>) => {
+      const fields = parseTemplateLines(String(values.lines ?? ''));
+
+      if (fields.length === 0) {
+        throw new TemplateLineError(1, 'Mẫu phải có ít nhất một trường.');
+      }
+
+      return catalogingApi.saveTemplate(value?.id ?? null, {
+        code: values.code,
+        name: values.name,
+        description: values.description,
+        documentTypeId: values.documentTypeId ?? null,
+        isDefault: values.isDefault,
+        isActive: values.isActive,
+        fields: JSON.stringify(fields),
+        // Values typed into the lines are part of the template on purpose.
+        clearValues: false,
+      });
+    },
+    onSuccess: async () => {
+      message.success(value ? 'Đã cập nhật mẫu biên mục.' : 'Đã thêm mẫu biên mục.');
+      await onSaved();
+    },
+    onError: (error: unknown) => {
+      if (error instanceof TemplateLineError) {
+        form.setFields([{ name: 'lines', errors: [error.message] }]);
+        return;
+      }
+
+      message.error(applyApiError(form, error));
+    },
+  });
+
+  return (
+    <Drawer
+      open={open}
+      onClose={onClose}
+      width={640}
+      title={value ? `Sửa mẫu "${value.name}"` : 'Thêm mẫu biên mục'}
+      destroyOnClose
+      extra={
+        <Space>
+          <Button onClick={onClose}>Hủy</Button>
+          <Button type="primary" loading={save.isPending} onClick={() => form.submit()}>
+            Lưu
+          </Button>
+        </Space>
+      }
+    >
+      <Form form={form} layout="vertical" onFinish={(values) => save.mutate(values)}>
+        <Form.Item
+          name="name"
+          label="Tên mẫu"
+          rules={[{ required: true, message: 'Chưa nhập tên mẫu.' }]}
+        >
+          <Input placeholder="Ví dụ: Sách tiếng Việt" maxLength={200} />
+        </Form.Item>
+
+        <Space size={12} align="start">
+          <Form.Item name="code" label="Mã mẫu" style={{ width: 200 }} extra="Bỏ trống để sinh từ tên">
+            <Input style={MONOSPACE} maxLength={50} />
+          </Form.Item>
+
+          <Form.Item name="documentTypeId" label="Dạng tài liệu" style={{ width: 340 }}>
+            <Select
+              options={toOptions(documentTypes.data)}
+              placeholder="Mọi dạng tài liệu"
+              allowClear
+              showSearch
+              optionFilterProp="label"
+            />
+          </Form.Item>
+        </Space>
+
+        <Form.Item name="description" label="Mô tả">
+          <Input.TextArea rows={2} maxLength={500} />
+        </Form.Item>
+
+        <Form.Item
+          name="lines"
+          label="Khung trường — mỗi dòng một trường"
+          extra="Nhãn trường, hai chỉ thị (# là khoảng trắng), rồi các trường con: 245 10 $a$b$c. Có thể điền sẵn giá trị: 041 0# $avie."
+          rules={[{ required: true, message: 'Mẫu phải có ít nhất một trường.' }]}
+        >
+          <Input.TextArea rows={12} style={MONOSPACE} spellCheck={false} />
+        </Form.Item>
+
+        <Space size={24}>
+          <Form.Item name="isDefault" label="Mẫu mặc định" valuePropName="checked">
+            <Switch />
+          </Form.Item>
+
+          <Form.Item name="isActive" label="Đang sử dụng" valuePropName="checked">
+            <Switch />
+          </Form.Item>
+        </Space>
+      </Form>
+    </Drawer>
   );
 }
 

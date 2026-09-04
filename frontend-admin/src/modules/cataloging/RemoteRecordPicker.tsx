@@ -12,13 +12,14 @@ import {
   Tag,
   Typography,
 } from 'antd';
-import { SearchOutlined } from '@ant-design/icons';
+import { FileSearchOutlined, SearchOutlined } from '@ant-design/icons';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { interLibraryApi } from '@/modules/interlibrary/api';
 import { searchFieldLabels } from '@/modules/interlibrary/labels';
 import type { RemoteRecordDto, RemoteSearchField } from '@/modules/interlibrary/types';
 import { errorMessage } from '@/api/formErrors';
 import type { MarcRecord } from '@/modules/marc/types';
+import { RemoteMarcModal } from './RemoteMarcModal';
 
 interface RemoteRecordPickerProps {
   open: boolean;
@@ -46,6 +47,7 @@ export function RemoteRecordPicker({
   const { message } = App.useApp();
   const [field, setField] = useState<RemoteSearchField>(initialField);
   const [term, setTerm] = useState('');
+  const [viewing, setViewing] = useState<RemoteRecordDto | null>(null);
 
   const targets = useQuery({
     queryKey: ['ill-targets'],
@@ -149,25 +151,35 @@ export function RemoteRecordPicker({
               { title: 'ISBN', dataIndex: 'isbn', width: 150 },
               {
                 title: '',
-                width: 190,
-                render: (_: unknown, row) =>
-                  row.existingBibId ? (
-                    <Tag color="gold">Thư viện đã có</Tag>
-                  ) : (
-                    <Button
-                      size="small"
-                      type="primary"
-                      loading={pick.isPending}
-                      onClick={() => pick.mutate(row)}
-                    >
-                      Nạp vào trình soạn
-                    </Button>
-                  ),
+                width: 300,
+                render: (_: unknown, row) => (
+                  <Space direction="vertical" size={4}>
+                    {/* A record the library already holds is still worth loading — to compare, or
+                        to take the richer subject headings from it — so the tag is a warning, not
+                        a lock. */}
+                    {row.existingBibId && <Tag color="gold">Thư viện đã có: {row.existingBibTitle}</Tag>}
+                    <Space size={4}>
+                      <Button size="small" icon={<FileSearchOutlined />} onClick={() => setViewing(row)}>
+                        {row.existingBibId ? 'So sánh' : 'Xem MARC'}
+                      </Button>
+                      <Button
+                        size="small"
+                        type="primary"
+                        loading={pick.isPending}
+                        onClick={() => pick.mutate(row)}
+                      >
+                        Nạp vào trình soạn
+                      </Button>
+                    </Space>
+                  </Space>
+                ),
               },
             ]}
           />
         )}
       </Space>
+
+      <RemoteMarcModal record={viewing} onClose={() => setViewing(null)} />
     </Modal>
   );
 }

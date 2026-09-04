@@ -29,3 +29,20 @@ export interface ImportMappingProfile {
 export interface ExcelImportOptions extends BibImportOptions {
   mapping: ExcelColumnMapping[];
 }
+
+/** Một dòng đã lỗi, đọc lại từ tệp đã tải lên để sửa tại chỗ. */
+export interface ExcelFailedRow {
+  rowNumber: number;
+  message: string;
+  cells: Record<string, string>;
+}
+
+export interface ExcelFailedRows {
+  headers: string[];
+  rows: ExcelFailedRow[];
+}
+
+export interface ExcelRetryRow {
+  rowNumber: number;
+  cells: Record<string, string>;
+}

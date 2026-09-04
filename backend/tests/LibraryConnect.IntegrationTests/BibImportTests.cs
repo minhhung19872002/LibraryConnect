@@ -7,6 +7,8 @@ using LibraryConnect.Application.Common.Models;
 using LibraryConnect.Application.Features.Cataloging;
 using LibraryConnect.Application.Features.Marc;
 using LibraryConnect.Marc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace LibraryConnect.IntegrationTests;
 
@@ -342,5 +344,89 @@ public class BibImportTests
             "/api/cataloging/bibs?status=Draft", LibraryConnectFactory.JsonOptions);
 
         search!.Data!.TotalCount.Should().BeGreaterThanOrEqualTo(3);
+    }
+
+    /// <summary>
+    /// Tệp nhật ký lỗi tải về được sau khi nhập (II.6 bước 4): người nhập gửi nó cho nơi cấp tệp
+    /// để họ sửa, chứ không chép tay từng dòng trên màn hình.
+    /// </summary>
+    [Fact]
+    public async Task Tai_duoc_tep_nhat_ky_loi_cua_mot_luot_nhap()
+    {
+        var client = await ClientAsync();
+
+        var records = Iso2709Reader.ReadAll(SampleFile("LOG")).ToList();
+        records[1].DataFields.RemoveAll(field => field.Tag == "245");
+
+        var job = await RunImportAsync(
+            client, Iso2709Writer.WriteMany(records).Content, new { matchBy = "Isbn", onDuplicate = "Skip" });
+
+        job.Failed.Should().Be(1);
+
+        var csv = await client.GetAsync($"/api/cataloging/import/jobs/{job.Id}/result?format=csv");
+        csv.StatusCode.Should().Be(HttpStatusCode.OK);
+        csv.Content.Headers.ContentType!.MediaType.Should().Be("text/csv");
+
+        var text = await csv.Content.ReadAsStringAsync();
+        text.Should().Contain("1 lỗi").And.Contain("245");
+        text.Split('\n').Should().Contain(line => line.StartsWith("2,"), "dòng lỗi là biểu ghi số 2");
+
+        var xlsx = await client.GetAsync($"/api/cataloging/import/jobs/{job.Id}/result?format=xlsx");
+        xlsx.StatusCode.Should().Be(HttpStatusCode.OK);
+        xlsx.Content.Headers.ContentType!.MediaType.Should().Contain("spreadsheetml");
+        (await xlsx.Content.ReadAsByteArrayAsync()).Should().NotBeEmpty();
+    }
+
+    /// <summary>Giới hạn dung lượng tệp là tham số, và câu từ chối phải nói tên tham số ấy.</summary>
+    [Fact]
+    public async Task Tep_qua_gioi_han_bi_tu_choi_bang_cau_noi_ten_tham_so()
+    {
+        var client = await ClientAsync();
+
+        // Đặt giới hạn thấp hơn tệp mẫu qua chính dịch vụ tham số; tham số chưa được gieo sẵn nên
+        // đi qua API cập nhật tham số sẽ bị từ chối là "không tìm thấy".
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<LibraryConnect.Application.Common.Interfaces.IApplicationDbContext>();
+        var existing = await db.SystemParameters.FirstOrDefaultAsync(p => p.Key == ImportFileLimit.ParameterKey);
+
+        if (existing is null)
+        {
+            db.SystemParameters.Add(new LibraryConnect.Domain.Entities.Sys.SystemParameter
+            {
+                Id = Guid.NewGuid(),
+                Key = ImportFileLimit.ParameterKey,
+                GroupCode = "UPLOAD",
+                GroupName = "Giới hạn tải lên",
+                Name = "Dung lượng tối đa tệp nhập biểu ghi (MB)",
+                DataType = LibraryConnect.Domain.Enums.ParameterDataType.Number,
+                Value = "1",
+                DefaultValue = "100",
+                IsEditable = true
+            });
+            await db.SaveChangesAsync(CancellationToken.None);
+        }
+
+        var parameters = scope.ServiceProvider.GetRequiredService<LibraryConnect.Application.Common.Interfaces.ISystemParameterService>();
+        await parameters.SetAsync(ImportFileLimit.ParameterKey, "1");
+        await parameters.InvalidateAsync();
+
+        try
+        {
+            var big = new byte[2 * 1024 * 1024];
+            var response = await client.PostAsync(
+                "/api/cataloging/import", FileContent(big, "to.mrc", "{}"));
+
+            response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+            var payload = await response.Content.ReadFromJsonAsync<ApiResponse<object>>(LibraryConnectFactory.JsonOptions);
+            var loi = string.Join(" ", (payload!.Errors ?? Array.Empty<ApiError>()).Select(e => e.Message).Append(payload.Message));
+
+            loi.Should().Contain("to.mrc").And.Contain(ImportFileLimit.ParameterKey);
+        }
+        finally
+        {
+            await parameters.SetAsync(ImportFileLimit.ParameterKey, "100");
+            await parameters.InvalidateAsync();
+        }
     }
 }

@@ -368,4 +368,129 @@ public class ExcelImportTests
         loi.Should().Contain("Excel");
         loi.Should().NotContain("Exception");
     }
+
+    /// <summary>
+    /// Chọn "Gộp" thì trường biểu ghi cũ đang có phải còn nguyên (J1).
+    ///
+    /// Bộ nhập từ tệp trao đổi có nhánh gộp riêng, còn bộ nhập từ Excel rơi thẳng vào nhánh ghi đè:
+    /// cán bộ chọn "Gộp" để giữ tóm tắt đã viết tay, mà bảng tính chỉ có nhan đề và ISBN nên tóm tắt
+    /// biến mất không một lời báo.
+    /// </summary>
+    [Fact]
+    public async Task Chon_gop_thi_truong_bieu_ghi_cu_dang_co_van_con_nguyen()
+    {
+        var client = await ClientAsync();
+        var marker = Guid.NewGuid().ToString("N")[..6];
+        var isbn = $"978-604-{Random.Shared.Next(10000, 99999)}-7-7";
+        var tomTat = $"Tóm tắt viết tay {marker}";
+
+        var marc = JsonSerializer.Serialize(new
+        {
+            leader = "00000nam a2200000 a 4500",
+            controlFields = new[] { new { tag = "008", value = "260101s2024    vm a     b    000 0 vie d" } },
+            dataFields = new object[]
+            {
+                new { tag = "020", ind1 = " ", ind2 = " ", subfields = new[] { new { code = "a", value = isbn } } },
+                new { tag = "245", ind1 = "1", ind2 = "0", subfields = new[] { new { code = "a", value = $"Sách gộp {marker}" } } },
+                new { tag = "520", ind1 = " ", ind2 = " ", subfields = new[] { new { code = "a", value = tomTat } } }
+            }
+        });
+
+        var saved = await client.PostAsJsonAsync("/api/cataloging/bibs", new { marcJson = marc, status = "Published" });
+        saved.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var id = (await saved.Content.ReadFromJsonAsync<ApiResponse<SaveBibResultDto>>(
+            LibraryConnectFactory.JsonOptions))!.Data!.Id;
+
+        var file = BuildSheet(new[] { ($"Sách gộp {marker}", "Nguyễn Văn Gộp", isbn, "Chủ đề gộp") });
+
+        var job = await RunAsync(client, file, new
+        {
+            matchBy = "Isbn",
+            onDuplicate = "Merge",
+            mapping = StandardMapping()
+        });
+
+        job.Status.Should().Be(Domain.Enums.JobStatus.Completed);
+        job.Success.Should().Be(1);
+
+        var detail = await client.GetFromJsonAsync<ApiResponse<BibDetailDto>>(
+            $"/api/cataloging/bibs/{id}", LibraryConnectFactory.JsonOptions);
+
+        detail!.Data!.Abstract.Should().Be(tomTat, "gộp là chỉ bổ sung trường còn thiếu, không xoá trường đã có");
+        detail.Data.AuthorMain.Should().Be("Nguyễn Văn Gộp", "trường 100 biểu ghi cũ chưa có thì lấy từ bảng tính");
+        detail.Data.MarcJson.Should().Contain("\"520\"");
+    }
+
+    /// <summary>
+    /// Dòng lỗi sửa được ngay trên màn hình rồi nhập lại (II.8): hệ thống đọc lại đúng dòng ấy từ
+    /// tệp đã tải lên, cán bộ sửa ô sai, và lượt nhập lại dùng đúng ánh xạ của lượt gốc.
+    /// </summary>
+    [Fact]
+    public async Task Dong_loi_sua_tai_cho_roi_nhap_lai_duoc()
+    {
+        var client = await ClientAsync();
+        var marker = Guid.NewGuid().ToString("N")[..6];
+        var isbn = $"978-604-{Random.Shared.Next(10000, 99999)}-8-8";
+
+        var file = BuildSheet(new[]
+        {
+            ($"Sách lành {marker}", "Tác giả A", $"978-604-{Random.Shared.Next(10000, 99999)}-6-6", "Chủ đề"),
+            ("", "Tác giả B", isbn, "Chủ đề")
+        });
+
+        var job = await RunAsync(client, file, new { matchBy = "Isbn", onDuplicate = "Skip", mapping = StandardMapping() });
+
+        job.Failed.Should().Be(1);
+
+        var failed = (await client.GetFromJsonAsync<ApiResponse<ExcelFailedRowsDto>>(
+            $"/api/cataloging/excel/jobs/{job.Id}/failed-rows", LibraryConnectFactory.JsonOptions))!.Data!;
+
+        failed.Headers.Should().Contain("Nhan đề");
+        failed.Rows.Should().ContainSingle();
+        failed.Rows[0].RowNumber.Should().Be(3);
+        failed.Rows[0].Cells["Tác giả"].Should().Be("Tác giả B");
+        failed.Rows[0].Cells["Nhan đề"].Should().BeEmpty();
+        failed.Rows[0].Message.Should().Contain("nhan đề");
+
+        // The librarian fills in the title and sends that one row back.
+        failed.Rows[0].Cells["Nhan đề"] = $"Sách đã sửa {marker}";
+
+        var retried = await client.PostAsJsonAsync($"/api/cataloging/excel/jobs/{job.Id}/retry", new
+        {
+            rows = failed.Rows.Select(row => new { row.RowNumber, row.Cells })
+        }, LibraryConnectFactory.JsonOptions);
+
+        retried.StatusCode.Should().Be(HttpStatusCode.OK, await retried.Content.ReadAsStringAsync());
+        var newJobId = (await retried.Content.ReadFromJsonAsync<ApiResponse<Guid>>(LibraryConnectFactory.JsonOptions))!.Data;
+
+        ImportJobDto retryJob = null!;
+
+        for (var attempt = 0; attempt < 60; attempt++)
+        {
+            retryJob = (await client.GetFromJsonAsync<ApiResponse<ImportJobDto>>(
+                $"/api/cataloging/import/jobs/{newJobId}", LibraryConnectFactory.JsonOptions))!.Data!;
+
+            if (retryJob.Status is not (Domain.Enums.JobStatus.Pending or Domain.Enums.JobStatus.Running))
+            {
+                break;
+            }
+
+            await Task.Delay(500);
+        }
+
+        retryJob.Status.Should().Be(Domain.Enums.JobStatus.Completed);
+        retryJob.Total.Should().Be(1);
+        retryJob.Success.Should().Be(1, string.Join(" ", retryJob.Errors.Select(error => error.Message)));
+
+        var search = await client.GetFromJsonAsync<ApiResponse<PagedResult<BibListItemDto>>>(
+            $"/api/cataloging/bibs?keyword={marker}", LibraryConnectFactory.JsonOptions);
+
+        search!.Data!.Items.Should().Contain(item => item.Title.StartsWith("Sách đã sửa") && item.AuthorMain == "Tác giả B");
+
+        // The result file of the Excel run is downloadable too.
+        var result = await client.GetAsync($"/api/cataloging/import/jobs/{job.Id}/result");
+        result.StatusCode.Should().Be(HttpStatusCode.OK);
+        result.Content.Headers.ContentType!.MediaType.Should().Contain("spreadsheetml");
+    }
 }

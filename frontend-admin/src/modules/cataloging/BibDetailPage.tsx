@@ -13,7 +13,7 @@ import {
   Tag,
   Typography,
 } from 'antd';
-import { ArrowLeftOutlined, EditOutlined, RollbackOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, EditOutlined, PrinterOutlined, RollbackOutlined } from '@ant-design/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { PageHeader } from '@/components/PageHeader';
 import { Can } from '@/components/PermissionGate';
@@ -23,6 +23,7 @@ import { formatRecordAsText } from '@/modules/marc/marcRecord';
 import { catalogingApi, parseMarc } from './api';
 import { ItemsPanel } from './ItemsPanel';
 import { CoverPanel } from './CoverPanel';
+import { PrintCardsModal } from './PrintCardsModal';
 import {
   BIB_SOURCE_LABELS,
   RECORD_STATUS_LABELS,
@@ -41,6 +42,7 @@ const MONOSPACE = { fontFamily: 'ui-monospace, Consolas, monospace' } as const;
 export function BibDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [printOpen, setPrintOpen] = useState(false);
 
   const bib = useQuery({
     queryKey: ['bib-record', id],
@@ -73,6 +75,11 @@ export function BibDetailPage() {
             <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/bien-muc')}>
               Về danh sách
             </Button>
+            <Can permission={PERMISSIONS.cataloging.cardPrint}>
+              <Button icon={<PrinterOutlined />} onClick={() => setPrintOpen(true)}>
+                In phích
+              </Button>
+            </Can>
             <Can permission={PERMISSIONS.cataloging.bibUpdate}>
               <Button
                 type="primary"
@@ -182,6 +189,8 @@ export function BibDetailPage() {
           },
         ]}
       />
+
+      <PrintCardsModal open={printOpen} bibIds={[record.id]} onClose={() => setPrintOpen(false)} />
     </Space>
   );
 }

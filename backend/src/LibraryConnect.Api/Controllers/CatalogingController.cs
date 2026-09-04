@@ -307,7 +307,8 @@ public class CatalogingController : ApiControllerBase
     [HttpPost("import")]
     [RequirePermission(PermissionCodes.CatalogBibImport)]
     [ProducesResponseType(typeof(ApiResponse<Guid>), StatusCodes.Status200OK)]
-    [RequestSizeLimit(100 * 1024 * 1024)]
+    // Trần cứng của khung nền; giới hạn thật đọc từ tham số UPLOAD.IMPORT_MAX_SIZE_MB trong handler.
+    [RequestSizeLimit(ImportRequestCeiling)]
     public async Task<ActionResult<ApiResponse<Guid>>> StartImport(
         IFormFile file, [FromForm] string options, CancellationToken ct)
     {
@@ -355,6 +356,46 @@ public class CatalogingController : ApiControllerBase
     {
         var result = await Mediator.Send(new GetImportJobQuery(jobId), ct);
         return Ok(Success(result));
+    }
+
+    /// <summary>
+    /// Tệp kết quả của một lượt nhập: dòng tổng kết và danh sách dòng lỗi, dạng Excel hoặc CSV.
+    /// </summary>
+    [HttpGet("import/jobs/{jobId:guid}/result")]
+    [RequirePermission(PermissionCodes.CatalogBibImport)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetImportJobResult(Guid jobId, [FromQuery] string? format, CancellationToken ct)
+    {
+        var file = await Mediator.Send(new GetImportJobResultFileQuery(jobId, format ?? "xlsx"), ct);
+
+        return File(file.Content, file.ContentType, file.FileName);
+    }
+
+    /// <summary>Các dòng đã lỗi của một lượt nhập Excel, kèm nội dung ô để sửa tại chỗ (II.8).</summary>
+    [HttpGet("excel/jobs/{jobId:guid}/failed-rows")]
+    [RequirePermission(PermissionCodes.CatalogBibImport)]
+    [ProducesResponseType(typeof(ApiResponse<ExcelFailedRowsDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<ExcelFailedRowsDto>>> GetExcelFailedRows(
+        Guid jobId, CancellationToken ct)
+    {
+        var result = await Mediator.Send(new GetExcelImportFailedRowsQuery(jobId), ct);
+        return Ok(Success(result));
+    }
+
+    /// <summary>
+    /// Nhập lại các dòng đã sửa trên màn hình, với đúng ánh xạ và tùy chọn của lượt nhập gốc. Trả về
+    /// mã tác vụ mới để theo dõi.
+    /// </summary>
+    [HttpPost("excel/jobs/{jobId:guid}/retry")]
+    [RequirePermission(PermissionCodes.CatalogBibImport)]
+    [ProducesResponseType(typeof(ApiResponse<Guid>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<Guid>>> RetryExcelRows(
+        Guid jobId, [FromBody] RetryExcelRowsRequest body, CancellationToken ct)
+    {
+        var newJobId = await Mediator.Send(new RetryExcelImportRowsCommand(jobId, body.Rows), ct);
+
+        return Ok(Success(newJobId, $"Đã xếp {body.Rows.Count} dòng đã sửa vào hàng đợi nhập."));
     }
 
     /// <summary>
@@ -722,6 +763,22 @@ public class CatalogingController : ApiControllerBase
         return File(file.Content, file.ContentType, file.FileName);
     }
 
+    /// <summary>
+    /// Xem trước thẻ mục lục của một biểu ghi đang soạn, chưa lưu: trả PDF một phích dựng bằng mẫu
+    /// mặc định (hoặc mẫu đã chọn) với dữ liệu thật của biểu ghi.
+    /// </summary>
+    [HttpPost("cards/preview")]
+    [RequirePermission(PermissionCodes.CatalogBibView)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> PreviewCard([FromBody] PreviewCardRequest request, CancellationToken ct)
+    {
+        var file = await Mediator.Send(
+            new PreviewCardCommand(request.MarcJson, request.CardType ?? CardTypes.Main, request.TemplateId, request.CallNumber), ct);
+
+        return File(file.Content, file.ContentType, file.FileName);
+    }
+
     // ---------------------------------------------------------------
     // Nhập biểu ghi từ Excel (II.8)
     // ---------------------------------------------------------------
@@ -762,7 +819,7 @@ public class CatalogingController : ApiControllerBase
     [HttpPost("excel/import")]
     [RequirePermission(PermissionCodes.CatalogBibImport)]
     [ProducesResponseType(typeof(ApiResponse<Guid>), StatusCodes.Status200OK)]
-    [RequestSizeLimit(50 * 1024 * 1024)]
+    [RequestSizeLimit(ImportRequestCeiling)]
     public async Task<ActionResult<ApiResponse<Guid>>> StartExcelImport(
         IFormFile file, [FromForm] string options, CancellationToken ct)
     {
@@ -834,6 +891,12 @@ public class CatalogingController : ApiControllerBase
     }
 
     /// <summary>
+    /// Trần cứng của khung nền cho tệp nhập biểu ghi; giới hạn vận hành thật đọc từ tham số
+    /// <c>UPLOAD.IMPORT_MAX_SIZE_MB</c> trong handler và báo lỗi tiếng Việt đọc được.
+    /// </summary>
+    private const long ImportRequestCeiling = 512L * 1024 * 1024;
+
+    /// <summary>
     /// Tùy chọn nhập đi kèm tệp trong một biểu mẫu multipart nên phải tự đọc từ chuỗi JSON.
     /// Cấu hình phải khớp với cấu hình chung của API, nhất là việc đọc enum theo tên.
     /// </summary>
@@ -854,6 +917,23 @@ public class CatalogingController : ApiControllerBase
 
         return buffer.ToArray();
     }
+}
+
+/// <summary>Biểu ghi đang soạn gửi lên để dựng thử một phích (II.2).</summary>
+public class PreviewCardRequest
+{
+    public string MarcJson { get; set; } = string.Empty;
+    /// <summary>MAIN | TITLE | SUBJECT | CLASSIFICATION; bỏ trống là phích chính.</summary>
+    public string? CardType { get; set; }
+    public Guid? TemplateId { get; set; }
+    /// <summary>Ký hiệu xếp giá in trên phích, nếu cán bộ đã biết.</summary>
+    public string? CallNumber { get; set; }
+}
+
+/// <summary>Các dòng đã sửa trên màn hình để nhập lại (II.8).</summary>
+public class RetryExcelRowsRequest
+{
+    public List<ExcelRetryRow> Rows { get; set; } = new();
 }
 
 /// <summary>Yêu cầu xuất biểu ghi: hoặc danh sách đã chọn, hoặc bộ lọc đang dùng.</summary>

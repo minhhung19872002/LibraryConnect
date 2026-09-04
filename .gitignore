@@ -40,3 +40,6 @@ deploy/nginx/certs/*.pem
 
 # Worktree của các agent chạy song song (không phải mã nguồn)
 .claude/worktrees/
+
+# Tệp trung gian của trình biên dịch TypeScript, không phải mã nguồn
+*.tsbuildinfo

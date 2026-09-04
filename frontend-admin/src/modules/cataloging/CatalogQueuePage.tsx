@@ -406,6 +406,7 @@ function AssignModal({
   const [assignedTo, setAssignedTo] = useState<string | undefined>();
   const [priority, setPriority] = useState<number | undefined>();
   const [deadline, setDeadline] = useState<dayjs.Dayjs | null>(null);
+  const [note, setNote] = useState('');
 
   const staff = useQuery({
     queryKey: ['staff-options'],
@@ -423,9 +424,11 @@ function AssignModal({
         assignedTo: assignedTo ?? null,
         priority,
         deadline: deadline ? deadline.format('YYYY-MM-DD') : undefined,
+        note: note.trim() || undefined,
       }),
     onSuccess: async (count) => {
       message.success(`Đã phân công ${count} việc.`);
+      setNote('');
       await onDone();
     },
     onError: (error: unknown) => message.error(errorMessage(error)),
@@ -491,6 +494,19 @@ function AssignModal({
             />
           </Col>
         </Row>
+
+        <div>
+          <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+            Ghi chú cho cán bộ
+          </Typography.Text>
+          <Input.TextArea
+            value={note}
+            onChange={(event) => setNote(event.target.value)}
+            rows={2}
+            maxLength={500}
+            placeholder="Ví dụ: bổ sung đề mục chủ đề và chỉ số DDC; bỏ trống thì giữ ghi chú cũ"
+          />
+        </div>
       </Space>
     </Modal>
   );

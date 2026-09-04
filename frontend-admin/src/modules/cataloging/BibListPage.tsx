@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useMemo, useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   App,
   Button,
@@ -20,6 +20,7 @@ import {
   EyeOutlined,
   PictureOutlined,
   PlusOutlined,
+  PrinterOutlined,
 } from '@ant-design/icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { PageHeader } from '@/components/PageHeader';
@@ -38,6 +39,8 @@ import {
   type RecordStatus,
 } from './types';
 import { BIB_LIST_COLUMN_WIDTHS, BIB_LIST_SCROLL_X } from './bibListColumns';
+import { FILTER_LABEL_PARAM, linkedFilters, parseBibListParams } from './bibListFilters';
+import { PrintCardsModal } from './PrintCardsModal';
 
 const MONOSPACE = { fontFamily: 'ui-monospace, Consolas, monospace' } as const;
 
@@ -50,12 +53,19 @@ const MONOSPACE = { fontFamily: 'ui-monospace, Consolas, monospace' } as const;
  */
 export function BibListPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { message, modal } = App.useApp();
   const queryClient = useQueryClient();
 
-  const [keyword, setKeyword] = useState('');
-  const [filter, setFilter] = useState<BibListParams>({});
+  // Other screens link here with a filter in the address — the custom-index page sends
+  // `?customIndexValueId=…` — so the address is the first source of the filter, not an empty one.
+  const fromUrl = useMemo(() => parseBibListParams(searchParams), [searchParams]);
+  const linked = useMemo(() => linkedFilters(searchParams), [searchParams]);
+
+  const [keyword, setKeyword] = useState(fromUrl.keyword ?? '');
+  const [filter, setFilter] = useState<BibListParams>(fromUrl);
   const [selected, setSelected] = useState<string[]>([]);
+  const [printOpen, setPrintOpen] = useState(false);
 
   const documentTypes = useCatalogOptions('document-types');
   const languages = useCatalogOptions('languages');
@@ -63,7 +73,27 @@ export function BibListPage() {
   const list = usePagedQuery<BibListItem, BibListParams>({
     queryKey: 'bib-records',
     url: '/cataloging/bibs',
+    initialFilter: fromUrl,
   });
+
+  /**
+   * Mọi khoá đang lọc đặt về rỗng. `resetFilter` của hook quay về bộ lọc ban đầu — tức là bộ lọc
+   * từ địa chỉ — nên không dùng được cho nút "Đặt lại".
+   */
+  const clearedFilter = (): BibListParams =>
+    Object.fromEntries(Object.keys(filter).map((key) => [key, undefined])) as BibListParams;
+
+  /** Bỏ một bộ lọc đến từ liên kết: gỡ khỏi địa chỉ và khỏi câu hỏi gửi máy chủ. */
+  const dropLinkedFilter = (key: keyof BibListParams) => {
+    const next = new URLSearchParams(searchParams);
+    next.delete(key);
+    next.delete(FILTER_LABEL_PARAM);
+    setSearchParams(next, { replace: true });
+
+    const rest = { ...filter, [key]: undefined };
+    setFilter(rest);
+    list.applyFilter({ ...rest, keyword: keyword.trim() });
+  };
 
   const remove = useMutation({
     mutationFn: ({ id, reason }: { id: string; reason: string }) => catalogingApi.remove(id, reason),
@@ -156,6 +186,11 @@ export function BibListPage() {
                 MARCXML
               </Button>
             </Can>
+            <Can permission={PERMISSIONS.cataloging.cardPrint}>
+              <Button icon={<PrinterOutlined />} onClick={() => setPrintOpen(true)}>
+                {selected.length > 0 ? `In phích ${selected.length} biểu ghi` : 'In phích theo bộ lọc'}
+              </Button>
+            </Can>
             <Can permission={PERMISSIONS.cataloging.bibUpdate}>
               <Button
                 icon={<PictureOutlined />}
@@ -192,7 +227,8 @@ export function BibListPage() {
         onReset={() => {
           setKeyword('');
           setFilter({});
-          list.resetFilter();
+          setSearchParams({}, { replace: true });
+          list.applyFilter({ ...clearedFilter(), keyword: '' });
         }}
       >
         <Input
@@ -273,6 +309,25 @@ export function BibListPage() {
           style={{ width: 220 }}
         />
       </FilterBar>
+
+      {linked.length > 0 && (
+        <Space size={[6, 6]} wrap>
+          <Typography.Text type="secondary">Đang lọc theo liên kết:</Typography.Text>
+          {linked.map((item) => (
+            <Tag
+              key={item.key}
+              color="blue"
+              closable
+              onClose={(event) => {
+                event.preventDefault();
+                dropLinkedFilter(item.key);
+              }}
+            >
+              {item.label}: {item.value}
+            </Tag>
+          ))}
+        </Space>
+      )}
 
       <Table<BibListItem>
         rowKey="id"
@@ -392,6 +447,13 @@ export function BibListPage() {
             ),
           },
         ]}
+      />
+
+      <PrintCardsModal
+        open={printOpen}
+        bibIds={selected}
+        filter={{ ...filter, keyword: keyword.trim() || undefined }}
+        onClose={() => setPrintOpen(false)}
       />
     </Space>
   );

@@ -545,4 +545,52 @@ public class CatalogingTests
         defaults!.Data!.Should().Contain(item => item.Tag == "040" && item.ParameterKey != null);
         defaults.Data!.Should().Contain(item => item.Tag == "008" && item.Position == 35);
     }
+
+    /// <summary>
+    /// Lưu biểu ghi đang soạn thành mẫu biên mục và đặt làm mặc định (II.5).
+    ///
+    /// Mẫu chỉ giữ khung — nhãn trường, chỉ thị, mã trường con — còn nội dung bị xoá khi cán bộ
+    /// chọn vậy; mẫu mặc định của một dạng tài liệu chỉ có một, đặt cái mới là cái cũ thôi mặc định.
+    /// </summary>
+    [Fact]
+    public async Task Luu_bieu_ghi_thanh_mau_va_dat_mac_dinh()
+    {
+        var client = await ClientAsync();
+        var documentTypeId = await DocumentTypeIdAsync(client, "SACH");
+        var marker = Guid.NewGuid().ToString("N")[..6];
+        var marc = await BuildRecordAsync(client, documentTypeId, $"Sách làm mẫu {marker}");
+
+        async Task<Guid> SaveTemplateAsync(string name, bool isDefault)
+        {
+            var response = await client.PostAsJsonAsync("/api/cataloging/templates", new
+            {
+                name,
+                documentTypeId,
+                isDefault,
+                isActive = true,
+                fields = marc,
+                clearValues = true
+            }, LibraryConnectFactory.JsonOptions);
+
+            response.StatusCode.Should().Be(HttpStatusCode.OK, await response.Content.ReadAsStringAsync());
+
+            return (await response.Content.ReadFromJsonAsync<ApiResponse<Guid>>(LibraryConnectFactory.JsonOptions))!.Data;
+        }
+
+        var first = await SaveTemplateAsync($"Mẫu A {marker}", isDefault: true);
+        var second = await SaveTemplateAsync($"Mẫu B {marker}", isDefault: true);
+
+        var templates = (await client.GetFromJsonAsync<ApiResponse<List<MarcTemplateDto>>>(
+            $"/api/cataloging/templates?documentTypeId={documentTypeId}&includeInactive=true",
+            LibraryConnectFactory.JsonOptions))!.Data!;
+
+        var saved = templates.Single(template => template.Id == first);
+
+        saved.FieldCount.Should().BeGreaterThan(5);
+        saved.Fields.Should().Contain("\"245\"").And.NotContain("Sách làm mẫu", "chọn xoá nội dung thì mẫu chỉ còn khung");
+        saved.IsDefault.Should().BeFalse("mẫu B đặt mặc định sau nên mẫu A thôi mặc định");
+        templates.Single(template => template.Id == second).IsDefault.Should().BeTrue();
+        templates.Where(template => template.DocumentTypeId == documentTypeId).Count(template => template.IsDefault)
+            .Should().Be(1);
+    }
 }

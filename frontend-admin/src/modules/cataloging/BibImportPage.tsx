@@ -18,11 +18,13 @@ import {
   Typography,
   Upload,
 } from 'antd';
-import { InboxOutlined, ReloadOutlined } from '@ant-design/icons';
+import { DownloadOutlined, InboxOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { PageHeader } from '@/components/PageHeader';
 import { errorMessage } from '@/api/formErrors';
+import { saveBlob } from '@/modules/marc/api';
 import { importApi, locationsApi } from './api';
+import { combinePreviews, type CombinedPreview, type PreviewRow } from './importPreview';
 import { useCatalogOptions, toOptions } from './useCatalogOptions';
 import {
   DUPLICATE_ACTION_LABELS,
@@ -31,7 +33,6 @@ import {
   RECORD_STATUS_LABELS,
   type BibImportOptions,
   type BibImportPreview,
-  type BibImportPreviewRow,
   type DuplicateAction,
   type DuplicateMatchBy,
   type ImportJob,
@@ -40,21 +41,26 @@ import {
 
 const MONOSPACE = { fontFamily: 'ui-monospace, Consolas, monospace' } as const;
 
+/** Một tệp thật của trình duyệt kèm kết quả xem trước của nó. */
+interface PreviewedFile {
+  file: File;
+  preview: BibImportPreview;
+}
+
 /**
  * Nhập biểu ghi từ tệp trao đổi (II.6).
  *
- * Four steps, in the order the decisions actually have to be made: choose the file, look at what is
- * in it and what it collides with, say what to do about the collisions and where the copies go, then
- * watch it run. The middle two steps exist because an import that silently overwrote a catalogue
- * would be unusable — the librarian has to see the damage before agreeing to it.
+ * Four steps, in the order the decisions actually have to be made: choose the files, look at what is
+ * in them and what they collide with, say what to do about the collisions and where the copies go,
+ * then watch it run. The middle two steps exist because an import that silently overwrote a
+ * catalogue would be unusable — the librarian has to see the damage before agreeing to it.
  */
 export function BibImportPage() {
   const { message } = App.useApp();
 
   const [step, setStep] = useState(0);
-  const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<BibImportPreview | null>(null);
-  const [jobId, setJobId] = useState<string | null>(null);
+  const [previewed, setPreviewed] = useState<PreviewedFile[]>([]);
+  const [jobIds, setJobIds] = useState<string[]>([]);
 
   const [options, setOptions] = useState<BibImportOptions>({
     matchBy: 'Isbn',
@@ -73,33 +79,40 @@ export function BibImportPage() {
     queryFn: () => locationsApi.warehouses(),
   });
 
+  // Files are read one after another rather than all at once: each preview is a full parse of the
+  // file on the server, and ten of them in parallel is ten times the memory for no gain in speed.
   const runPreview = useMutation({
-    mutationFn: (selected: File) => importApi.preview(selected, options.matchBy),
+    mutationFn: async (files: File[]) => {
+      const results: PreviewedFile[] = [];
+
+      for (const file of files) {
+        results.push({ file, preview: await importApi.preview(file, options.matchBy) });
+      }
+
+      return results;
+    },
     onSuccess: (result) => {
-      setPreview(result);
+      setPreviewed(result);
       setStep(1);
     },
     onError: (error: unknown) => message.error(errorMessage(error)),
   });
 
   const start = useMutation({
-    mutationFn: () => importApi.start(file!, options),
-    onSuccess: (id) => {
-      setJobId(id);
+    mutationFn: async () => {
+      const ids: string[] = [];
+
+      for (const item of previewed) {
+        ids.push(await importApi.start(item.file, options));
+      }
+
+      return ids;
+    },
+    onSuccess: (ids) => {
+      setJobIds(ids);
       setStep(3);
     },
     onError: (error: unknown) => message.error(errorMessage(error)),
-  });
-
-  const job = useQuery({
-    queryKey: ['import-job', jobId],
-    queryFn: () => importApi.job(jobId!),
-    enabled: Boolean(jobId),
-    // The job runs in another process, so the screen asks it how far it has got until it stops.
-    refetchInterval: (query) => {
-      const status = query.state.data?.status;
-      return status === 'Pending' || status === 'Running' ? 1000 : false;
-    },
   });
 
   const jobs = useQuery({
@@ -107,11 +120,12 @@ export function BibImportPage() {
     queryFn: () => importApi.jobs(20),
   });
 
+  const combined = useMemo(() => combinePreviews(previewed), [previewed]);
+
   const reset = () => {
     setStep(0);
-    setFile(null);
-    setPreview(null);
-    setJobId(null);
+    setPreviewed([]);
+    setJobIds([]);
   };
 
   return (
@@ -142,11 +156,15 @@ export function BibImportPage() {
         <Card>
           <Upload.Dragger
             accept=".mrc,.marc,.iso,.xml,.mrx"
+            multiple
             showUploadList={false}
-            beforeUpload={(selected) => {
-              const chosen = selected as unknown as File;
-              setFile(chosen);
-              runPreview.mutate(chosen);
+            // Ant Design calls this once per file with the whole batch; the batch is read when the
+            // last file of it arrives, so several files dropped together become one preview.
+            beforeUpload={(selected, batch) => {
+              if (selected === batch[batch.length - 1]) {
+                runPreview.mutate(batch.map((item) => item as unknown as File));
+              }
+
               return false;
             }}
             disabled={runPreview.isPending}
@@ -154,37 +172,43 @@ export function BibImportPage() {
             <p className="ant-upload-drag-icon">
               <InboxOutlined />
             </p>
-            <p className="ant-upload-text">Kéo tệp vào đây hoặc bấm để chọn</p>
+            <p className="ant-upload-text">Kéo một hoặc nhiều tệp vào đây hoặc bấm để chọn</p>
             <p className="ant-upload-hint">
-              Chấp nhận tệp .mrc, .iso theo ISO 2709 và tệp .xml theo MARCXML. Bước này chỉ đọc tệp,
-              chưa ghi gì vào cơ sở dữ liệu.
+              Chấp nhận tệp .mrc, .iso theo ISO 2709 và tệp .xml theo MARCXML; chọn nhiều tệp cùng
+              lúc thì tất cả đi qua cùng một bộ tùy chọn. Bước này chỉ đọc tệp, chưa ghi gì vào cơ
+              sở dữ liệu. Dung lượng tối đa mỗi tệp đặt ở Tham số hệ thống (UPLOAD.IMPORT_MAX_SIZE_MB).
             </p>
           </Upload.Dragger>
+          {runPreview.isPending && (
+            <Typography.Text type="secondary" style={{ display: 'block', marginTop: 12 }}>
+              Đang đọc tệp và đối chiếu trùng…
+            </Typography.Text>
+          )}
         </Card>
       )}
 
-      {step === 1 && preview && (
+      {step === 1 && previewed.length > 0 && (
         <PreviewStep
-          preview={preview}
+          preview={combined}
+          fileCount={previewed.length}
           matchBy={options.matchBy}
           onChangeMatchBy={(value) => {
             setOptions((current) => ({ ...current, matchBy: value }));
-            if (file) {
-              runPreview.mutate(file);
-            }
+            runPreview.mutate(previewed.map((item) => item.file));
           }}
           loading={runPreview.isPending}
           onNext={() => setStep(2)}
         />
       )}
 
-      {step === 2 && preview && (
+      {step === 2 && previewed.length > 0 && (
         <Card title="Tùy chọn nhập">
           <Space direction="vertical" size={20} style={{ width: '100%' }}>
             <div>
               <Typography.Text strong>Xử lý biểu ghi trùng</Typography.Text>
               <Typography.Paragraph type="secondary" style={{ marginBottom: 8 }}>
-                Tệp này có {preview.duplicateCount} biểu ghi trùng với dữ liệu đã có.
+                {previewed.length > 1 ? `${previewed.length} tệp này có` : 'Tệp này có'}{' '}
+                {combined.duplicateCount} biểu ghi trùng với dữ liệu đã có.
               </Typography.Paragraph>
               <Radio.Group
                 value={options.onDuplicate}
@@ -307,14 +331,15 @@ export function BibImportPage() {
             <Space>
               <Button onClick={() => setStep(1)}>Quay lại</Button>
               <Button type="primary" loading={start.isPending} onClick={() => start.mutate()}>
-                Bắt đầu nhập {preview.totalRecords} biểu ghi
+                Bắt đầu nhập {combined.totalRecords} biểu ghi
+                {previewed.length > 1 ? ` từ ${previewed.length} tệp` : ''}
               </Button>
             </Space>
           </Space>
         </Card>
       )}
 
-      {step === 3 && job.data && <JobResult job={job.data} />}
+      {step === 3 && jobIds.map((id) => <JobResultLoader key={id} jobId={id} />)}
 
       <Card size="small" title="Các lần nhập gần đây" loading={jobs.isFetching}>
         <Table<ImportJob>
@@ -325,7 +350,7 @@ export function BibImportPage() {
           locale={{ emptyText: <Empty description="Chưa có lần nhập nào" /> }}
           onRow={(row) => ({
             onClick: () => {
-              setJobId(row.id);
+              setJobIds([row.id]);
               setStep(3);
             },
             style: { cursor: 'pointer' },
@@ -367,12 +392,14 @@ export function BibImportPage() {
 
 function PreviewStep({
   preview,
+  fileCount,
   matchBy,
   onChangeMatchBy,
   loading,
   onNext,
 }: {
-  preview: BibImportPreview;
+  preview: CombinedPreview;
+  fileCount: number;
   matchBy: DuplicateMatchBy;
   onChangeMatchBy: (value: DuplicateMatchBy) => void;
   loading: boolean;
@@ -381,10 +408,25 @@ function PreviewStep({
   const columns = useMemo(
     () => [
       { title: '#', dataIndex: 'recordNumber', width: 60 },
+      ...(fileCount > 1
+        ? [
+            {
+              title: 'Tệp',
+              dataIndex: 'fileName',
+              width: 180,
+              ellipsis: true,
+              render: (value: string) => (
+                <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                  {value}
+                </Typography.Text>
+              ),
+            },
+          ]
+        : []),
       {
         title: 'Nhan đề',
         dataIndex: 'title',
-        render: (value: string, row: BibImportPreviewRow) => (
+        render: (value: string, row: PreviewRow) => (
           <Space direction="vertical" size={0}>
             <Typography.Text>{value}</Typography.Text>
             {row.author && (
@@ -405,7 +447,7 @@ function PreviewStep({
       {
         title: 'Đối chiếu',
         width: 280,
-        render: (_: unknown, row: BibImportPreviewRow) =>
+        render: (_: unknown, row: PreviewRow) =>
           row.duplicateOfId ? (
             <Space direction="vertical" size={0}>
               <Tag color="orange">Trùng biểu ghi đã có</Tag>
@@ -420,7 +462,7 @@ function PreviewStep({
       {
         title: 'Kiểm tra',
         width: 300,
-        render: (_: unknown, row: BibImportPreviewRow) =>
+        render: (_: unknown, row: PreviewRow) =>
           row.errors.length > 0 ? (
             <Typography.Text type="danger" style={{ fontSize: 12 }}>
               {row.errors.join(' ')}
@@ -436,7 +478,7 @@ function PreviewStep({
           ),
       },
     ],
-    [],
+    [fileCount],
   );
 
   return (
@@ -444,7 +486,9 @@ function PreviewStep({
       <Card size="small">
         <Descriptions size="small" column={{ xs: 1, md: 4 }}>
           <Descriptions.Item label="Định dạng">{preview.format}</Descriptions.Item>
-          <Descriptions.Item label="Số biểu ghi">{preview.totalRecords}</Descriptions.Item>
+          <Descriptions.Item label={fileCount > 1 ? `Số biểu ghi (${fileCount} tệp)` : 'Số biểu ghi'}>
+            {preview.totalRecords}
+          </Descriptions.Item>
           <Descriptions.Item label="Trùng dữ liệu đã có">{preview.duplicateCount}</Descriptions.Item>
           <Descriptions.Item label="Không hợp lệ">{preview.invalidCount}</Descriptions.Item>
         </Descriptions>
@@ -472,8 +516,8 @@ function PreviewStep({
           message={`${preview.fileErrors.length} biểu ghi trong tệp không đọc được`}
           description={
             <Space direction="vertical" size={2}>
-              {preview.fileErrors.map((error) => (
-                <Typography.Text key={error.recordNumber} style={{ fontSize: 13 }}>
+              {preview.fileErrors.map((error, index) => (
+                <Typography.Text key={`${index}-${error.recordNumber}`} style={{ fontSize: 13 }}>
                   Biểu ghi số {error.recordNumber}: {error.message}
                 </Typography.Text>
               ))}
@@ -482,11 +526,11 @@ function PreviewStep({
         />
       )}
 
-      <Table<BibImportPreviewRow>
-        rowKey="recordNumber"
+      <Table<PreviewRow>
+        rowKey="key"
         size="small"
         loading={loading}
-        dataSource={preview.records}
+        dataSource={preview.rows}
         columns={columns}
         pagination={{ pageSize: 20, showSizeChanger: true }}
       />
@@ -500,20 +544,62 @@ function PreviewStep({
   );
 }
 
+/** Theo dõi một tác vụ cho tới khi nó dừng, rồi hiện kết quả. */
+function JobResultLoader({ jobId }: { jobId: string }) {
+  const job = useQuery({
+    queryKey: ['import-job', jobId],
+    queryFn: () => importApi.job(jobId),
+    // The job runs in another process, so the screen asks it how far it has got until it stops.
+    refetchInterval: (query) => {
+      const status = query.state.data?.status;
+      return status === 'Pending' || status === 'Running' ? 1000 : false;
+    },
+  });
+
+  return job.data ? <JobResult job={job.data} /> : null;
+}
+
 function JobResult({ job }: { job: ImportJob }) {
+  const { message } = App.useApp();
   const done = job.status === 'Completed' || job.status === 'Failed' || job.status === 'Cancelled';
   const processed = job.success + job.skipped + job.failed;
   const percent = job.total === 0 ? 0 : Math.round((processed / job.total) * 100);
+
+  const download = useMutation({
+    mutationFn: (format: 'xlsx' | 'csv') => importApi.result(job.id, format),
+    onSuccess: ({ blob, fileName }) => {
+      saveBlob(blob, fileName);
+      message.success(`Đã tải tệp ${fileName}.`);
+    },
+    onError: (error: unknown) => message.error(errorMessage(error)),
+  });
 
   return (
     <Card
       title={
         <Space>
           <span>Kết quả nhập</span>
+          {job.fileName && <Typography.Text type="secondary">{job.fileName}</Typography.Text>}
           <Tag color={job.status === 'Completed' ? 'green' : job.status === 'Failed' ? 'red' : 'blue'}>
             {JOB_STATUS_LABELS[job.status] ?? job.status}
           </Tag>
         </Space>
+      }
+      extra={
+        done && (
+          <Space>
+            <Button
+              icon={<DownloadOutlined />}
+              loading={download.isPending}
+              onClick={() => download.mutate('xlsx')}
+            >
+              Tải nhật ký lỗi (Excel)
+            </Button>
+            <Button size="small" type="link" onClick={() => download.mutate('csv')}>
+              CSV
+            </Button>
+          </Space>
+        )
       }
     >
       <Space direction="vertical" size={16} style={{ width: '100%' }}>

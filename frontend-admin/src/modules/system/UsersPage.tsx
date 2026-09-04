@@ -41,6 +41,7 @@ import { Can } from '@/components/PermissionGate';
 import { usePagedQuery } from '@/hooks/usePagedQuery';
 import { messages } from '@/i18n/messages';
 import { downloadFile, formatDateTime } from './helpers';
+import { buildDataScopes, splitDataScopes } from './dataScopes';
 import type {
   LoginHistoryItem,
   UserDetail,
@@ -59,6 +60,9 @@ interface UserFormValues {
   department?: string;
   isActive: boolean;
   groupIds: string[];
+  /** Phạm vi dữ liệu (I.2): thư viện và kho người dùng được thao tác; rỗng là không giới hạn. */
+  libraryIds: string[];
+  warehouseIds: string[];
 }
 
 /** Phân hệ I.2 — quản lý tài khoản cán bộ thư viện. */
@@ -415,6 +419,21 @@ function UserFormDrawer({
     enabled: isEdit && open,
   });
 
+  // The two scope lists are short and change rarely; they are only fetched while the drawer is open.
+  const libraries = useQuery({
+    queryKey: ['scope-libraries'],
+    queryFn: () => api.get<Array<{ id: string; name: string }>>('/locations/libraries'),
+    enabled: open,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const warehouses = useQuery({
+    queryKey: ['scope-warehouses'],
+    queryFn: () => api.get<Array<{ id: string; name: string }>>('/locations/warehouses'),
+    enabled: open,
+    staleTime: 5 * 60 * 1000,
+  });
+
   const mutation = useMutation({
     mutationFn: (values: UserFormValues) => {
       const profile = {
@@ -425,9 +444,12 @@ function UserFormDrawer({
         department: values.department,
         isActive: values.isActive,
         groupIds: values.groupIds ?? [],
-        // Data scopes are assigned once libraries and warehouses exist (Phase 6); until then every
-        // user is unrestricted, which is what an empty list means.
-        dataScopes: detail.data?.dataScopes ?? [],
+        // An empty list means unrestricted; anything else narrows the user to those libraries and
+        // warehouses. Document-type scopes are not assigned from this screen.
+        dataScopes: [
+          ...buildDataScopes(values),
+          ...(detail.data?.dataScopes ?? []).filter((scope) => scope.scopeType === 'DocumentType'),
+        ],
       };
 
       return isEdit
@@ -558,6 +580,37 @@ function UserFormDrawer({
             allowClear
             placeholder="Chọn một hoặc nhiều nhóm"
             options={groups.map((group) => ({ value: group.id, label: group.name }))}
+          />
+        </Form.Item>
+
+        <Form.Item
+          name="libraryIds"
+          label="Phạm vi dữ liệu — thư viện"
+          extra="Bỏ trống cả hai ô phạm vi là người dùng thao tác được trên mọi thư viện và kho."
+          initialValue={splitDataScopes(detail.data?.dataScopes).libraryIds}
+        >
+          <Select
+            mode="multiple"
+            allowClear
+            placeholder="Mọi thư viện"
+            loading={libraries.isFetching}
+            options={(libraries.data ?? []).map((library) => ({ value: library.id, label: library.name }))}
+            optionFilterProp="label"
+          />
+        </Form.Item>
+
+        <Form.Item
+          name="warehouseIds"
+          label="Phạm vi dữ liệu — kho"
+          initialValue={splitDataScopes(detail.data?.dataScopes).warehouseIds}
+        >
+          <Select
+            mode="multiple"
+            allowClear
+            placeholder="Mọi kho"
+            loading={warehouses.isFetching}
+            options={(warehouses.data ?? []).map((warehouse) => ({ value: warehouse.id, label: warehouse.name }))}
+            optionFilterProp="label"
           />
         </Form.Item>
 

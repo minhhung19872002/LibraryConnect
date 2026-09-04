@@ -4,7 +4,13 @@ import type { MarcRecord } from '@/modules/marc/types';
 import type { BibImportOptions, BibImportPreview, DuplicateMatchBy, ImportJob } from './importTypes';
 import type { CustomIndex, CustomIndexValue, HarvestResult } from './customIndexTypes';
 import type { CardTemplate } from './cardTypes';
-import type { ExcelImportOptions, ExcelPreview, ImportMappingProfile } from './excelTypes';
+import type {
+  ExcelFailedRows,
+  ExcelImportOptions,
+  ExcelPreview,
+  ExcelRetryRow,
+  ImportMappingProfile,
+} from './excelTypes';
 import type {
   CatalogProductivity,
   CatalogQueueItem,
@@ -42,6 +48,8 @@ export interface BibListParams {
   subjectId?: string;
   classificationId?: string;
   collectionId?: string;
+  /** Giá trị của một danh mục tự tạo từ trường MARC (II.9). */
+  customIndexValueId?: string;
   status?: RecordStatus;
   publishYearFrom?: number;
   publishYearTo?: number;
@@ -225,6 +233,10 @@ export const importApi = {
 
   job: (id: string) => api.get<ImportJob>(`/cataloging/import/jobs/${id}`),
 
+  /** Tệp kết quả của một lượt nhập: dòng tổng kết và các dòng lỗi, Excel hoặc CSV. */
+  result: (id: string, format: 'xlsx' | 'csv' = 'xlsx') =>
+    api.download(`/cataloging/import/jobs/${id}/result`, { params: { format } }),
+
   /**
    * Xuất biểu ghi ra tệp trao đổi: theo danh sách đã tick chọn, hoặc theo đúng bộ lọc đang dùng.
    *
@@ -301,6 +313,10 @@ export const cardApi = {
 
   deleteTemplate: (id: string) => api.delete<null>(`/cataloging/card-templates/${id}`),
 
+  /** Dựng thử một phích từ biểu ghi đang soạn, chưa lưu (II.2) — PDF một trang. */
+  previewRecord: (request: { marcJson: string; cardType?: string; templateId?: string; callNumber?: string }) =>
+    api.downloadPost('/cataloging/cards/preview', request, 'xem-truoc-phich.pdf'),
+
   /** Kết xuất phích ra PDF; phản hồi là tệp nên đi qua client thô. */
   async print(request: {
     bibIds: string[];
@@ -308,6 +324,9 @@ export const cardApi = {
     templateId?: string;
     cardTypes: string[];
     multiplePerPage: boolean;
+    /** Chỉ dựng vài biểu ghi đầu để xem trước, không phải cả lượt in. */
+    preview?: boolean;
+    previewRecords?: number;
   }): Promise<{ blob: Blob; fileName: string }> {
     const response = await http.post<Blob>('/cataloging/cards/print', request, { responseType: 'blob' });
 
@@ -346,6 +365,13 @@ export const excelApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
+
+  /** Các dòng đã lỗi của một lượt nhập, kèm nội dung ô để sửa tại chỗ. */
+  failedRows: (jobId: string) => api.get<ExcelFailedRows>(`/cataloging/excel/jobs/${jobId}/failed-rows`),
+
+  /** Nhập lại các dòng đã sửa; trả về mã tác vụ mới. */
+  retry: (jobId: string, rows: ExcelRetryRow[]) =>
+    api.post<string>(`/cataloging/excel/jobs/${jobId}/retry`, { rows }),
 
   profiles: () => api.get<ImportMappingProfile[]>('/cataloging/excel/mapping-profiles'),
 

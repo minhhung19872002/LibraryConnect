@@ -192,21 +192,26 @@ public class StartBibExcelImportCommandHandler : IRequestHandler<StartBibExcelIm
     private readonly IFileStorage _storage;
     private readonly IBackgroundJobService _jobs;
     private readonly ICurrentUser _currentUser;
+    private readonly ISystemParameterService _parameters;
 
     public StartBibExcelImportCommandHandler(
         IApplicationDbContext db,
         IFileStorage storage,
         IBackgroundJobService jobs,
-        ICurrentUser currentUser)
+        ICurrentUser currentUser,
+        ISystemParameterService parameters)
     {
         _db = db;
         _storage = storage;
         _jobs = jobs;
         _currentUser = currentUser;
+        _parameters = parameters;
     }
 
     public async Task<Guid> Handle(StartBibExcelImportCommand request, CancellationToken ct)
     {
+        await ImportFileLimit.EnsureWithinLimitAsync(_parameters, request.Content.LongLength, request.FileName, ct);
+
         if (request.Options.Mapping.Count == 0)
         {
             throw new Common.Exceptions.ValidationException("Mapping",
