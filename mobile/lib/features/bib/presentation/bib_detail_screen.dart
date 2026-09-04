@@ -13,6 +13,7 @@ import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/models/catalog_models.dart';
+import '../../my_library/data/reader_api.dart';
 import '../../search/data/search_api.dart';
 import '../../search/data/search_params.dart';
 import '../../search/presentation/result_card.dart';
@@ -109,6 +110,8 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
     final l10n = L10n.of(context);
     try {
       final hold = await ref.read(searchApiProvider).createHold(bib.id);
+      // Thẻ Đặt giữ trong Tủ sách đang sống thì không tự nạp lại; làm mới để về là thấy ngay.
+      ref.invalidate(holdsProvider);
       if (!mounted) return;
       _toast(
         hold.queuePosition <= 1

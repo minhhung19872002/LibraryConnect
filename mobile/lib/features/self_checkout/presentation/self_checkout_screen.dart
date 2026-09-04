@@ -16,6 +16,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/models/checkout_models.dart';
 import '../../../shared/models/reader_models.dart';
+import '../../my_library/data/reader_api.dart';
 import '../data/self_checkout_api.dart';
 
 /// Kết quả một lần quét sách: phiếu đã ghi hoặc câu từ chối của máy chủ.
@@ -238,6 +239,9 @@ class _SelfCheckoutScreenState extends ConsumerState<SelfCheckoutScreen> {
         _outcomes.insert(0, outcome);
         if (outcome.ok) _scanned.add(barcode.toUpperCase());
       });
+      // Thẻ Đang mượn của Tủ sách đang sống (bạn đọc đứng ở đó rồi bấm nút mượn) thì không tự nạp
+      // lại; làm mới để "Xem Sách của tôi" thấy ngay cuốn vừa mượn.
+      if (outcome.ok) ref.invalidate(currentLoansProvider);
       _feedback(outcome.ok);
     } on ApiException catch (error) {
       if (!mounted) return;

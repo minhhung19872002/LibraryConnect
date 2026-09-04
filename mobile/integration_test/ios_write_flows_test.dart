@@ -285,6 +285,11 @@ void main() {
     await tester.pumpAndSettle(const Duration(seconds: 5));
 
     // ---- 2. Mượn tự phục vụ: trạm bịa bị chặn, trạm thật cấp phiếu, mượn một cuốn thật ----
+    // Đứng ở thẻ Đang mượn rồi mới đi mượn: thẻ ấy còn sống khi quay về, nên chỉ thấy cuốn vừa
+    // mượn nếu màn hình tự mượn làm mới `currentLoansProvider` (lượt chạy 33828688766 đứng ở
+    // thẻ Đặt giữ nên không đi qua đường này). Trước sửa thì bước 3 đỏ vì không thấy nút Gia hạn.
+    await tester.tap(find.text('Đang mượn'));
+    await tester.pumpAndSettle(const Duration(seconds: 2));
     await tester.tap(find.byKey(const Key('self-checkout-fab')));
     await _waitFor(tester, find.byKey(const Key('verify-qr')));
 
