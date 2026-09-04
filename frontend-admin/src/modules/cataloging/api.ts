@@ -4,7 +4,13 @@ import type { MarcRecord } from '@/modules/marc/types';
 import type { BibImportOptions, BibImportPreview, DuplicateMatchBy, ImportJob } from './importTypes';
 import type { CustomIndex, CustomIndexValue, HarvestResult } from './customIndexTypes';
 import type { CardTemplate } from './cardTypes';
-import type { ExcelImportOptions, ExcelPreview, ImportMappingProfile } from './excelTypes';
+import type {
+  ExcelFailedRows,
+  ExcelImportOptions,
+  ExcelPreview,
+  ExcelRetryRow,
+  ImportMappingProfile,
+} from './excelTypes';
 import type {
   CatalogProductivity,
   CatalogQueueItem,
@@ -227,6 +233,10 @@ export const importApi = {
 
   job: (id: string) => api.get<ImportJob>(`/cataloging/import/jobs/${id}`),
 
+  /** Tệp kết quả của một lượt nhập: dòng tổng kết và các dòng lỗi, Excel hoặc CSV. */
+  result: (id: string, format: 'xlsx' | 'csv' = 'xlsx') =>
+    api.download(`/cataloging/import/jobs/${id}/result`, { params: { format } }),
+
   /**
    * Xuất biểu ghi ra tệp trao đổi: theo danh sách đã tick chọn, hoặc theo đúng bộ lọc đang dùng.
    *
@@ -351,6 +361,13 @@ export const excelApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
+
+  /** Các dòng đã lỗi của một lượt nhập, kèm nội dung ô để sửa tại chỗ. */
+  failedRows: (jobId: string) => api.get<ExcelFailedRows>(`/cataloging/excel/jobs/${jobId}/failed-rows`),
+
+  /** Nhập lại các dòng đã sửa; trả về mã tác vụ mới. */
+  retry: (jobId: string, rows: ExcelRetryRow[]) =>
+    api.post<string>(`/cataloging/excel/jobs/${jobId}/retry`, { rows }),
 
   profiles: () => api.get<ImportMappingProfile[]>('/cataloging/excel/mapping-profiles'),
 

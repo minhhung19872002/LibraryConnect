@@ -421,4 +421,76 @@ public class ExcelImportTests
         detail.Data.AuthorMain.Should().Be("Nguyễn Văn Gộp", "trường 100 biểu ghi cũ chưa có thì lấy từ bảng tính");
         detail.Data.MarcJson.Should().Contain("\"520\"");
     }
+
+    /// <summary>
+    /// Dòng lỗi sửa được ngay trên màn hình rồi nhập lại (II.8): hệ thống đọc lại đúng dòng ấy từ
+    /// tệp đã tải lên, cán bộ sửa ô sai, và lượt nhập lại dùng đúng ánh xạ của lượt gốc.
+    /// </summary>
+    [Fact]
+    public async Task Dong_loi_sua_tai_cho_roi_nhap_lai_duoc()
+    {
+        var client = await ClientAsync();
+        var marker = Guid.NewGuid().ToString("N")[..6];
+        var isbn = $"978-604-{Random.Shared.Next(10000, 99999)}-8-8";
+
+        var file = BuildSheet(new[]
+        {
+            ($"Sách lành {marker}", "Tác giả A", $"978-604-{Random.Shared.Next(10000, 99999)}-6-6", "Chủ đề"),
+            ("", "Tác giả B", isbn, "Chủ đề")
+        });
+
+        var job = await RunAsync(client, file, new { matchBy = "Isbn", onDuplicate = "Skip", mapping = StandardMapping() });
+
+        job.Failed.Should().Be(1);
+
+        var failed = (await client.GetFromJsonAsync<ApiResponse<ExcelFailedRowsDto>>(
+            $"/api/cataloging/excel/jobs/{job.Id}/failed-rows", LibraryConnectFactory.JsonOptions))!.Data!;
+
+        failed.Headers.Should().Contain("Nhan đề");
+        failed.Rows.Should().ContainSingle();
+        failed.Rows[0].RowNumber.Should().Be(3);
+        failed.Rows[0].Cells["Tác giả"].Should().Be("Tác giả B");
+        failed.Rows[0].Cells["Nhan đề"].Should().BeEmpty();
+        failed.Rows[0].Message.Should().Contain("nhan đề");
+
+        // The librarian fills in the title and sends that one row back.
+        failed.Rows[0].Cells["Nhan đề"] = $"Sách đã sửa {marker}";
+
+        var retried = await client.PostAsJsonAsync($"/api/cataloging/excel/jobs/{job.Id}/retry", new
+        {
+            rows = failed.Rows.Select(row => new { row.RowNumber, row.Cells })
+        }, LibraryConnectFactory.JsonOptions);
+
+        retried.StatusCode.Should().Be(HttpStatusCode.OK, await retried.Content.ReadAsStringAsync());
+        var newJobId = (await retried.Content.ReadFromJsonAsync<ApiResponse<Guid>>(LibraryConnectFactory.JsonOptions))!.Data;
+
+        ImportJobDto retryJob = null!;
+
+        for (var attempt = 0; attempt < 60; attempt++)
+        {
+            retryJob = (await client.GetFromJsonAsync<ApiResponse<ImportJobDto>>(
+                $"/api/cataloging/import/jobs/{newJobId}", LibraryConnectFactory.JsonOptions))!.Data!;
+
+            if (retryJob.Status is not (Domain.Enums.JobStatus.Pending or Domain.Enums.JobStatus.Running))
+            {
+                break;
+            }
+
+            await Task.Delay(500);
+        }
+
+        retryJob.Status.Should().Be(Domain.Enums.JobStatus.Completed);
+        retryJob.Total.Should().Be(1);
+        retryJob.Success.Should().Be(1, string.Join(" ", retryJob.Errors.Select(error => error.Message)));
+
+        var search = await client.GetFromJsonAsync<ApiResponse<PagedResult<BibListItemDto>>>(
+            $"/api/cataloging/bibs?keyword={marker}", LibraryConnectFactory.JsonOptions);
+
+        search!.Data!.Items.Should().Contain(item => item.Title.StartsWith("Sách đã sửa") && item.AuthorMain == "Tác giả B");
+
+        // The result file of the Excel run is downloadable too.
+        var result = await client.GetAsync($"/api/cataloging/import/jobs/{job.Id}/result");
+        result.StatusCode.Should().Be(HttpStatusCode.OK);
+        result.Content.Headers.ContentType!.MediaType.Should().Contain("spreadsheetml");
+    }
 }

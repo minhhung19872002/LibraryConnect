@@ -35,7 +35,7 @@ import {
   type ImportJob,
   type RecordStatus,
 } from './importTypes';
-import type { ExcelColumnMapping, ExcelPreview } from './excelTypes';
+import type { ExcelColumnMapping, ExcelFailedRow, ExcelPreview } from './excelTypes';
 
 const MONOSPACE = { fontFamily: 'ui-monospace, Consolas, monospace' } as const;
 
@@ -456,7 +456,7 @@ export function BibExcelImportPage() {
         </Card>
       )}
 
-      {step === 3 && job.data && <ExcelJobResult job={job.data} />}
+      {step === 3 && job.data && <ExcelJobResult job={job.data} onRetried={setJobId} />}
 
       <Modal
         open={saveProfileOpen}
@@ -482,7 +482,51 @@ export function BibExcelImportPage() {
   );
 }
 
-function ExcelJobResult({ job }: { job: ImportJob }) {
+/**
+ * Kết quả một lượt nhập Excel, với bảng lỗi sửa được tại chỗ (II.8).
+ *
+ * Các dòng lỗi được đọc lại từ chính tệp đã tải lên, cán bộ sửa ô sai ngay trên bảng rồi bấm nhập
+ * lại — lượt mới dùng đúng ánh xạ và tùy chọn của lượt gốc, nên không phải đi lại bốn bước.
+ */
+function ExcelJobResult({ job, onRetried }: { job: ImportJob; onRetried: (jobId: string) => void }) {
+  const { message } = App.useApp();
+  const done = job.status === 'Completed' || job.status === 'Failed' || job.status === 'Cancelled';
+  const [edited, setEdited] = useState<ExcelFailedRow[]>([]);
+
+  const failedRows = useQuery({
+    queryKey: ['excel-failed-rows', job.id],
+    queryFn: () => excelApi.failedRows(job.id),
+    enabled: done && job.failed > 0,
+  });
+
+  useEffect(() => {
+    setEdited(failedRows.data?.rows.map((row) => ({ ...row, cells: { ...row.cells } })) ?? []);
+  }, [failedRows.data]);
+
+  const retry = useMutation({
+    mutationFn: () =>
+      excelApi.retry(
+        job.id,
+        edited.map((row) => ({ rowNumber: row.rowNumber, cells: row.cells })),
+      ),
+    onSuccess: (newJobId) => {
+      message.success(`Đã xếp ${edited.length} dòng đã sửa vào hàng đợi nhập.`);
+      onRetried(newJobId);
+    },
+    onError: (error: unknown) => message.error(errorMessage(error)),
+  });
+
+  const download = useMutation({
+    mutationFn: () => importApi.result(job.id, 'xlsx'),
+    onSuccess: ({ blob, fileName }) => {
+      saveBlob(blob, fileName);
+      message.success(`Đã tải tệp ${fileName}.`);
+    },
+    onError: (error: unknown) => message.error(errorMessage(error)),
+  });
+
+  const headers = failedRows.data?.headers ?? [];
+
   return (
     <Card
       title={
@@ -493,6 +537,13 @@ function ExcelJobResult({ job }: { job: ImportJob }) {
           </Tag>
         </Space>
       }
+      extra={
+        done && (
+          <Button icon={<DownloadOutlined />} loading={download.isPending} onClick={() => download.mutate()}>
+            Tải tệp kết quả
+          </Button>
+        )
+      }
     >
       <Space direction="vertical" size={16} style={{ width: '100%' }}>
         <Descriptions size="small" column={{ xs: 1, md: 4 }} bordered>
@@ -502,10 +553,13 @@ function ExcelJobResult({ job }: { job: ImportJob }) {
           <Descriptions.Item label="Lỗi">{job.failed}</Descriptions.Item>
         </Descriptions>
 
-        {job.errors.length > 0 ? (
+        {job.errors.length === 0 && <Empty description="Không có dòng nào lỗi" image={null} />}
+
+        {job.errors.length > 0 && edited.length === 0 && (
           <Table
             rowKey={(row) => `${row.row}-${row.message}`}
             size="small"
+            loading={failedRows.isFetching}
             dataSource={job.errors}
             pagination={{ pageSize: 10 }}
             columns={[
@@ -513,8 +567,59 @@ function ExcelJobResult({ job }: { job: ImportJob }) {
               { title: 'Lý do', dataIndex: 'message' },
             ]}
           />
-        ) : (
-          <Empty description="Không có dòng nào lỗi" image={null} />
+        )}
+
+        {edited.length > 0 && (
+          <>
+            <Typography.Text type="secondary">
+              Sửa trực tiếp trong bảng rồi bấm nhập lại. Chỉ những dòng dưới đây được nhập lại, với
+              đúng ánh xạ cột và tùy chọn của lượt vừa chạy.
+            </Typography.Text>
+
+            <Table<ExcelFailedRow>
+              rowKey="rowNumber"
+              size="small"
+              dataSource={edited}
+              pagination={{ pageSize: 10 }}
+              scroll={{ x: 160 + 220 * headers.length + 260 }}
+              columns={[
+                { title: 'Dòng', dataIndex: 'rowNumber', width: 70, fixed: 'left' },
+                ...headers.map((header) => ({
+                  title: header,
+                  width: 220,
+                  render: (_: unknown, row: ExcelFailedRow) => (
+                    <Input
+                      size="small"
+                      value={row.cells[header] ?? ''}
+                      onChange={(event) =>
+                        setEdited((current) =>
+                          current.map((item) =>
+                            item.rowNumber === row.rowNumber
+                              ? { ...item, cells: { ...item.cells, [header]: event.target.value } }
+                              : item,
+                          ),
+                        )
+                      }
+                    />
+                  ),
+                })),
+                {
+                  title: 'Lý do lỗi',
+                  dataIndex: 'message',
+                  width: 260,
+                  render: (value: string) => (
+                    <Typography.Text type="danger" style={{ fontSize: 12 }}>
+                      {value}
+                    </Typography.Text>
+                  ),
+                },
+              ]}
+            />
+
+            <Button type="primary" icon={<ReloadOutlined />} loading={retry.isPending} onClick={() => retry.mutate()}>
+              Nhập lại {edited.length} dòng đã sửa
+            </Button>
+          </>
         )}
       </Space>
     </Card>

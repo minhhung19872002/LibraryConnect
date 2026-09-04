@@ -119,21 +119,26 @@ public class StartBibImportCommandHandler : IRequestHandler<StartBibImportComman
     private readonly IFileStorage _storage;
     private readonly IBackgroundJobService _jobs;
     private readonly ICurrentUser _currentUser;
+    private readonly ISystemParameterService _parameters;
 
     public StartBibImportCommandHandler(
         IApplicationDbContext db,
         IFileStorage storage,
         IBackgroundJobService jobs,
-        ICurrentUser currentUser)
+        ICurrentUser currentUser,
+        ISystemParameterService parameters)
     {
         _db = db;
         _storage = storage;
         _jobs = jobs;
         _currentUser = currentUser;
+        _parameters = parameters;
     }
 
     public async Task<Guid> Handle(StartBibImportCommand request, CancellationToken ct)
     {
+        await ImportFileLimit.EnsureWithinLimitAsync(_parameters, request.Content.LongLength, request.FileName, ct);
+
         var jobId = Guid.NewGuid();
         var objectName = $"{jobId}/{request.FileName}";
 

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   App,
@@ -16,12 +16,14 @@ import {
   Tabs,
   Tag,
   Typography,
+  Upload,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { HistoryOutlined, SaveOutlined } from '@ant-design/icons';
+import { DownloadOutlined, HistoryOutlined, SaveOutlined, UploadOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/api/client';
+import { saveBlob } from '@/modules/marc/api';
 import { errorMessage } from '@/api/formErrors';
 import { PERMISSIONS } from '@/api/permissions';
 import { PageHeader } from '@/components/PageHeader';
@@ -214,9 +216,122 @@ function renderControl(parameter: SystemParameter) {
       return <Input.TextArea disabled={disabled} rows={4} className="lc-mono" />;
     case 'Cron':
       return <Input disabled={disabled} placeholder="0 2 * * *" className="lc-mono" />;
+    case 'File':
+      return <FileParameterControl parameterKey={parameter.key} disabled={disabled} />;
     default:
       return <Input disabled={disabled} />;
   }
+}
+
+/**
+ * Tham số kiểu Tệp (I.3) — hiện chỉ có logo thư viện: xem tệp đang dùng, tải tệp mới lên, tải về.
+ *
+ * Form.Item hands this control the stored object name as `value`; the name is not something a
+ * person edits, so the control shows the image itself and uploads through the file endpoint. The
+ * image is fetched with the bearer token and shown from a blob URL — an `<img src="/api/...">`
+ * would carry no token and render broken.
+ */
+function FileParameterControl({
+  parameterKey,
+  disabled,
+  value,
+}: {
+  parameterKey: string;
+  disabled: boolean;
+  value?: string;
+}) {
+  const { message } = App.useApp();
+  const queryClient = useQueryClient();
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  // The object name the store holds right now: what the form was loaded with, or what was just
+  // uploaded — the form's own value does not change until the page is reloaded.
+  const [objectName, setObjectName] = useState(value);
+
+  useEffect(() => setObjectName(value), [value]);
+
+  const current = useQuery({
+    queryKey: ['parameter-file', parameterKey, objectName],
+    queryFn: () => api.download(`/admin/parameters/${parameterKey}/file`),
+    enabled: Boolean(objectName),
+    retry: false,
+  });
+
+  useEffect(() => {
+    if (!current.data) {
+      setPreviewUrl(null);
+      return;
+    }
+
+    const url = URL.createObjectURL(current.data.blob);
+    setPreviewUrl(url);
+
+    return () => URL.revokeObjectURL(url);
+  }, [current.data]);
+
+  const upload = useMutation({
+    mutationFn: async (file: File) => {
+      const form = new FormData();
+      form.append('file', file);
+
+      return api.post<string>(`/admin/parameters/${parameterKey}/file`, form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+    },
+    onSuccess: async (name) => {
+      message.success('Đã tải tệp lên. Ảnh mới hiện ở đầu trang quản trị và trên biểu mẫu in.');
+      setObjectName(name);
+      await queryClient.invalidateQueries({ queryKey: ['parameters'] });
+      await queryClient.invalidateQueries({ queryKey: ['public-settings'] });
+      await queryClient.invalidateQueries({ queryKey: ['parameter-file', parameterKey] });
+    },
+    onError: (error: unknown) => message.error(errorMessage(error)),
+  });
+
+  return (
+    <Space direction="vertical" size={8}>
+      {previewUrl ? (
+        <img
+          src={previewUrl}
+          alt="Tệp hiện tại"
+          style={{ maxHeight: 96, maxWidth: 280, objectFit: 'contain', display: 'block' }}
+        />
+      ) : (
+        <Typography.Text type="secondary">
+          {current.isFetching ? 'Đang tải tệp hiện tại…' : 'Chưa có tệp nào.'}
+        </Typography.Text>
+      )}
+
+      <Space wrap>
+        <Upload
+          accept="image/png,image/jpeg,image/gif,image/webp"
+          showUploadList={false}
+          disabled={disabled || upload.isPending}
+          beforeUpload={(file) => {
+            upload.mutate(file as unknown as File);
+            return false;
+          }}
+        >
+          <Button icon={<UploadOutlined />} loading={upload.isPending} disabled={disabled}>
+            {objectName ? 'Thay tệp' : 'Tải tệp lên'}
+          </Button>
+        </Upload>
+
+        {current.data && (
+          <Button
+            icon={<DownloadOutlined />}
+            onClick={() => saveBlob(current.data.blob, current.data.fileName)}
+          >
+            Tải về
+          </Button>
+        )}
+      </Space>
+
+      <Typography.Text type="secondary" className="lc-small">
+        Ảnh PNG, JPG, GIF hoặc WEBP, tối đa 2 MB.
+      </Typography.Text>
+    </Space>
+  );
 }
 
 /** Stored values are text; this turns them into whatever the control expects. */
@@ -242,6 +357,12 @@ function deserialise(parameter: SystemParameter): unknown {
 function serialise(parameter: SystemParameter, value: unknown): string | null | undefined {
   if (parameter.dataType === 'Password') {
     return value === undefined || value === null || value === '' ? undefined : String(value);
+  }
+
+  // A file parameter is set by the upload endpoint, never by the form: the form still holds the
+  // object name it was loaded with, and saving that back would undo an upload made a moment ago.
+  if (parameter.dataType === 'File') {
+    return undefined;
   }
 
   if (value === undefined || value === null) {
