@@ -54,6 +54,7 @@ public static class DependencyInjection
         services.AddHttpClient("fcm", client => client.Timeout = TimeSpan.FromSeconds(20));
         services.AddScoped<IBackgroundJobService, HangfireBackgroundJobService>();
         services.AddScoped<IBackupScheduleRefresher, Jobs.BackupScheduleRefresher>();
+        services.AddSingleton<IMarcStandardFields, MarcStandardFields>();
         services.AddScoped<IBackupService, PostgresBackupService>();
         services.AddScoped<IObjectStorageMirror, ObjectStorageMirror>();
         services.AddSingleton<IVirusScanner, ClamAvScanner>();

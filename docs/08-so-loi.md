@@ -478,6 +478,7 @@ xuống API. Lỗi ghi ở đây là chỗ **bảng đáp ứng ghi "Có" mà ng
 | JN9 | Nhẹ | **Màn hình tải tài liệu số lên không gắn được biểu ghi thư mục**: tải xong phải mở sửa từng tài liệu để gắn | Máy chủ nhận `bibId` ở cả ba lối tải lên, chỉ biểu mẫu bỏ trống trường ấy | Thêm ô chọn biểu ghi vào biểu mẫu tải lên, truyền qua cả ba lối |
 | JN10 | Nhẹ | **Báo cáo ấn phẩm định kỳ chỉ có bảng và tệp**, thiếu dạng đồ họa mà mọi phân hệ khác đều có (yêu cầu 6.8) | Trang báo cáo viết sau, không dùng lại thành phần biểu đồ sẵn có | Dùng lại đúng thành phần biểu đồ của phân hệ Bổ sung: cùng cách đổi cột/tròn, cùng dải màu |
 | JN11 | Nhẹ | **Quy tắc sinh mã thiếu hậu tố** dù I.3 liệt kê "prefix/suffix/độ dài/reset theo năm" | Bộ sinh mã đọc khoá `_SUFFIX` từ đầu, nhưng không có dòng tham số nào nên màn hình không hiện ô nhập | Nạp tám tham số hậu tố (mã vạch, ĐKCB, số thẻ, đơn đặt, yêu cầu mua, biên bản bàn giao, phiếu chuyển kho, quyết định thanh lý), mặc định rỗng nên mã cũ không đổi |
+| JN13 | Nhẹ | **Không có đường nạp lại bộ định nghĩa MARC 21 chuẩn** dù II.5 nói "Import bộ định nghĩa MARC21 chuẩn": sửa hỏng một trường thì phải sửa tay từng ô hoặc dựng lại cả cơ sở dữ liệu | Bộ 220 trường chỉ được đọc bởi bộ nạp dữ liệu lúc khởi động; chú thích trong mã còn hứa "màn hình nhập định nghĩa dùng lại khi cán bộ chọn khôi phục bộ chuẩn", mà màn hình ấy không có nút nào | `POST /marc/fields/import-standard` hai chế độ: nạp bổ sung tag còn thiếu (an toàn, chạy lúc nào cũng được) và khôi phục ghi đè (hỏi lại trước khi chạy). Trường thư viện tự thêm không bị đụng tới ở cả hai chế độ, và trường đã xoá mềm thì sống lại thay vì đâm vào ràng buộc duy nhất. `CatalogingTests.Khoi_phuc_bo_dinh_nghia_MARC_chuan_khong_dung_toi_truong_rieng` sửa hỏng trường 245 rồi khôi phục, đồng thời canh một trường 9xx của thư viện |
 | JN12 | Nhẹ | **Màn hình sao lưu không nói tệp nằm ở đâu** và thư mục đích không cấu hình được từ giao diện | Chỉ có trong biến môi trường | Màn hình hiện thư mục, **chỉ đọc**. Không cho sửa là cố ý: đó là đường dẫn bên trong container và nó phải trỏ vào ổ đĩa gắn ngoài; cho gõ tay là mở đường ghi bản sao lưu vào thư mục biến mất ở lần dựng lại sau |
 
 **Ba chỗ lệch đặc tả nhưng giữ nguyên, ghi ra để khỏi phải kiểm lại:**
@@ -486,7 +487,7 @@ xuống API. Lỗi ghi ở đây là chỗ **bảng đáp ứng ghi "Có" mà ng
 2. **Xoá biểu ghi (II.3)** bị chặn khi còn **bất kỳ** ĐKCB nào, chặt hơn câu "chặn nếu còn ĐKCB đang lưu thông". Nới ra thì xoá được biểu ghi trong khi vẫn còn sách trên giá — mất chỗ dựa của chính những bản ấy.
 3. **Tải bản sao lưu về** chỉ tải tệp dump, không đóng gói kèm thư mục tệp tài liệu số. Phục hồi tại chỗ đã tự tải lại tệp (JN5); gói cả kho đối tượng vào một lượt tải HTTP là hàng chục gigabyte đi qua một kết nối trình duyệt.
 
-**Còn thiếu, chưa làm:** II.5 nói "Import bộ định nghĩa MARC21 chuẩn". Bộ 220 trường được nạp lúc cài đặt và bổ sung tag còn thiếu ở mỗi lần khởi động, nhưng không có nút "khôi phục bộ chuẩn" hay nhập một bộ định nghĩa từ tệp trên giao diện.
+**Đã làm nốt trong cùng ngày:** phần nhập bộ định nghĩa MARC 21 chuẩn — xem JN13.
 
 
 ## Đ. Những chỗ đã thử phá nhưng hệ thống chịu được
@@ -595,7 +596,7 @@ dạng quét mã nguồn chặn cả lớp lỗi quay lại thay vì chỉ chặ
 | Nguy cơ | 1 | 0 | 1 (H9, ghi ở "Làm tiếp") |
 
 Cộng cả ba đợt, đợt áp thiết kế, đợt triển khai và ba đợt rà hoàn thiện ngày 04/09/2026:
-**136 lỗi, đã sửa 134**. Hai mục còn lại là H3 và H9, đã làm xong ngày 03/09/2026 và ghi ở cột cuối
+**137 lỗi, đã sửa 135**. Hai mục còn lại là H3 và H9, đã làm xong ngày 03/09/2026 và ghi ở cột cuối
 của chính hai dòng ấy — con số 134 giữ nguyên cách đếm cũ để đối chiếu được với các bản trước.
 Mỗi lỗi đã sửa đều có phép thử chạy đỏ trước khi sửa và xanh sau khi sửa, kể cả H7: phép thử giả
 tiêu đề đỏ trước khi sửa `CurrentUser.Ip`.
@@ -613,9 +614,9 @@ giao diện gửi mà máy chủ không đọc.
 2. **I8 đã làm xong** cùng ngày. Còn một hệ quả chưa dọn: những bản sao lưu tạo **trước** thay đổi
    này vẫn mang schema `hangfire` bên trong. Phía phục hồi đã loại nó ra nên không hại gì, nhưng
    các tệp ấy lớn hơn mức cần thiết.
-3. **Còn thiếu một chức năng nhỏ của II.5**: nhập bộ định nghĩa MARC 21 từ tệp, hoặc nút "khôi
-   phục bộ chuẩn". Bộ 220 trường vẫn được nạp lúc cài đặt và bổ sung tag còn thiếu ở mỗi lần khởi
-   động, nên thư viện không thiếu định nghĩa nào; chỉ là sửa hỏng rồi thì phải sửa lại bằng tay.
+3. **II.5 đã làm xong** cùng ngày (JN13). Bộ định nghĩa nạp lại được từ giao diện, cả kiểu nạp bổ
+   sung lẫn kiểu khôi phục ghi đè. Chưa có: nhập một bộ định nghĩa **của thư viện khác** từ tệp tải
+   lên — chưa gặp nhu cầu ấy, và bộ chuẩn đi kèm bản cài là thứ mọi thư viện Việt Nam dùng chung.
 4. **Đợt sau là ứng dụng di động** (Phase 15) theo `PROMPT-MOBILE-LIBRARYCONNECT.md`. Nhóm
    `/api/reader/*` đã kiểm lại trong đợt này qua lối bạn đọc thật (đọc tài liệu số có chữ chìm).
 5. Bài học giữ lại từ ba đợt: **lỗi ghi là "đã sửa" chưa chắc đã sửa hết** (B12 dưới D8, H5 dưới lần

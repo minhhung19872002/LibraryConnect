@@ -40,6 +40,26 @@ public class MarcController : ApiControllerBase
         return Ok(Success(result));
     }
 
+    /// <summary>
+    /// Nạp bộ định nghĩa MARC 21 chuẩn kèm theo bản cài đặt (II.5).
+    ///
+    /// Mặc định chỉ thêm tag còn thiếu. <c>overwrite=true</c> ghi đè cả những trường đã có bằng bản
+    /// chuẩn — dùng khi sửa hỏng một trường và muốn về nguyên trạng; trường thư viện tự thêm không
+    /// bị đụng tới trong cả hai chế độ.
+    /// </summary>
+    [HttpPost("fields/import-standard")]
+    [RequirePermission(PermissionCodes.CatalogMarcDefinitionManage)]
+    [ProducesResponseType(typeof(ApiResponse<MarcStandardImportResultDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<MarcStandardImportResultDto>>> ImportStandardFields(
+        [FromQuery] bool overwrite, CancellationToken ct)
+    {
+        var result = await Mediator.Send(new ImportStandardMarcFieldsCommand(overwrite), ct);
+
+        return Ok(Success(result, overwrite
+            ? $"Đã khôi phục bộ chuẩn: thêm {result.Added} trường, ghi đè {result.Updated} trường."
+            : $"Đã nạp thêm {result.Added} trường còn thiếu; {result.Unchanged} trường giữ nguyên."));
+    }
+
     /// <summary>Thêm một trường vào bộ định nghĩa, kể cả trường dùng riêng của thư viện.</summary>
     [HttpPost("fields")]
     [RequirePermission(PermissionCodes.CatalogMarcDefinitionManage)]

@@ -213,6 +213,7 @@ Ký hiệu bám theo **Mục 5 phần 2 của E-HSMT**.
 | BM.48 | Ctrl+D nhân bản trường đang gõ | Đặt con trỏ vào một trường con của 650 → nhấn Ctrl+D | Trường 650 được nhân bản, trình duyệt **không** mở hộp đánh dấu trang | Đúng như mong đợi | Đạt |
 | BM.49 | Xem trước ISBD trước khi lưu | Biên mục mới, điền 245/260/300 → bấm **Xem trước ISBD** khi chưa lưu | Khung mô tả thư mục hiện từng vùng kèm nhan đề vừa gõ, cộng một đoạn gộp đúng cách nó lên phích. Không có biểu ghi nào được ghi xuống cơ sở dữ liệu | Đúng như mong đợi (`MarcTests.An_unsaved_record_can_be_previewed_as_a_bibliographic_description`; biểu ghi hỏng trả 400 chứ không 500) | Đạt |
 | BM.50 | Lấy biểu ghi từ Z39.50 / theo ISBN ngay trên trình soạn | Biên mục mới → **Lấy từ ISBN** → nhập `9780472093755` → Tra cứu → **Nạp vào trình soạn** | Hộp thoại mở sẵn ở tiêu chí ISBN; kết quả gom theo máy chủ, biểu ghi thư viện đã có thì gắn nhãn thay cho nút nạp; bấm nạp thì biểu ghi qua bước `prepare` của máy chủ rồi vào thẳng trình soạn để hiệu đính | Đúng như mong đợi | Đạt (máy chủ Z39.50 công khai) |
+| BM.51 | Khôi phục bộ định nghĩa MARC chuẩn | Định nghĩa trường → sửa tên trường 245 thành "Tên gõ nhầm" → thêm một trường 9xx của thư viện → bấm **Khôi phục bộ chuẩn** | Trường 245 về đúng tên chuẩn; trường 9xx vẫn còn; thông báo ghi rõ số trường thêm, số ghi đè và số trường riêng được giữ. Bấm **Nạp trường còn thiếu** thì không ghi đè gì cả |
 
 ---
 

@@ -35,6 +35,23 @@ export function MarcFieldsPage() {
     queryFn: () => marcApi.getFields({ keyword: appliedKeyword || undefined, includeInactive }),
   });
 
+  const importStandard = useMutation({
+    mutationFn: (overwrite: boolean) => marcApi.importStandardFields(overwrite),
+    onSuccess: async (result) => {
+      message.success(
+        result.updated > 0
+          ? `Đã khôi phục bộ chuẩn: thêm ${result.added}, ghi đè ${result.updated}; giữ nguyên ${result.custom} trường riêng của thư viện.`
+          : `Đã nạp thêm ${result.added} trường còn thiếu; ${result.unchanged} trường giữ nguyên.`,
+      );
+      await queryClient.invalidateQueries({ queryKey: ['marc-fields'] });
+    },
+    onError: (error: unknown) => {
+      message.error(
+        error instanceof ApiRequestError ? error.message : 'Không nạp được bộ định nghĩa chuẩn.',
+      );
+    },
+  });
+
   const remove = useMutation({
     mutationFn: (id: string) => marcApi.deleteField(id),
     onSuccess: async () => {
@@ -66,16 +83,37 @@ export function MarcFieldsPage() {
         description={`Bộ định nghĩa đang dùng để gợi ý và kiểm tra biểu ghi: ${counts.total} trường, trong đó ${counts.control} trường điều khiển và ${counts.required} trường bắt buộc.`}
         actions={
           <Can permission={PERMISSIONS.cataloging.marcDefinition}>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={() => {
-                setEditing(null);
-                setDrawerOpen(true);
-              }}
-            >
-              Thêm trường
-            </Button>
+            <Space>
+              {/*
+                II.5: nạp bộ định nghĩa MARC 21 chuẩn. Hai nút vì hai việc khác hẳn nhau — nạp bổ
+                sung là an toàn và chạy được bất cứ lúc nào, còn khôi phục thì ghi đè lên cả những
+                trường thư viện đã sửa, nên phải hỏi lại.
+              */}
+              <Button loading={importStandard.isPending} onClick={() => importStandard.mutate(false)}>
+                Nạp trường còn thiếu
+              </Button>
+              <Popconfirm
+                title="Khôi phục bộ định nghĩa chuẩn?"
+                description="Mọi sửa đổi của thư viện trên các trường chuẩn sẽ bị ghi đè. Trường do thư viện tự thêm được giữ nguyên."
+                okText="Khôi phục"
+                cancelText="Hủy"
+                onConfirm={() => importStandard.mutate(true)}
+              >
+                <Button danger loading={importStandard.isPending}>
+                  Khôi phục bộ chuẩn
+                </Button>
+              </Popconfirm>
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => {
+                  setEditing(null);
+                  setDrawerOpen(true);
+                }}
+              >
+                Thêm trường
+              </Button>
+            </Space>
           </Can>
         }
       />

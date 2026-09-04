@@ -332,6 +332,68 @@ public class CatalogingTests
     }
 
     [Fact]
+    public async Task Khoi_phuc_bo_dinh_nghia_MARC_chuan_khong_dung_toi_truong_rieng()
+    {
+        // II.5 nói "Import bộ định nghĩa MARC21 chuẩn". Bộ 220 trường vẫn được nạp lúc cài đặt,
+        // nhưng trước 04/09/2026 không có đường nào để nạp lại: sửa hỏng một trường thì phải sửa
+        // tay từng ô, hoặc dựng lại cả cơ sở dữ liệu.
+        var client = await ClientAsync();
+        // Nhãn trường phải là ba chữ số; dải 9xx là dải dành cho thư viện tự dùng.
+        var tag = $"9{Random.Shared.Next(10, 100)}";
+
+        // Một trường dùng riêng của thư viện: lượt khôi phục không được đụng tới nó.
+        var custom = await client.PostAsJsonAsync("/api/marc/fields", new
+        {
+            tag,
+            name = $"Trường riêng {tag}",
+            isControl = false,
+            isRepeatable = true,
+            sortOrder = 900
+        }, LibraryConnectFactory.JsonOptions);
+
+        // Lượt chạy trước có thể đã lập đúng nhãn ấy: trùng thì dùng lại, không phải lỗi của phép thử.
+        custom.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.Conflict);
+
+        // Sửa hỏng một trường của bộ chuẩn.
+        var fields = (await client.GetFromJsonAsync<ApiResponse<IReadOnlyList<Application.Features.Marc.MarcFieldDto>>>(
+            "/api/marc/fields?includeInactive=true", LibraryConnectFactory.JsonOptions))!.Data!;
+
+        var title = fields.Single(field => field.Tag == "245");
+
+        (await client.PutAsJsonAsync($"/api/marc/fields/{title.Id}", new
+        {
+            id = title.Id,
+            tag = title.Tag,
+            name = "Tên gõ nhầm",
+            isControl = title.IsControl,
+            isRepeatable = title.IsRepeatable,
+            sortOrder = title.SortOrder
+        }, LibraryConnectFactory.JsonOptions)).EnsureSuccessStatusCode();
+
+        // Nạp bổ sung: không ghi đè, nên tên hỏng vẫn còn.
+        var added = (await (await client.PostAsync("/api/marc/fields/import-standard", null))
+            .Content.ReadFromJsonAsync<ApiResponse<Application.Features.Marc.MarcStandardImportResultDto>>(
+                LibraryConnectFactory.JsonOptions))!.Data!;
+
+        added.Updated.Should().Be(0);
+        added.Custom.Should().BeGreaterThan(0, "trường riêng của thư viện phải được đếm riêng");
+
+        // Khôi phục bộ chuẩn: tên đúng trở lại.
+        var restored = (await (await client.PostAsync("/api/marc/fields/import-standard?overwrite=true", null))
+            .Content.ReadFromJsonAsync<ApiResponse<Application.Features.Marc.MarcStandardImportResultDto>>(
+                LibraryConnectFactory.JsonOptions))!.Data!;
+
+        restored.Updated.Should().BeGreaterThan(200, "bộ chuẩn có hơn 200 trường");
+
+        var after = (await client.GetFromJsonAsync<ApiResponse<IReadOnlyList<Application.Features.Marc.MarcFieldDto>>>(
+            "/api/marc/fields?includeInactive=true", LibraryConnectFactory.JsonOptions))!.Data!;
+
+        after.Single(field => field.Tag == "245").Name.Should().NotBe("Tên gõ nhầm");
+        after.Should().Contain(field => field.Tag == tag,
+            "trường dùng riêng của thư viện không bị lượt khôi phục xóa đi");
+    }
+
+    [Fact]
     public async Task A_record_without_a_title_is_refused_with_the_reason()
     {
         var client = await ClientAsync();

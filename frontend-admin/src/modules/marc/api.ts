@@ -20,6 +20,15 @@ export const marcApi = {
 
   deleteField: (id: string) => api.delete<null>(`/marc/fields/${id}`),
 
+  /**
+   * Nạp bộ định nghĩa MARC 21 chuẩn kèm bản cài đặt (II.5). `overwrite` ghi đè cả trường đã có;
+   * trường thư viện tự thêm không bị đụng tới ở cả hai chế độ.
+   */
+  importStandardFields: (overwrite: boolean) =>
+    api.post<{ added: number; updated: number; unchanged: number; custom: number }>(
+      `/marc/fields/import-standard?overwrite=${overwrite}`,
+    ),
+
   validate: (record: MarcRecord) =>
     api.post<MarcValidationResult>('/marc/validate', { marcJson: JSON.stringify(record) }),
 
