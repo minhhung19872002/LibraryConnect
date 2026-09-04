@@ -240,3 +240,10 @@ diện nào mới.
 | P15 | Biểu tượng ứng dụng | Vẽ bằng script (sách mở + sóng kết nối, nền xanh rêu) qua `flutter_launcher_icons`, adaptive icon Android | Thay biểu tượng Flutter mặc định; thư viện đổi bằng cách thay `assets/icon/app_icon.png` rồi chạy lại lệnh | Có, khi khách hàng có bộ nhận diện |
 | P15 | Luồng 11 (nhận đẩy thật) và các kiểm chứng máy thật | Ghi rõ **chưa kiểm** trong docs/06 và docs/07 thay vì đánh "Đạt" | Không có `google-services.json`, khoá FCM, điện thoại thật, máy Mac; ghi "Đạt" mà không kiểm là vi phạm nguyên tắc số 7 của CLAUDE.md | Có, khi có thiết bị |
 | P15 | Mốc đồng bộ delta lấy ở đâu | Ứng dụng và phép thử dùng `serverTime` máy chủ trả trong mỗi trang, không dùng đồng hồ điện thoại | Máy ảo lệch vài chục giây so với máy chủ làm `updatedSince` bỏ sót đúng bản ghi vừa sửa (bắt được ở MB.33) — đúng lý do đã ghi ở dòng "Đồng bộ delta dùng mốc nào" | Không |
+
+## Đợt rà hoàn thiện 04/09/2026 — Bạn đọc, Lưu thông, Kiểm kê
+
+| Phase | Vấn đề | Phương án đã chọn | Lý do | Đổi được không |
+|---|---|---|---|---|
+| Rà 04/09 | Kho đang đóng để kiểm kê (III.4 bước 1) thì quầy xử lý thế nào | **Ghi mượn**: chặn hẳn (cảnh báo chặn `WAREHOUSE_CLOSED`, gọi thẳng API cũng trả 409 "Kho … đang đóng để kiểm kê"). **Ghi trả**: vẫn nhận, nhưng dòng trả mang cảnh báo không chặn "giữ bản này ở quầy, chưa xếp lên giá"; màn hình quầy hiện banner liệt kê kho đang đóng ngay khi mở | Bạn đọc mang sách tới trả thì không đuổi về được, và tiền phạt phải dừng đúng ngày trả; nhưng bản ấy lên giá giữa kỳ kiểm kê là thành "thừa" so với danh sách kỳ vọng đã chốt lúc tạo kỳ. Giữ ở quầy tới khi chốt kỳ là cách các thư viện vẫn làm | Không (quy tắc nghiệp vụ) |
+

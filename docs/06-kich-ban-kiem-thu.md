@@ -413,6 +413,8 @@ Ký hiệu bám theo **Mục 5 phần 2 của E-HSMT**.
 | LT.27 | Thẻ điện tử | `GET /api/reader/card` | Trả số thẻ, hạn thẻ và chuỗi mã vạch để hiện lên điện thoại |
 | LT.28 | Bạn đọc chỉ thấy dữ liệu của mình | Đăng nhập bạn đọc A rồi gọi `POST /api/reader/loans/{id}/renew` với phiếu của bạn đọc B | Trả HTTP 403 |
 | LT.29 | Mượn tự phục vụ khi chưa bật | `POST /api/reader/loans/self-checkout` | Bị chặn kèm thông báo thư viện chưa mở chức năng; bật tham số rồi gọi lại kèm mã điểm quét đúng thì mượn được |
+| LT.30 | Kho đang đóng để kiểm kê thì không ghi mượn | Kiểm kê → đóng một kho; ở quầy quét thẻ rồi quét mã vạch một bản thuộc kho ấy; gọi thẳng `POST /api/circulation/desk/checkout` với mã vạch ấy | Lần quét bị từ chối kèm "Kho … đang đóng để kiểm kê"; gọi thẳng API trả HTTP 409 cùng câu ấy; bản vẫn "Trong kho". Đầu màn hình quầy có banner liệt kê kho đang đóng |
+| LT.31 | Trả sách về kho đang kiểm kê | Mượn một bản trước khi đóng kho, đóng kho, rồi quét trả | Vẫn ghi trả được (tiền phạt dừng đúng ngày), cột Ghi chú hiện "Giữ ở quầy — kho đang kiểm kê" thay vì "Xếp lên giá" |
 
 ## Nhóm chức năng — Phân hệ V: Tài liệu số
 

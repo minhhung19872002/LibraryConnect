@@ -314,6 +314,15 @@ nhất trên máy.
 
 ---
 
+## J. Đợt rà hoàn thiện 04/09/2026 — Bạn đọc, Lưu thông, Kiểm kê
+
+Đối chiếu từng dòng Phân hệ VI, VII và III.4 của đặc tả với thứ đang chạy thật, đi từ giao diện
+xuống API. Lỗi ghi ở đây là chỗ **bảng đáp ứng ghi "Có" mà người dùng không làm được**.
+
+| Mã | Mức | Lỗi | Nguyên nhân | Sửa |
+|---|---|---|---|---|
+| J1 | Nặng | Kho đã đóng để kiểm kê vẫn cho mượn và trả ở quầy như thường; màn hình quầy không biết kho nào đang đóng. Đặc tả III.4 bước 1 ghi rõ "ngưng cho mượn/trả tại kho đó, cảnh báo trên màn hình lưu thông", bảng đáp ứng đã đánh "Có" từ phase 6 | `Warehouse.IsClosedForInventory` chỉ được kiểm ở chuyển kho và nhập kho (`ItemLifecycleFeatures`, `ReceivingFeatures`); `CirculationDeskService` không tham chiếu tới nó | Quét mượn thêm cảnh báo chặn `WAREHOUSE_CLOSED`, ghi mượn thẳng API trả 409; ghi trả vẫn nhận nhưng báo giữ ở quầy (quyết định ghi ở docs/00); banner trên Quầy lưu thông đọc `IsClosedForInventory` từ danh sách kho. Hai phép thử tích hợp `Kho_dang_dong_de_kiem_ke_thi_khong_ghi_muon_duoc`, `Tra_sach_ve_kho_dang_kiem_ke_van_nhan_nhung_bao_giu_o_quay` chạy đỏ trước khi sửa |
+
 ## Đ. Những chỗ đã thử phá nhưng hệ thống chịu được
 
 Ghi lại để biết chỗ nào đã kiểm và không phải kiểm lại — kèm bằng chứng, không ghi suông.

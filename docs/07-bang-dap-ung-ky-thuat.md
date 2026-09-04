@@ -177,6 +177,7 @@ Cập nhật lần cuối: 02/09/2026, sau đợt hoàn thiện (bảo mật, b�
 | III.3 | Thông tin thư viện / cơ sở | **Có** | CRUD kèm địa chỉ, giờ mở cửa, người phụ trách, tọa độ |
 | III.3 | Thông tin kho, giá, ngăn, quy tắc ký hiệu | **Có** | CRUD kho và giá; mã giá duy nhất trong phạm vi kho |
 | III.4 | Đóng kho khi bắt đầu kiểm kê | **Có** | Kho đóng thì ngưng nhận chuyển kho; trạng thái từng kho hiện ngay trên màn hình kiểm kê |
+| III.4 | Kho đóng thì ngưng cho mượn/trả tại kho đó, cảnh báo trên màn hình lưu thông | **Có** | Bổ sung 04/09/2026: quầy từ chối ghi mượn bản thuộc kho đang đóng (cả khi gọi thẳng API, HTTP 409); ghi trả vẫn nhận nhưng báo giữ ở quầy; banner trên Quầy lưu thông liệt kê kho đang đóng. Kịch bản LT.30–LT.31 |
 | III.4 | Tạo kỳ kiểm kê, snapshot danh sách kỳ vọng | **Có** | Phạm vi toàn kho / theo khoảng ĐKCB / theo dạng tài liệu; danh sách chốt ngay lúc tạo kỳ |
 | III.4 | Quét barcode liên tục, phản hồi khớp / thừa / sai kho | **Có** | Ô quét giữ tiêu điểm sau mỗi lần quét; nhật ký quét hiện ngay bên dưới |
 | III.4 | Nhập tệp quét từ máy đọc rời | **Có** | Mỗi dòng một mã, hoặc CSV lấy cột đầu |
