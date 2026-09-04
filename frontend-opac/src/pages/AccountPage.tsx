@@ -21,6 +21,7 @@ import {
 } from 'antd';
 import { readerApi } from '@/api/opac';
 import {
+  describeDigitalRequest,
   describeFineType,
   describeHoldStatus,
   describeLoanStatus,
@@ -66,6 +67,13 @@ export function AccountPage() {
   const renewals = useQuery({
     queryKey: ['card-renewals'],
     queryFn: () => readerApi.cardRenewals(),
+  });
+
+  // IX.3 liệt kê "tài liệu số được cấp quyền" trong trang cá nhân; trước 04/09/2026 phần ấy chỉ có ở
+  // trang Tài liệu số riêng, và trạng thái yêu cầu đã gửi thì không xem được ở đâu cả.
+  const digitalRequests = useQuery({
+    queryKey: ['digital-requests'],
+    queryFn: () => readerApi.digitalRequests(),
   });
 
   const renew = useMutation({
@@ -384,6 +392,65 @@ export function AccountPage() {
                     locale={{ emptyText: 'Bạn không có khoản phạt nào.' }}
                   />
                 </>
+              ),
+            },
+            {
+              key: 'digital',
+              label: `Tài liệu số (${digitalRequests.data?.totalCount ?? 0})`,
+              children: (
+                <List
+                  loading={digitalRequests.isLoading}
+                  dataSource={digitalRequests.data?.items ?? []}
+                  locale={{
+                    emptyText: (
+                      <Empty
+                        description={
+                          <>
+                            Bạn chưa gửi yêu cầu đọc tài liệu hạn chế nào.{' '}
+                            <Link to="/tai-lieu-so">Xem tài liệu số của thư viện</Link>
+                          </>
+                        }
+                      />
+                    ),
+                  }}
+                  renderItem={(item) => (
+                    <List.Item
+                      actions={
+                        item.status === 'Approved'
+                          ? [
+                              <Link key="read" to={`/tai-lieu-so/${item.documentId}`}>
+                                Đọc
+                              </Link>,
+                            ]
+                          : undefined
+                      }
+                    >
+                      <List.Item.Meta
+                        title={item.documentTitle}
+                        description={
+                          <Space direction="vertical" size={0}>
+                            <span>Gửi yêu cầu: {formatDateTime(item.requestDate)}</span>
+                            {item.status === 'Approved' && item.expireAt && (
+                              <span>Được đọc tới {formatDateTime(item.expireAt)}</span>
+                            )}
+                            {item.status === 'Approved' && item.maxViews != null && (
+                              <span>
+                                Đã xem {item.viewCount}/{item.maxViews} lần
+                                {item.allowDownload ? ' · được tải về' : ''}
+                              </span>
+                            )}
+                            {item.status === 'Rejected' && item.rejectReason && (
+                              <span>Lý do từ chối: {item.rejectReason}</span>
+                            )}
+                          </Space>
+                        }
+                      />
+                      <Tag color={describeDigitalRequest(item.status).color}>
+                        {describeDigitalRequest(item.status).label}
+                      </Tag>
+                    </List.Item>
+                  )}
+                />
               ),
             },
             {

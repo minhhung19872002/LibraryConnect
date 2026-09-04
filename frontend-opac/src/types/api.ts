@@ -391,6 +391,22 @@ export interface ReaderProfile {
   debtAmount: number;
 }
 
+/** Một yêu cầu đọc tài liệu hạn chế của chính bạn đọc đang đăng nhập (V.2, IX.3). */
+export interface DigitalRequestRow {
+  id: string;
+  documentId: string;
+  documentTitle: string;
+  requestDate: string;
+  reason?: string | null;
+  status: 'Pending' | 'Approved' | 'Rejected' | 'Expired';
+  approvedAt?: string | null;
+  expireAt?: string | null;
+  rejectReason?: string | null;
+  maxViews?: number | null;
+  viewCount: number;
+  allowDownload: boolean;
+}
+
 export interface LoanRow {
   id: string;
   code: string;

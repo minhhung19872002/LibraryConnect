@@ -1,4 +1,4 @@
-import type { FineRow, HoldRow, LoanRow } from '@/types/api';
+import type { DigitalRequestRow, FineRow, HoldRow, LoanRow } from '@/types/api';
 
 /**
  * Chữ tiếng Việt cho các trạng thái nghiệp vụ.
@@ -73,4 +73,20 @@ export function holdStatusColor(status: HoldRow['status']): string | undefined {
 export function describeResultCount(total: number, capped?: boolean): string {
   const number = total.toLocaleString('vi-VN');
   return capped ? `Tìm thấy hơn ${number} tài liệu` : `Tìm thấy ${number} tài liệu`;
+}
+
+/** Trạng thái một yêu cầu đọc tài liệu hạn chế, nhìn từ phía bạn đọc (IX.3). */
+export function describeDigitalRequest(
+  status: DigitalRequestRow['status'],
+): { label: string; color: string } {
+  switch (status) {
+    case 'Approved':
+      return { label: 'Đã duyệt', color: 'green' };
+    case 'Rejected':
+      return { label: 'Từ chối', color: 'red' };
+    case 'Expired':
+      return { label: 'Hết hạn', color: 'default' };
+    default:
+      return { label: 'Chờ duyệt', color: 'blue' };
+  }
 }

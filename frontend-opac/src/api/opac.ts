@@ -1,6 +1,7 @@
 import { api, http, tokenStorage } from '@/api/client';
 import { buildReadingTimeRequest } from '@/lib/readingTime';
 import type {
+  DigitalRequestRow,
   AuthResult,
   BibDetail,
   BrowseEntry,
@@ -238,6 +239,12 @@ export const readerApi = {
     api.get<DigitalCollectionNode[]>('/reader/digital/collections'),
 
   digitalDocument: (id: string) => api.get<DigitalDocumentDetail>(`/reader/digital/${id}`),
+
+  /** Trạng thái các yêu cầu đọc tài liệu hạn chế mà chính bạn đọc đã gửi (IX.3). */
+  digitalRequests: (page = 1) =>
+    api.get<PagedResult<DigitalRequestRow>>('/reader/digital/requests', {
+      params: { page, pageSize: 20 },
+    }),
 
   openDigital: (id: string) => api.get<DigitalReaderSession>(`/reader/digital/${id}/read`),
 
