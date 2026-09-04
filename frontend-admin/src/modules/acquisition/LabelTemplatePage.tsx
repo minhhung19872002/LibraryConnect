@@ -27,6 +27,8 @@ import { Can } from '@/components/PermissionGate';
 import { PERMISSIONS } from '@/api/permissions';
 import { ApiRequestError } from '@/api/client';
 import { stockApi } from './api';
+import { LabelPreview } from './LabelPreview';
+import { sampleLabelData } from './labelContent';
 import type {
   BarcodeTemplateDto,
   LabelBoxDto,
@@ -53,7 +55,13 @@ const labelFields: { value: string; label: string }[] = [
   { value: 'copyNumber', label: 'Số bản' },
 ];
 
-const emptyLayout: LabelLayoutDto = { boxes: [], barcode: null, padding: 1.5, showBorder: false };
+const emptyLayout: LabelLayoutDto = {
+  boxes: [],
+  barcode: null,
+  logo: null,
+  padding: 1.5,
+  showBorder: false,
+};
 
 /**
  * III.2 — Mẫu tem mã vạch và nhãn gáy.
@@ -255,6 +263,9 @@ function TemplateDrawer({
   const rows = Form.useWatch('rowsPerPage', form) ?? template?.rowsPerPage ?? 10;
   const marginLeft = Form.useWatch('marginLeftMm', form) ?? template?.marginLeftMm ?? 8;
   const marginTop = Form.useWatch('marginTopMm', form) ?? template?.marginTopMm ?? 10;
+  const barcodeType =
+    (Form.useWatch('barcodeType', form) as string | undefined) ??
+    (template && 'barcodeType' in template ? template.barcodeType : 'Code128');
 
   const overflowX = marginLeft + columns * width > 210;
   const overflowY = marginTop + rows * height > 297;
@@ -388,6 +399,79 @@ function TemplateDrawer({
           </Col>
         </Row>
       </Form>
+
+      <Card variant="borderless" size="small" title="Xem trước" style={{ marginBottom: 12 }}>
+        <Space align="start" size="large">
+          <LabelPreview
+            layout={layout}
+            widthMm={width}
+            heightMm={height}
+            data={sampleLabelData}
+            barcodeType={barcodeType}
+          />
+          <Typography.Text type="secondary" style={{ maxWidth: 360, display: 'block' }}>
+            Mô phỏng một tem với dữ liệu mẫu, tỷ lệ 5 điểm ảnh một milimét. Mã vạch là ảnh thật do
+            máy chủ dựng; logo lấy từ tham số hệ thống "Logo thư viện". Ô đè lên nhau ở đây thì trên
+            giấy cũng vậy.
+          </Typography.Text>
+        </Space>
+      </Card>
+
+      <Card
+        variant="borderless"
+        size="small"
+        title="Logo thư viện"
+        style={{ marginBottom: 12 }}
+        extra={
+          <Checkbox
+            checked={layout.logo != null}
+            onChange={(event) =>
+              setLayout((current) => ({
+                ...current,
+                logo: event.target.checked ? { x: 1, y: 1, width: 8, height: 8 } : null,
+              }))
+            }
+          >
+            In logo thư viện trên tem
+          </Checkbox>
+        }
+      >
+        {layout.logo ? (
+          <Row gutter={12}>
+            {(
+              [
+                ['x', 'X (mm)'],
+                ['y', 'Y (mm)'],
+                ['width', 'Rộng'],
+                ['height', 'Cao'],
+              ] as const
+            ).map(([key, label]) => (
+              <Col span={4} key={key}>
+                <Typography.Text type="secondary">{label}</Typography.Text>
+                <InputNumber
+                  value={layout.logo![key]}
+                  min={key === 'x' || key === 'y' ? 0 : 2}
+                  step={0.5}
+                  style={{ width: '100%' }}
+                  onChange={(value) =>
+                    setLayout((c) => ({ ...c, logo: { ...c.logo!, [key]: value ?? 0 } }))
+                  }
+                />
+              </Col>
+            ))}
+            <Col span={8}>
+              <Typography.Text type="secondary">
+                Ảnh lấy từ tham số hệ thống lúc in; đổi logo một lần là mọi mẫu đổi theo. Chưa tải
+                logo thì khối này bỏ trống.
+              </Typography.Text>
+            </Col>
+          </Row>
+        ) : (
+          <Typography.Text type="secondary">
+            Nhãn gáy có logo giúp nhận ra sách của thư viện khi lẫn với sách mượn liên thư viện.
+          </Typography.Text>
+        )}
+      </Card>
 
       <Card
         variant="borderless"

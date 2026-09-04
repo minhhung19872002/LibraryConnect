@@ -49,6 +49,8 @@ import { formsApi, locationsApi, stockApi } from './api';
 import { MAU } from '@/lib/palette';
 import { printableFormFor, printedDocumentTitle, type PrintableFormType, type StockBulkAction } from './printing';
 import { TransferSlipsDrawer } from './TransferSlipsDrawer';
+import { LabelPreview } from './LabelPreview';
+import { toLabelData } from './labelContent';
 import {
   acquisitionTypeLabels,
   disposalTypes,
@@ -156,6 +158,18 @@ export function StockItemsPage() {
 
   const selectionPayload = () =>
     applyToAll ? { itemIds: [], filter } : { itemIds: selected, filter: null };
+
+  // Mẫu đang chọn trong hộp in (hoặc mẫu mặc định) và ấn phẩm đầu tiên đang chọn — đủ để mô phỏng
+  // một tem với dữ liệu thật trước khi tạo tệp.
+  const printTemplateId = Form.useWatch('templateId', printForm) as string | undefined;
+  const printTemplates = printKind === 'barcode' ? barcodeTemplates.data : labelTemplates.data;
+  const previewTemplate =
+    printTemplates?.find((template) => template.id === printTemplateId) ??
+    printTemplates?.find((template) => template.isDefault) ??
+    printTemplates?.[0];
+  const previewItem = applyToAll
+    ? items.data?.items[0]
+    : items.data?.items.find((item) => selected.includes(item.id));
 
   const selectionCount = applyToAll ? (items.data?.totalCount ?? 0) : selected.length;
 
@@ -823,6 +837,24 @@ export function StockItemsPage() {
               )}
             />
           </Form.Item>
+          {previewTemplate && previewItem && (
+            <Form.Item label="Xem trước với ấn phẩm đầu tiên đang chọn">
+              <Space align="start" size="middle">
+                <LabelPreview
+                  layout={previewTemplate.layout}
+                  widthMm={previewTemplate.widthMm}
+                  heightMm={previewTemplate.heightMm}
+                  data={toLabelData(previewItem)}
+                  barcodeType={
+                    'barcodeType' in previewTemplate ? String(previewTemplate.barcodeType) : 'Code128'
+                  }
+                />
+                <Typography.Text type="secondary" style={{ maxWidth: 200, display: 'block' }}>
+                  {previewItem.barcode} — {previewItem.title}
+                </Typography.Text>
+              </Space>
+            </Form.Item>
+          )}
           <Form.Item
             name="copies"
             label="Số bản mỗi ấn phẩm"

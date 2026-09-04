@@ -139,6 +139,12 @@ export const stockApi = {
   printLabels: (payload: Record<string, unknown>) =>
     api.downloadPost('/stock/print/labels', payload, 'nhan-gay.pdf'),
 
+  /** Ảnh PNG một mã vạch cho ô xem trước; đi qua client để mang JWT, nên trả về blob. */
+  barcodeImage: (value: string, type: string, width = 400, height = 120) =>
+    api.download('/stock/barcode-image', { params: { value, type, width, height } }),
+
+  /** Logo thư viện đã tải lên ở tham số hệ thống, cho ô xem trước tem. */
+  libraryLogo: () => api.download('/admin/parameters/LIBRARY.LOGO_URL/file'),
 };
 
 /** III.1 — Yêu cầu đặt mua, đơn đặt, biên bản bàn giao, biên mục sơ lược. */

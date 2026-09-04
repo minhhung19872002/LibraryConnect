@@ -285,9 +285,18 @@ export interface LabelBarcodeDto {
   source: string;
 }
 
+/** Khối ảnh logo thư viện trên tem; ảnh lấy từ tham số hệ thống lúc in. */
+export interface LabelImageDto {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 export interface LabelLayoutDto {
   boxes: LabelBoxDto[];
   barcode?: LabelBarcodeDto | null;
+  logo?: LabelImageDto | null;
   padding: number;
   showBorder: boolean;
 }

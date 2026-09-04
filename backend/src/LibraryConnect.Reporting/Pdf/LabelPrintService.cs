@@ -23,7 +23,7 @@ public class LabelPrintService : ILabelPrintService
     {
     }
 
-    public byte[] RenderBarcodes(BarcodeTemplateDto template, IReadOnlyList<LabelDataDto> items)
+    public byte[] RenderBarcodes(BarcodeTemplateDto template, IReadOnlyList<LabelDataDto> items, byte[]? logo = null)
     {
         ArgumentNullException.ThrowIfNull(template);
         ArgumentNullException.ThrowIfNull(items);
@@ -37,10 +37,11 @@ public class LabelPrintService : ILabelPrintService
             template.RowsPerPage,
             template.MarginTopMm,
             template.MarginLeftMm,
-            template.BarcodeType);
+            template.BarcodeType,
+            logo);
     }
 
-    public byte[] RenderLabels(LabelTemplateDto template, IReadOnlyList<LabelDataDto> items)
+    public byte[] RenderLabels(LabelTemplateDto template, IReadOnlyList<LabelDataDto> items, byte[]? logo = null)
     {
         ArgumentNullException.ThrowIfNull(template);
         ArgumentNullException.ThrowIfNull(items);
@@ -54,7 +55,8 @@ public class LabelPrintService : ILabelPrintService
             template.RowsPerPage,
             template.MarginTopMm,
             template.MarginLeftMm,
-            BarcodeType.Code128);
+            BarcodeType.Code128,
+            logo);
     }
 
     public byte[] RenderBarcodeImage(string value, BarcodeType type, int widthPx, int heightPx) =>
@@ -69,9 +71,14 @@ public class LabelPrintService : ILabelPrintService
         int rows,
         double marginTopMm,
         double marginLeftMm,
-        BarcodeType defaultType)
+        BarcodeType defaultType,
+        byte[]? logo)
     {
         columns = Math.Max(1, columns);
+
+        // Logo chỉ in khi mẫu có khối logo và thư viện đã tải ảnh lên; thiếu một trong hai thì khối
+        // ấy bỏ trống chứ không làm hỏng tờ tem.
+        var logoImage = logo is { Length: > 0 } && layout.Logo is not null ? logo : null;
         rows = Math.Max(1, rows);
         var perPage = columns * rows;
 
@@ -130,7 +137,7 @@ public class LabelPrintService : ILabelPrintService
                                                 .ConstantItem((float)widthMm, Unit.Millimetre)
                                                 .Height((float)heightMm, Unit.Millimetre)
                                                 .Element(element => DrawLabel(
-                                                    element, layout, slice[index], barcodeImages));
+                                                    element, layout, slice[index], barcodeImages, logoImage));
 
                                             if (index < slice.Count - 1 && gapX > 0)
                                             {
@@ -181,7 +188,8 @@ public class LabelPrintService : ILabelPrintService
         IContainer container,
         LabelLayoutDto layout,
         LabelDataDto item,
-        IReadOnlyDictionary<string, byte[]> barcodeImages)
+        IReadOnlyDictionary<string, byte[]> barcodeImages,
+        byte[]? logo)
     {
         var canvas = layout.ShowBorder
             ? container.Border(0.4f).BorderColor(Colors.Grey.Lighten1)
@@ -190,6 +198,16 @@ public class LabelPrintService : ILabelPrintService
         canvas.Padding((float)layout.Padding, Unit.Millimetre).Layers(layers =>
         {
             layers.PrimaryLayer();
+
+            if (layout.Logo is not null && logo is not null)
+            {
+                layers.Layer()
+                    .TranslateX((float)layout.Logo.X, Unit.Millimetre)
+                    .TranslateY((float)layout.Logo.Y, Unit.Millimetre)
+                    .Width((float)layout.Logo.Width, Unit.Millimetre)
+                    .Height((float)layout.Logo.Height, Unit.Millimetre)
+                    .Image(logo).FitArea();
+            }
 
             if (layout.Barcode is not null)
             {
