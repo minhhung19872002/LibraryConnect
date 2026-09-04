@@ -341,9 +341,30 @@ export interface HomePayload {
   newBooks: SearchResult[];
   popularBooks: SearchResult[];
   news: NewsSummary[];
+  /** Bản tin thuộc chuyên mục "Thông báo", mới nhất trước (IX.1). */
+  announcements: NewsSummary[];
   banners: HomeBanner[];
   links: HomeLink[];
   statistics: HomeStatistics;
+}
+
+/** Một ảnh trong album sự kiện (VIII.2). */
+export interface GalleryImage {
+  id: string;
+  imageUrl: string;
+  caption?: string;
+  sortOrder: number;
+}
+
+/** Album ảnh sự kiện đã đăng, xem ở trang Thư viện ảnh. */
+export interface Gallery {
+  id: string;
+  title: string;
+  description?: string;
+  coverUrl?: string;
+  eventDate?: string;
+  isPublished: boolean;
+  images: GalleryImage[];
 }
 
 export interface ReaderProfile {

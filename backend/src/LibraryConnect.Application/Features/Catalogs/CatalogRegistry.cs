@@ -170,7 +170,12 @@ public static class CatalogRegistry
                 CatalogFields.Decimal<ReaderType>("cardFee", "Phí làm thẻ (VNĐ)",
                     e => e.CardFee, (e, v) => e.CardFee = v ?? 0),
                 CatalogFields.Decimal<ReaderType>("depositAmount", "Tiền đặt cọc (VNĐ)",
-                    e => e.DepositAmount, (e, v) => e.DepositAmount = v ?? 0)
+                    e => e.DepositAmount, (e, v) => e.DepositAmount = v ?? 0),
+                // "circulation-policies" không phải một danh mục của registry: giao diện nạp danh sách
+                // này từ /api/circulation/policies. Ở máy chủ, tên danh mục tham chiếu chỉ là siêu dữ liệu.
+                CatalogFields.Reference<ReaderType>("defaultPolicyId", "Chính sách lưu thông mặc định",
+                    e => e.DefaultPolicyId, (e, v) => e.DefaultPolicyId = v, "circulation-policies",
+                    "Áp dụng khi không ô nào của ma trận chính sách khớp với loại bạn đọc này.")
             }
         },
 

@@ -43,7 +43,7 @@ import { saveBlob } from '@/modules/marc/api';
 import { useCatalogOptions, toOptions } from '@/modules/cataloging/useCatalogOptions';
 import { locationsApi } from '@/modules/acquisition/api';
 import { circulationApi } from './api';
-import { formatDate, money } from './labels';
+import { bucketLoansByDue, countLoansBy, formatDate, money } from './labels';
 import type { CirculationReportFilter, LoanRowDto, TopItemRowDto, TopReaderRowDto } from './types';
 import { MAU, MAU_BIEU_DO, mauBieuDo } from '@/lib/palette';
 
@@ -409,17 +409,60 @@ export function CirculationReportsPage() {
       )}
 
       {kind === 'current' && (
-        <Card size="small" title={`Đang có ${current.data?.length ?? 0} tài liệu ngoài thư viện`}>
-          <Table
-            rowKey="id"
-            size="small"
-            loading={current.isFetching}
-            dataSource={current.data ?? []}
-            columns={loanColumns}
-            scroll={{ x: 1400 }}
-            pagination={{ pageSize: 20 }}
-          />
-        </Card>
+        <Space direction="vertical" size={16} style={{ width: '100%' }}>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Card size="small" title="Đang mượn theo hạn trả">
+                {(current.data ?? []).length === 0 ? (
+                  <Empty description="Không có tài liệu nào đang ngoài thư viện" />
+                ) : (
+                  <ResponsiveContainer width="100%" height={240}>
+                    <BarChart data={bucketLoansByDue(current.data ?? [])}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="label" />
+                      <YAxis allowDecimals={false} />
+                      <Tooltip />
+                      <Bar dataKey="count" name="Số phiếu" fill={mauBieuDo(0)} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </Card>
+            </Col>
+            <Col span={12}>
+              <Card size="small" title="Đang mượn theo loại bạn đọc">
+                {(current.data ?? []).length === 0 ? (
+                  <Empty description="Chưa có số liệu" />
+                ) : (
+                  <ResponsiveContainer width="100%" height={240}>
+                    <BarChart
+                      layout="vertical"
+                      data={countLoansBy(current.data ?? [], (loan) => loan.readerTypeName)}
+                      margin={{ left: 40 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis type="number" allowDecimals={false} />
+                      <YAxis type="category" dataKey="name" width={120} />
+                      <Tooltip />
+                      <Bar dataKey="count" name="Số phiếu" fill={mauBieuDo(3)} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </Card>
+            </Col>
+          </Row>
+
+          <Card size="small" title={`Đang có ${current.data?.length ?? 0} tài liệu ngoài thư viện`}>
+            <Table
+              rowKey="id"
+              size="small"
+              loading={current.isFetching}
+              dataSource={current.data ?? []}
+              columns={loanColumns}
+              scroll={{ x: 1400 }}
+              pagination={{ pageSize: 20 }}
+            />
+          </Card>
+        </Space>
       )}
 
       {kind === 'history' && (

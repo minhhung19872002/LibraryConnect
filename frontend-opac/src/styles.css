@@ -185,6 +185,71 @@ body {
   vertical-align: -1px;
 }
 
+/* Khối "Thông báo" trên trang chủ (IX.1): danh sách gọn, mỗi dòng một thông báo kèm ngày. */
+.lc-notice-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.lc-notice-list__item {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--lc-line);
+}
+
+.lc-notice-list__item:last-child {
+  border-bottom: none;
+}
+
+/* Trang Thư viện ảnh (VIII.2): lưới album, mỗi album một thẻ có ảnh bìa. */
+.lc-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.lc-gallery-card {
+  background: var(--lc-paper);
+  border: 1px solid var(--lc-line);
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.lc-gallery-card__cover {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  background: var(--lc-panel);
+}
+
+.lc-gallery-card__body {
+  padding: 12px 14px 14px;
+}
+
+.lc-gallery-card__title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.lc-gallery-card__meta {
+  color: var(--lc-muted);
+  font-size: 12.5px;
+}
+
+.lc-gallery-photos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.lc-gallery-photos__caption {
+  color: var(--lc-muted);
+  font-size: 12.5px;
+  margin-top: 4px;
+}
+
 .lc-header__link--active {
   color: var(--lc-ink);
 }

@@ -5,6 +5,7 @@ import {
   App,
   Button,
   Descriptions,
+  Dropdown,
   Empty,
   Input,
   List,
@@ -17,7 +18,13 @@ import {
   Tag,
   Typography,
 } from 'antd';
-import { CopyOutlined, HeartOutlined, ShoppingCartOutlined } from '@ant-design/icons';
+import {
+  CopyOutlined,
+  HeartOutlined,
+  ShareAltOutlined,
+  ShoppingCartOutlined,
+} from '@ant-design/icons';
+import { canNativeShare, copyText, shareTargets } from '@/lib/share';
 import { opacApi, readerApi } from '@/api/opac';
 import { Availability, Cover, HoldButton, ResultShelf } from '@/components/ResultList';
 import { useAuthStore } from '@/stores/authStore';
@@ -252,6 +259,40 @@ export function BibDetailPage() {
             >
               Thêm vào giỏ
             </Button>
+            <Dropdown
+              menu={{
+                items: [
+                  { key: 'copy', label: 'Sao chép liên kết' },
+                  ...(canNativeShare() ? [{ key: 'native', label: 'Chia sẻ…' }] : []),
+                  { type: 'divider' as const },
+                  { key: 'facebook', label: 'Facebook' },
+                  { key: 'zalo', label: 'Zalo' },
+                ],
+                onClick: async ({ key }) => {
+                  const url = window.location.href;
+                  const title = data.title;
+                  const targets = shareTargets(url, title);
+
+                  if (key === 'copy') {
+                    if (await copyText(url)) {
+                      message.success('Đã sao chép liên kết.');
+                    } else {
+                      message.warning(`Trình duyệt không cho sao chép; liên kết là ${url}`);
+                    }
+                  } else if (key === 'native') {
+                    try {
+                      await navigator.share({ title, url });
+                    } catch {
+                      // Người dùng đóng hộp chia sẻ — không phải lỗi.
+                    }
+                  } else if (key === 'facebook' || key === 'zalo') {
+                    window.open(targets[key], '_blank', 'noopener,noreferrer,width=640,height=480');
+                  }
+                },
+              }}
+            >
+              <Button icon={<ShareAltOutlined />}>Chia sẻ</Button>
+            </Dropdown>
           </div>
         </div>
       </div>

@@ -23,6 +23,91 @@ public partial class DatabaseSeeder
     {
         await SeedDemoLibraryIdentityAsync(ct);
         await SeedDemoNewsAsync(ct);
+        await SeedDemoBannersAsync(ct);
+        await SeedDemoGalleryAsync(ct);
+    }
+
+    /// <summary>
+    /// Hai banner trình chiếu trang chủ (VIII.1). Ảnh mẫu là SVG dạng data URI — xem
+    /// <see cref="DemoImages"/> về lý do và về hai chỗ dễ hỏng.
+    /// </summary>
+    private async Task SeedDemoBannersAsync(CancellationToken ct)
+    {
+        if (await _db.CmsBanners.AnyAsync(ct))
+        {
+            return;
+        }
+
+        var today = DateOnly.FromDateTime(_clock.Now.Date);
+
+        _db.CmsBanners.AddRange(
+            new CmsBanner
+            {
+                Title = "Chào mừng năm học mới",
+                ImageUrl = DemoImages.Svg("Chào mừng năm học mới", "Mở cửa 7h30 – 17h00 các ngày trong tuần", "#35523f", 1200, 400),
+                Link = "/trang/gioi-thieu",
+                Position = "HOME_SLIDER",
+                SortOrder = 10,
+                StartDate = today.AddDays(-7),
+                IsActive = true,
+            },
+            new CmsBanner
+            {
+                Title = "Tài liệu số mới cập nhật",
+                ImageUrl = DemoImages.Svg("Tài liệu số mới cập nhật", "Luận văn, giáo trình đọc trực tuyến ngay trên trang", "#22301f", 1200, 400),
+                Link = "/tai-lieu-so",
+                Position = "HOME_SLIDER",
+                SortOrder = 20,
+                StartDate = today.AddDays(-7),
+                IsActive = true,
+            });
+
+        await _db.SaveChangesAsync(ct);
+    }
+
+    /// <summary>
+    /// Một album ảnh sự kiện mẫu (VIII.2) để trang Thư viện ảnh của bản trình diễn không rỗng —
+    /// người xem buổi nghiệm thu mở một trang trống thì kết luận là chức năng chưa làm.
+    /// </summary>
+    private async Task SeedDemoGalleryAsync(CancellationToken ct)
+    {
+        if (await _db.CmsGalleries.AnyAsync(ct))
+        {
+            return;
+        }
+
+        var eventDate = DateOnly.FromDateTime(_clock.Now.Date).AddDays(-21);
+
+        var gallery = new CmsGallery
+        {
+            Title = "Ngày hội đọc sách",
+            Description = "Ảnh ghi lại ngày hội đọc sách tại sảnh thư viện: giới thiệu sách mới, giao lưu tác giả và trao giải bạn đọc tích cực.",
+            EventDate = eventDate,
+            IsPublished = true,
+        };
+
+        var captions = new[]
+        {
+            ("Khai mạc ngày hội đọc sách", "#35523f"),
+            ("Gian trưng bày sách mới bổ sung", "#4d6a42"),
+            ("Giao lưu cùng tác giả", "#8a6114"),
+            ("Trao giải bạn đọc tích cực", "#22301f"),
+        };
+
+        for (var index = 0; index < captions.Length; index++)
+        {
+            var (caption, fill) = captions[index];
+
+            gallery.Images.Add(new CmsGalleryImage
+            {
+                ImageUrl = DemoImages.Svg(caption, "Ngày hội đọc sách", fill, 800, 600),
+                Caption = caption,
+                SortOrder = (index + 1) * 10,
+            });
+        }
+
+        _db.CmsGalleries.Add(gallery);
+        await _db.SaveChangesAsync(ct);
     }
 
     private async Task SeedDemoLibraryIdentityAsync(CancellationToken ct)

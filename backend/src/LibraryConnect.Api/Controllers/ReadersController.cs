@@ -357,6 +357,35 @@ public class ReadersController : ApiControllerBase
         return Ok(Success(result));
     }
 
+    /// <summary>Tải ảnh nền cho mẫu thẻ (JPG/PNG); trả về khoá để ghi vào <c>front.backgroundImage</c>.</summary>
+    [HttpPost("card-templates/artwork")]
+    [RequirePermission(PermissionCodes.ReaderCardTemplateManage)]
+    [RequestSizeLimit(6 * 1024 * 1024)]
+    [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<string>>> UploadCardArtwork(IFormFile file, CancellationToken ct)
+    {
+        if (file is null || file.Length == 0)
+        {
+            return BadRequest(ApiResponse.Fail("Chưa chọn ảnh."));
+        }
+
+        var content = await ReadAllAsync(file, ct);
+        var key = await Mediator.Send(new UploadCardArtworkCommand(content), ct);
+
+        return Ok(Success(key, "Đã tải ảnh nền."));
+    }
+
+    /// <summary>Ảnh nền mẫu thẻ đã tải, để trình thiết kế hiển thị.</summary>
+    [HttpGet("card-templates/artwork")]
+    [RequirePermission(PermissionCodes.ReaderPrintCard)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetCardArtwork([FromQuery] string key, CancellationToken ct)
+    {
+        var artwork = await Mediator.Send(new GetCardArtworkQuery(key ?? string.Empty), ct);
+        return File(artwork.Content, artwork.ContentType);
+    }
+
     /// <summary>Lưu mẫu thẻ: khổ thẻ, bố cục mặt trước và mặt sau.</summary>
     [HttpPost("card-templates")]
     [RequirePermission(PermissionCodes.ReaderCardTemplateManage)]

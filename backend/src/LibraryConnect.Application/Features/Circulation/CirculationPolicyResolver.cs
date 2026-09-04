@@ -67,6 +67,22 @@ public class CirculationPolicyResolver : ICirculationPolicyResolver
 
         var best = Pick(candidates);
 
+        if (best is null && readerTypeId is not null)
+        {
+            // Không ô nào khớp thì tới lượt chính sách mặc định gắn trên loại bạn đọc (VI.3) — thư
+            // viện chỉ cần khai một chính sách chung cho loại mới, không phải thêm ô cho từng kho.
+            best = await _db.ReaderTypes
+                .AsNoTracking()
+                .Where(type => type.Id == readerTypeId && type.DefaultPolicyId != null)
+                .Select(type => type.DefaultPolicy)
+                .FirstOrDefaultAsync(ct);
+
+            if (best is not null && !best.IsActive)
+            {
+                best = null;
+            }
+        }
+
         if (best is null)
         {
             // Chưa khai chính sách nào thì vẫn phải cho mượn được: lấy giá trị mặc định trong Tham số

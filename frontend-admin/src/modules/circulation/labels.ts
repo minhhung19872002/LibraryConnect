@@ -2,8 +2,10 @@ import type {
   FineType,
   HoldStatus,
   LoanChannel,
+  LoanRowDto,
   LoanStatus,
   LoanType,
+  LockerRowDto,
   LockerStatus,
 } from './types';
 
@@ -164,4 +166,118 @@ export function closedWarehouseNotice(
   return closed.length === 1
     ? `Kho ${names} đang đóng để kiểm kê: không ghi mượn sách của kho này; sách trả về thì giữ ở quầy, chưa xếp lên giá.`
     : `${closed.length} kho đang đóng để kiểm kê (${names}): không ghi mượn sách của các kho này; sách trả về thì giữ ở quầy, chưa xếp lên giá.`;
+}
+
+/** Sơ đồ tủ dựng từ hàng/cột máy chủ trả về (VII.3). */
+export interface LockerGrid {
+  rows: number;
+  columns: number;
+  /** Tủ có toạ độ, tra theo khoá "hàng-cột". */
+  placed: Map<string, LockerRowDto>;
+  /** Tủ chưa khai hàng/cột — vẫn phải hiện để giao được, xếp thành dải riêng bên dưới. */
+  unplaced: LockerRowDto[];
+}
+
+export function lockerGridKey(row: number, column: number): string {
+  return `${row}-${column}`;
+}
+
+/**
+ * Xếp tủ lên lưới theo `mapRow`/`mapColumn`. Hai tủ khai trùng ô thì tủ sau rơi xuống dải "chưa
+ * xếp" thay vì đè lên nhau — đè là mất một tủ trên sơ đồ mà không ai biết.
+ */
+export function buildLockerGrid(lockers: ReadonlyArray<LockerRowDto>): LockerGrid {
+  const placed = new Map<string, LockerRowDto>();
+  const unplaced: LockerRowDto[] = [];
+  let rows = 0;
+  let columns = 0;
+
+  lockers.forEach((locker) => {
+    if (locker.mapRow == null || locker.mapColumn == null || locker.mapRow < 1 || locker.mapColumn < 1) {
+      unplaced.push(locker);
+      return;
+    }
+
+    const key = lockerGridKey(locker.mapRow, locker.mapColumn);
+
+    if (placed.has(key)) {
+      unplaced.push(locker);
+      return;
+    }
+
+    placed.set(key, locker);
+    rows = Math.max(rows, locker.mapRow);
+    columns = Math.max(columns, locker.mapColumn);
+  });
+
+  return { rows, columns, placed, unplaced };
+}
+
+/** Một cột của biểu đồ "đang mượn theo hạn trả" (báo cáo VII.5.2). */
+export interface DueBucket {
+  key: 'overdue' | 'today' | 'soon' | 'week' | 'later';
+  label: string;
+  count: number;
+}
+
+/**
+ * Gom các phiếu đang mượn theo còn bao nhiêu ngày tới hạn, để nhìn một cái là biết hôm nay quầy
+ * sẽ bận thế nào. Ngày lấy theo đầu ngày, không tính giờ.
+ */
+export function bucketLoansByDue(loans: ReadonlyArray<LoanRowDto>, today = new Date()): DueBucket[] {
+  const buckets: DueBucket[] = [
+    { key: 'overdue', label: 'Đã quá hạn', count: 0 },
+    { key: 'today', label: 'Hạn hôm nay', count: 0 },
+    { key: 'soon', label: '1–3 ngày', count: 0 },
+    { key: 'week', label: '4–7 ngày', count: 0 },
+    { key: 'later', label: 'Trên 7 ngày', count: 0 },
+  ];
+
+  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  const dayMs = 24 * 60 * 60 * 1000;
+
+  loans.forEach((loan) => {
+    const due = new Date(loan.dueDate);
+    const startOfDue = new Date(due.getFullYear(), due.getMonth(), due.getDate()).getTime();
+    const days = Math.round((startOfDue - startOfToday) / dayMs);
+
+    const bucket = days < 0
+      ? buckets[0]
+      : days === 0
+        ? buckets[1]
+        : days <= 3
+          ? buckets[2]
+          : days <= 7
+            ? buckets[3]
+            : buckets[4];
+
+    if (bucket) bucket.count += 1;
+  });
+
+  return buckets;
+}
+
+/** Đếm phiếu đang mượn theo một chiều (loại bạn đọc, kho…), sắp giảm dần, gộp phần đuôi thành "Khác". */
+export function countLoansBy(
+  loans: ReadonlyArray<LoanRowDto>,
+  pick: (loan: LoanRowDto) => string | null | undefined,
+  limit = 8,
+): { name: string; count: number }[] {
+  const counts = new Map<string, number>();
+
+  loans.forEach((loan) => {
+    const name = pick(loan)?.trim() || 'Chưa rõ';
+    counts.set(name, (counts.get(name) ?? 0) + 1);
+  });
+
+  const sorted = Array.from(counts.entries())
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'vi'));
+
+  if (sorted.length <= limit) return sorted;
+
+  const head = sorted.slice(0, limit - 1);
+  const tail = sorted.slice(limit - 1).reduce((sum, item) => sum + item.count, 0);
+
+  return [...head, { name: 'Khác', count: tail }];
 }

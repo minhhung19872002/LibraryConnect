@@ -19,8 +19,9 @@ import {
   Table,
   Tag,
   Typography,
+  Upload,
 } from 'antd';
-import { DeleteOutlined, PlusOutlined, PrinterOutlined } from '@ant-design/icons';
+import { DeleteOutlined, PictureOutlined, PlusOutlined, PrinterOutlined } from '@ant-design/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnsType } from 'antd/es/table';
 import { PageHeader } from '@/components/PageHeader';
@@ -28,6 +29,7 @@ import { Can } from '@/components/PermissionGate';
 import { PERMISSIONS } from '@/api/permissions';
 import { saveBlob } from '@/modules/marc/api';
 import { readersApi } from './api';
+import { useCardArtwork } from './useReaderPhoto';
 import { MAU } from '@/lib/palette';
 import type {
   CardBarcodeDto,
@@ -181,6 +183,18 @@ function CardTemplateDrawer({
 
   const layout = face === 'front' ? front : back;
   const setLayout = face === 'front' ? setFront : setBack;
+
+  // Ảnh nền của mặt đang thiết kế, nạp qua lối có kiểm quyền để khung xem trước hiện đúng thứ sẽ in.
+  const artworkUrl = useCardArtwork(layout.backgroundImage);
+
+  const uploadArtwork = useMutation({
+    mutationFn: (file: File) => readersApi.uploadCardArtwork(file),
+    onSuccess: (key) => {
+      setLayout((current) => ({ ...current, backgroundImage: key }));
+      message.success('Đã tải ảnh nền. Lưu mẫu thẻ để giữ lại.');
+    },
+    onError: (error: Error) => message.error(error.message),
+  });
 
   const dragRef = useRef<{
     kind: 'box' | 'image' | 'barcode';
@@ -491,6 +505,15 @@ function CardTemplateDrawer({
                 dragRef.current = null;
               }}
             >
+              {artworkUrl && (
+                // Ảnh nền kéo giãn cho vừa khổ thẻ như máy in sẽ làm; nằm dưới mọi thứ khác.
+                <img
+                  src={artworkUrl}
+                  alt=""
+                  draggable={false}
+                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'fill' }}
+                />
+              )}
               {(layout.headerBandHeight ?? 0) > 0 && (
                 <div
                   style={{
@@ -678,6 +701,30 @@ function CardTemplateDrawer({
                       setLayout((current) => ({ ...current, backgroundColor: color.toHexString() }))
                     }
                   />
+                </Space>
+                <Space size={4}>
+                  <span>Ảnh nền</span>
+                  <Upload
+                    accept=".png,.jpg,.jpeg,image/png,image/jpeg"
+                    showUploadList={false}
+                    beforeUpload={(file) => {
+                      uploadArtwork.mutate(file);
+                      return false;
+                    }}
+                  >
+                    <Button size="small" icon={<PictureOutlined />} loading={uploadArtwork.isPending}>
+                      {layout.backgroundImage ? 'Thay ảnh' : 'Tải ảnh'}
+                    </Button>
+                  </Upload>
+                  {layout.backgroundImage && (
+                    <Button
+                      size="small"
+                      danger
+                      onClick={() => setLayout((current) => ({ ...current, backgroundImage: null }))}
+                    >
+                      Bỏ ảnh nền
+                    </Button>
+                  )}
                 </Space>
                 <Space size={4}>
                   <span>Dải màu đầu thẻ (mm)</span>

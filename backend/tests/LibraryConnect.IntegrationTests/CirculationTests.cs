@@ -217,6 +217,61 @@ public class CirculationTests
     }
 
     [Fact]
+    public async Task Loai_ban_doc_moi_dung_chinh_sach_mac_dinh_cua_no_khi_ma_tran_khong_co_o_nao_khop()
+    {
+        var client = await ClientAsync();
+
+        var policies = await ReadAsync<IReadOnlyList<CirculationPolicyDto>>(
+            await client.GetAsync("/api/circulation/policies"));
+
+        // Chính sách của nghiên cứu sinh khai riêng cho loại NCS, nên loại bạn đọc mới không khớp ô nào.
+        var chosen = policies.First(policy => policy.Name.Contains("Nghiên cứu sinh"));
+
+        var withDefault = await ReadAsync<Guid>(await client.PostAsJsonAsync(
+            "/api/catalogs/reader-types/items", new
+            {
+                code = $"LBD{Unique()}",
+                name = $"Cộng tác viên {Unique()}",
+                sortOrder = 50,
+                isActive = true,
+                extras = new Dictionary<string, string>
+                {
+                    ["cardValidMonths"] = "12",
+                    ["defaultPolicyId"] = chosen.Id.ToString()
+                }
+            }));
+
+        var effective = await ReadAsync<EffectivePolicy>(
+            await client.GetAsync($"/api/circulation/policies/preview?readerTypeId={withDefault}"));
+
+        effective.PolicyId.Should().Be(chosen.Id);
+        effective.Name.Should().Be(chosen.Name);
+        effective.LoanDays.Should().Be(chosen.LoanDays);
+
+        // Danh mục loại bạn đọc phải hiện lại chính sách đã gán, không nuốt mất.
+        var item = await ReadAsync<CatalogItemDto>(
+            await client.GetAsync($"/api/catalogs/reader-types/items/{withDefault}"));
+
+        item.Extras["defaultPolicyId"].Should().Be(chosen.Id.ToString());
+
+        // Loại không gán gì thì vẫn rơi về tham số hệ thống như trước.
+        var withoutDefault = await ReadAsync<Guid>(await client.PostAsJsonAsync(
+            "/api/catalogs/reader-types/items", new
+            {
+                code = $"LBD{Unique()}",
+                name = $"Khách vãng lai {Unique()}",
+                sortOrder = 51,
+                isActive = true,
+                extras = new Dictionary<string, string> { ["cardValidMonths"] = "1" }
+            }));
+
+        var fallback = await ReadAsync<EffectivePolicy>(
+            await client.GetAsync($"/api/circulation/policies/preview?readerTypeId={withoutDefault}"));
+
+        fallback.PolicyId.Should().BeNull();
+    }
+
+    [Fact]
     public async Task A_due_date_landing_on_a_public_holiday_is_pushed_to_the_next_working_day()
     {
         var client = await ClientAsync();

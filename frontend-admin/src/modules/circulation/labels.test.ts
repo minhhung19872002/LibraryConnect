@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  bucketLoansByDue,
+  buildLockerGrid,
   channelLabels,
   closedWarehouseNotice,
+  countLoansBy,
   describeDue,
   fineTypeLabels,
   formatDate,
@@ -14,7 +17,7 @@ import {
   lockerStatusLabels,
   money,
 } from './labels';
-import type { FineType, HoldStatus, LoanStatus, LockerStatus } from './types';
+import type { FineType, HoldStatus, LoanRowDto, LoanStatus, LockerRowDto, LockerStatus } from './types';
 
 describe('Nhãn tiếng Việt của Phân hệ VII', () => {
   it('phủ hết trạng thái phiếu mượn, kèm màu để tô bảng', () => {
@@ -116,3 +119,121 @@ describe('Cảnh báo kho đang đóng để kiểm kê trên quầy', () => {
   });
 });
 
+function locker(code: string, mapRow: number | null, mapColumn: number | null): LockerRowDto {
+  return {
+    id: code,
+    code,
+    libraryId: null,
+    libraryName: null,
+    area: 'A',
+    size: null,
+    status: 'Free',
+    mapRow,
+    mapColumn,
+    note: null,
+    usageId: null,
+    readerId: null,
+    readerName: null,
+    readerCardNumber: null,
+    checkinAt: null,
+    keyNumber: null,
+    minutesInUse: null,
+    overdue: false,
+  };
+}
+
+describe('Sơ đồ tủ gửi đồ theo hàng/cột (VII.3)', () => {
+  it('đặt tủ đúng ô và tính đủ số hàng, số cột', () => {
+    const grid = buildLockerGrid([locker('A01', 1, 1), locker('A05', 1, 5), locker('B03', 2, 3)]);
+
+    expect(grid.rows).toBe(2);
+    expect(grid.columns).toBe(5);
+    expect(grid.placed.get('1-5')?.code).toBe('A05');
+    expect(grid.placed.get('2-3')?.code).toBe('B03');
+    expect(grid.unplaced).toHaveLength(0);
+  });
+
+  it('tủ chưa khai toạ độ hoặc khai trùng ô không bị mất — rơi xuống dải chưa xếp', () => {
+    const grid = buildLockerGrid([locker('A01', 1, 1), locker('A02', 1, 1), locker('C09', null, null)]);
+
+    expect(grid.placed.size).toBe(1);
+    expect(grid.unplaced.map((item) => item.code)).toEqual(['A02', 'C09']);
+  });
+});
+
+function loan(dueDate: string, extra: Partial<LoanRowDto> = {}): LoanRowDto {
+  return {
+    id: dueDate + Math.random(),
+    code: 'PM',
+    readerId: 'r',
+    readerCardNumber: 'TV',
+    readerName: 'A',
+    readerTypeName: 'Sinh viên',
+    facultyName: null,
+    className: null,
+    itemId: 'i',
+    barcode: null,
+    title: null,
+    callNumber: null,
+    warehouseName: 'Kho mở',
+    loanDate: '2026-08-01',
+    dueDate,
+    returnDate: null,
+    renewedCount: 0,
+    maxRenewals: 2,
+    status: 'Active',
+    loanType: 'TakeHome',
+    channel: 'Desk',
+    loanByName: null,
+    returnByName: null,
+    fineAmount: 0,
+    fineOutstanding: 0,
+    overdueDays: 0,
+    estimatedFine: 0,
+    note: null,
+    ...extra,
+  };
+}
+
+describe('Biểu đồ báo cáo đang mượn (VII.5.2)', () => {
+  const today = new Date(2026, 8, 4); // 04/09/2026
+
+  it('gom phiếu theo số ngày tới hạn, tính theo ngày chứ không theo giờ', () => {
+    const buckets = bucketLoansByDue(
+      [
+        loan('2026-09-01'),
+        loan('2026-09-04T23:00:00'),
+        loan('2026-09-06'),
+        loan('2026-09-11'),
+        loan('2026-10-01'),
+        loan('2026-09-07'),
+      ],
+      today,
+    );
+
+    expect(buckets.map((bucket) => [bucket.key, bucket.count])).toEqual([
+      ['overdue', 1],
+      ['today', 1],
+      ['soon', 2],
+      ['week', 1],
+      ['later', 1],
+    ]);
+  });
+
+  it('đếm theo một chiều, sắp giảm dần và gộp đuôi thành "Khác"', () => {
+    const loans = [
+      loan('2026-09-10', { readerTypeName: 'Sinh viên' }),
+      loan('2026-09-10', { readerTypeName: 'Sinh viên' }),
+      loan('2026-09-10', { readerTypeName: 'Giảng viên' }),
+      loan('2026-09-10', { readerTypeName: null }),
+      loan('2026-09-10', { readerTypeName: 'Học viên' }),
+    ];
+
+    const rows = countLoansBy(loans, (item) => item.readerTypeName, 3);
+
+    expect(rows[0]).toEqual({ name: 'Sinh viên', count: 2 });
+    expect(rows).toHaveLength(3);
+    expect(rows[2]).toEqual({ name: 'Khác', count: 2 });
+    expect(countLoansBy(loans, (item) => item.readerTypeName)).toContainEqual({ name: 'Chưa rõ', count: 1 });
+  });
+});

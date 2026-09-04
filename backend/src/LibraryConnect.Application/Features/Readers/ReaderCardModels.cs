@@ -66,6 +66,11 @@ public class CardFaceLayoutDto
     public CardBarcodeDto? Barcode { get; set; }
     /// <summary>Màu nền mặt thẻ dạng #RRGGBB; bỏ trống là nền trắng.</summary>
     public string? BackgroundColor { get; set; }
+    /// <summary>
+    /// Khoá ảnh nền trong kho đối tượng (tải lên qua <c>POST /api/readers/card-templates/artwork</c>);
+    /// ảnh phủ kín mặt thẻ, nằm dưới dải màu, ảnh, mã vạch và chữ.
+    /// </summary>
+    public string? BackgroundImage { get; set; }
     /// <summary>Dải màu chạy ngang phía trên mặt thẻ, kiểu thẻ sinh viên quen thuộc.</summary>
     public double HeaderBandHeight { get; set; }
     public string? HeaderBandColor { get; set; }
@@ -163,5 +168,19 @@ public class ReaderCardDataDto
     public byte[]? Photo { get; set; }
 }
 
-/// <summary>Thông tin thư viện in trên thẻ, lấy từ tham số hệ thống chứ không viết cứng.</summary>
-public record CardLibraryInfo(string? Name, string? Address, string? Phone, byte[]? Logo);
+/// <summary>
+/// Thông tin thư viện in trên thẻ, lấy từ tham số hệ thống chứ không viết cứng. <paramref name="Artwork"/>
+/// là ảnh nền của từng mặt thẻ đã đọc sẵn từ kho đối tượng, tra theo khoá <see cref="CardFaceLayoutDto.BackgroundImage"/>.
+/// </summary>
+public record CardLibraryInfo(
+    string? Name, string? Address, string? Phone, byte[]? Logo,
+    IReadOnlyDictionary<string, byte[]>? Artwork = null);
+
+/// <summary>Kho ảnh nền mẫu thẻ: cùng bucket với ảnh bạn đọc, tiền tố riêng.</summary>
+public static class CardArtwork
+{
+    public const string Bucket = "lc-images";
+    public const string Prefix = "card-artwork/";
+    /// <summary>Ảnh nền in ở 300 dpi trên thẻ 85,6 mm chỉ cần ~1.000 điểm ảnh; 5 MB là dư.</summary>
+    public const long MaxSizeBytes = 5 * 1024 * 1024;
+}

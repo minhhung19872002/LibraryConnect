@@ -90,6 +90,12 @@ public class ReaderType : CatalogEntity
     public int CardValidMonths { get; set; } = 48;
     public decimal CardFee { get; set; }
     public decimal DepositAmount { get; set; }
+    /// <summary>
+    /// Circulation policy applied when no cell of the policy matrix matches this reader type (VI.3);
+    /// null falls back to the system-parameter defaults.
+    /// </summary>
+    public Guid? DefaultPolicyId { get; set; }
+    public Cir.CirculationPolicy? DefaultPolicy { get; set; }
 }
 
 public class Faculty : CatalogEntity

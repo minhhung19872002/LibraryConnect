@@ -116,6 +116,16 @@ export const readersApi = {
 
   deleteCardTemplate: (id: string) => api.delete<null>(`/readers/card-templates/${id}`),
 
+  /** Ảnh nền mẫu thẻ (JPG/PNG) — trả về khoá để ghi vào front/back.backgroundImage. */
+  uploadCardArtwork: (file: File) => {
+    const form = new FormData();
+    form.append('file', file, file.name);
+
+    return api.post<string>('/readers/card-templates/artwork', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+
   printCards: (payload: Record<string, unknown>) =>
     api.downloadPost('/readers/cards/print', payload, 'the-ban-doc.pdf'),
 

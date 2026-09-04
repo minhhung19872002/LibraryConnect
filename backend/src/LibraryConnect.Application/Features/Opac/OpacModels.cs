@@ -217,10 +217,15 @@ public record OpacBrowseEntryDto(
     bool HasChildren);
 
 /// <summary>Nội dung trang chủ của trang tra cứu.</summary>
+/// <param name="Announcements">
+/// Thông báo của thư viện (IX.1): bản tin thuộc chuyên mục mã <c>THONG_BAO</c>, mới nhất trước —
+/// khối riêng trên trang chủ để lịch nghỉ, giờ mở cửa thay đổi không lẫn vào tin sự kiện.
+/// </param>
 public record OpacHomeDto(
     IReadOnlyList<OpacResultDto> NewBooks,
     IReadOnlyList<OpacResultDto> PopularBooks,
     IReadOnlyList<OpacHomeNewsDto> News,
+    IReadOnlyList<OpacHomeNewsDto> Announcements,
     IReadOnlyList<OpacHomeBannerDto> Banners,
     IReadOnlyList<OpacHomeLinkDto> Links,
     OpacStatisticsDto Statistics);

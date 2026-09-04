@@ -191,6 +191,14 @@ public static class DependencyInjection
             client.Timeout = TimeSpan.FromSeconds(60);
         });
 
+        // IX.1 — lấy index.html của trang tra cứu để chèn thẻ meta. Máy chủ này nằm ngay cạnh trong
+        // cùng mạng Docker, nên chờ lâu là vô ích: hỏng thì trả trang tối thiểu còn hơn để máy thu
+        // thập treo.
+        services.AddHttpClient("opac-shell", client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(5);
+        });
+
         services.AddScoped<Application.Features.InterLibrary.IRemoteCatalogSearcher,
             RemoteCatalogSearcher>();
         services.AddScoped<Application.Features.InterLibrary.IOaiHarvester, OaiHarvester>();

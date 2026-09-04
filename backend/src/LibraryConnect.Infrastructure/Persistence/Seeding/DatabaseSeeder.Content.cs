@@ -218,6 +218,7 @@ public partial class DatabaseSeeder
             new CmsMenu { Name = "Tra cứu", Url = "/tra-cuu", SortOrder = 20 },
             new CmsMenu { Name = "Tài liệu số", Url = "/tai-lieu-so", SortOrder = 30 },
             new CmsMenu { Name = "Tin tức", Url = "/tin-tuc", SortOrder = 40 },
+            new CmsMenu { Name = "Thư viện ảnh", Url = "/thu-vien-anh", Icon = "PictureOutlined", SortOrder = 45 },
             about);
 
         await _db.SaveChangesAsync(ct);

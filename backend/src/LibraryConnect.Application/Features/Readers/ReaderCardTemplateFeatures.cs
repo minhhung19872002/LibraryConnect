@@ -261,6 +261,69 @@ public class DeleteReaderCardTemplateCommandHandler : IRequestHandler<DeleteRead
 }
 
 /// <summary>Danh sách trường kéo được lên thẻ, đổ vào bảng chọn của màn hình thiết kế.</summary>
+/// <summary>Tải ảnh nền cho mẫu thẻ lên kho đối tượng (VI.2); trả về khoá để ghi vào bố cục mặt thẻ.</summary>
+public record UploadCardArtworkCommand(byte[] Content) : IRequest<string>;
+
+public class UploadCardArtworkCommandHandler : IRequestHandler<UploadCardArtworkCommand, string>
+{
+    private readonly IFileStorage _storage;
+
+    public UploadCardArtworkCommandHandler(IFileStorage storage) => _storage = storage;
+
+    public async Task<string> Handle(UploadCardArtworkCommand command, CancellationToken ct)
+    {
+        if (command.Content.Length == 0)
+        {
+            throw new Common.Exceptions.ValidationException("file", "Tệp ảnh rỗng.");
+        }
+
+        if (command.Content.Length > CardArtwork.MaxSizeBytes)
+        {
+            throw new Common.Exceptions.ValidationException(
+                "file", $"Ảnh nền tối đa {CardArtwork.MaxSizeBytes / 1024 / 1024} MB.");
+        }
+
+        var contentType = ReaderPhotos.DetectImageType(command.Content)
+            ?? throw new Common.Exceptions.ValidationException("file", "Tệp tải lên không phải ảnh JPG hoặc PNG.");
+
+        var objectName = $"{CardArtwork.Prefix}{Guid.NewGuid():N}{(contentType == "image/png" ? ".png" : ".jpg")}";
+
+        await _storage.EnsureBucketAsync(CardArtwork.Bucket, ct);
+
+        using var stream = new MemoryStream(command.Content);
+        await _storage.UploadAsync(CardArtwork.Bucket, objectName, stream, contentType, ct);
+
+        return objectName;
+    }
+}
+
+/// <summary>Đọc lại ảnh nền đã tải, cho trình thiết kế hiển thị.</summary>
+public record GetCardArtworkQuery(string Key) : IRequest<ReaderPhotoDto>;
+
+public class GetCardArtworkQueryHandler : IRequestHandler<GetCardArtworkQuery, ReaderPhotoDto>
+{
+    private readonly IFileStorage _storage;
+
+    public GetCardArtworkQueryHandler(IFileStorage storage) => _storage = storage;
+
+    public async Task<ReaderPhotoDto> Handle(GetCardArtworkQuery query, CancellationToken ct)
+    {
+        // Chỉ phục vụ đúng tiền tố của ảnh nền: khoá là chuỗi người gọi gửi lên, không được để nó
+        // trỏ sang ảnh bạn đọc hay tệp khác trong cùng bucket.
+        if (string.IsNullOrWhiteSpace(query.Key)
+            || !query.Key.StartsWith(CardArtwork.Prefix, StringComparison.Ordinal)
+            || query.Key.Contains("..", StringComparison.Ordinal))
+        {
+            throw new NotFoundException("ảnh nền mẫu thẻ", query.Key);
+        }
+
+        var bytes = await ReaderPhotoWriter.LoadAsync(_storage, query.Key, ct)
+            ?? throw new NotFoundException("ảnh nền mẫu thẻ", query.Key);
+
+        return new ReaderPhotoDto(bytes, ReaderPhotos.DetectImageType(bytes) ?? "application/octet-stream");
+    }
+}
+
 public record GetReaderCardFieldsQuery : IRequest<IReadOnlyList<CardFieldOptionDto>>;
 
 public record CardFieldOptionDto(string Key, string Label);
@@ -374,12 +437,31 @@ public class PrintReaderCardsCommandHandler : IRequestHandler<PrintReaderCardsCo
             });
         }
 
+        var artwork = new Dictionary<string, byte[]>(StringComparer.Ordinal);
+
+        foreach (var key in new[] { template.Front.BackgroundImage, template.Back.BackgroundImage })
+        {
+            if (string.IsNullOrWhiteSpace(key) || artwork.ContainsKey(key))
+            {
+                continue;
+            }
+
+            // Thiếu ảnh nền thì thẻ vẫn in — thiếu nền còn hơn không có thẻ đưa cho bạn đọc.
+            var bytes = await ReaderPhotoWriter.LoadAsync(_storage, key, ct);
+
+            if (bytes is not null)
+            {
+                artwork[key] = bytes;
+            }
+        }
+
         var library = new CardLibraryInfo(
             await _parameters.GetAsync("LIBRARY.NAME", string.Empty, ct),
             await _parameters.GetAsync("LIBRARY.ADDRESS", string.Empty, ct),
             await _parameters.GetAsync("LIBRARY.PHONE", string.Empty, ct),
             await Admin.Parameters.ParameterFileLoader.LoadAsync(
-                _storage, await _parameters.GetAsync("LIBRARY.LOGO_URL", ct), ct));
+                _storage, await _parameters.GetAsync("LIBRARY.LOGO_URL", ct), ct),
+            artwork);
 
         var pdf = _printer.Render(template, cards, library, command.MultiplePerPage);
 

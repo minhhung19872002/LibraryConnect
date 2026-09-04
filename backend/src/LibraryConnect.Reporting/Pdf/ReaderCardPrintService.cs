@@ -231,6 +231,18 @@ public class ReaderCardPrintService : IReaderCardPrintService
         {
             layers.PrimaryLayer();
 
+            // Ảnh nền phủ kín mặt thẻ và nằm dưới mọi thứ khác: khai trước dải màu, ảnh và chữ.
+            if (!string.IsNullOrWhiteSpace(face.BackgroundImage)
+                && library.Artwork is not null
+                && library.Artwork.TryGetValue(face.BackgroundImage, out var background)
+                && background.Length > 0)
+            {
+                layers.Layer()
+                    .Width((float)template.WidthMm, Unit.Millimetre)
+                    .Height((float)template.HeightMm, Unit.Millimetre)
+                    .Image(background).FitUnproportionally();
+            }
+
             if (face.HeaderBandHeight > 0)
             {
                 layers.Layer()

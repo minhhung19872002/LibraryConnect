@@ -687,6 +687,104 @@ public class ReaderTests
         (await ErrorTextAsync(response)).Should().Contain("ngoài khổ thẻ");
     }
 
+    /// <summary>
+    /// Ảnh PNG 32×32 tô dải màu, sinh sẵn. Không dùng ảnh 1×1: Skia vẽ ảnh một điểm ảnh thành một ô
+    /// màu đặc chứ không thành đối tượng ảnh trong PDF, nên phép đếm ảnh sẽ không thấy gì.
+    /// </summary>
+    private static readonly byte[] SamplePng = Convert.FromBase64String(
+        "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAGyklEQVR42hXVEdvGIBiG4ReH4XAYDofhMAyH4XB44TAMw2EYhuEwDIfD8Nu3H9DZ8XQ/936/H8MP8WP8Mf2QP+Yfyw/1Y/2hf5gf2w/7Y/9x/ODH+cP98D/Cj+tH/JF+5B/lx/2j/mg/nh/vj/7j9xsYBsTAODANyIF5YBlQA+uAHjAD24Ad2AeOAQbOATfgB8LANRAH0kAeKAP3QB1oA8/AO9CHDxAMAiEYBZNACmbBIlCCVaAFRrAJrGAXHAIEp8AJvCAILkEUJEEWFMEtqIImeASvoIsPGBlGxMg4Mo3IkXlkGVEj64geMSPbiB3ZR44RRs4RN+JHwsg1EkfSSB4pI/dIHWkjz8g70scPmBgmxMQ4MU3IiXlimVAT64SeMBPbhJ3YJ44JJs4JN+EnwsQ1ESfSRJ4oE/dEnWgTz8Q70acPkAwSIRklk0RKZskiUZJVoiVGskmsZJccEiSnxEm8JEguSZQkSZYUyS2pkiZ5JK+kyw+YGWbEzDgzzciZeWaZUTPrjJ4xM9uMndlnjhlmzhk342fCzDUTZ9JMnikz90ydaTPPzDvT5w9YGBbEwrgwLciFeWFZUAvrgl4wC9uCXdgXjgUWzgW34BfCwrUQF9JCXigL90JdaAvPwrvQlw9QDAqhGBWTQipmxaJQilWhFUaxKaxiVxwKFKfCKbwiKC5FVCRFVhTFraiKpngUr6KrD1gZVsTKuDKtyJV5ZVlRK+uKXjEr24pd2VeOFVbOFbfiV8LKtRJX0kpeKSv3Sl1pK8/Ku9LXD9AMGqEZNZNGambNolGaVaM1RrNprGbXHBo0p8ZpvCZoLk3UJE3WFM2tqZqmeTSvpusPMAwGYRgNk0EaZsNiUIbVoA3GsBmsYTccBgynwRm8IRguQzQkQzYUw22ohmZ4DK+hmw/YGDbExrgxbciNeWPZUBvrht4wG9uG3dg3jg02zg234TfCxrURN9JG3igb90bdaBvPxrvRtw+wDBZhGS2TRVpmy2JRltWiLcayWaxltxwWLKfFWbwlWC5LtCRLthTLbamWZnksr6XbD9gZdsTOuDPtyJ15Z9lRO+uO3jE7247d2XeOHXbOHbfjd8LOtRN30k7eKTv3Tt1pO8/Ou9P3DzgYDsTBeDAdyIP5YDlQB+uBPjAH24E92A+OAw7OA3fgD8LBdRAP0kE+KAf3QT1oB8/Be9CPD/gv4K8ivxL7auYrgm9Vv2X64v4F8ovM96jf2L/BfFf/Dv//TnDgIcAFERJkKHBDhQYPvNC/38fvZDgRJ+PJdCJP5pPlRJ2sJ/rEnGwn9mQ/Oc7/488Td+JPwsl1Ek/SST4pJ/dJPWknz8l70s8PcAwO4Rgdk0M6ZsfiUI7VoR3GsTmsY3cc7v/yp8M5vCM4Lkd0JEd2FMftqI7meByvo7sP8Awe4Rk9k0d6Zs/iUZ7Voz3Gs3msZ/cc/n80p8d5vCd4Lk/0JE/2FM/tqZ7meTyvp/sPCAwBERgDU0AG5sASUIE1oAMmsAVsYA8c4X/wZ8AFfCAErkAMpEAOlMAdqIEWeAJvoIcPuBguxMV4MV3Ii/liuVAX64W+MBfbhb3YL47r/1nPC3fhL8LFdREv0kW+KBf3Rb1oF8/Fe9GvD4gMEREZI1NERubIElGRNaIjJrJFbGSPHPE/NGfERXwkRK5IjKRIjpTIHamRFnkib6THD0gMCZEYE1NCJubEklCJNaETJrElbGJPHOk/kmfCJXwiJK5ETKRETpTEnaiJlngSb6KnD8gMGZEZM1NGZubMklGZNaMzJrNlbGbPHPk/8GfGZXwmZK5MzKRMzpTMnamZlnkyb6bnDygMBVEYC1NBFubCUlCFtaALprAVbGEvHOV/nc6CK/hCKFyFWEiFXCiFu1ALrfAU3kIvH3Az3Iib8Wa6kTfzzXKjbtYbfWNutht7s98c9/+ynjfuxt+Em+sm3qSbfFNu7pt6026em/em3x9QGSqiMlamiqzMlaWiKmtFV0xlq9jKXjnqfxWcFVfxlVC5KrGSKrlSKnelVlrlqbyVXj+gMTREY2xMDdmYG0tDNdaGbpjG1rCNvXG0/6I5G67hG6FxNWIjNXKjNO5GbbTG03gbvX3Aw/AgHsaH6UE+zA/Lg3pYH/SDedge7MP+cDz/NXY+uAf/EB6uh/iQHvJDebgf6kN7eB7eh/58wMvwIl7Gl+lFvswvy4t6WV/0i3nZXuzL/nK8/yV5vrgX/xJerpf4kl7yS3m5X+pLe3le3pf+fkBn6IjO2Jk6sjN3lo7qrB3dMZ2tYzt75+j/FXx2XMd3QufqxE7q5E7p3J3aaZ2n83Z65w80CuBMrqY5NQAAAABJRU5ErkJggg==");
+
+    private static async Task<byte[]> PrintWithTemplateAsync(HttpClient client, Guid templateId, Guid readerId)
+    {
+        var response = await client.PostAsJsonAsync("/api/readers/cards/print", new
+        {
+            selection = new { readerIds = new[] { readerId } },
+            templateId,
+            multiplePerPage = false,
+            preview = true
+        });
+
+        response.IsSuccessStatusCode.Should().BeTrue(await response.Content.ReadAsStringAsync());
+        return await response.Content.ReadAsByteArrayAsync();
+    }
+
+    [Fact]
+    public async Task Anh_nen_cua_mau_the_duoc_tai_len_va_in_ra_tren_the()
+    {
+        var client = await ClientAsync();
+        var typeId = await ReaderTypeAsync(client);
+        var readerId = await NewReaderAsync(client, "Bạn đọc thẻ có ảnh nền", typeId);
+
+        var form = new MultipartFormDataContent();
+        var file = new ByteArrayContent(SamplePng);
+        file.Headers.ContentType = new MediaTypeHeaderValue("image/png");
+        form.Add(file, "file", "nen-the.png");
+
+        var artworkKey = await ReadAsync<string>(
+            await client.PostAsync("/api/readers/card-templates/artwork", form));
+
+        artworkKey.Should().NotBeNullOrWhiteSpace();
+
+        // Trình thiết kế cần xem lại ảnh đã tải, qua lối có kiểm quyền.
+        var stored = await client.GetAsync($"/api/readers/card-templates/artwork?key={Uri.EscapeDataString(artworkKey)}");
+        stored.IsSuccessStatusCode.Should().BeTrue();
+        stored.Content.Headers.ContentType!.MediaType.Should().Be("image/png");
+        (await stored.Content.ReadAsByteArrayAsync()).Should().Equal(SamplePng);
+
+        // Mẫu chỉ có một ô chữ: không mã vạch, không ảnh — PDF chỉ chứa ảnh khi ảnh nền được vẽ.
+        object Template(string? backgroundImage) => new
+        {
+            code = $"NEN{Unique()}",
+            name = "Mẫu thẻ ảnh nền",
+            widthMm = 85.6,
+            heightMm = 54,
+            front = new
+            {
+                backgroundImage,
+                boxes = new[] { new { x = 4.0, y = 4.0, width = 40.0, height = 6.0, source = "fullName" } }
+            }
+        };
+
+        var plainId = await ReadAsync<Guid>(
+            await client.PostAsJsonAsync("/api/readers/card-templates", Template(null)));
+        var plainPdf = System.Text.Encoding.Latin1.GetString(
+            await PrintWithTemplateAsync(client, plainId, readerId));
+
+        // "/ProcSet [... /ImageB ...]" có trong mọi PDF, nên phải đếm đúng đối tượng ảnh XObject.
+        CountImages(plainPdf).Should().Be(0, "mẫu không ảnh nền thì PDF không có ảnh nào");
+
+        var withImageId = await ReadAsync<Guid>(
+            await client.PostAsJsonAsync("/api/readers/card-templates", Template(artworkKey)));
+
+        var templates = await ReadAsync<IReadOnlyList<ReaderCardTemplateDto>>(
+            await client.GetAsync("/api/readers/card-templates?includeInactive=true"));
+        templates.First(template => template.Id == withImageId).Front.BackgroundImage.Should().Be(artworkKey);
+
+        var pdf = System.Text.Encoding.Latin1.GetString(
+            await PrintWithTemplateAsync(client, withImageId, readerId));
+
+        CountImages(pdf).Should().BeGreaterThan(0, "ảnh nền phải được vẽ lên thẻ");
+    }
+
+    private static int CountImages(string pdf) =>
+        System.Text.RegularExpressions.Regex.Matches(pdf, @"/Subtype\s*/Image").Count;
+
+    [Fact]
+    public async Task Tep_khong_phai_anh_bi_tu_choi_lam_anh_nen_the()
+    {
+        var client = await ClientAsync();
+
+        var form = new MultipartFormDataContent();
+        var file = new ByteArrayContent(System.Text.Encoding.UTF8.GetBytes("<svg></svg>"));
+        file.Headers.ContentType = new MediaTypeHeaderValue("image/svg+xml");
+        form.Add(file, "file", "nen.svg");
+
+        var response = await client.PostAsync("/api/readers/card-templates/artwork", form);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await ErrorTextAsync(response)).Should().Contain("JPG hoặc PNG");
+    }
+
     // -----------------------------------------------------------------------------------------
     // VI.4 — Nhập, xuất và đồng bộ
     // -----------------------------------------------------------------------------------------

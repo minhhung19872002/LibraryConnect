@@ -46,7 +46,18 @@ public class CountryConfiguration : CatalogEntityConfiguration<Country> { }
 public class PublisherConfiguration : CatalogEntityConfiguration<Publisher> { }
 public class KeywordConfiguration : CatalogEntityConfiguration<Keyword> { }
 public class SeriesConfiguration : CatalogEntityConfiguration<Series> { }
-public class ReaderTypeConfiguration : CatalogEntityConfiguration<ReaderType> { }
+public class ReaderTypeConfiguration : CatalogEntityConfiguration<ReaderType>
+{
+    public override void Configure(EntityTypeBuilder<ReaderType> builder)
+    {
+        base.Configure(builder);
+
+        // Xoá chính sách thì loại bạn đọc rơi về mặc định của tham số hệ thống, không chặn việc xoá.
+        builder.HasOne(x => x.DefaultPolicy).WithMany().HasForeignKey(x => x.DefaultPolicyId)
+            .OnDelete(DeleteBehavior.SetNull);
+        builder.HasIndex(x => x.DefaultPolicyId).HasDatabaseName("ix_readertype_default_policy");
+    }
+}
 public class FacultyConfiguration : CatalogEntityConfiguration<Faculty> { }
 public class SupplierConfiguration : CatalogEntityConfiguration<Supplier> { }
 public class FundingSourceConfiguration : CatalogEntityConfiguration<FundingSource> { }

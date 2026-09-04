@@ -134,6 +134,27 @@ export function HomePage() {
             </Col>
 
             <Col xs={24} lg={8}>
+              <Section title="Thông báo" extra={<Link to="/tin-tuc">Xem tất cả</Link>}>
+                {data.announcements.length > 0 ? (
+                  <ul className="lc-notice-list">
+                    {data.announcements.map((notice) => (
+                      <li key={notice.id} className="lc-notice-list__item">
+                        <Link to={`/tin-tuc/${notice.slug}`}>{notice.title}</Link>
+                        {notice.publishedAt ? (
+                          <div className="lc-result__meta" style={{ fontSize: 12 }}>
+                            {formatDate(notice.publishedAt)}
+                          </div>
+                        ) : null}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="lc-empty" style={{ padding: 20 }}>
+                    Chưa có thông báo nào.
+                  </div>
+                )}
+              </Section>
+
               <Section title="Liên kết hữu ích">
                 {data.links.length > 0 ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

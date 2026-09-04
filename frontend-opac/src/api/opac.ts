@@ -12,6 +12,7 @@ import type {
   DigitalDocumentRow,
   DigitalReaderSession,
   FineSummary,
+  Gallery,
   HoldRow,
   HomePayload,
   LoanRow,
@@ -76,6 +77,7 @@ export const opacApi = {
   settings: () => api.get<SiteSettings>('/public/settings'),
   home: () => api.get<HomePayload>('/public/home'),
   menus: () => api.get<MenuItem[]>('/public/menus'),
+  galleries: () => api.get<Gallery[]>('/public/galleries'),
 
   // ---- Tra cứu ----
   search: (params: SearchParams) =>

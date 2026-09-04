@@ -47,3 +47,42 @@ export function useReaderPhoto(
 
   return url;
 }
+
+/**
+ * Nạp ảnh nền của mẫu thẻ để trình thiết kế hiện đúng thứ sẽ in. Cùng lý do với ảnh bạn đọc: ảnh
+ * nằm sau endpoint có kiểm quyền, thẻ <img> không mang mã thông báo.
+ */
+export function useCardArtwork(key: string | null | undefined): string | undefined {
+  const [url, setUrl] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (!key) {
+      setUrl(undefined);
+      return;
+    }
+
+    let objectUrl: string | undefined;
+    let cancelled = false;
+
+    http
+      .get<Blob>('/readers/card-templates/artwork', { params: { key }, responseType: 'blob' })
+      .then((response) => {
+        if (cancelled) return;
+
+        objectUrl = URL.createObjectURL(response.data);
+        setUrl(objectUrl);
+      })
+      .catch(() => {
+        // Mất tệp trong kho thì khung xem trước chỉ mất nền; máy in cũng bỏ qua nền tương tự.
+        if (!cancelled) setUrl(undefined);
+      });
+
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [key]);
+
+  return url;
+}
+

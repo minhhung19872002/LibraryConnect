@@ -14,6 +14,7 @@ import { BibDetailPage } from '@/pages/BibDetailPage';
 import { BrowsePage, MajorCoursesPage } from '@/pages/BrowsePage';
 import { SerialsPage, ThesesPage } from '@/pages/CatalogPages';
 import { NewsDetailPage, NewsListPage, StaticPageView } from '@/pages/ContentPages';
+import { GalleryPage } from '@/pages/GalleryPage';
 import { InterlibraryPage } from '@/pages/InterlibraryPage';
 import { DigitalPage, DigitalViewerPage } from '@/pages/DigitalPage';
 import { LoginPage } from '@/pages/LoginPage';
@@ -70,6 +71,7 @@ function AppRoutes() {
 
         <Route path="/tin-tuc" element={<NewsListPage />} />
         <Route path="/tin-tuc/:slug" element={<NewsDetailPage />} />
+        <Route path="/thu-vien-anh" element={<GalleryPage />} />
         <Route path="/trang/:slug" element={<StaticPageView />} />
 
         <Route path="/dang-nhap" element={<LoginPage />} />

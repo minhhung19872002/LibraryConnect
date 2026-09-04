@@ -56,7 +56,10 @@ public class GetOpacHomeQueryHandler : IRequestHandler<GetOpacHomeQuery, OpacHom
             .Select(OpacQueryBuilder.ToResult())
             .ToListAsync(ct);
 
+        // Thông báo có khối riêng ở dưới, nên bỏ khỏi khối tin tức: hai khối cạnh nhau cùng hiện
+        // một bản tin thì bạn đọc tưởng thư viện đăng trùng.
         var news = await PublishedNews(_db, now)
+            .Where(item => item.Category == null || item.Category.Code != AnnouncementCategoryCode)
             .OrderByDescending(item => item.IsFeatured)
             .ThenByDescending(item => item.PublishedAt)
             .Take(NewsSize)
@@ -100,8 +103,30 @@ public class GetOpacHomeQueryHandler : IRequestHandler<GetOpacHomeQuery, OpacHom
                                         && document.AccessLevel != DigitalAccessLevel.Internal, ct),
             await _db.Readers.AsNoTracking().CountAsync(ct));
 
-        return new OpacHomeDto(newBooks, popular, news, banners, links, statistics);
+        // Thông báo: bản tin thuộc chuyên mục nạp sẵn "Thông báo" (mã THONG_BAO). Khối này không
+        // xét cờ nổi bật — thông báo mới nhất luôn đứng đầu, vì đó là thứ bạn đọc cần biết hôm nay.
+        var announcements = await PublishedNews(_db, now)
+            .Where(item => item.Category != null && item.Category.Code == AnnouncementCategoryCode)
+            .OrderByDescending(item => item.PublishedAt)
+            .Take(AnnouncementSize)
+            .Select(item => new OpacHomeNewsDto(
+                item.Id,
+                item.Title,
+                item.Slug,
+                item.Summary,
+                item.ThumbnailUrl,
+                item.Category!.Name,
+                item.IsFeatured,
+                item.PublishedAt))
+            .ToListAsync(ct);
+
+        return new OpacHomeDto(newBooks, popular, news, announcements, banners, links, statistics);
     }
+
+    /// <summary>Mã chuyên mục tin nạp sẵn dành cho thông báo của thư viện.</summary>
+    public const string AnnouncementCategoryCode = "THONG_BAO";
+
+    private const int AnnouncementSize = 5;
 
     /// <summary>
     /// Bản tin đã đăng và đã tới giờ.

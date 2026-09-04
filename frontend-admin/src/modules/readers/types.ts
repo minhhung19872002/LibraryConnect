@@ -216,6 +216,8 @@ export interface CardFaceLayoutDto {
   images: CardImageDto[];
   barcode?: CardBarcodeDto | null;
   backgroundColor?: string | null;
+  /** Khoá ảnh nền trong kho đối tượng; tải lên qua readersApi.uploadCardArtwork. */
+  backgroundImage?: string | null;
   headerBandHeight?: number;
   headerBandColor?: string | null;
 }
