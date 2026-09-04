@@ -246,6 +246,77 @@ public class PermissionAndAuditTests
     }
 
     [Fact]
+    public async Task Bat_ghi_nhat_ky_luot_xem_thi_mo_ho_so_ban_doc_sinh_mot_dong()
+    {
+        // I.4 nói cài đặt nhật ký bật/tắt được cho Create/Update/Delete/**Read**. Trước 04/09/2026
+        // ô "Xem" là một công tắc chết: cột được lưu, nhánh xét cũng có, nhưng không chỗ nào trong
+        // sản phẩm phát ra hành động Read — bật lên không sinh thêm một dòng nào.
+        var admin = await AdminClientAsync();
+
+        var settings = await admin.GetFromJsonAsync<ApiResponse<IReadOnlyList<AuditSettingDto>>>(
+            "/api/admin/audit-logs/settings", LibraryConnectFactory.JsonOptions);
+
+        var reader = settings!.Data!.Single(row => row.Entity == "Reader");
+
+        // Tắt rồi bật lại: bộ nhớ đệm cài đặt chỉ được xoá khi có thay đổi thật, mà bộ cài mặc định
+        // đã bật sẵn ô này cho Bạn đọc — gửi đúng giá trị cũ thì máy chủ trả "không có thay đổi".
+        reader.LogRead = false;
+
+        (await admin.PutAsJsonAsync("/api/admin/audit-logs/settings", new { settings = new[] { reader } }))
+            .EnsureSuccessStatusCode();
+
+        reader.LogRead = true;
+
+        (await admin.PutAsJsonAsync("/api/admin/audit-logs/settings", new { settings = new[] { reader } }))
+            .EnsureSuccessStatusCode();
+
+        var reloaded = await admin.GetFromJsonAsync<ApiResponse<IReadOnlyList<AuditSettingDto>>>(
+            "/api/admin/audit-logs/settings", LibraryConnectFactory.JsonOptions);
+
+        reloaded!.Data!.Single(row => row.Entity == "Reader").LogRead.Should().BeTrue();
+
+        var readerCode = $"AUD{Guid.NewGuid():N}"[..10].ToUpperInvariant();
+
+        var readerTypes = await admin.GetFromJsonAsync<ApiResponse<PagedResult<Application.Features.Catalogs.CatalogItemDto>>>(
+            "/api/catalogs/reader-types/items?pageSize=5", LibraryConnectFactory.JsonOptions);
+
+        var created = await admin.PostAsJsonAsync("/api/readers", new
+        {
+            fullName = $"Bạn đọc nhật ký {readerCode}",
+            studentCode = readerCode,
+            readerTypeId = readerTypes!.Data!.Items[0].Id
+        });
+
+        created.IsSuccessStatusCode.Should().BeTrue(await created.Content.ReadAsStringAsync());
+
+        var readerId = (await created.Content.ReadFromJsonAsync<ApiResponse<Guid>>(
+            LibraryConnectFactory.JsonOptions))!.Data;
+
+        (await admin.GetAsync($"/api/readers/{readerId}")).EnsureSuccessStatusCode();
+
+        var logs = await admin.GetFromJsonAsync<ApiResponse<PagedResult<AuditLogListItemDto>>>(
+            "/api/admin/audit-logs?entity=Reader&action=Read&pageSize=50", LibraryConnectFactory.JsonOptions);
+
+        logs!.Data!.Items.Should().Contain(
+            item => item.EntityId == readerId.ToString(),
+            "mở hồ sơ bạn đọc khi đã bật ghi nhật ký lượt xem phải sinh một dòng");
+
+        // Tắt lại rồi mở lần nữa: không được sinh thêm dòng nào cho bản ghi ấy.
+        reader.LogRead = false;
+
+        (await admin.PutAsJsonAsync("/api/admin/audit-logs/settings", new { settings = new[] { reader } }))
+            .EnsureSuccessStatusCode();
+
+        (await admin.GetAsync($"/api/readers/{readerId}")).EnsureSuccessStatusCode();
+
+        var after = await admin.GetFromJsonAsync<ApiResponse<PagedResult<AuditLogListItemDto>>>(
+            "/api/admin/audit-logs?entity=Reader&action=Read&pageSize=50", LibraryConnectFactory.JsonOptions);
+
+        after!.Data!.Items.Count(item => item.EntityId == readerId.ToString())
+            .Should().Be(1, "tắt công tắc rồi thì lượt xem sau không được ghi nữa");
+    }
+
+    [Fact]
     public async Task Creating_a_group_writes_an_audit_entry_with_the_diff()
     {
         var admin = await AdminClientAsync();

@@ -82,6 +82,7 @@ public class DigitalController : ApiControllerBase
     /// <summary>Chi tiết một tài liệu số kèm quyền của người đang xem.</summary>
     [HttpGet("documents/{id:guid}")]
     [RequirePermission(PermissionCodes.DigitalView)]
+    [AuditRead("DigitalDocument")]
     [ProducesResponseType(typeof(ApiResponse<DigitalDocumentDetailDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<ApiResponse<DigitalDocumentDetailDto>>> Detail(
         Guid id, CancellationToken ct)

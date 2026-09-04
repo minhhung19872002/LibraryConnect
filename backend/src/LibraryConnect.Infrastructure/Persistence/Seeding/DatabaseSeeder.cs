@@ -28,6 +28,7 @@ public partial class DatabaseSeeder
     private readonly ICirculationCalendarProvider _calendars;
     private readonly IFileStorage _storage;
     private readonly IConfiguration _configuration;
+    private readonly Application.Features.Admin.AuditLogs.IAuditSettingsInvalidator _auditSettings;
 
     public DatabaseSeeder(
         LibraryConnectDbContext db,
@@ -40,7 +41,8 @@ public partial class DatabaseSeeder
         ICirculationPolicyResolver policies,
         ICirculationCalendarProvider calendars,
         IFileStorage storage,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        Application.Features.Admin.AuditLogs.IAuditSettingsInvalidator auditSettings)
     {
         _db = db;
         _hasher = hasher;
@@ -53,6 +55,7 @@ public partial class DatabaseSeeder
         _calendars = calendars;
         _storage = storage;
         _configuration = configuration;
+        _auditSettings = auditSettings;
     }
 
     public async Task SeedAsync(CancellationToken ct = default)
@@ -62,6 +65,12 @@ public partial class DatabaseSeeder
         await SeedAdministratorAsync(ct);
         await SeedSystemParametersAsync(ct);
         await SeedAuditSettingsAsync(ct);
+
+        // Bộ đệm cài đặt nhật ký giữ kết quả trong năm phút. Lượt đọc đầu tiên có thể xảy ra khi
+        // bảng còn rỗng — lúc cài mới — và khi ấy mọi thực thể chạy theo mặc định "ghi khi sửa,
+        // không ghi khi xem" cho tới hết năm phút, dù bảng đã có dòng bật sẵn. Xoá đệm ngay sau khi
+        // nạp thì bản cài mới đúng từ lượt gọi đầu.
+        _auditSettings.Invalidate();
         await SeedCatalogsAsync(ct);
         await SeedLocationsAsync(ct);
         await SeedMarcFieldsAsync(ct);

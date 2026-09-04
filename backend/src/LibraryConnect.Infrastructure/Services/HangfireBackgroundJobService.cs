@@ -47,4 +47,14 @@ public class HangfireBackgroundJobService : IBackgroundJobService
         });
 
     public void RemoveRecurring(string jobId) => _recurring.RemoveIfExists(jobId);
+
+    public string? GetRecurringCron(string jobId)
+    {
+        using var connection = _storage.GetConnection();
+
+        // Hangfire giữ việc định kỳ trong một hash tên "recurring-job:<id>"; khoá "Cron" là lịch.
+        var hash = connection.GetAllEntriesFromHash($"recurring-job:{jobId}");
+
+        return hash is not null && hash.TryGetValue("Cron", out var cron) ? cron : null;
+    }
 }

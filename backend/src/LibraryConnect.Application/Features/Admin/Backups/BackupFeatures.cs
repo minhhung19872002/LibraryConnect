@@ -36,7 +36,13 @@ public class BackupStorageDto
     public long UsedByBackupsBytes { get; set; }
     public int BackupCount { get; set; }
     public bool AutoEnabled { get; set; }
+    /// <summary>Lịch người quản trị đã khai trong tham số hệ thống.</summary>
     public string? ScheduleCron { get; set; }
+    /// <summary>
+    /// Lịch bộ chạy nền **đang giữ**. Bằng <see cref="ScheduleCron"/> là mọi thứ đúng; lệch nhau
+    /// nghĩa là lượt đăng ký lại chưa chạy, và màn hình phải nói ra chứ không im lặng.
+    /// </summary>
+    public string? ScheduledCron { get; set; }
     public int KeepCount { get; set; }
     public DateTimeOffset? LastSuccessAt { get; set; }
 }
@@ -130,13 +136,18 @@ public class GetBackupStorageQueryHandler : IRequestHandler<GetBackupStorageQuer
     private readonly IApplicationDbContext _db;
     private readonly IBackupService _backups;
     private readonly ISystemParameterService _parameters;
+    private readonly IBackupScheduleRefresher _backupSchedule;
 
     public GetBackupStorageQueryHandler(
-        IApplicationDbContext db, IBackupService backups, ISystemParameterService parameters)
+        IApplicationDbContext db,
+        IBackupService backups,
+        ISystemParameterService parameters,
+        IBackupScheduleRefresher backupSchedule)
     {
         _db = db;
         _backups = backups;
         _parameters = parameters;
+        _backupSchedule = backupSchedule;
     }
 
     public async Task<BackupStorageDto> Handle(GetBackupStorageQuery request, CancellationToken ct)
@@ -154,6 +165,7 @@ public class GetBackupStorageQueryHandler : IRequestHandler<GetBackupStorageQuer
             LastSuccessAt = await successful.MaxAsync(job => (DateTimeOffset?)job.StartedAt, ct),
             AutoEnabled = await _parameters.GetAsync("BACKUP.AUTO_ENABLED", true, ct),
             ScheduleCron = await _parameters.GetAsync("BACKUP.SCHEDULE_CRON", "0 2 * * *", ct),
+            ScheduledCron = _backupSchedule.CurrentCron(),
             KeepCount = await _parameters.GetAsync("BACKUP.KEEP_COUNT", 30, ct)
         };
     }

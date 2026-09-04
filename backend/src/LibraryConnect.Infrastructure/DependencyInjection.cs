@@ -53,6 +53,7 @@ public static class DependencyInjection
         services.AddSingleton<IImageResizer, SkiaImageResizer>();
         services.AddHttpClient("fcm", client => client.Timeout = TimeSpan.FromSeconds(20));
         services.AddScoped<IBackgroundJobService, HangfireBackgroundJobService>();
+        services.AddScoped<IBackupScheduleRefresher, Jobs.BackupScheduleRefresher>();
         services.AddScoped<IBackupService, PostgresBackupService>();
         services.AddScoped<IObjectStorageMirror, ObjectStorageMirror>();
         services.AddSingleton<IVirusScanner, ClamAvScanner>();

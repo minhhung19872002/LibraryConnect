@@ -86,6 +86,55 @@ public class BackupTests
     }
 
     [Fact]
+    public async Task Phuc_hoi_tai_lai_tep_tai_lieu_so_chu_khong_chi_co_so_du_lieu()
+    {
+        // I.5 và mục 2.6 của E-HSMT: phục hồi phải trả hệ thống về đúng như lúc sao lưu. Trước
+        // 04/09/2026 lượt phục hồi chỉ chạy pg_restore: cơ sở dữ liệu nói biểu ghi có toàn văn,
+        // còn kho đối tượng trống, nên bạn đọc bấm đọc chỉ nhận lỗi. Hướng dẫn bảo tự chạy `mc
+        // mirror` bằng tay — mà một bước bằng tay trong quy trình khẩn cấp là một bước bị quên.
+        using var scope = _factory.Services.CreateScope();
+        var storage = scope.ServiceProvider.GetRequiredService<IFileStorage>();
+        var options = scope.ServiceProvider
+            .GetRequiredService<Microsoft.Extensions.Options.IOptions<
+                LibraryConnect.Infrastructure.Configuration.MinioOptions>>().Value;
+        var mirror = scope.ServiceProvider.GetRequiredService<IObjectStorageMirror>();
+
+        var objectName = $"kiem-thu/phuc-hoi-{Guid.NewGuid():N}.txt";
+        var content = System.Text.Encoding.UTF8.GetBytes("Toàn văn tài liệu số dùng để kiểm phục hồi");
+
+        await storage.EnsureBucketAsync(options.DocumentsBucket);
+        await storage.UploadAsync(options.DocumentsBucket, objectName, new MemoryStream(content), "text/plain");
+
+        var folder = Path.Combine(Path.GetTempPath(), "lc-restore-" + Guid.NewGuid().ToString("N"));
+
+        try
+        {
+            await mirror.MirrorAsync(folder, CancellationToken.None);
+
+            // Kho đối tượng mất tệp — đúng cảnh sau một lượt phục hồi cơ sở dữ liệu.
+            await storage.DeleteAsync(options.DocumentsBucket, objectName);
+            (await storage.ExistsAsync(options.DocumentsBucket, objectName)).Should().BeFalse();
+
+            var restored = await mirror.RestoreAsync(folder, CancellationToken.None);
+
+            restored.Should().BeGreaterThan(0);
+            (await storage.ExistsAsync(options.DocumentsBucket, objectName)).Should().BeTrue(
+                "tệp phải quay lại đúng bucket và đúng tên object");
+
+            await using var back = await storage.DownloadAsync(options.DocumentsBucket, objectName);
+            using var buffer = new MemoryStream();
+            await back.CopyToAsync(buffer);
+
+            buffer.ToArray().Should().Equal(content, "nội dung tệp phải nguyên vẹn");
+        }
+        finally
+        {
+            if (Directory.Exists(folder)) Directory.Delete(folder, true);
+            await storage.DeleteAsync(options.DocumentsBucket, objectName);
+        }
+    }
+
+    [Fact]
     public async Task Sao_luu_kem_tep_tai_lieu_so_phai_chep_tep_that_chu_khong_chi_ghi_README()
     {
         // I.5: "Kèm backup file MinIO". Trước 04/09/2026 hàm sao lưu tệp chỉ ghi một README ghi tên
@@ -332,5 +381,53 @@ public class BackupTests
         var cache = scope.ServiceProvider.GetRequiredService<ICacheService>();
 
         return await cache.GetAsync<RestoreStatusDto>(BackupRunner.RestoreStatusKey);
+    }
+
+    [Fact]
+    public async Task Doi_lich_sao_luu_tren_giao_dien_thi_viec_dinh_ky_doi_theo_ngay()
+    {
+        // I.5 nói lịch sao lưu tự động cấu hình được. Trước 04/09/2026 việc định kỳ chỉ được đăng ký
+        // một lần lúc máy chủ khởi động: đổi giờ trên màn hình Tham số chỉ ghi vào cơ sở dữ liệu,
+        // còn bộ chạy nền giữ nguyên giờ cũ tới lần khởi động lại — mà màn hình vẫn hiện giờ mới.
+        var client = await AdminAsync();
+
+        var cron = $"{DateTime.UtcNow.Second % 60} 3 * * *";
+
+        (await client.PutAsJsonAsync("/api/admin/parameters", new
+        {
+            parameters = new[]
+            {
+                new { key = "BACKUP.AUTO_ENABLED", value = "true" },
+                new { key = "BACKUP.SCHEDULE_CRON", value = cron }
+            }
+        })).EnsureSuccessStatusCode();
+
+        var storage = (await client.GetFromJsonAsync<ApiResponse<BackupStorageDto>>(
+            "/api/admin/backups/storage", LibraryConnectFactory.JsonOptions))!.Data!;
+
+        storage.ScheduleCron.Should().Be(cron);
+        storage.ScheduledCron.Should().Be(cron,
+            "việc định kỳ phải được đăng ký lại ngay, không đợi tới lần khởi động sau");
+
+        // Tắt sao lưu tự động thì việc phải biến mất khỏi bộ chạy nền, không chỉ đổi một dòng dữ liệu.
+        (await client.PutAsJsonAsync("/api/admin/parameters", new
+        {
+            parameters = new[] { new { key = "BACKUP.AUTO_ENABLED", value = "false" } }
+        })).EnsureSuccessStatusCode();
+
+        var off = (await client.GetFromJsonAsync<ApiResponse<BackupStorageDto>>(
+            "/api/admin/backups/storage", LibraryConnectFactory.JsonOptions))!.Data!;
+
+        off.ScheduledCron.Should().BeNull("tắt rồi thì không còn việc định kỳ nào");
+
+        // Trả lại như cũ để các kịch bản khác không bị ảnh hưởng.
+        (await client.PutAsJsonAsync("/api/admin/parameters", new
+        {
+            parameters = new[]
+            {
+                new { key = "BACKUP.AUTO_ENABLED", value = "true" },
+                new { key = "BACKUP.SCHEDULE_CRON", value = "0 2 * * *" }
+            }
+        })).EnsureSuccessStatusCode();
     }
 }

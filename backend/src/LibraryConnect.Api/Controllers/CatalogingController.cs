@@ -32,6 +32,7 @@ public class CatalogingController : ApiControllerBase
     /// <summary>Chi tiết một biểu ghi: MARC thô, mô tả ISBD và các liên kết danh mục.</summary>
     [HttpGet("bibs/{id:guid}")]
     [RequirePermission(PermissionCodes.CatalogBibView)]
+    [AuditRead("BibRecord")]
     [ProducesResponseType(typeof(ApiResponse<BibDetailDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ApiResponse<BibDetailDto>>> GetBib(Guid id, CancellationToken ct)

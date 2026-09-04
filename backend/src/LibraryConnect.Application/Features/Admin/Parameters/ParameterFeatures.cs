@@ -155,13 +155,18 @@ public class UpdateParametersCommandHandler : IRequestHandler<UpdateParametersCo
     private readonly IApplicationDbContext _db;
     private readonly ISystemParameterService _parameterService;
     private readonly IAuditService _audit;
+    private readonly IBackupScheduleRefresher _backupSchedule;
 
     public UpdateParametersCommandHandler(
-        IApplicationDbContext db, ISystemParameterService parameterService, IAuditService audit)
+        IApplicationDbContext db,
+        ISystemParameterService parameterService,
+        IAuditService audit,
+        IBackupScheduleRefresher backupSchedule)
     {
         _db = db;
         _parameterService = parameterService;
         _audit = audit;
+        _backupSchedule = backupSchedule;
     }
 
     public async Task<int> Handle(UpdateParametersCommand request, CancellationToken ct)
@@ -218,6 +223,14 @@ public class UpdateParametersCommandHandler : IRequestHandler<UpdateParametersCo
         {
             await _audit.LogAsync(AuditAction.ParameterChange, "SystemParameter", null,
                 message: $"Cập nhật {changed} tham số hệ thống", ct: ct);
+        }
+
+        // Lịch sao lưu chỉ được đọc một lần lúc máy chủ khởi động, nên đổi tham số thôi thì việc
+        // định kỳ vẫn chạy theo giờ cũ. Đăng ký lại ngay để cái người quản trị nhìn thấy và cái
+        // thật sự chạy là một.
+        if (request.Parameters.Any(input => input.Key.StartsWith("BACKUP.", StringComparison.Ordinal)))
+        {
+            await _backupSchedule.RefreshAsync(ct);
         }
 
         return changed;

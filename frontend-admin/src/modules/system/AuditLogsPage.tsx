@@ -18,6 +18,16 @@ import {
   Typography,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+
+/**
+ * Đối tượng có ghi nhận lượt xem.
+ *
+ * Ghi lượt đọc phải gắn vào từng endpoint chi tiết (thuộc tính `AuditRead` phía máy chủ), chứ không
+ * bắt tự động như ba hành động ghi — đọc không đụng tới lượt lưu nào cả. Danh sách này phải khớp
+ * với những chỗ đã gắn thuộc tính ấy; đối tượng ngoài danh sách hiện ô khoá kèm lời giải thích thay
+ * vì một công tắc không nối vào đâu.
+ */
+const GHI_DUOC_LUOT_XEM = ['Reader', 'User', 'BibRecord', 'DigitalDocument'];
 import { FileExcelOutlined, FilePdfOutlined, SaveOutlined } from '@ant-design/icons';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -408,11 +418,29 @@ function AuditSettingsTab() {
     {
       title: 'Xem',
       dataIndex: 'logRead',
-      width: 90,
+      width: 110,
       align: 'center',
-      render: (value: boolean, record) => (
-        <Checkbox checked={value} onChange={(e) => update(record, { logRead: e.target.checked })} />
-      ),
+      render: (value: boolean, record) => {
+        // Chỉ những đối tượng có màn hình chi tiết được đánh dấu mới ghi được lượt xem. Bật ô cho
+        // đối tượng khác là một công tắc không nối vào đâu — thà khoá lại và nói rõ vì sao.
+        const supported = GHI_DUOC_LUOT_XEM.includes(record.entity);
+
+        const box = (
+          <Checkbox
+            checked={value}
+            disabled={!supported}
+            onChange={(e) => update(record, { logRead: e.target.checked })}
+          />
+        );
+
+        return supported ? (
+          box
+        ) : (
+          <Tooltip title="Đối tượng này chưa ghi nhận lượt xem; chỉ ghi khi thêm, sửa hoặc xóa.">
+            {box}
+          </Tooltip>
+        );
+      },
     },
     {
       title: 'Thời gian lưu (ngày)',

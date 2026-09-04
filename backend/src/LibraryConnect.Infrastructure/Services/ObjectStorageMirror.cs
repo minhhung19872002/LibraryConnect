@@ -73,4 +73,65 @@ public class ObjectStorageMirror : IObjectStorageMirror
 
         return copied;
     }
+
+    public async Task<int> RestoreAsync(string folder, CancellationToken ct = default)
+    {
+        if (!Directory.Exists(folder))
+        {
+            return 0;
+        }
+
+        var root = Path.GetFullPath(folder);
+        var restored = 0;
+
+        foreach (var bucketFolder in Directory.EnumerateDirectories(root))
+        {
+            var bucket = Path.GetFileName(bucketFolder);
+
+            // Chỉ nhận đúng hai bucket của sản phẩm: thư mục lạ trong bản sao lưu không được biến
+            // thành một bucket mới trên máy chủ đang chạy.
+            if (bucket != _options.DocumentsBucket && bucket != _options.ImagesBucket)
+            {
+                _logger.LogWarning("Bỏ qua thư mục không phải bucket của hệ thống: {Folder}", bucket);
+                continue;
+            }
+
+            foreach (var file in Directory.EnumerateFiles(bucketFolder, "*", SearchOption.AllDirectories))
+            {
+                ct.ThrowIfCancellationRequested();
+
+                // Tên object dựng lại từ đường dẫn tương đối, luôn dùng dấu "/" như S3.
+                var name = Path.GetRelativePath(bucketFolder, file).Replace(Path.DirectorySeparatorChar, '/');
+
+                await using var content = File.OpenRead(file);
+                await _storage.UploadAsync(bucket, name, content, ContentType(file), ct);
+                restored++;
+            }
+        }
+
+        _logger.LogWarning("Đã tải lại {Count} tệp tài liệu số từ bản sao lưu", restored);
+
+        return restored;
+    }
+
+    /// <summary>
+    /// Kiểu nội dung suy từ phần mở rộng. Kho đối tượng cần một giá trị để trả về cho trình duyệt;
+    /// đoán sai thì trình đọc trực tuyến nhận nhầm kiểu và hiện tệp thành chữ.
+    /// </summary>
+    private static string ContentType(string path) => Path.GetExtension(path).ToLowerInvariant() switch
+    {
+        ".pdf" => "application/pdf",
+        ".png" => "image/png",
+        ".jpg" or ".jpeg" => "image/jpeg",
+        ".gif" => "image/gif",
+        ".webp" => "image/webp",
+        ".tif" or ".tiff" => "image/tiff",
+        ".txt" => "text/plain",
+        ".epub" => "application/epub+zip",
+        ".mp3" => "audio/mpeg",
+        ".mp4" => "video/mp4",
+        ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        ".xlsx" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        _ => "application/octet-stream"
+    };
 }

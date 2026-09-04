@@ -177,9 +177,16 @@ public class PostgresBackupService : IBackupService
                 $"Phục hồi thất bại, cơ sở dữ liệu giữ nguyên như trước. Chi tiết: {Summarise(output)}");
         }
 
+        // Cơ sở dữ liệu đã về, nhưng nó chỉ chứa **đường dẫn** tới tệp tài liệu số. Bản sao lưu nào
+        // kèm tệp thì tải chúng trở lại kho đối tượng ngay ở đây: bỏ bước này là biểu ghi nói "có
+        // toàn văn" trong khi bạn đọc bấm vào chỉ nhận lỗi (bài học 11 trong CLAUDE.md).
+        var files = await RestoreObjectStorageAsync(filePath, ct);
+
         _logger.LogWarning("Đã phục hồi cơ sở dữ liệu từ {File}", Path.GetFileName(filePath));
 
-        return new BackupResult(true, filePath, new FileInfo(filePath).Length, null, null);
+        var note = files is > 0 ? $"Đã tải lại {files} tệp tài liệu số kèm theo." : null;
+
+        return new BackupResult(true, filePath, new FileInfo(filePath).Length, null, note);
     }
 
     public Task<Stream> OpenAsync(string filePath, CancellationToken ct = default)
@@ -235,6 +242,27 @@ public class PostgresBackupService : IBackupService
         {
             _logger.LogWarning(ex, "Không đọc được dung lượng thư mục sao lưu");
             return Task.FromResult((0L, 0L));
+        }
+    }
+
+    /// <summary>
+    /// Tải tệp tài liệu số của bản sao lưu trở lại kho đối tượng.
+    ///
+    /// Lỗi ở đây không lật ngược lượt phục hồi cơ sở dữ liệu — lượt ấy đã xong và đúng. Nhưng phải
+    /// ghi rõ vào nhật ký, vì hệ thống lúc đó có dữ liệu mà thiếu tệp.
+    /// </summary>
+    private async Task<int?> RestoreObjectStorageAsync(string archivePath, CancellationToken ct)
+    {
+        try
+        {
+            var folder = Path.ChangeExtension(archivePath, null) + "-files";
+            return await _mirror.RestoreAsync(folder, ct);
+        }
+        catch (Exception ex) when (ex is IOException or InvalidOperationException or HttpRequestException)
+        {
+            _logger.LogError(ex,
+                "Cơ sở dữ liệu đã phục hồi nhưng không tải lại được tệp tài liệu số kèm theo");
+            return null;
         }
     }
 

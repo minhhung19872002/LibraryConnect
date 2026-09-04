@@ -27,6 +27,7 @@ public class UsersController : ApiControllerBase
     /// <summary>Chi tiết một người dùng kèm nhóm quyền và phạm vi dữ liệu được gán.</summary>
     [HttpGet("{id:guid}")]
     [RequirePermission(PermissionCodes.SystemUserView)]
+    [AuditRead("User")]
     [ProducesResponseType(typeof(ApiResponse<UserDetailDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<ApiResponse<UserDetailDto>>> GetById(Guid id, CancellationToken ct)
     {

@@ -44,19 +44,10 @@ public class RecurringJobRegistrar : IHostedService
             var jobs = scope.ServiceProvider.GetRequiredService<IBackgroundJobService>();
             var parameters = scope.ServiceProvider.GetRequiredService<ISystemParameterService>();
 
-            var backupCron = await parameters.GetAsync("BACKUP.SCHEDULE_CRON", "0 2 * * *", cancellationToken);
-            var autoEnabled = await parameters.GetAsync("BACKUP.AUTO_ENABLED", true, cancellationToken);
-
-            if (autoEnabled)
-            {
-                jobs.AddOrUpdateRecurring<SystemMaintenanceJobs>(
-                    BackupJobId, job => job.RunScheduledBackupAsync(), backupCron);
-                _logger.LogInformation("Đã đăng ký sao lưu tự động theo lịch '{Cron}'", backupCron);
-            }
-            else
-            {
-                jobs.RemoveRecurring(BackupJobId);
-            }
+            // Cùng một đường với lượt đăng ký lại khi tham số đổi — hai chỗ tính lịch riêng là hai
+            // chỗ để lệch nhau.
+            await scope.ServiceProvider.GetRequiredService<IBackupScheduleRefresher>()
+                .RefreshAsync(cancellationToken);
 
             // Housekeeping runs in the small hours, after the backup has finished.
             jobs.AddOrUpdateRecurring<SystemMaintenanceJobs>(

@@ -42,6 +42,7 @@ public class ReadersController : ApiControllerBase
     /// <summary>Hồ sơ chi tiết kèm lịch sử cấp thẻ.</summary>
     [HttpGet("{id:guid}")]
     [RequirePermission(PermissionCodes.ReaderView)]
+    [AuditRead("Reader")]
     [ProducesResponseType(typeof(ApiResponse<ReaderDetailDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ApiResponse<ReaderDetailDto>>> Get(Guid id, CancellationToken ct)

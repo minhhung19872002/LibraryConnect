@@ -211,6 +211,15 @@ public interface IBackgroundJobService
     string Schedule<T>(System.Linq.Expressions.Expression<Func<T, Task>> methodCall, TimeSpan delay);
     void AddOrUpdateRecurring<T>(string jobId, System.Linq.Expressions.Expression<Func<T, Task>> methodCall, string cronExpression);
     void RemoveRecurring(string jobId);
+
+    /// <summary>
+    /// Lịch mà bộ chạy nền **đang thật sự** giữ cho một việc định kỳ; null nếu việc ấy chưa đăng ký.
+    ///
+    /// Khác với tham số hệ thống: tham số là ý muốn của người quản trị, còn cái này là thứ sẽ chạy.
+    /// Hai giá trị lệch nhau là chuyện đã xảy ra thật — đổi lịch trên giao diện mà việc vẫn chạy
+    /// theo lịch cũ cho tới lần khởi động lại.
+    /// </summary>
+    string? GetRecurringCron(string jobId);
 }
 
 /// <summary>
