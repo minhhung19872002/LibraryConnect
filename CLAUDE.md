@@ -32,13 +32,20 @@ liệu trình diễn lớn, rà soát lần hai, và làm sạch bảng đáp �
 sổ lỗi) và **đợt rà thứ ba** (mục H) đi vào sáu chỗ hai đợt trước chưa tới — trình soạn MARC bằng
 chuột, ba trình thiết kế mẫu, kiểm kê, đóng tập, trình đọc có chữ chìm, sao lưu – phục hồi — và tìm
 ra hai lỗi nghiêm trọng đã sống từ phase 5: sửa biểu ghi đã có thì không lưu được, và địa chỉ IP người
-dùng vừa giả được vừa bị nhốt chung một ngăn giới hạn tốc độ. Cộng tất cả: **109 lỗi, đã sửa 107**; hai mục còn lại (thiếu chức
-năng H3, nguy cơ H9) ghi rõ ở "Làm tiếp gì sau đây" của sổ lỗi. Trang tra cứu đã áp lại theo dự án
+dùng vừa giả được vừa bị nhốt chung một ngăn giới hạn tốc độ. Trang tra cứu đã áp lại theo dự án
 Claude Design "LibraryConnect layout design".
+
+Ngày 04/09/2026 chạy tiếp **ba đợt rà theo đặc tả**: đọc từng gạch đầu dòng của mười một phân hệ rồi
+tìm bằng chứng trong mã, thay vì đọc mã rồi hỏi nó có đúng không. Ba đợt ấy tìm thêm **28 lỗi** mà
+1.067 phép thử không bao giờ chạm tới, vì chúng nằm ở khoảng giữa hai lớp: công tắc được lưu mà
+không ai đọc (ghi nhật ký lượt xem, danh mục tự tạo làm bộ lọc), cờ cấu hình chỉ có tác dụng sau khi
+khởi động lại (lịch sao lưu), chức năng làm xong một nửa mà màn hình báo là đã xong (biểu ghi bài
+trích tạo ở trạng thái Nháp nên bạn đọc không tra được), và thông báo đẩy của ứng dụng di động chưa
+bản dựng nào chạy được vì thiếu một trình cắm Gradle. Cộng tất cả: **137 lỗi, đã sửa 135**.
 
 | Tài liệu | Nội dung |
 |---|---|
-| `docs/08-so-loi.md` | Sổ lỗi sáu đợt: 37 lỗi hai đợt đầu, 5 lỗi đợt rà thứ hai (mục E), 9 lỗi đợt áp bản thiết kế (mục G), 7 lỗi đợt rà thứ ba (mục H), 8 lỗi đợt triển khai (mục I), **50 lỗi đợt rà hoàn thiện 04/09/2026 (mục J, chia theo phân hệ: J, J.C, J.B, J.L, J.D, J.X)** |
+| `docs/08-so-loi.md` | Sổ lỗi bảy đợt: 37 lỗi hai đợt đầu, 5 lỗi đợt rà thứ hai (mục E), 9 lỗi đợt áp bản thiết kế (mục G), 7 lỗi đợt rà thứ ba (mục H), 8 lỗi đợt triển khai (mục I), **78 lỗi ba đợt rà theo đặc tả ngày 04/09/2026 (mục J và các mục con J.C, J.B, J.L, J.D, J.X, J.A, J.M, J.N)** |
 | `docs/09-nguon-du-lieu.md` | Khảo sát 16 nguồn dữ liệu thư mục, giấy phép từng nguồn, kết quả nạp |
 | `docs/00-quyet-dinh-ky-thuat.md` | Sổ quyết định — mọi chỗ tự chốt khi đặc tả không nói rõ |
 | `docs/01`–`docs/07` | Bảy tài liệu bàn giao theo mục 10 |
@@ -63,9 +70,10 @@ huống lỗi; phải tự tay dựng đúng bối cảnh ấy trong phép thử
 **Lệnh chạy đúng:**
 
 ```bash
-cd backend  && dotnet test                 # 577 unit + 390 integration
-cd frontend-admin && npx tsc -b && npx vitest run    # 211 test
-cd frontend-opac  && npx tsc -b && npx vitest run    #  85 test
+cd backend  && dotnet test                 # 605 unit + 462 integration
+cd frontend-admin && npx tsc -b && npx vitest run    # 340 test
+cd frontend-opac  && npx tsc -b && npx vitest run    #  97 test
+cd mobile   && flutter analyze && flutter test       # 118 test
 ```
 
 > `npx tsc --noEmit` **không kiểm gì cả** ở hai thư mục frontend: `tsconfig.json` là tệp solution
