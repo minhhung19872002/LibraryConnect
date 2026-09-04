@@ -287,6 +287,13 @@ Ký hiệu bám theo **Mục 5 phần 2 của E-HSMT**.
 | BS.69 | Đánh giá nhà cung cấp | Danh mục → Nhà cung cấp → sửa → Đánh giá 4 → Báo cáo bổ sung → Duyệt mua → chọn nhà cung cấp ấy | Lịch sử giao dịch hiện 4 sao |
 | BS.70 | Chuyển kho bằng quét mã vạch | Thao tác hàng loạt → Chuyển kho khi chưa tick gì → quét ba mã, quét lại một mã → chọn kho nhận, lý do → Thực hiện | Danh sách quét có ba dòng, mã quét lại báo "đã có"; phiếu chuyển kho ba bản |
 | BS.71 | Tiến độ kiểm kê tự cập nhật | Mở kỳ đang kiểm kê ở hai trình duyệt, quét ở cửa sổ này | Cửa sổ kia tự tăng số đã quét trong vòng 5 giây, không bấm làm mới |
+| BS.72 | Duyệt nhiều cấp đúng nhóm | Tham số hệ thống → đặt `ACQ.APPROVAL_LEVELS`=2, `ACQ.APPROVAL_GROUPS`=`ACQUISITION,LANHDAO` → tài khoản thuộc nhóm Lãnh đạo bấm Duyệt ở cấp 1 | Bị từ chối kèm câu nói rõ cấp 1 thuộc nhóm nào; cột trạng thái ghi "Chờ Cán bộ bổ sung duyệt" |
+| BS.73 | Một người không duyệt hai cấp | Người của nhóm cấp 1 duyệt xong, bấm Duyệt lần nữa cho cấp 2 | Bị chặn: "Bạn đã duyệt cấp trước của yêu cầu này; cấp tiếp theo phải do người khác duyệt." |
+| BS.74 | Thông báo tới người duyệt | Người đề nghị bấm Gửi duyệt → đăng nhập bằng tài khoản thuộc nhóm duyệt cấp 1 | Chuông trên thanh trên có số mới; mở ra thấy dòng "Yêu cầu đặt mua … chờ duyệt", bấm vào mở đúng yêu cầu ấy |
+| BS.75 | Biên bản bàn giao ghi tình trạng | Đơn đặt → Lập biên bản → sau khi lập, bảng chi tiết hiện các dòng của đơn → gõ "Ướt góc 3 bản" vào một dòng → Lưu tình trạng → In biên bản | Bảng chi tiết giữ nguyên số dòng; PDF có cột Tình trạng với đúng câu vừa gõ |
+| BS.76 | Biên bản không gắn đơn đặt | Gọi API lập biên bản không có `orderId`, kèm hai dòng tài liệu | Biên bản có bảng chi tiết hai dòng, tổng số bản và tổng tiền bằng đúng tổng của bảng; bản in không còn là tờ giấy trắng |
+| BS.77 | Phân công kiểm kê theo tài khoản | Tạo kỳ kiểm kê, ô "Cán bộ kiểm kê" chọn hai tài khoản → đăng nhập bằng một trong hai | Chuông có thông báo "Bạn được phân công kiểm kê …" kèm tên kho và số ĐKCB phải đối chiếu |
+| BS.78 | Phân công lại giữa kỳ | Mở kỳ đang chạy → thẻ "Cán bộ được phân công" → bỏ một người, thêm một người khác → Lưu phân công | Danh sách đổi đúng; chỉ người **mới** thêm nhận thông báo, người cũ không nhận lại |
 
 ## Nhóm chức năng — Phân hệ IV: Ấn phẩm định kỳ
 
