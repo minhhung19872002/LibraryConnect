@@ -276,6 +276,17 @@ Ký hiệu bám theo **Mục 5 phần 2 của E-HSMT**.
 | BS.58 | Lịch sử nhà cung cấp | Chọn một nhà cung cấp ở bộ lọc | Số đơn, tổng giá trị, tỷ lệ giao đủ và danh sách đơn |
 | BS.59 | Xuất danh sách ĐKCB | Ấn phẩm trong kho → Xuất Excel | Tệp Excel đúng bằng danh sách đang lọc |
 | BS.60 | Phân quyền | Đăng nhập tài khoản không có quyền Bổ sung | Menu Bổ sung không hiện; gọi thẳng API trả 403 |
+| BS.61 | In phiếu ngay sau chuyển kho | Chuyển kho xong, trong hộp "Phiếu chuyển kho CK-…" bấm In phiếu | Tải về PDF của đúng số phiếu vừa sinh |
+| BS.62 | In lại phiếu chuyển kho | Ấn phẩm trong kho → Phiếu chuyển kho → lọc theo kho nhận → In lại | Danh sách có phiếu vừa lập với đúng số bản; PDF tải về |
+| BS.63 | In quyết định thanh lý | Thanh lý xong bấm In quyết định; hoặc mở chi tiết bản đã thanh lý → In quyết định | PDF theo mẫu quyết định thanh lý, tên tệp mang số quyết định |
+| BS.64 | Yêu cầu đặt báo | Tạo yêu cầu loại Ấn phẩm định kỳ: tạp chí tháng, 12 kỳ/năm, đặt 01/2026–12/2026, 2 bản/kỳ, 25.000 đ/kỳ | Dòng hiện "12 kỳ", thành tiền 600.000; máy chủ lưu đúng số ấy; duyệt 1 bản thì giá trị duyệt 300.000 |
+| BS.65 | Biểu đồ báo cáo bổ sung | Báo cáo bổ sung → Tổng quát, Thống kê theo chiều, Duyệt mua; đổi Cột/Tròn, đổi chỉ tiêu | Biểu đồ có đủ mọi dòng của bảng, mỗi dòng một màu phân loại; xuất Excel/PDF ở tab Tổng quát và Duyệt mua ra tệp |
+| BS.66 | Nhập nhanh liên tục | Bổ sung → Biên mục sơ lược → nhập cuốn 1 → Enter → nhập cuốn 2 | Sau mỗi lần lưu: ô nhan đề trống và có tiêu điểm, kho/dạng tài liệu/NXB giữ nguyên, bộ đếm "Đã nhập" tăng, mã vạch sinh ra hiện bên phải |
+| BS.67 | Logo trên nhãn gáy | Mẫu tem và nhãn → sửa mẫu nhãn → bật "In logo thư viện", đặt 10×10 mm → xem trước → in nhãn | Ô xem trước hiện logo đã tải ở tham số hệ thống; PDF in có logo; chưa tải logo thì khối để trống, nhãn vẫn in |
+| BS.68 | Xem trước tem với dữ liệu thật | Chọn vài bản → In tem mã vạch | Hộp in hiện mô phỏng tem của bản đầu tiên với mã vạch thật của nó |
+| BS.69 | Đánh giá nhà cung cấp | Danh mục → Nhà cung cấp → sửa → Đánh giá 4 → Báo cáo bổ sung → Duyệt mua → chọn nhà cung cấp ấy | Lịch sử giao dịch hiện 4 sao |
+| BS.70 | Chuyển kho bằng quét mã vạch | Thao tác hàng loạt → Chuyển kho khi chưa tick gì → quét ba mã, quét lại một mã → chọn kho nhận, lý do → Thực hiện | Danh sách quét có ba dòng, mã quét lại báo "đã có"; phiếu chuyển kho ba bản |
+| BS.71 | Tiến độ kiểm kê tự cập nhật | Mở kỳ đang kiểm kê ở hai trình duyệt, quét ở cửa sổ này | Cửa sổ kia tự tăng số đã quét trong vòng 5 giây, không bấm làm mới |
 
 ## Nhóm chức năng — Phân hệ IV: Ấn phẩm định kỳ
 
@@ -324,6 +335,12 @@ Ký hiệu bám theo **Mục 5 phần 2 của E-HSMT**.
 | DK.41 | Gộp môn loại | Xem chiều Môn loại với các đầu báo có DDC 020.5 và 070.1 | Cùng gộp vào lớp "000 — Tin học, thông tin và tác phẩm tổng quát" |
 | DK.42 | Xuất báo cáo | Bấm Excel và PDF | Tệp xuất ra đúng bằng bộ lọc đang xem |
 | DK.43 | Phân quyền | Đăng nhập tài khoản không có quyền Ấn phẩm định kỳ | Menu không hiện; gọi thẳng API trả 403 |
+| DK.44 | Bổ sung tổng thể — số đến hạn | Ấn phẩm định kỳ → Bổ sung tổng thể → tab Số đến hạn | Bảng gồm số đến hạn của mọi đầu báo (tạp chí tháng lẫn quý), thẻ đếm số đầu báo và số quá hạn |
+| DK.45 | Nhận hàng loạt nhiều đầu báo | Tick số của hai đầu báo, gõ số lượng 2 và ngày nhận riêng cho một dòng → Ghi nhận đã nhận | Máy chủ nhận 2 số, tạo 3 ĐKCB; dòng để trống ngày lấy ngày mặc định của hộp thoại |
+| DK.46 | Đối chiếu số thiếu đa đầu báo | Tab Đối chiếu số thiếu sau khi ghi thiếu một số và để một số quá hạn | Bảng "Theo đầu báo" đếm 2 số chưa về; số đã nhận không xuất hiện; bấm một đầu báo thì bảng dưới lọc theo nó |
+| DK.47 | Khiếu nại nhiều đầu báo một lần | Tick số thiếu của hai đầu báo → Lập khiếu nại | Mỗi số một phiếu, gửi tới nhà cung cấp của đầu báo ấy; số vẫn nằm trong danh sách đối chiếu với nhãn "Đang khiếu nại" |
+| DK.48 | Đóng tập theo khoảng số | Bàn làm việc → Đóng tập → năm 2026, từ số 1 đến số 2 | Hộp báo "Sẽ đóng 2 số: 1, 2"; tập có 2 số, số 3–4 vẫn là số lẻ đã nhận; chọn "đến số 9" không có trong năm thì bị chặn |
+| DK.49 | In nhãn gáy tập | Tab Đóng tập → In nhãn gáy tập trên dòng tập vừa đóng | PDF nhãn gáy in cho ĐKCB của tập |
 
 ## Nhóm chức năng — Phân hệ VI: Bạn đọc
 

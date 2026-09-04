@@ -314,6 +314,39 @@ nhất trên máy.
 
 ---
 
+## J. Đợt rà hoàn thiện 04/09/2026 — Phân hệ III và IV đối chiếu từng dòng đặc tả
+
+Đợt này không mở hệ thống ra tìm lỗi mà **đặt đặc tả Phân hệ III, IV cạnh sản phẩm và dò từng
+dòng**: dòng nào bảng đáp ứng ghi "Có" mà đường đi thật của cán bộ không tới được thì ghi là lỗi.
+Phần lớn là chức năng máy chủ đã có mà giao diện chưa mở lối tới, hoặc mở tới nhưng tính sai.
+
+| Mã | Mức | Lỗi | Nguyên nhân | Sửa |
+|---|---|---|---|---|
+| J1 | Thiếu chức năng | Chuyển kho và thanh lý xong **không có chỗ nào để in** phiếu chuyển kho hay quyết định thanh lý; endpoint in đã có từ phase 6 nhưng chỉ gọi được khi biết số phiếu và gõ tay địa chỉ | Màn hình kho chỉ hiện số phiếu trong một toast rồi thôi; danh sách phiếu (`GET /stock/transfers`) có API mà không có màn hình | Hộp mời in ngay sau thao tác; nút "In quyết định" ở chi tiết bản đã thanh lý; ngăn "Phiếu chuyển kho" liệt kê mọi phiếu kèm in lại. Phép thử `printing.test.ts` (đỏ trước khi có module) và hai phép thử tích hợp mở rộng |
+| J2 | Nghiêm trọng | **Yêu cầu đặt báo tính tiền như mua sách**: tạp chí tháng đặt trọn năm ra tiền của một số. Bảng đáp ứng ghi "tổng tiền tự tính" nhưng công thức là số bản × đơn giá, không nhân số kỳ; giá trị duyệt cũng vậy | Cột ISSN, kỳ hạn, thời gian đặt có ở thực thể từ phase 6 nhưng form không hiện, máy chủ không dùng | `SerialSubscription.IssueCount` đếm kỳ theo tháng đặt và số kỳ/năm; thành tiền = số bản × số kỳ × đơn giá kỳ ở cả lưu lẫn duyệt; form đổi cột khi chọn loại Ấn phẩm định kỳ, hiện số kỳ và thành tiền khi gõ. 7 phép thử đơn vị, 5 vitest, phép thử tích hợp `Serial_request_prices…` (đỏ: 50.000 thay vì 600.000). Còn để lại: đơn đặt sinh từ yêu cầu đặt báo vẫn lấy đơn giá/kỳ làm đơn giá dòng đơn, chưa nhân số kỳ — ghi ở "Làm tiếp" |
+| J3 | Thiếu chức năng | **IV.3 Bổ sung tổng thể không có màn hình**: bảng đáp ứng ghi "Có" nhưng ghi nhận hàng loạt chỉ làm được trong bàn làm việc của *một* đầu báo; nhận một chồng báo hai chục đầu là mở hai chục ngăn | `SerialIssueListRequest.DueOnly` có sẵn mà không màn hình nào gọi không kèm `serialId` | Màn hình `/an-pham-dinh-ky/bo-sung-tong-the` ba tab: số đến hạn mọi đầu báo (số lượng, ngày nhận từng dòng), đối chiếu số thiếu gom theo đầu báo + khiếu nại đa đầu báo, sinh số nhiều đầu báo. Bộ lọc `unresolvedOnly` mới (quá hạn ∪ thiếu ∪ đang khiếu nại). Phép thử tích hợp `Batch_receiving…` đỏ trước (bộ lọc chưa có nên trả cả số đã nhận), 4 vitest cho hai hàm gom |
+| J4 | Nặng | **Đóng tập "theo khoảng số" đóng cả năm**: `FromIssue`/`ToIssue` được nhận vào lệnh nhưng chỉ dùng làm nhãn in trên tập; chọn 1–2 vẫn đóng 1–12 | Handler lọc theo năm rồi ghi hai ô vào `SerialBinding` mà không thu hẹp danh sách số | Thu hẹp theo vị trí trong thứ tự phát hành (số hiệu là chuỗi, không so số học); số không có trong năm bị chặn; modal có ô từ số/đến số và báo trước sẽ đóng những số nào; nút "In nhãn gáy tập" trên dòng tập. Phép thử tích hợp `Binding_by_issue_range…` đỏ trước (IssueCount 4 thay vì 2), 4 vitest |
+| J5 | Vừa | Báo cáo bổ sung **không có biểu đồ đúng nghĩa**: ba khối "Theo kho / dạng tài liệu / tình trạng" là thanh tiến độ cắt còn 10 dòng đầu, tab thống kê theo chiều chỉ có bảng; tổng quát và duyệt mua **không xuất được tệp** dù E-HSMT đòi ba dạng đầu ra cho mọi báo cáo | Phase 6 ghi chú "đủ để trả lời cái nào nhiều hơn"; hai loại báo cáo chưa có `AcquisitionReportKind` | `StatChart` (Recharts, cột/tròn, đủ mọi dòng, màu phân loại từ `MAU_BIEU_DO`); `Overview` và `PurchaseApproval` vào bộ xuất Excel/PDF. Phép thử tích hợp mở rộng (đỏ: 400 vì enum chưa có), 3 vitest cho dữ liệu biểu đồ |
+| J6 | Thiếu chức năng | **Biên mục sơ lược chỉ mở được từ một dòng đơn đặt**; sách tặng, sách mua ngoài đơn không có lối vào. "Nhập nhanh liên tục" của đặc tả không tồn tại: modal đóng sau mỗi lần lưu | Phase 6 gắn form vào `PurchaseOrderPage` như một modal | Màn hình riêng Bổ sung › Biên mục sơ lược: lưu xong giữ bối cảnh đợt (kho, dạng tài liệu, NXB, số bản), xóa phần của cuốn vừa nhập, trả tiêu điểm về nhan đề, đếm đã nhập kèm mã vạch. 3 vitest cho quy tắc giữ/xóa ô |
+| J7 | Thiếu chức năng | **Nhãn gáy không in được logo thư viện** dù đặc tả III.2 ghi rõ; trình thiết kế tem **không có ô xem trước** nào, "xem trước" trong bảng đáp ứng là nói quá | `LabelLayoutDto` không có khối ảnh; `LabelPrintService` không nhận logo; endpoint ảnh mã vạch có từ phase 6 mà không màn hình nào gọi | Khối logo (mm) trong bố cục; hai handler in nạp logo như biểu mẫu; `LabelPreview` mô phỏng tem 5 px/mm với mã vạch thật và logo thật, dùng ở trình thiết kế (dữ liệu mẫu) và hộp in (bản đầu tiên đang chọn); `labelContent.ts` chiếu `LabelContentBuilder` với 6 vitest lặp đúng các trường hợp của phép thử C#. 3 phép thử đơn vị C# (đỏ: không biên dịch khi chưa có `Logo`; sau đó đỏ lần hai vì phép thử quên khai giấy phép QuestPDF — DI khai hộ lúc chạy thật) |
+| J8 | Vừa | **Không đánh giá được nhà cung cấp**: cột `Rating` có ở thực thể từ phase 6 nhưng không khai ở `CatalogRegistry` nên màn hình danh mục không hiện, không sửa được; lịch sử giao dịch không có số sao | Sót dòng khai trường | Trường Number 0–5 ở danh mục nhà cung cấp; `SupplierHistoryDto.Rating` hiện thành sao ở báo cáo. Phép thử tích hợp mở rộng đỏ trước (Extras không có `rating`) |
+| J9 | Vừa | **Chuyển kho hàng loạt bằng quét barcode** không có: phải tick từng dòng trên danh sách phân trang, mà sách đang ở trên tay | Hộp chuyển kho chỉ nhận lựa chọn từ bảng | Ô quét liên tục trong hộp chuyển kho, tra đúng mã, gom danh sách, quét trùng báo "đã có"; mở được hộp khi chưa tick gì. 2 vitest |
+| J10 | Nhẹ | Tiến độ kiểm kê chỉ đổi khi chính cửa sổ ấy quét; máy rời và điện thoại quét vào cùng kỳ thì người điều phối phải bấm làm mới | Không có `refetchInterval` | Nạp lại tiến độ mỗi 5 giây khi kỳ chưa chốt |
+
+Bài học của đợt: **"Có" trong bảng đáp ứng phải là "đi được từ menu tới tờ giấy"**, không phải "có
+endpoint". Bảy trong mười dòng trên đều có máy chủ làm đúng từ phase 6–7; cái thiếu là lối đi của
+người dùng, và bảng đáp ứng đã ghi "Có" cho cái lối chưa có ấy.
+
+### Làm tiếp sau đợt J
+
+1. Đơn đặt sinh từ yêu cầu đặt báo (J2): dòng đơn mang đơn giá/kỳ và số bản, chưa nhân số kỳ nên
+   tổng đơn nhỏ hơn giá trị duyệt; cần thêm số kỳ vào `PurchaseOrderItem` hoặc quy ước đơn giá dòng
+   đơn là "cả kỳ đặt".
+2. Phiếu khiếu nại chưa in được thành văn bản gửi nhà cung cấp; biên bản bàn giao độc lập (không từ
+   đơn) chưa có dòng chi tiết tự nhập; ô "tình trạng" khi ghi nhận số báo chưa có (thực thể
+   `SerialIssue` không có cột); kéo thả sắp xếp trường trong trình thiết kế biểu mẫu; phân công cán
+   bộ kiểm kê bằng tài khoản thay vì gõ tên.
+
 ## Đ. Những chỗ đã thử phá nhưng hệ thống chịu được
 
 Ghi lại để biết chỗ nào đã kiểm và không phải kiểm lại — kèm bằng chứng, không ghi suông.
