@@ -301,6 +301,11 @@ class _SelfCheckoutScreenState extends ConsumerState<SelfCheckoutScreen> {
     final settings = ref.watch(publicSettingsProvider);
 
     return Scaffold(
+      // Không co thân màn hình khi bàn phím hiện: ô nhập tay nằm trong hộp thoại riêng, tự lo phần
+      // bàn phím của nó. Co thân lại thì trên iPhone SE (667 điểm) bước quét — dải xác thực hai
+      // dòng + khung quét 220 + dòng gợi ý — không còn chỗ, tràn 2 điểm ảnh ở đáy (lượt iOS
+      // 33836450263).
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         title: Text(l10n.selfCheckoutTitle),
         actions: [
