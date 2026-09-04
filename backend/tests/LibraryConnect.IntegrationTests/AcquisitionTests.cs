@@ -308,6 +308,56 @@ public class AcquisitionTests
     }
 
     [Fact]
+    public async Task Serial_request_prices_the_subscription_by_the_number_of_issues()
+    {
+        var client = await ClientAsync();
+
+        // Hai bản một kỳ, tạp chí tháng, đặt trọn năm 2026, 25.000 đ một kỳ → 2 × 12 × 25.000.
+        var requestId = await ReadAsync<Guid>(await client.PostAsJsonAsync("/api/acquisition/requests", new
+        {
+            type = PurchaseRequestType.Serial,
+            requesterName = "Phòng Đào tạo",
+            department = "Phòng Đào tạo",
+            items = new[]
+            {
+                new
+                {
+                    title = "Tạp chí Khoa học và Công nghệ",
+                    issn = "1859-1450",
+                    frequency = SerialFrequency.Monthly,
+                    issuesPerYear = 12,
+                    subscriptionFrom = "2026-01-01",
+                    subscriptionTo = "2026-12-01",
+                    quantity = 2,
+                    unitPrice = 25000m
+                }
+            }
+        }));
+
+        var detail = await ReadAsync<PurchaseRequestDetailDto>(
+            await client.GetAsync($"/api/acquisition/requests/{requestId}"));
+
+        detail.Type.Should().Be(PurchaseRequestType.Serial);
+        detail.Items.Should().ContainSingle();
+        detail.Items[0].IssueCount.Should().Be(12);
+        detail.Items[0].EstimatedAmount.Should().Be(600000m);
+        detail.TotalAmount.Should().Be(600000m);
+
+        // Duyệt một bản thay vì hai: giá trị duyệt cũng phải tính theo số kỳ.
+        await EnsureAsync(await client.PostAsync($"/api/acquisition/requests/{requestId}/submit", null));
+
+        await EnsureAsync(await client.PostAsJsonAsync($"/api/acquisition/requests/{requestId}/approve", new
+        {
+            lines = new[] { new { itemId = detail.Items[0].Id, approvedQuantity = 1 } }
+        }));
+
+        var approved = await ReadAsync<PurchaseRequestDetailDto>(
+            await client.GetAsync($"/api/acquisition/requests/{requestId}"));
+
+        approved.ApprovedAmount.Should().Be(300000m);
+    }
+
+    [Fact]
     public async Task Duplicate_check_finds_a_title_the_library_already_holds()
     {
         var client = await ClientAsync();

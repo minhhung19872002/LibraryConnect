@@ -372,6 +372,8 @@ export interface PurchaseRequestItemDto {
   issuesPerYear?: number | null;
   subscriptionFrom?: string | null;
   subscriptionTo?: string | null;
+  /** Số kỳ trong thời gian đặt; tài liệu đơn bản luôn là 1. */
+  issueCount: number;
   existingCopies: number;
 }
 
