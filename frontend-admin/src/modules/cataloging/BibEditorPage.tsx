@@ -35,11 +35,15 @@ import { formatRecordAsText } from '@/modules/marc/marcRecord';
 import type { MarcPreview, MarcRecord, MarcValidationResult } from '@/modules/marc/types';
 import type { RemoteSearchField } from '@/modules/interlibrary/types';
 import { RemoteRecordPicker } from './RemoteRecordPicker';
-import { catalogingApi, parseMarc } from './api';
+import { cardApi, catalogingApi, parseMarc } from './api';
+import { CARD_TYPE_LABELS, type CardType } from './cardTypes';
 import { useCatalogOptions, toOptions } from './useCatalogOptions';
 import { RECORD_STATUS_LABELS, type RecordStatus } from './types';
 
 const MONOSPACE = { fontFamily: 'ui-monospace, Consolas, monospace' } as const;
+
+/** Ngừng gõ bao lâu thì kiểm tra biểu ghi — đủ ngắn để thấy lỗi ngay, đủ dài để không kiểm từng phím. */
+export const LIVE_VALIDATE_DELAY_MS = 800;
 
 /**
  * Soạn biểu ghi thư mục (II.2, II.3).
@@ -179,6 +183,45 @@ export function BibEditorPage() {
         message.success('Biểu ghi hợp lệ.');
       }
     },
+    onError: (error: unknown) => message.error(errorMessage(error)),
+  });
+
+  // Kiểm tra theo thời gian thực (II.2): sau khi ngừng gõ 800 ms, biểu ghi được kiểm và lỗi hiện
+  // ngay tại dòng — không cần bấm "Kiểm tra". Lượt kiểm ngầm không bật thông báo, chỉ cập nhật bảng
+  // lỗi; lượt bấm tay vẫn có câu "Biểu ghi hợp lệ".
+  const liveValidate = useMutation({
+    mutationFn: (current: MarcRecord) => marcApi.validate(current),
+    onSuccess: setValidation,
+  });
+
+  useEffect(() => {
+    if (!record || !started) {
+      return;
+    }
+
+    const handle = window.setTimeout(() => liveValidate.mutate(record), LIVE_VALIDATE_DELAY_MS);
+    return () => window.clearTimeout(handle);
+    // The mutation object is stable for the life of the page; only the record matters here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [record, started]);
+
+  // Xem trước thẻ mục lục (II.2): dựng đúng phích từ mẫu mặc định với biểu ghi đang gõ, chưa lưu.
+  const [cardType, setCardType] = useState<CardType>('MAIN');
+  const [cardUrl, setCardUrl] = useState<string | null>(null);
+
+  useEffect(
+    () => () => {
+      if (cardUrl) {
+        URL.revokeObjectURL(cardUrl);
+      }
+    },
+    [cardUrl],
+  );
+
+  const previewCard = useMutation({
+    mutationFn: (type: CardType) =>
+      cardApi.previewRecord({ marcJson: JSON.stringify(record), cardType: type }),
+    onSuccess: ({ blob }) => setCardUrl(URL.createObjectURL(blob)),
     onError: (error: unknown) => message.error(errorMessage(error)),
   });
 
@@ -485,12 +528,50 @@ export function BibEditorPage() {
                   ))}
 
                   <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                    Gộp một đoạn, đúng cách nó lên phích mục lục
+                    Gộp một đoạn
                   </Typography.Text>
                   <Typography.Paragraph style={{ marginBottom: 0 }}>{isbd.paragraph}</Typography.Paragraph>
                 </Space>
               </Card>
             )}
+
+            <Card
+              size="small"
+              title="Thẻ mục lục"
+              extra={
+                cardUrl && (
+                  <Button type="link" size="small" onClick={() => setCardUrl(null)}>
+                    Ẩn
+                  </Button>
+                )
+              }
+            >
+              <Space direction="vertical" size={8} style={{ width: '100%' }}>
+                <Space.Compact style={{ width: '100%' }}>
+                  <Select<CardType>
+                    value={cardType}
+                    onChange={setCardType}
+                    options={Object.entries(CARD_TYPE_LABELS).map(([value, label]) => ({ value, label }))}
+                    style={{ flex: 1 }}
+                  />
+                  <Button loading={previewCard.isPending} onClick={() => previewCard.mutate(cardType)}>
+                    Xem trước phích
+                  </Button>
+                </Space.Compact>
+
+                {cardUrl ? (
+                  <iframe
+                    title="Xem trước thẻ mục lục"
+                    src={cardUrl}
+                    style={{ width: '100%', height: 300, border: 0, display: 'block' }}
+                  />
+                ) : (
+                  <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                    Dựng đúng phích từ mẫu phích mặc định với biểu ghi đang gõ, chưa cần lưu.
+                  </Typography.Text>
+                )}
+              </Space>
+            </Card>
 
             <Card size="small" title="Biểu ghi ở dạng văn bản">
               <Typography.Paragraph

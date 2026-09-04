@@ -763,6 +763,22 @@ public class CatalogingController : ApiControllerBase
         return File(file.Content, file.ContentType, file.FileName);
     }
 
+    /// <summary>
+    /// Xem trước thẻ mục lục của một biểu ghi đang soạn, chưa lưu: trả PDF một phích dựng bằng mẫu
+    /// mặc định (hoặc mẫu đã chọn) với dữ liệu thật của biểu ghi.
+    /// </summary>
+    [HttpPost("cards/preview")]
+    [RequirePermission(PermissionCodes.CatalogBibView)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> PreviewCard([FromBody] PreviewCardRequest request, CancellationToken ct)
+    {
+        var file = await Mediator.Send(
+            new PreviewCardCommand(request.MarcJson, request.CardType ?? CardTypes.Main, request.TemplateId, request.CallNumber), ct);
+
+        return File(file.Content, file.ContentType, file.FileName);
+    }
+
     // ---------------------------------------------------------------
     // Nhập biểu ghi từ Excel (II.8)
     // ---------------------------------------------------------------
@@ -901,6 +917,17 @@ public class CatalogingController : ApiControllerBase
 
         return buffer.ToArray();
     }
+}
+
+/// <summary>Biểu ghi đang soạn gửi lên để dựng thử một phích (II.2).</summary>
+public class PreviewCardRequest
+{
+    public string MarcJson { get; set; } = string.Empty;
+    /// <summary>MAIN | TITLE | SUBJECT | CLASSIFICATION; bỏ trống là phích chính.</summary>
+    public string? CardType { get; set; }
+    public Guid? TemplateId { get; set; }
+    /// <summary>Ký hiệu xếp giá in trên phích, nếu cán bộ đã biết.</summary>
+    public string? CallNumber { get; set; }
 }
 
 /// <summary>Các dòng đã sửa trên màn hình để nhập lại (II.8).</summary>

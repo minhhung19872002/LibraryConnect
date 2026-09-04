@@ -15,7 +15,7 @@ import {
   Tag,
   Typography,
 } from 'antd';
-import { DownloadOutlined, SearchOutlined } from '@ant-design/icons';
+import { DownloadOutlined, FileSearchOutlined, SearchOutlined } from '@ant-design/icons';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
@@ -23,6 +23,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { Can } from '@/components/PermissionGate';
 import { PERMISSIONS } from '@/api/permissions';
 import { ApiRequestError } from '@/api/client';
+import { RemoteMarcModal } from '@/modules/cataloging/RemoteMarcModal';
 import { interLibraryApi } from './api';
 import {
   bib1UseCodes,
@@ -54,6 +55,7 @@ export function RemoteSearchPage() {
   const [targetIds, setTargetIds] = useState<string[]>([]);
   const [maxRecords, setMaxRecords] = useState(20);
   const [result, setResult] = useState<RemoteSearchResultDto | null>(null);
+  const [viewing, setViewing] = useState<RemoteRecordDto | null>(null);
 
   const targets = useQuery({
     queryKey: ['ill-targets'],
@@ -113,19 +115,29 @@ export function RemoteSearchPage() {
     { title: 'Số kiểm soát', dataIndex: 'controlNumber', width: 150, ellipsis: true },
     {
       title: '',
-      width: 150,
+      width: 250,
       render: (_, row) => (
-        <Can permission={PERMISSIONS.cataloging.bibCreate}>
+        <Space size={0}>
           <Button
             type="link"
             size="small"
-            icon={<DownloadOutlined />}
-            loading={prepare.isPending && prepare.variables?.marcJson === row.marcJson}
-            onClick={() => prepare.mutate(row)}
+            icon={<FileSearchOutlined />}
+            onClick={() => setViewing(row)}
           >
-            Nhập vào
+            {row.existingBibId ? 'So sánh' : 'Xem MARC'}
           </Button>
-        </Can>
+          <Can permission={PERMISSIONS.cataloging.bibCreate}>
+            <Button
+              type="link"
+              size="small"
+              icon={<DownloadOutlined />}
+              loading={prepare.isPending && prepare.variables?.marcJson === row.marcJson}
+              onClick={() => prepare.mutate(row)}
+            >
+              Nhập vào
+            </Button>
+          </Can>
+        </Space>
       ),
     },
   ];
@@ -248,6 +260,8 @@ export function RemoteSearchPage() {
           }))}
         />
       )}
+
+      <RemoteMarcModal record={viewing} onClose={() => setViewing(null)} />
     </Space>
   );
 }

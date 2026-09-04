@@ -263,20 +263,23 @@ public class PrintCardsCommandHandler : IRequestHandler<PrintCardsCommand, MarcE
         };
     }
 
-    private async Task<CardTemplateDto> FindTemplateAsync(PrintCardsRequestDto request, CancellationToken ct)
+    private Task<CardTemplateDto> FindTemplateAsync(PrintCardsRequestDto request, CancellationToken ct) =>
+        FindTemplateAsync(_db, request.TemplateId, request.CardTypes.FirstOrDefault() ?? CardTypes.Main, ct);
+
+    /// <summary>Mẫu đã chọn, hoặc mẫu mặc định gần nhất với loại phích; không có thì mẫu dựng sẵn.</summary>
+    internal static async Task<CardTemplateDto> FindTemplateAsync(
+        IApplicationDbContext db, Guid? templateId, string cardType, CancellationToken ct)
     {
-        if (request.TemplateId is not null)
+        if (templateId is not null)
         {
-            var chosen = await _db.CardTemplates.AsNoTracking()
-                             .FirstOrDefaultAsync(template => template.Id == request.TemplateId, ct)
+            var chosen = await db.CardTemplates.AsNoTracking()
+                             .FirstOrDefaultAsync(template => template.Id == templateId, ct)
                          ?? throw new NotFoundException("Không tìm thấy mẫu phích đã chọn.");
 
             return CardTemplateMapper.ToDto(chosen);
         }
 
-        var cardType = request.CardTypes.FirstOrDefault() ?? CardTypes.Main;
-
-        var fallback = await _db.CardTemplates.AsNoTracking()
+        var fallback = await db.CardTemplates.AsNoTracking()
             .Where(template => template.IsActive)
             .OrderByDescending(template => template.CardType == cardType)
             .ThenByDescending(template => template.IsDefault)
@@ -285,6 +288,62 @@ public class PrintCardsCommandHandler : IRequestHandler<PrintCardsCommand, MarcE
         return fallback is null
             ? CardTemplateMapper.Fallback()
             : CardTemplateMapper.ToDto(fallback);
+    }
+}
+
+/// <summary>
+/// Xem trước thẻ mục lục của một biểu ghi **chưa lưu** (II.2): trình soạn gửi biểu ghi đang gõ,
+/// máy chủ dựng phích bằng đúng mẫu mặc định và trả PDF một trang.
+///
+/// The ISBD paragraph tells the cataloguer what the description reads like; only the card itself
+/// shows whether the heading, call number and tracings land where the template puts them.
+/// </summary>
+public record PreviewCardCommand(string MarcJson, string CardType, Guid? TemplateId, string? CallNumber)
+    : IRequest<MarcExportFileDto>;
+
+public class PreviewCardCommandHandler : IRequestHandler<PreviewCardCommand, MarcExportFileDto>
+{
+    private readonly IApplicationDbContext _db;
+    private readonly ICardPrintService _printer;
+
+    public PreviewCardCommandHandler(IApplicationDbContext db, ICardPrintService printer)
+    {
+        _db = db;
+        _printer = printer;
+    }
+
+    public async Task<MarcExportFileDto> Handle(PreviewCardCommand command, CancellationToken ct)
+    {
+        MarcRecord marc;
+
+        try
+        {
+            marc = MarcJson.Deserialize(command.MarcJson);
+        }
+        catch (MarcException exception)
+        {
+            throw new Common.Exceptions.ValidationException("marcJson", exception.Message);
+        }
+
+        var cardType = CardTypes.Labels.ContainsKey(command.CardType) ? command.CardType : CardTypes.Main;
+        var template = await PrintCardsCommandHandler.FindTemplateAsync(_db, command.TemplateId, cardType, ct);
+
+        var cards = CardContentBuilder.Build(marc, new[] { cardType }, command.CallNumber)
+            .Select(content => new CardToPrint(content, marc))
+            .ToList();
+
+        if (cards.Count == 0)
+        {
+            throw new Common.Exceptions.ValidationException("cardType",
+                "Biểu ghi chưa có dữ liệu cho loại phích này — ví dụ phích chủ đề cần trường 650.");
+        }
+
+        return new MarcExportFileDto
+        {
+            Content = _printer.Render(template, cards, multiplePerPage: false),
+            FileName = "xem-truoc-phich.pdf",
+            ContentType = "application/pdf"
+        };
     }
 }
 

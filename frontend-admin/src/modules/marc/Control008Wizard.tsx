@@ -2,9 +2,10 @@ import { Alert, Col, Input, Row, Select, Space, Tooltip, Typography } from 'antd
 import { InfoCircleOutlined } from '@ant-design/icons';
 import {
   CONTROL_008_LENGTH,
-  CONTROL_008_POSITIONS,
+  CONTROL_008_MATERIAL_LABELS,
   fromDisplay,
-  isBookMaterial,
+  materialOf,
+  positionsFor,
   toDisplay,
 } from './control008';
 import { getFieldRange, setFieldRange } from './marcRecord';
@@ -28,25 +29,30 @@ const MONOSPACE = { fontFamily: 'ui-monospace, Consolas, monospace' } as const;
  */
 export function Control008Wizard({ value, leader, onChange, readOnly }: Control008WizardProps) {
   const padded = value.padEnd(CONTROL_008_LENGTH, ' ').slice(0, CONTROL_008_LENGTH);
-  const books = isBookMaterial(leader);
-  const visible = CONTROL_008_POSITIONS.filter((entry) => !entry.booksOnly || books);
+  const material = materialOf(leader);
+  const visible = positionsFor(material);
 
   const update = (start: number, length: number, next: string) =>
     onChange(setFieldRange(padded, start, length, fromDisplay(next), CONTROL_008_LENGTH));
 
   return (
     <div>
-      {!books && (
+      {material === 'other' ? (
         <Alert
           type="info"
           showIcon
           style={{ marginBottom: 12 }}
-          message="Đầu biểu đang khai đây không phải tài liệu chữ in"
+          message="Đầu biểu đang khai một loại hình chưa có bảng riêng"
           description={
-            'Vị trí 18–34 mang ý nghĩa khác theo từng loại hình tài liệu, nên trình hướng dẫn '
-            + 'không đoán thay. Sửa các vị trí ấy ở ô chuỗi đầy đủ bên dưới.'
+            'Trình hướng dẫn có bảng cho sách, ấn phẩm định kỳ và bản đồ (theo Đầu biểu/06–07). '
+            + 'Với loại hình này, vị trí 18–34 sửa ở ô chuỗi đầy đủ bên dưới.'
           }
         />
+      ) : (
+        <Typography.Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
+          Khối 18–34 đang hiện theo loại hình <strong>{CONTROL_008_MATERIAL_LABELS[material]}</strong>,
+          suy từ Đầu biểu vị trí 06–07. Đổi Đầu biểu thì bảng đổi theo.
+        </Typography.Text>
       )}
 
       <Row gutter={[16, 12]}>

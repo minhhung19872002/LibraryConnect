@@ -313,6 +313,10 @@ export const cardApi = {
 
   deleteTemplate: (id: string) => api.delete<null>(`/cataloging/card-templates/${id}`),
 
+  /** Dựng thử một phích từ biểu ghi đang soạn, chưa lưu (II.2) — PDF một trang. */
+  previewRecord: (request: { marcJson: string; cardType?: string; templateId?: string; callNumber?: string }) =>
+    api.downloadPost('/cataloging/cards/preview', request, 'xem-truoc-phich.pdf'),
+
   /** Kết xuất phích ra PDF; phản hồi là tệp nên đi qua client thô. */
   async print(request: {
     bibIds: string[];

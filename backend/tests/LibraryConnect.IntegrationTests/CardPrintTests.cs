@@ -295,4 +295,48 @@ public class CardPrintTests
         previewPdf.Length.Should().BeLessThan(full.Length, "bản xem trước chỉ dựng một biểu ghi");
         Encoding.ASCII.GetString(previewPdf, 0, 5).Should().Be("%PDF-");
     }
+
+    /// <summary>
+    /// Xem trước thẻ mục lục của một biểu ghi **chưa lưu** (II.2): trình soạn gửi biểu ghi đang gõ
+    /// và nhận về một phích dựng bằng mẫu mặc định.
+    /// </summary>
+    [Fact]
+    public async Task Xem_truoc_phich_tu_bieu_ghi_chua_luu()
+    {
+        var client = await ClientAsync();
+
+        var record = new MarcRecord();
+        record.Leader.RecordType = 'a';
+        record.Leader.BibliographicLevel = 'm';
+        record.SetControlField("008", "240115s2023    vm a     b    000 0 vie d");
+        record.AddField("100", '1').AddSubfield('a', "Nguyễn Văn Xem");
+        record.AddField("245", '1', '0').AddSubfield('a', "Biểu ghi chưa lưu :").AddSubfield('c', "Nguyễn Văn Xem");
+        record.AddField("260").AddSubfield('a', "Hà Nội :").AddSubfield('b', "Nhà xuất bản Thử,").AddSubfield('c', "2023");
+        record.AddField("650", ' ', '4').AddSubfield('a', "Kiểm thử");
+
+        var response = await client.PostAsJsonAsync("/api/cataloging/cards/preview", new
+        {
+            marcJson = MarcJson.Serialize(record),
+            cardType = "SUBJECT",
+            callNumber = "005.1 NGU"
+        }, LibraryConnectFactory.JsonOptions);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK, await response.Content.ReadAsStringAsync());
+        response.Content.Headers.ContentType!.MediaType.Should().Be("application/pdf");
+
+        var pdf = await response.Content.ReadAsByteArrayAsync();
+        Encoding.ASCII.GetString(pdf, 0, 5).Should().Be("%PDF-");
+
+        // A record with no subject cannot make a subject card, and the reply says so in Vietnamese.
+        record.DataFields.RemoveAll(field => field.Tag == "650");
+
+        var refused = await client.PostAsJsonAsync("/api/cataloging/cards/preview", new
+        {
+            marcJson = MarcJson.Serialize(record),
+            cardType = "SUBJECT"
+        }, LibraryConnectFactory.JsonOptions);
+
+        refused.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await refused.Content.ReadAsStringAsync()).Should().Contain("650");
+    }
 }
