@@ -35,17 +35,27 @@ ra hai lỗi nghiêm trọng đã sống từ phase 5: sửa biểu ghi đã có
 dùng vừa giả được vừa bị nhốt chung một ngăn giới hạn tốc độ. Trang tra cứu đã áp lại theo dự án
 Claude Design "LibraryConnect layout design".
 
-Ngày 04/09/2026 chạy tiếp **ba đợt rà theo đặc tả**: đọc từng gạch đầu dòng của mười một phân hệ rồi
-tìm bằng chứng trong mã, thay vì đọc mã rồi hỏi nó có đúng không. Ba đợt ấy tìm thêm **28 lỗi** mà
-1.067 phép thử không bao giờ chạm tới, vì chúng nằm ở khoảng giữa hai lớp: công tắc được lưu mà
-không ai đọc (ghi nhật ký lượt xem, danh mục tự tạo làm bộ lọc), cờ cấu hình chỉ có tác dụng sau khi
-khởi động lại (lịch sao lưu), chức năng làm xong một nửa mà màn hình báo là đã xong (biểu ghi bài
-trích tạo ở trạng thái Nháp nên bạn đọc không tra được), và thông báo đẩy của ứng dụng di động chưa
-bản dựng nào chạy được vì thiếu một trình cắm Gradle. Cộng tất cả: **137 lỗi, đã sửa 135**.
+Ngày 04–05/09/2026 chạy tiếp **năm đợt rà theo đặc tả**: đọc từng gạch đầu dòng rồi tìm bằng chứng
+trong mã, thay vì đọc mã rồi hỏi nó có đúng không. Ba đợt đầu soi mười một phân hệ, đợt thứ tư soi
+yêu cầu phi chức năng, đợt cuối đọc thẳng `Chương V.YÊU CẦU VỀ KỸ THUẬT.pdf` — bản gốc của hồ sơ mời
+thầu, thứ mà chính tài liệu này chỉ chép lại phần chức năng.
+
+Năm đợt tìm thêm **38 lỗi** mà 1.073 phép thử không bao giờ chạm tới, vì chúng nằm ở khoảng giữa hai
+lớp: công tắc được lưu mà không ai đọc (ghi nhật ký lượt xem, danh mục tự tạo làm bộ lọc, phạm vi dữ
+liệu theo dạng tài liệu), cờ cấu hình chỉ có tác dụng sau khi khởi động lại (lịch sao lưu), chức năng
+làm xong một nửa mà màn hình báo là đã xong (biểu ghi bài trích ở trạng thái Nháp nên bạn đọc không
+tra được), thông báo đẩy của ứng dụng di động chưa bản dựng nào chạy được vì thiếu một trình cắm
+Gradle, luật thêm vào hai trong ba tệp cấu hình Nginx (chính sách nội dung mất ở đúng bản chạy thật),
+và một sink nhật ký ném ở mỗi lô mà thư viện log nuốt lỗi nên bảng cứ rỗng.
+Cộng tất cả: **147 lỗi, đã sửa 145**.
+
+Đọc thẳng hồ sơ gốc còn tìm ra thứ không phải lỗi mã: **bốn hồ sơ bàn giao** mà Chương V mục III và
+mục 5 đòi — kế hoạch triển khai, kế hoạch đào tạo, cam kết bảo hành, hồ sơ nghiệm thu — nay là
+`docs/10` → `docs/13`, và bảng đáp ứng có thêm hai mục đối chiếu đúng thứ tự của cả Chương V.
 
 | Tài liệu | Nội dung |
 |---|---|
-| `docs/08-so-loi.md` | Sổ lỗi bảy đợt: 37 lỗi hai đợt đầu, 5 lỗi đợt rà thứ hai (mục E), 9 lỗi đợt áp bản thiết kế (mục G), 7 lỗi đợt rà thứ ba (mục H), 8 lỗi đợt triển khai (mục I), **78 lỗi ba đợt rà theo đặc tả ngày 04/09/2026 (mục J và các mục con J.C, J.B, J.L, J.D, J.X, J.A, J.M, J.N)** |
+| `docs/08-so-loi.md` | Sổ lỗi tám đợt: 37 lỗi hai đợt đầu, 5 lỗi đợt rà thứ hai (mục E), 9 lỗi đợt áp bản thiết kế (mục G), 7 lỗi đợt rà thứ ba (mục H), 8 lỗi đợt triển khai (mục I), **88 lỗi năm đợt rà theo đặc tả ngày 04–05/09/2026 (mục J và các mục con J.C, J.B, J.L, J.D, J.X, J.A, J.M, J.N, J.P)** |
 | `docs/09-nguon-du-lieu.md` | Khảo sát 16 nguồn dữ liệu thư mục, giấy phép từng nguồn, kết quả nạp |
 | `docs/10-ke-hoach-trien-khai.md` | Kế hoạch triển khai, chạy thử và chuyển đổi dữ liệu (Chương V mục III.1) |
 | `docs/11-ke-hoach-dao-tao.md` | Kế hoạch đào tạo 16 buổi cho 7 nhóm học viên (Chương V mục III.2) |
@@ -74,9 +84,9 @@ huống lỗi; phải tự tay dựng đúng bối cảnh ấy trong phép thử
 **Lệnh chạy đúng:**
 
 ```bash
-cd backend  && dotnet test                 # 605 unit + 462 integration
-cd frontend-admin && npx tsc -b && npx vitest run    # 340 test
-cd frontend-opac  && npx tsc -b && npx vitest run    #  97 test
+cd backend  && dotnet test                 # 606 unit + 467 integration
+cd frontend-admin && npx tsc -b && npx vitest run    # 342 test
+cd frontend-opac  && npx tsc -b && npx vitest run    #  98 test
 cd mobile   && flutter analyze && flutter test       # 118 test
 ```
 

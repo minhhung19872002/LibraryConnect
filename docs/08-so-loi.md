@@ -489,6 +489,25 @@ xuống API. Lỗi ghi ở đây là chỗ **bảng đáp ứng ghi "Có" mà ng
 
 **Đã làm nốt trong cùng ngày:** phần nhập bộ định nghĩa MARC 21 chuẩn — xem JN13.
 
+### J.P — Yêu cầu phi chức năng và đối chiếu thẳng Chương V (05/09/2026)
+
+Hai đợt cuối đổi cách đọc: đợt trước đọc mục 6 của `CLAUDE.md`, đợt này đọc thẳng
+`Chương V.YÊU CẦU VỀ KỸ THUẬT.pdf` — bản gốc của hồ sơ mời thầu. Cách sau bắt được cả những yêu cầu
+mà đặc tả nội bộ không chép lại: hồ sơ bàn giao, kế hoạch đào tạo, cam kết bảo hành.
+
+| Mã | Mức | Lỗi | Nguyên nhân | Sửa |
+|---|---|---|---|---|
+| JP1 | Nghiêm trọng | **Cấu hình Nginx chạy thật không có Content-Security-Policy** — đúng header chống XSS chính, trên trang có trình soạn thảo WYSIWYG. Bản dùng lúc phát triển thì có | Thêm luật vào `nginx.conf` và `nginx.behind-proxy.conf`, quên `nginx.prod.conf`. Cùng lớp lỗi với JM5 trong cùng một ngày, và cùng lớp với bài học 9 | Thêm đủ bộ header vào cả hai `location` phục vụ trang đơn của bản chạy thật. Kèm phép thử quét `NginxConfigParityTests`: sáu luật chung phải có mặt ở **cả ba** tệp cấu hình, đỏ ngay khi bỏ một header khỏi một tệp |
+| JP2 | Nghiêm trọng | **Phạm vi dữ liệu theo dạng tài liệu không bật được**, dù đặc tả liệt kê đủ ba chiều (kho, thư viện, loại tài liệu) và bộ lọc toàn cục đã đọc chiều ấy từ trước | Màn hình Người dùng chỉ có hai ô chọn; chiều thứ ba được giữ lại lúc lưu nhưng không tạo cũng không sửa được — làm xong phần khó rồi bỏ dở phần dễ | Ô chọn thứ ba trên màn hình, lấy danh sách từ chính danh mục dạng tài liệu. `DataScopeTests.Gan_pham_vi_dang_tai_lieu_thi_chi_thay_bieu_ghi_dung_dang_ay` kiểm cả danh sách lẫn lượt gọi thẳng bằng mã (404, không phải 200), và kiểm rằng người không gán phạm vi vẫn thấy đủ |
+| JP3 | Nghiêm trọng | **Bảy đường xuất dữ liệu không ghi nhật ký**, trong đó có đường xuất biểu ghi ra ISO 2709 — đường mang cả mục lục ra khỏi hệ thống. Mục 6.2 nêu đích danh "xuất dữ liệu" | Mỗi handler phải tự gọi bộ ghi nhật ký; bảy chỗ quên gọi. Không có gì chặn chỗ thứ tám quên tiếp | `ExportAuditBehaviour` trong đường ống MediatR ghi mọi lượt trả về tệp, nhận diện theo **kiểu trả về** chứ không theo tên lệnh. Handler đã tự ghi dòng riêng (kèm bộ lọc, kèm mã bản ghi) thì bộ dùng chung im lặng — một lượt xuất một dòng |
+| JP4 | Nghiêm trọng (trang công khai) | **Menu chính của trang tra cứu không thao tác được bằng bàn phím**: `<span onClick>` không nằm trong thứ tự tab, không phím nào kích hoạt | Bộ trợ giúp `clickable` đã có và dùng ở thẻ ngành, dòng môn học — nhưng menu dựng trước đó và không ai rà lại | Menu dùng `clickable`; kèm phép thử quét `keyboard.test.ts` cấm mọi `div`/`span` có `onClick` mà thiếu `clickable` hoặc thiếu bộ ba `role` + `tabIndex` + `onKeyDown`. Phép thử phải cắt đúng thẻ mở đầu: cắt tới dấu `>` đầu tiên là dừng ngay giữa `onClick={() => ...}` và bỏ sót phần khai sau đó |
+| JP5 | Cao | **Hai đường tải tệp chỉ tin `Content-Type` do máy khách gửi** — logo thư viện (nhúng vào biểu mẫu in và trang công khai) và bản scan biên bản bàn giao. Mục 6.4 đòi kiểm magic number | Hai chỗ này viết sau, và bảng chữ ký byte có tới bốn bản sao rải rác nên không ai thấy thiếu | Cả hai kiểm bằng chữ ký byte; bộ nhận dạng học thêm TIFF cho bản scan. `AcquisitionTests.Tep_dinh_kem_phai_dung_chu_ky_byte_chu_khong_chi_dung_nhan` gửi tệp chữ khoác nhãn PDF và nhãn PNG, đỏ trước khi sửa |
+| JP6 | Vừa | **Mã dạng tài liệu của trang Luận văn viết cứng trong mã nguồn** (`LUANVAN`, `LUANAN`, `THESIS`, `DISSERTATION`), trong khi dạng tài liệu là danh mục nghiệp vụ cán bộ tự khai | Trái mục 1 gạch 9: không hardcode danh mục nghiệp vụ. Thư viện đặt mã "LV" hay "LATS" thì trang ấy rỗng vĩnh viễn và không sửa được từ giao diện | Tham số `OPAC.THESIS_DOCUMENT_TYPES`. `ContentAndOpacTests.Dang_tai_lieu_tinh_la_luan_van_khai_duoc_trong_tham_so` lập một dạng tài liệu mã lạ, chứng minh trang rỗng trước và có kết quả ngay sau khi khai thêm mã |
+| JP7 | Vừa | **Hai thẻ báo cáo chỉ có bảng và tệp, thiếu dạng đồ họa** (dung lượng tài liệu số theo định dạng; ĐKCB hủy bỏ), trong khi yêu cầu chung của Chương V đòi đủ ba dạng đầu ra | Hai thẻ viết sau, không dùng lại thành phần biểu đồ đã có ngay trong cùng màn hình | Cả hai vẽ biểu đồ bằng đúng thành phần sẵn có; thẻ ĐKCB hủy bỏ gom theo hình thức ngay tại máy khách, không thêm lượt gọi nào |
+| JP8 | Vừa | **Danh mục không in ra giấy được**, dù yêu cầu chung của Chương V ghi "cho phép in, xóa danh mục nếu đủ thẩm quyền" | Chỉ có xuất Excel — tệp để sửa hàng loạt, không phải tờ giấy mang đi ký hay dán ở quầy | `format=Pdf` trên chính endpoint xuất, dựng bằng bộ kết xuất PDF dùng chung (có tiêu đề thư viện, tổng số giá trị, người in); nút **In** bên cạnh nút Xuất Excel |
+| JP9 | Vừa | **Serilog chưa bao giờ ghi xuống PostgreSQL** dù bảng công nghệ ghi "Serilog → file + PostgreSQL"; gói đã cài nhưng không nối dây | Cấu hình chỉ khai hai sink Console và File | Nối sink, **và** phát hiện hai lỗi mà bản dựng không nói: bộ ghi dùng COPY nhị phân gọi `NpgsqlBinaryImporter.Complete()` theo chữ ký Npgsql 7 (dự án dùng Npgsql 8), và bộ ghi thời gian đưa `DateTimeOffset` lệch +07 xuống cột chỉ nhận UTC. Cả hai ném ở **mỗi lô** mà Serilog nuốt lỗi, nên biểu hiện duy nhất là bảng rỗng mãi. Chuyển sang INSERT và một bộ ghi thời gian UTC riêng; bật SelfLog ra stderr để lần sau sink chết thì nói ra ngay. Đã kiểm trên container đang chạy: 4 dòng vào bảng, 0 ngoại lệ |
+| JP10 | Vừa | **Thiếu hẳn bốn hồ sơ mà Chương V đòi**: kế hoạch triển khai kèm đối soát dữ liệu (mục III.1), kế hoạch đào tạo (III.2), cam kết bảo hành và mức phản hồi sự cố (III.3), hồ sơ bàn giao và biểu mẫu nghiệm thu (mục 5.5) | Đặc tả nội bộ `CLAUDE.md` chỉ chép phần chức năng của Chương V, bỏ mục III và mục 5. Bảy tài liệu bàn giao làm theo đặc tả nội bộ nên cũng thiếu đúng chừng ấy | Bốn tài liệu mới `docs/10` → `docs/13`, và bảng đáp ứng có thêm hai mục E, F đối chiếu mục III và mục 5 — nay bảng đi đúng thứ tự **toàn bộ** Chương V |
+
 
 ## Đ. Những chỗ đã thử phá nhưng hệ thống chịu được
 
@@ -596,7 +615,7 @@ dạng quét mã nguồn chặn cả lớp lỗi quay lại thay vì chỉ chặ
 | Nguy cơ | 1 | 0 | 1 (H9, ghi ở "Làm tiếp") |
 
 Cộng cả ba đợt, đợt áp thiết kế, đợt triển khai và ba đợt rà hoàn thiện ngày 04/09/2026:
-**137 lỗi, đã sửa 135**. Hai mục còn lại là H3 và H9, đã làm xong ngày 03/09/2026 và ghi ở cột cuối
+**147 lỗi, đã sửa 145**. Hai mục còn lại là H3 và H9, đã làm xong ngày 03/09/2026 và ghi ở cột cuối
 của chính hai dòng ấy — con số 134 giữ nguyên cách đếm cũ để đối chiếu được với các bản trước.
 Mỗi lỗi đã sửa đều có phép thử chạy đỏ trước khi sửa và xanh sau khi sửa, kể cả H7: phép thử giả
 tiêu đề đỏ trước khi sửa `CurrentUser.Ip`.
