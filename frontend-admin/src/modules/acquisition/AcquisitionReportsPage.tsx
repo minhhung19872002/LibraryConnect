@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   App,
   Button,
@@ -88,6 +88,31 @@ export function AcquisitionReportsPage() {
     queryKey: ['acq-disposals', filter],
     queryFn: () => acqReportsApi.disposals(filter),
   });
+
+  // Gom danh sách ĐKCB hủy bỏ theo hình thức để vẽ biểu đồ: số bản, số đầu và giá trị — đúng ba
+  // chỉ tiêu mà thành phần biểu đồ dùng chung của phân hệ nhận.
+  const disposalRows = useMemo(() => {
+    const rows = disposals.data ?? [];
+    const byType = new Map<string, { itemCount: number; value: number }>();
+
+    for (const row of rows) {
+      const current = byType.get(row.disposalType) ?? { itemCount: 0, value: 0 };
+      byType.set(row.disposalType, {
+        itemCount: current.itemCount + 1,
+        value: current.value + (row.value ?? 0),
+      });
+    }
+
+    const total = rows.length || 1;
+
+    return [...byType.entries()].map(([label, sums]) => ({
+      label,
+      itemCount: sums.itemCount,
+      titleCount: sums.itemCount,
+      value: sums.value,
+      percent: Math.round((sums.itemCount / total) * 100),
+    }));
+  }, [disposals.data]);
 
   const approval = useQuery({
     queryKey: ['acq-approval', filter.from, filter.to],
@@ -542,6 +567,16 @@ export function AcquisitionReportsPage() {
             key: 'disposals',
             label: 'ĐKCB hủy bỏ',
             children: (
+              <Space direction="vertical" size={16} style={{ width: '100%' }}>
+                {/*
+                  Ba dạng đầu ra cho mọi báo cáo (yêu cầu chung của Chương V): thẻ này trước
+                  05/09/2026 chỉ có bảng và tệp. Gom theo hình thức hủy bỏ ngay tại máy khách —
+                  danh sách đã tải về đủ, không cần thêm một lượt gọi nữa.
+                */}
+                <Card variant="borderless" title="Số bản và giá trị theo hình thức">
+                  <StatChart rows={disposalRows} unit="bản" />
+                </Card>
+
               <Card
                 variant="borderless"
                 title="Danh sách ĐKCB đã thanh lý, ghi mất hoặc hỏng"
@@ -583,6 +618,7 @@ export function AcquisitionReportsPage() {
                   ]}
                 />
               </Card>
+              </Space>
             ),
           },
           {

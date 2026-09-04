@@ -4,6 +4,7 @@ using System.Threading.RateLimiting;
 using Hangfire;
 using HealthChecks.UI.Client;
 using LibraryConnect.Api.Health;
+using LibraryConnect.Api.Logging;
 using LibraryConnect.Api.Middleware;
 using LibraryConnect.Api.Security;
 using LibraryConnect.Api.Swagger;
@@ -46,11 +47,52 @@ builder.Services.Configure<HostOptions>(options =>
 builder.Configuration.AddEnvironmentVariables(prefix: "LC_");
 builder.Configuration["ConnectionStrings:Default"] = BuildConnectionString(builder.Configuration);
 
-builder.Host.UseSerilog((context, services, configuration) => configuration
-    .ReadFrom.Configuration(context.Configuration)
-    .ReadFrom.Services(services)
-    .Enrich.FromLogContext()
-    .Enrich.WithProperty("Application", "LibraryConnect.Api"));
+// Sink hỏng thì Serilog **nuốt lỗi**: biểu hiện duy nhất là bảng nhật ký rỗng mãi mà không ai biết
+// vì sao — đã mất công đi tìm đúng vì chuyện ấy. Bật SelfLog ra stderr: im lặng khi mọi sink chạy
+// tốt, và nói ngay khi có sink chết.
+Serilog.Debugging.SelfLog.Enable(Console.Error);
+
+builder.Host.UseSerilog((context, services, configuration) =>
+{
+    configuration
+        .ReadFrom.Configuration(context.Configuration)
+        .ReadFrom.Services(services)
+        .Enrich.FromLogContext()
+        .Enrich.WithProperty("Application", "LibraryConnect.Api");
+
+    // Nhật ký kỹ thuật ghi thêm xuống PostgreSQL (bảng công nghệ mục 1: "Serilog → file +
+    // PostgreSQL"). Tệp vẫn là nơi ghi chính vì nó còn đọc được cả khi cơ sở dữ liệu chết — mà đó
+    // đúng là lúc cần đọc nhật ký nhất; bảng chỉ nhận từ mức Cảnh báo trở lên để một lượt nhập biểu
+    // ghi không đẩy hàng vạn dòng Thông tin vào chính cơ sở dữ liệu nghiệp vụ.
+    //
+    // Khác hẳn `sys.audit_logs`: bảng ấy là nhật ký **nghiệp vụ** (ai sửa gì, mục 6.2), còn bảng này
+    // là nhật ký **kỹ thuật** (ngoại lệ, lỗi hạ tầng). Hai thứ không thay nhau được.
+    var logToDatabase = context.Configuration.GetValue("Logging:ToDatabase", true);
+
+    if (!logToDatabase)
+    {
+        return;
+    }
+
+    configuration.WriteTo.Logger(sub => sub
+        .Filter.ByIncludingOnly(entry => entry.Level >= Serilog.Events.LogEventLevel.Warning)
+        .WriteTo.PostgreSQL(
+            connectionString: context.Configuration.GetConnectionString("Default")!,
+            tableName: "serilog_logs",
+            schemaName: "sys",
+            columnOptions: SerilogColumns.Definition,
+            needAutoCreateTable: true,
+            // Ghi bằng INSERT, không dùng COPY nhị phân: bản sink hiện tại gọi
+            // `NpgsqlBinaryImporter.Complete()` theo chữ ký của Npgsql 7, mà dự án dùng Npgsql 8 nên
+            // mỗi lô đều ném MissingMethodException và **không dòng nào vào bảng** — sink nuốt lỗi,
+            // chỉ hiện ra khi bật SelfLog. Nhật ký kỹ thuật chỉ nhận mức Cảnh báo trở lên nên số
+            // dòng nhỏ, INSERT thừa sức.
+            useCopy: false,
+            // Gom theo lô: mỗi dòng một lượt ghi là một vòng đi về cơ sở dữ liệu ngay giữa lúc hệ
+            // thống đang có sự cố.
+            batchSizeLimit: 50,
+            period: TimeSpan.FromSeconds(5)));
+});
 
 // ---------------------------------------------------------------------------
 // Services

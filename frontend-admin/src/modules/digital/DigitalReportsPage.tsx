@@ -392,6 +392,26 @@ export function DigitalReportsPage() {
                   </Card>
                 </Space>
 
+                {/*
+                  Mọi báo cáo có ba dạng đầu ra — bảng, đồ họa, tệp (yêu cầu chung của Chương V).
+                  Thẻ này trước 05/09/2026 chỉ có bảng, trong khi thẻ "Kiểm kê" ngay bên cạnh vẽ
+                  đúng cấu trúc dữ liệu ấy thành biểu đồ.
+                */}
+                <Card size="small" title="Dung lượng theo định dạng">
+                  <ResponsiveContainer width="100%" height={260}>
+                    <BarChart data={storage.data.byFormat}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis
+                        dataKey="label"
+                        tickFormatter={(label: string) => formatGroupLabels[label] ?? label}
+                      />
+                      <YAxis allowDecimals={false} />
+                      <Tooltip />
+                      <Bar dataKey="count" name="Số tệp" fill={mauBieuDo(3)} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </Card>
+
                 <Card size="small" title="Theo định dạng">
                   <Table
                     rowKey="label"
