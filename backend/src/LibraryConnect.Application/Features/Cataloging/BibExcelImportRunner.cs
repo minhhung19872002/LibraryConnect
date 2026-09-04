@@ -329,6 +329,13 @@ public class BibExcelImportRunner : IBibExcelImportRunner
                 .Include(record => record.Collections)
                 .FirstAsync(record => record.Id == duplicate.Id, ct);
 
+            if (options.OnDuplicate == DuplicateAction.Merge)
+            {
+                // "Gộp" keeps everything the local record already has and only fills in what the
+                // spreadsheet adds — the same rule the exchange-file importer applies.
+                marc = MarcMerge.MergeInto(MarcJson.Deserialize(entity.MarcData), marc);
+            }
+
             isNew = false;
         }
 

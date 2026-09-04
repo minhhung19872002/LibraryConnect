@@ -221,7 +221,7 @@ public class BibImportRunner : IBibImportRunner
 
                 case DuplicateAction.Merge:
                     entity = await LoadForWriteAsync(duplicate.Id, ct);
-                    marc = MergeInto(MarcJson.Deserialize(entity.MarcData), marc);
+                    marc = MarcMerge.MergeInto(MarcJson.Deserialize(entity.MarcData), marc);
                     isNew = false;
                     break;
 
@@ -286,40 +286,6 @@ public class BibImportRunner : IBibImportRunner
             .Include(record => record.Classifications)
             .Include(record => record.Collections)
             .FirstAsync(record => record.Id == id, ct);
-
-    /// <summary>
-    /// Gộp: giữ nguyên mọi thứ biểu ghi đã có, chỉ thêm những trường nó chưa có.
-    ///
-    /// This is the conservative choice a librarian expects from "gộp": work already done on the local
-    /// record — a corrected author heading, a local subject — must not be replaced by whatever the
-    /// incoming file happens to say.
-    /// </summary>
-    private static MarcRecord MergeInto(MarcRecord existing, MarcRecord incoming)
-    {
-        var merged = existing.Clone();
-
-        foreach (var field in incoming.ControlFields.Where(field => field.Tag != "001" && field.Tag != "005"))
-        {
-            if (string.IsNullOrWhiteSpace(merged.GetControlField(field.Tag)))
-            {
-                merged.SetControlField(field.Tag, field.Value);
-            }
-        }
-
-        foreach (var field in incoming.DataFields)
-        {
-            if (!merged.GetFields(field.Tag).Any())
-            {
-                merged.DataFields.Add(field.Clone());
-            }
-        }
-
-        merged.DataFields = merged.DataFields
-            .OrderBy(field => field.Tag, StringComparer.Ordinal)
-            .ToList();
-
-        return merged;
-    }
 
     private async Task CreateItemsAsync(
         BibRecord bib,

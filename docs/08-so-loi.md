@@ -312,6 +312,18 @@ Cùng đợt còn thêm lớp compose thứ ba `docker-compose.behind-proxy.yml`
 cổng 80/443 (mục 5.1b của `docs/04`), vì `nginx.prod.conf` giả định LibraryConnect là ứng dụng duy
 nhất trên máy.
 
+## J. Đợt rà hoàn thiện 04/09/2026 — phân hệ I và II
+
+Đi lại đặc tả Phân hệ I (Quản trị) và II (Biên mục) từng dòng, đối chiếu với thứ đang có trên màn
+hình và trong mã. Lỗi thật ghi ở bảng này; chức năng còn thiếu so với đặc tả thì làm thẳng và ghi ở
+`docs/06`/`docs/07`.
+
+| Mã | Mức | Lỗi | Nguyên nhân | Sửa |
+|---|---|---|---|---|
+| J1 | Nặng | Nhập biểu ghi từ Excel chọn **"Gộp" mà lại ghi đè**: biểu ghi có tóm tắt 520$a viết tay, nhập bảng tính chỉ có nhan đề + ISBN với lựa chọn Gộp thì tóm tắt biến mất | `BibExcelImportRunner` không có nhánh `Merge`; mọi lựa chọn không phải Bỏ qua/Tạo mới đều rơi vào nhánh nạp biểu ghi cũ rồi ghi đè bằng biểu ghi dựng từ dòng Excel. Bộ nhập ISO 2709 có `MergeInto` riêng nên làm đúng — hai bộ nhập, hai cách hiểu một chữ trên màn hình. | Tách `MergeInto` thành `MarcMerge` dùng chung, bộ Excel gọi nó khi `OnDuplicate = Merge`. Phép thử tích hợp `ExcelImportTests.Chon_gop_thi_truong_bieu_ghi_cu_dang_co_van_con_nguyen` đỏ trước (Abstract = null), xanh sau. |
+
+---
+
 ---
 
 ## Đ. Những chỗ đã thử phá nhưng hệ thống chịu được

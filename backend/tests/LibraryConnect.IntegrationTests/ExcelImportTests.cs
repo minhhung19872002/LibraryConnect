@@ -368,4 +368,57 @@ public class ExcelImportTests
         loi.Should().Contain("Excel");
         loi.Should().NotContain("Exception");
     }
+
+    /// <summary>
+    /// Chọn "Gộp" thì trường biểu ghi cũ đang có phải còn nguyên (J1).
+    ///
+    /// Bộ nhập từ tệp trao đổi có nhánh gộp riêng, còn bộ nhập từ Excel rơi thẳng vào nhánh ghi đè:
+    /// cán bộ chọn "Gộp" để giữ tóm tắt đã viết tay, mà bảng tính chỉ có nhan đề và ISBN nên tóm tắt
+    /// biến mất không một lời báo.
+    /// </summary>
+    [Fact]
+    public async Task Chon_gop_thi_truong_bieu_ghi_cu_dang_co_van_con_nguyen()
+    {
+        var client = await ClientAsync();
+        var marker = Guid.NewGuid().ToString("N")[..6];
+        var isbn = $"978-604-{Random.Shared.Next(10000, 99999)}-7-7";
+        var tomTat = $"Tóm tắt viết tay {marker}";
+
+        var marc = JsonSerializer.Serialize(new
+        {
+            leader = "00000nam a2200000 a 4500",
+            controlFields = new[] { new { tag = "008", value = "260101s2024    vm a     b    000 0 vie d" } },
+            dataFields = new object[]
+            {
+                new { tag = "020", ind1 = " ", ind2 = " ", subfields = new[] { new { code = "a", value = isbn } } },
+                new { tag = "245", ind1 = "1", ind2 = "0", subfields = new[] { new { code = "a", value = $"Sách gộp {marker}" } } },
+                new { tag = "520", ind1 = " ", ind2 = " ", subfields = new[] { new { code = "a", value = tomTat } } }
+            }
+        });
+
+        var saved = await client.PostAsJsonAsync("/api/cataloging/bibs", new { marcJson = marc, status = "Published" });
+        saved.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var id = (await saved.Content.ReadFromJsonAsync<ApiResponse<SaveBibResultDto>>(
+            LibraryConnectFactory.JsonOptions))!.Data!.Id;
+
+        var file = BuildSheet(new[] { ($"Sách gộp {marker}", "Nguyễn Văn Gộp", isbn, "Chủ đề gộp") });
+
+        var job = await RunAsync(client, file, new
+        {
+            matchBy = "Isbn",
+            onDuplicate = "Merge",
+            mapping = StandardMapping()
+        });
+
+        job.Status.Should().Be(Domain.Enums.JobStatus.Completed);
+        job.Success.Should().Be(1);
+
+        var detail = await client.GetFromJsonAsync<ApiResponse<BibDetailDto>>(
+            $"/api/cataloging/bibs/{id}", LibraryConnectFactory.JsonOptions);
+
+        detail!.Data!.Abstract.Should().Be(tomTat, "gộp là chỉ bổ sung trường còn thiếu, không xoá trường đã có");
+        detail.Data.AuthorMain.Should().Be("Nguyễn Văn Gộp", "trường 100 biểu ghi cũ chưa có thì lấy từ bảng tính");
+        detail.Data.MarcJson.Should().Contain("\"520\"");
+    }
 }
