@@ -620,6 +620,14 @@ public class AcquisitionTests
         pdf.IsSuccessStatusCode.Should().BeTrue();
         (await pdf.Content.ReadAsByteArrayAsync()).Take(5)
             .Should().Equal((byte)'%', (byte)'P', (byte)'D', (byte)'F', (byte)'-');
+
+        // Danh sách phiếu đã lập — nơi cán bộ quay lại in lại phiếu bị thất lạc — phải có phiếu này,
+        // và lọc theo kho nhận vẫn thấy nó.
+        var slips = await ReadAsync<IReadOnlyList<TransferSlipDto>>(
+            await client.GetAsync($"/api/stock/transfers?warehouseId={target.Id}"));
+
+        slips.Should().Contain(entry => entry.BatchCode == moved.DocumentCode);
+        slips.Single(entry => entry.BatchCode == moved.DocumentCode).ItemCount.Should().Be(2);
     }
 
     [Fact]
@@ -660,6 +668,14 @@ public class AcquisitionTests
         detail.ShelfId.Should().BeNull();
         detail.Disposal.Should().NotBeNull();
         detail.Disposal!.DecisionNo.Should().Be(disposed.DocumentCode);
+
+        // Quyết định thanh lý in được ngay từ số quyết định vừa sinh (III.6).
+        var pdf = await client.GetAsync(
+            $"/api/acquisition/forms/print/DISPOSAL/{Uri.EscapeDataString(disposed.DocumentCode!)}");
+
+        pdf.IsSuccessStatusCode.Should().BeTrue(await pdf.Content.ReadAsStringAsync());
+        (await pdf.Content.ReadAsByteArrayAsync()).Take(5)
+            .Should().Equal((byte)'%', (byte)'P', (byte)'D', (byte)'F', (byte)'-');
 
         // Xử lý lần thứ hai không có tác dụng gì thêm.
         var twice = await client.PostAsJsonAsync("/api/stock/items/dispose",

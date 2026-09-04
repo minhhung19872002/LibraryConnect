@@ -27,7 +27,9 @@ import {
   BarcodeOutlined,
   DownOutlined,
   ExportOutlined,
+  FileTextOutlined,
   LockOutlined,
+  PrinterOutlined,
   SwapOutlined,
   TagOutlined,
   UnlockOutlined,
@@ -43,8 +45,10 @@ import { PERMISSIONS } from '@/api/permissions';
 import { ApiRequestError } from '@/api/client';
 import { saveBlob } from '@/modules/marc/api';
 import { useCatalogOptions, toOptions } from '@/modules/cataloging/useCatalogOptions';
-import { locationsApi, stockApi } from './api';
+import { formsApi, locationsApi, stockApi } from './api';
 import { MAU } from '@/lib/palette';
+import { printableFormFor, printedDocumentTitle, type PrintableFormType, type StockBulkAction } from './printing';
+import { TransferSlipsDrawer } from './TransferSlipsDrawer';
 import {
   acquisitionTypeLabels,
   disposalTypes,
@@ -60,7 +64,7 @@ import type {
   StockItemFilter,
 } from './types';
 
-type BulkAction = 'shelve' | 'inspect' | 'lock' | 'unlock' | 'transfer' | 'dispose';
+type BulkAction = StockBulkAction;
 
 const actionTitles: Record<BulkAction, string> = {
   shelve: 'Xếp giá',
@@ -100,6 +104,12 @@ export function StockItemsPage() {
   const [detailId, setDetailId] = useState<string | null>(null);
   const [printKind, setPrintKind] = useState<'barcode' | 'label' | null>(null);
   const [printForm] = Form.useForm();
+  const [slipsOpen, setSlipsOpen] = useState(false);
+  /** Chứng từ vừa sinh ra từ thao tác chuyển kho / thanh lý, chờ người dùng bấm in. */
+  const [printableDocument, setPrintableDocument] = useState<{
+    formType: PrintableFormType;
+    code: string;
+  } | null>(null);
 
   const warehouses = useQuery({ queryKey: ['acq-warehouses', null], queryFn: () => locationsApi.warehouses() });
   const documentTypes = useCatalogOptions('document-types');
@@ -205,6 +215,8 @@ export function StockItemsPage() {
       }
     },
     onSuccess: ({ result, done }) => {
+      const formType = action ? printableFormFor(action) : null;
+
       setAction(null);
       refresh();
 
@@ -212,10 +224,26 @@ export function StockItemsPage() {
         message.success(`${done} ${result.affected} bản. Số phiếu: ${result.documentCode}.`);
       }
 
+      // Chuyển kho và thanh lý sinh chứng từ có số: mời in ngay, cán bộ đang cần tờ để ký.
+      if (formType && result.documentCode && result.affected > 0) {
+        setPrintableDocument({ formType, code: result.documentCode });
+      }
+
       reportResult(result, done);
     },
     onError: (error) =>
       message.error(error instanceof ApiRequestError ? error.message : 'Không thực hiện được.'),
+  });
+
+  const printDocument = useMutation({
+    mutationFn: ({ formType, code }: { formType: PrintableFormType; code: string }) =>
+      formsApi.print(formType, code),
+    onSuccess: ({ blob, fileName }) => {
+      saveBlob(blob, fileName);
+      message.success('Đã tạo tệp in.');
+    },
+    onError: (error) =>
+      message.error(error instanceof ApiRequestError ? error.message : 'Không in được.'),
   });
 
   const print = useMutation({
@@ -340,6 +368,11 @@ export function StockItemsPage() {
                 onClick={() => exportItems.mutate()}
               >
                 Xuất Excel
+              </Button>
+            </Can>
+            <Can permission={PERMISSIONS.acquisition.itemMove}>
+              <Button icon={<FileTextOutlined />} onClick={() => setSlipsOpen(true)}>
+                Phiếu chuyển kho
               </Button>
             </Can>
             <Can permission={PERMISSIONS.acquisition.itemPrintBarcode}>
@@ -741,6 +774,30 @@ export function StockItemsPage() {
       </Modal>
 
       <Modal
+        open={printableDocument !== null}
+        title={
+          printableDocument
+            ? printedDocumentTitle(printableDocument.formType, printableDocument.code)
+            : ''
+        }
+        onCancel={() => setPrintableDocument(null)}
+        onOk={() => printableDocument && printDocument.mutate(printableDocument)}
+        confirmLoading={printDocument.isPending}
+        okText={printableDocument?.formType === 'TRANSFER' ? 'In phiếu' : 'In quyết định'}
+        okButtonProps={{ icon: <PrinterOutlined /> }}
+        cancelText="Để sau"
+      >
+        <Typography.Paragraph>
+          Chứng từ đã lập xong. In ngay để ký, hoặc in lại sau
+          {printableDocument?.formType === 'TRANSFER'
+            ? ' từ danh sách "Phiếu chuyển kho".'
+            : ' từ chi tiết ấn phẩm đã thanh lý.'}
+        </Typography.Paragraph>
+      </Modal>
+
+      <TransferSlipsDrawer open={slipsOpen} onClose={() => setSlipsOpen(false)} />
+
+      <Modal
         open={printKind !== null}
         title={printKind === 'barcode' ? 'In tem mã vạch' : 'In nhãn gáy'}
         onCancel={() => setPrintKind(null)}
@@ -832,6 +889,25 @@ export function StockItemsPage() {
                     <div>Lý do: {detail.data.disposal.reason ?? '—'}</div>
                     <div>Người duyệt: {detail.data.disposal.approvedByName ?? '—'}</div>
                   </>
+                }
+                action={
+                  detail.data.disposal.decisionNo ? (
+                    <Can permission={PERMISSIONS.acquisition.itemDispose}>
+                      <Button
+                        size="small"
+                        icon={<PrinterOutlined />}
+                        loading={printDocument.isPending}
+                        onClick={() =>
+                          printDocument.mutate({
+                            formType: 'DISPOSAL',
+                            code: detail.data!.disposal!.decisionNo!,
+                          })
+                        }
+                      >
+                        In quyết định
+                      </Button>
+                    </Can>
+                  ) : undefined
                 }
               />
             )}
