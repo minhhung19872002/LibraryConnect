@@ -51,6 +51,7 @@ import { printableFormFor, printedDocumentTitle, type PrintableFormType, type St
 import { TransferSlipsDrawer } from './TransferSlipsDrawer';
 import { LabelPreview } from './LabelPreview';
 import { toLabelData } from './labelContent';
+import { addScannedItem, type ScannedItem } from './scanList';
 import {
   acquisitionTypeLabels,
   disposalTypes,
@@ -107,6 +108,9 @@ export function StockItemsPage() {
   const [printKind, setPrintKind] = useState<'barcode' | 'label' | null>(null);
   const [printForm] = Form.useForm();
   const [slipsOpen, setSlipsOpen] = useState(false);
+  /** ĐKCB gom bằng máy quét trong hộp chuyển kho — cộng thêm vào các dòng đã tick. */
+  const [scanned, setScanned] = useState<ScannedItem[]>([]);
+  const [scanValue, setScanValue] = useState('');
   /** Chứng từ vừa sinh ra từ thao tác chuyển kho / thanh lý, chờ người dùng bấm in. */
   const [printableDocument, setPrintableDocument] = useState<{
     formType: PrintableFormType;
@@ -157,7 +161,41 @@ export function StockItemsPage() {
   });
 
   const selectionPayload = () =>
-    applyToAll ? { itemIds: [], filter } : { itemIds: selected, filter: null };
+    applyToAll
+      ? { itemIds: [], filter }
+      : { itemIds: Array.from(new Set([...selected, ...scanned.map((item) => item.id)])), filter: null };
+
+  // Quét một mã vạch trong hộp chuyển kho: tra đúng mã ấy rồi gom vào danh sách.
+  const scan = useMutation({
+    mutationFn: async (value: string) => {
+      const page = await stockApi.search({ page: 1, pageSize: 20, filter: { keyword: value } });
+      return page.items.find((item) => item.barcode.toLowerCase() === value.toLowerCase()) ?? null;
+    },
+    onSuccess: (item, value) => {
+      setScanValue('');
+
+      if (!item) {
+        message.warning(`Không có ấn phẩm nào mang mã vạch ${value}.`);
+        return;
+      }
+
+      const result = addScannedItem(scanned, {
+        id: item.id,
+        barcode: item.barcode,
+        title: item.title,
+        warehouseName: item.warehouseName,
+      });
+
+      if (result.duplicate) {
+        message.info(`${item.barcode} đã có trong danh sách.`);
+        return;
+      }
+
+      setScanned(result.list);
+    },
+    onError: (error) =>
+      message.error(error instanceof ApiRequestError ? error.message : 'Không tra được mã vạch.'),
+  });
 
   // Mẫu đang chọn trong hộp in (hoặc mẫu mặc định) và ấn phẩm đầu tiên đang chọn — đủ để mô phỏng
   // một tem với dữ liệu thật trước khi tạo tệp.
@@ -171,7 +209,9 @@ export function StockItemsPage() {
     ? items.data?.items[0]
     : items.data?.items.find((item) => selected.includes(item.id));
 
-  const selectionCount = applyToAll ? (items.data?.totalCount ?? 0) : selected.length;
+  const selectionCount = applyToAll
+    ? (items.data?.totalCount ?? 0)
+    : new Set([...selected, ...scanned.map((item) => item.id)]).size;
 
   const refresh = () => {
     void queryClient.invalidateQueries({ queryKey: ['stock-items'] });
@@ -179,6 +219,7 @@ export function StockItemsPage() {
     void queryClient.invalidateQueries({ queryKey: ['stock-item'] });
     setSelected([]);
     setApplyToAll(false);
+    setScanned([]);
   };
 
   const reportResult = (result: BulkItemResultDto, done: string) => {
@@ -288,7 +329,8 @@ export function StockItemsPage() {
   });
 
   const openAction = (next: BulkAction) => {
-    if (selectionCount === 0) {
+    // Chuyển kho mở được khi chưa chọn gì: cán bộ đứng ở giá quét từng cuốn ngay trong hộp thoại.
+    if (selectionCount === 0 && next !== 'transfer') {
       message.warning('Chưa chọn ấn phẩm nào.');
       return;
     }
@@ -639,13 +681,75 @@ export function StockItemsPage() {
       <Modal
         open={action !== null}
         title={action ? `${actionTitles[action]} — ${selectionCount} ấn phẩm` : ''}
-        onCancel={() => setAction(null)}
-        onOk={() => actionForm.submit()}
+        onCancel={() => {
+          setAction(null);
+          setScanned([]);
+        }}
+        onOk={() => {
+          if (selectionCount === 0) {
+            message.warning('Chưa có ấn phẩm nào — tick trên danh sách hoặc quét mã vạch.');
+            return;
+          }
+          actionForm.submit();
+        }}
         confirmLoading={runAction.isPending}
         okText="Thực hiện"
         cancelText="Bỏ qua"
+        width={action === 'transfer' ? 720 : undefined}
         destroyOnHidden
       >
+        {action === 'transfer' && !applyToAll && (
+          <Card size="small" title="Quét mã vạch để gom thêm" style={{ marginBottom: 12 }}>
+            <Space direction="vertical" style={{ width: '100%' }}>
+              <Input
+                prefix={<BarcodeOutlined />}
+                placeholder="Quét hoặc gõ mã vạch rồi nhấn Enter"
+                value={scanValue}
+                autoFocus={selected.length === 0}
+                disabled={scan.isPending}
+                onChange={(event) => setScanValue(event.target.value)}
+                onPressEnter={() => {
+                  const value = scanValue.trim();
+                  if (value) scan.mutate(value);
+                }}
+              />
+              {scanned.length > 0 && (
+                <Table
+                  rowKey="id"
+                  size="small"
+                  pagination={false}
+                  scroll={{ y: 180 }}
+                  dataSource={scanned}
+                  columns={[
+                    { title: 'Mã vạch', dataIndex: 'barcode', width: 140 },
+                    { title: 'Nhan đề', dataIndex: 'title', width: 300, ellipsis: true },
+                    { title: 'Kho hiện tại', dataIndex: 'warehouseName', width: 140 },
+                    {
+                      title: '',
+                      width: 60,
+                      render: (_, row: ScannedItem) => (
+                        <Button
+                          size="small"
+                          type="link"
+                          danger
+                          onClick={() =>
+                            setScanned((current) => current.filter((item) => item.id !== row.id))
+                          }
+                        >
+                          Bỏ
+                        </Button>
+                      ),
+                    },
+                  ]}
+                />
+              )}
+              <Typography.Text type="secondary">
+                Đã quét {scanned.length} bản
+                {selected.length > 0 ? `, cộng ${selected.length} bản đã tick trên danh sách` : ''}.
+              </Typography.Text>
+            </Space>
+          </Card>
+        )}
         <Form form={actionForm} layout="vertical" onFinish={(values) => runAction.mutate(values)}>
           {action === 'shelve' && (
             <>

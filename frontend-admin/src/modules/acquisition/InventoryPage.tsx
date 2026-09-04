@@ -430,6 +430,10 @@ function PeriodDrawer({
   const summary = useQuery({
     queryKey: ['inventory-summary', id],
     queryFn: () => inventoryApi.summary(id),
+    // Tiến độ kỳ đang chạy tự cập nhật: máy quét rời và điện thoại cũng quét vào cùng kỳ này,
+    // nên màn hình của người điều phối phải thấy số của họ mà không phải bấm làm mới.
+    refetchInterval: (query) =>
+      period.data?.status !== 'Closed' && query.state.status === 'success' ? 5000 : false,
   });
 
   const results = useQuery({
