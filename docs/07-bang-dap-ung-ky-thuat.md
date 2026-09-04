@@ -406,6 +406,7 @@ Cập nhật lần cuối: 02/09/2026, sau đợt hoàn thiện (bảo mật, b�
 | # | Yêu cầu của E-HSMT | Đáp ứng | Thực hiện |
 |---|---|---|---|
 | VIII.1 | Cấu hình chung: tên thư viện, logo, favicon, ảnh banner, slogan, địa chỉ, điện thoại, email, giờ mở cửa, mạng xã hội | **Có** | Một màn hình "Thông tin trang thư viện" gom cả hai kho cấu hình: tên/địa chỉ/logo nằm ở tham số hệ thống vì cả phần mềm dùng chung, còn khẩu hiệu, giờ mở cửa, mạng xã hội nằm ở bảng riêng của trang tra cứu. Mỗi ô ghi rõ nó được lưu ở đâu |
+| VIII.1 | Giờ mở cửa từng cơ sở | **Có** | Bổ sung 04/09/2026: giờ mở cửa nhập theo từng cơ sở ở màn hình Thư viện và API công khai trả về cùng địa chỉ, điện thoại, toạ độ. Chân trang liệt kê theo cơ sở, trang Liên hệ có khối "Các cơ sở" kèm lối chỉ đường riêng; ô chữ tự do trong cấu hình trang còn dùng để ghi ngoại lệ |
 | VIII.1 | Quản lý trang tĩnh (Giới thiệu, Nội quy, Hướng dẫn, Liên hệ, Hỏi đáp) | **Có** | Năm trang nạp sẵn khi cài đặt với nội dung viết theo lệ chung của thư viện đại học Việt Nam; thêm, sửa, xóa, đăng/gỡ từ giao diện |
 | VIII.1 | Trình soạn thảo WYSIWYG, chèn ảnh/file/bảng/video | **Có** | Thanh công cụ đủ chữ đậm, nghiêng, gạch chân, hai cấp tiêu đề, hai kiểu danh sách, liên kết, ảnh, bảng, khung video nhúng, hoàn tác, và một nút xem thẳng mã HTML. Ảnh tải lên kho đối tượng ngay lúc chọn nên bài viết chỉ chứa đường dẫn Chèn được cả tệp PDF / Word / Excel, nhận dạng bằng chữ ký nhị phân (04/09/2026). |
 | VIII.1 | Nội dung soạn thảo phải an toàn (yêu cầu 6.4) | **Có** | HTML được lọc ngay khi lưu, không phải lúc hiển thị: thẻ script, thuộc tính sự kiện, giao thức `javascript:`, thuộc tính style đều bị bỏ; khung video chỉ giữ từ YouTube và Vimeo |
@@ -431,13 +432,14 @@ Cập nhật lần cuối: 02/09/2026, sau đợt hoàn thiện (bảo mật, b�
 | IX.1 | Trang thông tin điện tử là SPA riêng, công khai, responsive | **Có** | `frontend-opac` chạy trong container riêng sau Nginx ở đường dẫn gốc; giao diện co giãn từ điện thoại tới màn hình rộng |
 | IX.1 | Trang chủ: ô tìm kiếm lớn, banner, sách mới, sách mượn nhiều, tin tức, liên kết nhanh | **Có** | Đủ các khối; ba khối sách mới, sách mượn nhiều và mục tìm ở thư viện khác bật tắt được bằng cấu hình |
 | IX.1 | Trang tin tức, trang tĩnh, trang liên hệ | **Có** | Tin tức có lọc theo chuyên mục và tìm kiếm; trang Liên hệ ghép thêm thông tin liên hệ, giờ mở cửa và bản đồ nhúng từ cấu hình |
-| IX.1 | SEO: thẻ meta, sitemap.xml, robots.txt | **Có** | `/sitemap.xml` do máy chủ sinh động, liệt kê trang tĩnh, bản tin và tài liệu đã xuất bản; `/robots.txt` mở phần tra cứu và chặn khu quản trị cùng các trang cá nhân của bạn đọc |
+| IX.1 | SEO: thẻ meta, sitemap.xml, robots.txt | **Có** | `/sitemap.xml` do máy chủ sinh động, liệt kê trang tĩnh, bản tin, tài liệu đã xuất bản và đủ mười một trang duyệt công khai (bổ sung 04/09/2026); `/robots.txt` mở phần tra cứu và chặn khu quản trị cùng các trang cá nhân của bạn đọc |
 | IX.2 | Tìm kiếm cơ bản, chọn phạm vi | **Có** | Tám phạm vi: tất cả, nhan đề, tác giả, chủ đề, từ khóa, nhà xuất bản, ISBN/ISSN, ký hiệu xếp giá |
 | IX.2 | Gợi ý tự động khi gõ | **Có** | Gợi ý nhan đề, tác giả và chủ đề; chờ tới ký tự thứ hai và có nhịp dừng để một câu mười chữ không thành mười lượt truy vấn |
 | IX.2 | **Tìm được cả khi gõ không dấu** | **Có** | Toàn bộ tra cứu đi qua hàm bỏ dấu của cơ sở dữ liệu; "co so du lieu" ra "Cơ sở dữ liệu" |
 | IX.2 | Tìm kiếm nâng cao: nhiều điều kiện AND/OR/NOT, chọn trường cho từng điều kiện | **Có** | Tối đa mười mệnh đề, mỗi mệnh đề chọn phạm vi riêng; ghép thành một biểu thức duy nhất để dịch xuống một câu lệnh |
+| IX.2 | Tìm kiếm nâng cao lọc theo năm, ngôn ngữ, dạng tài liệu, kho, có tài liệu số | **Có** | Bổ sung 04/09/2026: ba ô chọn ngôn ngữ, dạng tài liệu và kho lấy danh sách từ chính bộ đếm facet của kho, kèm số lượng — bạn đọc chỉ thấy giá trị thật sự có tài liệu |
 | IX.2 | Lọc theo năm xuất bản, ngôn ngữ, dạng tài liệu, kho, có tài liệu số | **Có** | Đủ, dùng chung bộ lọc với tìm kiếm cơ bản và với bộ đếm facet |
-| IX.2 | Duyệt theo Chủ đề / Đề mục / Tác giả / Phân loại / Bộ sưu tập / Ngành / Môn học | **Có** | Chủ đề và phân loại duyệt theo cây; tác giả duyệt theo chữ cái đầu; ngành mở xuống môn học rồi tới tài liệu của môn. Số đếm ở nhánh cha cộng dồn cả nhánh con |
+| IX.2 | Duyệt theo Chủ đề / Đề mục / Tác giả / Phân loại / Bộ sưu tập / Ngành / Môn học | **Có** | Chủ đề và phân loại duyệt theo cây; tác giả duyệt theo chữ cái đầu; ngành mở xuống môn học rồi tới tài liệu của môn, danh sách tài liệu có phân trang. Môn học có thêm nhánh duyệt riêng kèm dải A–Z (bổ sung 04/09/2026). Số đếm ở nhánh cha cộng dồn cả nhánh con |
 | IX.2 | Kết quả: phân trang, sắp xếp, bộ lọc facet đếm số lượng | **Có** | Năm cách sắp xếp; bảy nhóm facet đếm trên đúng tập kết quả hiện tại, không phải trên toàn kho |
 | IX.2 | Chi tiết: ảnh bìa, ISBD, tóm tắt, chủ đề bấm được, **danh sách ĐKCB kèm trạng thái và vị trí kho** | **Có** | Bảng bản in đặt cột tình trạng lên đầu, kèm ký hiệu xếp giá, kho, giá, thư viện; bản đang có người mượn hiện cả hạn trả dự kiến |
 | IX.2 | Nút đặt giữ, xem tài liệu số, xem MARC | **Có** | Đủ ba; biểu ghi MARC hiện dưới dạng đọc được ngay trên trang |
@@ -454,7 +456,7 @@ Cập nhật lần cuối: 02/09/2026, sau đợt hoàn thiện (bảo mật, b�
 | IX.4 | Xem trước, đọc trực tuyến, tải về theo quyền | **Có** | Trình đọc lật từng trang, mỗi trang là ảnh do máy chủ dựng và đóng chữ chìm tên bạn đọc, thời điểm và địa chỉ máy; tài liệu không cho tải thì không có nút tải |
 | IX.4 | Gửi yêu cầu truy cập tài liệu hạn chế | **Có** | Ngay trên trình đọc, kèm ô ghi lý do sử dụng |
 | IX.5 | Tab "Tìm ở thư viện khác", tra song song Z39.50/SRU | **Có** | Chỉ tra ở máy chủ cán bộ đã bật cờ cho bạn đọc; đã tra thật tới Thư viện Quốc hội Mỹ qua cả hai lối |
-| IX.5 | Kết quả gộp có ghi rõ nguồn | **Có** | Mỗi nơi một khối riêng kèm số kết quả và thời gian trả lời; cuốn nào thư viện mình đã có thì có liên kết mở thẳng sang trang chi tiết |
+| IX.5 | Kết quả gộp có ghi rõ nguồn | **Có** | Bổ sung 04/09/2026: bảng gộp mọi thư viện đứng trước, xếp theo nhan đề, cột "Nguồn" ghi tên từng nơi. Bảng theo từng máy chủ giữ bên dưới vì nó nói được nơi nào không tra được và mất bao lâu; cuốn nào thư viện mình đã có thì có liên kết mở thẳng sang trang chi tiết |
 
 ---
 
@@ -463,6 +465,7 @@ Cập nhật lần cuối: 02/09/2026, sau đợt hoàn thiện (bảo mật, b�
 | # | Yêu cầu E-HSMT | Đáp ứng | Chức năng trong sản phẩm |
 |---|---|---|---|
 | X.1 | Quản lý ngành: mã ngành, tên, khoa quản lý, bậc đào tạo, mô tả | **Có** | Danh mục → Ngành đào tạo. Ô "Khoa quản lý" là ô chọn lấy thẳng từ danh mục Khoa, không phải gõ tay nên không lệch tên giữa hai bảng |
+| X.1 | Import ngành từ Excel | **Có** | Bổ sung 04/09/2026: cột "Khoa quản lý" nhận mã hoặc tên khoa (so sau khi bỏ dấu và bỏ hoa thường); gõ sai thì dòng ấy báo lỗi chứ không im lặng bỏ qua, tên trùng nhau thì đòi gõ mã. Áp cho mọi cột tham chiếu của mọi danh mục |
 | X.1 | Import ngành từ Excel | **Có** | Dùng chung khung nhập Excel của danh mục: tải tệp mẫu, kiểm tra thử trước, xem bảng lỗi rồi mới nhập thật |
 | X.2 | Quản lý môn học: mã môn, tên, số tín chỉ, ngành, học kỳ, giảng viên, mô tả | **Có** | Danh mục → Môn học cho phần thông tin chung; màn hình Gán tài liệu cho môn học sửa được danh sách ngành của từng môn |
 | X.2 | Gán môn học vào nhiều ngành (quan hệ nhiều-nhiều) | **Có** | Một môn thuộc bao nhiêu ngành cũng được; dữ liệu mẫu để sẵn Tin học đại cương dùng chung cho sáu ngành |

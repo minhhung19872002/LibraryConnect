@@ -120,6 +120,7 @@ Ký hiệu bám theo **Mục 5 phần 2 của E-HSMT**.
 | DM.10 | Nhập cập nhật theo mã | Nhập tệp có mã đã tồn tại | Các dòng đó cập nhật giá trị hiện có thay vì tạo bản ghi trùng | Integration — `CatalogTests` | | |
 | DM.11 | Vòng xuất – nhập | Xuất một danh mục ra Excel rồi nhập lại chính tệp đó | Toàn bộ dòng được ghi nhận là cập nhật, không dòng nào lỗi, không tạo bản ghi mới | Integration — `CatalogTests` | | |
 | DM.12 | Gộp trùng | Tạo ba cách viết của cùng một tên tác giả, mở Gộp trùng | Ba giá trị vào cùng một nhóm; sau khi gộp chỉ còn một, mọi biểu ghi tham chiếu được chuyển sang giá trị giữ lại | Integration — `CatalogTests`; Unit — `DuplicateDetectionTests` | | |
+| DM.13 | Nhập cột tham chiếu bằng tên | Tệp ngành đào tạo: một dòng gõ mã khoa, một dòng gõ tên khoa không dấu, một dòng gõ khoa không có thật | Hai dòng đầu vào đúng khoa; dòng thứ ba báo lỗi ở cột "Khoa quản lý" và không được nhập | Integration — `CatalogTests` | | |
 
 ---
 
@@ -595,9 +596,13 @@ Ký hiệu bám theo **Mục 5 phần 2 của E-HSMT**.
 | TC.34 | Đọc trực tuyến | Mở một tài liệu công khai | Trang tài liệu hiện dưới dạng ảnh có chữ chìm ghi số thẻ, thời điểm và địa chỉ máy; lật trang được |
 | TC.35 | Tài liệu không cho tải | Mở một tài liệu bị cấm tải | Không có nút tải về, kèm dòng giải thích |
 | TC.36 | Tài liệu hạn chế | Mở một tài liệu mức hạn chế khi chưa được duyệt | Chỉ xem được số trang thử đã cấu hình, có nút gửi yêu cầu kèm ô ghi lý do |
-| TC.37 | Tìm ở thư viện khác | Mở mục Tìm ở thư viện khác, tra một từ khóa | Mỗi thư viện một khối kết quả riêng kèm số kết quả và thời gian trả lời |
+| TC.37 | Tìm ở thư viện khác | Mở mục Tìm ở thư viện khác, tra một từ khóa | Bảng gộp mọi thư viện đứng trước, cột "Nguồn" ghi tên từng nơi; bên dưới là khối riêng của từng thư viện kèm số kết quả và thời gian trả lời |
 | TC.38 | Đối chiếu với kho của mình | Tra một nhan đề thư viện đã có | Cột "Ở thư viện mình" có liên kết mở thẳng sang trang chi tiết |
-| TC.39 | Sơ đồ trang | Mở `/sitemap.xml` | Liệt kê trang tĩnh, bản tin và tài liệu đã xuất bản |
+| TC.39 | Sơ đồ trang | Mở `/sitemap.xml` | Liệt kê trang tĩnh, bản tin, tài liệu đã xuất bản và đủ mười một trang duyệt công khai |
+| TC.40 | Lọc nâng cao theo ngôn ngữ, dạng tài liệu, kho | Tra cứu nâng cao → khối "Giới hạn kết quả" → chọn một ngôn ngữ | Ô chọn chỉ liệt kê giá trị đang có tài liệu, kèm số lượng; kết quả thu hẹp đúng theo lựa chọn |
+| TC.41 | Duyệt theo môn học | Trang chủ → Danh mục tra cứu → Môn học → chọn chữ cái đầu → chọn một môn | Danh sách môn lọc theo chữ cái; chọn môn thì ra trang kết quả lọc đúng môn ấy |
+| TC.42 | Tài liệu của môn quá một trang | Duyệt theo ngành → chọn môn có trên 20 tài liệu | Có thanh phân trang, sang trang 2 xem được phần còn lại |
+| TC.43 | Giờ mở cửa từng cơ sở | Khai giờ mở cửa khác nhau cho hai cơ sở ở màn hình Thư viện → mở trang tra cứu | Chân trang liệt kê từng cơ sở kèm giờ của nó; trang Liên hệ có khối "Các cơ sở" với địa chỉ, điện thoại và lối chỉ đường |
 | TC.40 | Tệp robots.txt | Mở `/robots.txt` | Mở phần tra cứu, chặn `/admin` và các trang cá nhân, có dòng trỏ tới sơ đồ trang |
 | TC.41 | Gọi API bạn đọc khi chưa đăng nhập | Gọi `/api/reader/profile` không kèm mã đăng nhập | Trả 401 |
 | TC.42 | Tài khoản bạn đọc gọi API quản trị | Dùng mã đăng nhập của bạn đọc gọi `/api/content/settings` | Trả 403 |
