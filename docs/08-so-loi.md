@@ -424,6 +424,8 @@ xuống API. Lỗi ghi ở đây là chỗ **bảng đáp ứng ghi "Có" mà ng
 |---|---|---|---|---|
 | JX1 | Vừa | **Chi tiết biểu ghi thiếu tab lịch sử lưu thông** (đặc tả II.3 nói bốn tab): tab thứ tư chỉ có lịch sử sửa đổi, và không có endpoint nào trả lịch sử mượn của biểu ghi | Bảng đáp ứng ghi "Bốn tab chi tiết" và không ai đối chiếu nội dung từng tab với đặc tả | `GET /cataloging/bibs/{id}/loans` phân trang phía máy chủ, lọc phiếu chưa trả, tìm theo mã phiếu / mã vạch / tên hoặc số thẻ bạn đọc. Lọc theo `BibId` chép sẵn trên phiếu chứ không đi vòng qua ĐKCB — biên mục lại một bản in không được kéo lịch sử cũ sang biểu ghi mới |
 | JX2 | Vừa | **Không có quét virus nào** dù mục 6.4 ghi "quét virus (ClamAV tùy chọn)" | "Tùy chọn" bị đọc thành "không cần làm" | `IVirusScanner` đặt ở cổng vào duy nhất của mọi tệp tải lên (cả tải một lần lẫn tải theo mảnh đều đi qua đó); `ClamAvScanner` nói thẳng giao thức INSTREAM của clamd, không thêm thư viện. Tắt thì không mở socket nào; **bật mà không nối được clamd thì từ chối tệp** |
+| JX5 | Vừa | **Triển khai xong mà nginx vẫn chạy cấu hình cũ**: thẻ meta cho máy thu thập không có tác dụng trên máy chủ thật dù tệp cấu hình trên đĩa đã mới | Cấu hình gắn vào container theo **tệp**; `git reset --hard` của script triển khai thay tệp bằng một inode mới, container vẫn giữ inode cũ. `nginx -s reload` cũng vô ích vì nó đọc lại đúng inode cũ ấy | `gh-deploy.sh` dựng lại container nginx sau khi kéo mã. Đã chứng minh trên máy chủ thật: trước khi dựng lại, `grep lc_crawler` trong container ra 0; sau khi dựng lại ra 2 và máy thu thập nhận đúng nhan đề bản tin |
+| JX6 | Vừa | **Cổng Z39.50 không ra tới ngoài trên máy chủ thật** dù compose gốc đã công bố | Lớp `docker-compose.prod.yml` đặt `ports: !override []` cho API — đúng cho HTTP (mọi lượt gọi đi qua nginx) nhưng Z39.50 là TCP thô, nginx không proxy được | Lớp sản xuất công bố lại đúng một cổng `${Z3950_PORT:-210}:2100` |
 | JX4 | Nhẹ | Phép thử `The_permission_catalogue_and_the_staff_groups_are_seeded` **phụ thuộc thứ tự**: xanh khi chạy riêng, đỏ khi chạy trọn bộ | Nó khẳng định *mọi* nhóm trong trang đầu đều là nhóm hệ thống, trong khi các bài phân quyền tạo nhóm thường trên cùng một cơ sở dữ liệu — đủ nhóm mới là nhóm thứ 51 đẩy một nhóm thường vào trang. Cùng lớp lỗi với I4 | Chỉ soi năm nhóm mẫu theo mã, không soi mọi nhóm trong trang. Đỏ khi chạy cùng `PermissionAndAuditTests` trước khi sửa |
 | JX3 | Nhẹ | **Dừng êm chỉ có mặc định 5 giây của .NET**: `docker compose stop` cắt ngang lượt nhập biểu ghi, phiên Z39.50 hay lượt tải tài liệu số đang chạy | Không ai đặt `ShutdownTimeout`; máy chủ Z39.50 không đóng ổ nghe khi dừng | Hạn dừng 30 giây (cấu hình được), compose cho container 45 giây; `Z3950ServerHost.StopAsync` đóng ổ nghe để trả cổng ngay cho lần khởi động sau |
 
@@ -533,7 +535,7 @@ dạng quét mã nguồn chặn cả lớp lỗi quay lại thay vì chỉ chặ
 | Thiếu chức năng | 1 | 0 | 1 (H3, ghi ở "Làm tiếp") |
 | Nguy cơ | 1 | 0 | 1 (H9, ghi ở "Làm tiếp") |
 
-Cộng cả ba đợt, đợt áp thiết kế, đợt triển khai và đợt rà hoàn thiện 04/09/2026: **99 lỗi, đã sửa 97**, còn hai mục là thiếu chức năng và nguy cơ
+Cộng cả ba đợt, đợt áp thiết kế, đợt triển khai và đợt rà hoàn thiện 04/09/2026: **101 lỗi, đã sửa 99**, còn hai mục là thiếu chức năng và nguy cơ
 đã ghi rõ chỗ. Mỗi lỗi đã sửa của đợt này đều có phép thử chạy đỏ trước khi sửa và xanh sau khi sửa,
 kể cả H7: phép thử giả tiêu đề đỏ trước khi sửa `CurrentUser.Ip`.
 

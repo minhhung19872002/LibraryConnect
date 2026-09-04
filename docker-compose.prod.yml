@@ -83,7 +83,11 @@ services:
       options: { max-size: "10m", max-file: "3" }
 
   api:
-    ports: !override []
+    # HTTP không mở thẳng ra ngoài — mọi lượt gọi đi qua nginx. Riêng Z39.50 là giao thức TCP thô,
+    # nginx không proxy được, nên cổng của nó vẫn phải công bố (mục 3.3b). Không bật máy chủ Z39.50
+    # thì không có gì lắng nghe sau cổng ấy; bật bằng tham số ILL.Z3950_SERVER_ENABLED.
+    ports: !override
+      - "${Z3950_PORT:-210}:2100"
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       LC_Redis__ConnectionString: redis:6379,password=${REDIS_PASSWORD:?Thiếu REDIS_PASSWORD}

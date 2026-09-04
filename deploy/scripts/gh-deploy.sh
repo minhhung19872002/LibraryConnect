@@ -51,6 +51,12 @@ $COMPOSE pull -q api admin opac
 log "khởi động lại"
 $COMPOSE up -d --no-build --remove-orphans
 
+# Cấu hình nginx được gắn vào container theo **tệp**, mà `git reset --hard` ở trên thay tệp bằng một
+# inode mới — container vẫn giữ inode cũ, nên đổi cấu hình xong mà không dựng lại thì nginx chạy bản
+# cũ trong khi tệp trên đĩa đã mới. Đã mất một lượt triển khai vì chuyện này (04/09/2026).
+log "dựng lại nginx để nhận cấu hình mới"
+$COMPOSE up -d --no-build --force-recreate nginx
+
 # APK mới nhất từ release mobile-latest → thư mục downloads (OPAC phục vụ tại /downloads/LibraryConnect.apk).
 mkdir -p downloads
 if curl -fsSL --retry 3 -o downloads/LibraryConnect.apk.tmp \
