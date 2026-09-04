@@ -49,6 +49,18 @@ export interface AuthResult {
 }
 
 /** Thông tin thư viện và tùy chọn hiển thị, lấy một lần khi mở trang. */
+/** Một cơ sở của thư viện. */
+export interface PublicBranch {
+  id: string;
+  name: string;
+  address?: string | null;
+  phone?: string | null;
+  openingHours?: string | null;
+  isHeadquarters: boolean;
+  latitude?: number | null;
+  longitude?: number | null;
+}
+
 export interface SiteSettings {
   libraryName: string;
   libraryNameEn?: string;
@@ -66,6 +78,8 @@ export interface SiteSettings {
   heroImageUrl?: string;
   footerText?: string;
   openingHours?: string;
+  /** Từng cơ sở kèm giờ mở cửa của chính nó, do màn hình Thư viện nhập (VIII.1). */
+  branches: PublicBranch[];
   contactNote?: string;
   mapEmbedUrl?: string;
   facebook?: string;

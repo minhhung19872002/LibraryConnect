@@ -54,6 +54,8 @@ export function SearchPage() {
     if (params.get('languageId')) filter.languageId = params.get('languageId')!;
     if (params.get('warehouseId')) filter.warehouseId = params.get('warehouseId')!;
     if (params.get('collectionId')) filter.collectionId = params.get('collectionId')!;
+    // Duyệt theo môn học dẫn sang đây; bộ lọc đã có ở máy chủ từ phân hệ X, chỉ thiếu chỗ đọc ra.
+    if (params.get('courseId')) filter.courseId = params.get('courseId')!;
     if (params.get('ddc')) filter.ddc = params.get('ddc')!;
     if (params.get('publishYear')) {
       const year = Number(params.get('publishYear'));

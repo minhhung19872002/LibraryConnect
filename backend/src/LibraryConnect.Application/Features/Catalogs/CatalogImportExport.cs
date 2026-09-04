@@ -67,6 +67,20 @@ public class GetCatalogTemplateQueryHandler : IRequestHandler<GetCatalogTemplate
         return Task.FromResult(new ExportedFile(content, fileName, ExportedFile.ExcelContentType));
     }
 
+    /// <summary>Cột tham chiếu nhận mã hoặc tên của danh mục kia — nói rõ trong tệp mẫu.</summary>
+    private static string ReferenceHint(CatalogField field)
+    {
+        if (string.IsNullOrWhiteSpace(field.ReferenceCatalog))
+        {
+            return string.Empty;
+        }
+
+        var target = CatalogRegistry.Find(field.ReferenceCatalog);
+        var what = target is null ? "danh mục liên quan" : target.PluralName.ToLowerInvariant();
+
+        return $"Nhập mã hoặc tên của {what}.";
+    }
+
     private static string DescribeField(CatalogField field)
     {
         var description = field.Description ?? string.Empty;
@@ -77,6 +91,7 @@ public class GetCatalogTemplateQueryHandler : IRequestHandler<GetCatalogTemplate
             CatalogFieldType.Number or CatalogFieldType.Decimal => $"{description} Nhập số.".Trim(),
             CatalogFieldType.Select =>
                 $"{description} Nhận một trong các giá trị: {string.Join(", ", field.Options.Select(o => o.Value))}.".Trim(),
+            CatalogFieldType.Reference => $"{description} {ReferenceHint(field)}".Trim(),
             _ => description
         };
     }
@@ -239,6 +254,58 @@ public class ImportCatalogCommandHandler : IRequestHandler<ImportCatalogCommand,
         return result;
     }
 
+    /// <summary>
+    /// Bảng tra "mã hoặc tên → khoá" của một danh mục, dùng khi nhập Excel có cột tham chiếu.
+    ///
+    /// Cán bộ gõ "Khoa Công nghệ thông tin" hay "CNTT" chứ không dán khoá 36 ký tự, nên cột tham
+    /// chiếu phải nhận cả hai. Tên trùng nhau thì ghi <see cref="Guid.Empty"/> để lượt nhập báo lỗi
+    /// đòi gõ mã, chứ không tự chọn một trong hai.
+    /// </summary>
+    private sealed class ReferenceLookupOperation : ICatalogOperation<Dictionary<string, Guid>>
+    {
+        public async Task<Dictionary<string, Guid>> ExecuteAsync<TEntity>(
+            DbSet<TEntity> set, CatalogDefinition definition, CancellationToken ct)
+            where TEntity : CatalogEntity, new()
+        {
+            var rows = await set
+                .AsNoTracking()
+                .Select(entity => new { entity.Id, entity.Code, entity.Name })
+                .ToListAsync(ct);
+
+            var map = new Dictionary<string, Guid>();
+
+            foreach (var row in rows)
+            {
+                map[Normalise(row.Code)] = row.Id;
+            }
+
+            foreach (var row in rows)
+            {
+                var key = Normalise(row.Name);
+
+                // Mã thắng tên: mã là thứ duy nhất chắc chắn không trùng.
+                if (map.TryGetValue(key, out var existing))
+                {
+                    if (existing != row.Id)
+                    {
+                        map[key] = Guid.Empty;
+                    }
+
+                    continue;
+                }
+
+                map[key] = row.Id;
+            }
+
+            return map;
+        }
+    }
+
+    /// <summary>Khoá so khớp: bỏ dấu, bỏ hoa thường, bỏ khoảng trắng thừa.</summary>
+    private static string Normalise(string? value) =>
+        Common.Text.VietnameseText.RemoveDiacritics(value?.Trim() ?? string.Empty)
+            .ToLowerInvariant();
+
     private sealed class ImportOperation : ICatalogOperation<CatalogImportResultDto>
     {
         private readonly ExcelSheet _sheet;
@@ -272,6 +339,22 @@ public class ImportCatalogCommandHandler : IRequestHandler<ImportCatalogCommand,
             }
 
             var existing = await set.ToDictionaryAsync(entity => entity.Code, StringComparer.OrdinalIgnoreCase, ct);
+
+            // Một bảng tra cho mỗi cột tham chiếu, nạp một lần cho cả tệp.
+            var lookups = new Dictionary<string, Dictionary<string, Guid>>(StringComparer.Ordinal);
+
+            foreach (var field in definition.Fields
+                         .Where(field => field.Type == CatalogFieldType.Reference
+                                         && !string.IsNullOrWhiteSpace(field.ReferenceCatalog)))
+            {
+                var target = CatalogRegistry.Find(field.ReferenceCatalog!);
+
+                if (target is not null)
+                {
+                    lookups[field.Key] = await target.ExecuteAsync(_db, new ReferenceLookupOperation(), ct);
+                }
+            }
+
             var pending = new List<(TEntity Entity, bool IsNew, string? ParentCode)>();
             var codesInFile = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
@@ -313,7 +396,7 @@ public class ImportCatalogCommandHandler : IRequestHandler<ImportCatalogCommand,
                 entity.SortOrder = ParseInt(row.Get(CatalogColumns.SortOrder));
                 entity.IsActive = ParseBoolean(row.Get(CatalogColumns.Active));
 
-                var fieldError = ApplyFields(entity, row, definition, result);
+                var fieldError = ApplyFields(entity, row, definition, lookups, result);
                 if (fieldError)
                 {
                     result.ErrorRows++;
@@ -374,7 +457,11 @@ public class ImportCatalogCommandHandler : IRequestHandler<ImportCatalogCommand,
 
         /// <summary>Writes the catalogue-specific columns, reporting any value the field rejects.</summary>
         private static bool ApplyFields(
-            CatalogEntity entity, ExcelRow row, CatalogDefinition definition, CatalogImportResultDto result)
+            CatalogEntity entity,
+            ExcelRow row,
+            CatalogDefinition definition,
+            IReadOnlyDictionary<string, Dictionary<string, Guid>> lookups,
+            CatalogImportResultDto result)
         {
             var hasError = false;
 
@@ -390,6 +477,38 @@ public class ImportCatalogCommandHandler : IRequestHandler<ImportCatalogCommand,
                         hasError = true;
                     }
 
+                    continue;
+                }
+
+                if (field.Type == CatalogFieldType.Reference)
+                {
+                    // Trước 04/09/2026 chỗ này ghi thẳng giá trị người dùng gõ vào: chỉ khoá 36 ký
+                    // tự mới lọt, mọi thứ khác thành null và lượt nhập vẫn báo "thành công". Cán bộ
+                    // mất dữ liệu mà không có một dòng lỗi nào.
+                    if (Guid.TryParse(raw, out _))
+                    {
+                        field.Write(entity, raw);
+                        continue;
+                    }
+
+                    if (!lookups.TryGetValue(field.Key, out var lookup)
+                        || !lookup.TryGetValue(Normalise(raw), out var referenced))
+                    {
+                        result.Errors.Add(Error(row.RowNumber, field.Label, raw,
+                            $"Không tìm thấy {field.Label.ToLowerInvariant()} nào có mã hoặc tên này."));
+                        hasError = true;
+                        continue;
+                    }
+
+                    if (referenced == Guid.Empty)
+                    {
+                        result.Errors.Add(Error(row.RowNumber, field.Label, raw,
+                            "Có nhiều giá trị cùng tên này, hãy nhập mã để chỉ đúng một."));
+                        hasError = true;
+                        continue;
+                    }
+
+                    field.Write(entity, referenced.ToString());
                     continue;
                 }
 

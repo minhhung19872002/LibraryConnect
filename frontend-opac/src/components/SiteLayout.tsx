@@ -162,7 +162,19 @@ export function SiteLayout() {
 
             <div>
               <div className="lc-footer__title">Giờ mở cửa</div>
-              {settings?.openingHours ? (
+              {/*
+                Giờ của từng cơ sở là dữ liệu thật, nhập ở màn hình Thư viện; ô chữ tự do trong cấu
+                hình trang chỉ còn dùng khi chưa khai cơ sở nào, hoặc để ghi thêm ngoại lệ.
+              */}
+              {(settings?.branches ?? []).some((branch) => branch.openingHours) ? (
+                (settings?.branches ?? [])
+                  .filter((branch) => branch.openingHours)
+                  .map((branch) => (
+                    <div key={branch.id}>
+                      {branch.name}: {branch.openingHours}
+                    </div>
+                  ))
+              ) : settings?.openingHours ? (
                 settings.openingHours.split('\n').map((line) => <div key={line}>{line}</div>)
               ) : (
                 <div>Xem thông báo tại quầy phục vụ.</div>

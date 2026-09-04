@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import {
   Button,
   Card,
@@ -21,6 +21,7 @@ import { describeResultCount } from '@/labels';
 import { ResultList } from '@/components/ResultList';
 import type {
   Connector,
+  FacetGroup,
   PagedResult,
   SearchClause,
   SearchFilter,
@@ -30,6 +31,17 @@ import type {
 } from '@/types/api';
 
 const { Paragraph } = Typography;
+
+/**
+ * Ba bộ lọc lấy danh sách giá trị từ chính bộ đếm facet của kho: bạn đọc chỉ thấy những ngôn ngữ,
+ * dạng tài liệu và kho **thật sự có tài liệu**, kèm số lượng. Không dựng ba lời gọi danh mục riêng —
+ * danh mục có cả giá trị chưa dùng đến bao giờ, chọn vào là ra danh sách rỗng.
+ */
+const LIMIT_FACETS: { code: string; field: 'languageId' | 'documentTypeId' | 'warehouseId'; label: string }[] = [
+  { code: 'documentType', field: 'documentTypeId', label: 'Dạng tài liệu' },
+  { code: 'language', field: 'languageId', label: 'Ngôn ngữ' },
+  { code: 'warehouse', field: 'warehouseId', label: 'Kho' },
+];
 
 const CONNECTORS: { value: Connector; label: string }[] = [
   { value: 'And', label: 'VÀ' },
@@ -46,6 +58,13 @@ export function AdvancedSearchPage() {
   const [filter, setFilter] = useState<SearchFilter>({});
   const [sort, setSort] = useState<SortOrder>('Relevance');
   const [page, setPage] = useState(1);
+
+  // Danh sách giá trị của ba bộ lọc, đếm trên toàn kho (không có từ khoá nào).
+  const limits = useQuery<FacetGroup[]>({
+    queryKey: ['advanced-limits'],
+    queryFn: () => opacApi.facets({ page: 1, pageSize: 1 }),
+    staleTime: 5 * 60 * 1000,
+  });
 
   const search = useMutation<PagedResult<SearchResult>, Error, number>({
     mutationFn: (targetPage: number) =>
@@ -163,6 +182,30 @@ export function AdvancedSearchPage() {
               }
             />
           </Col>
+          {LIMIT_FACETS.map((group) => (
+            <Col xs={24} md={8} key={group.code}>
+              <div style={{ marginBottom: 4 }}>{group.label}</div>
+              <Select
+                allowClear
+                showSearch
+                optionFilterProp="label"
+                style={{ width: '100%' }}
+                placeholder="Tất cả"
+                loading={limits.isLoading}
+                value={filter[group.field]}
+                onChange={(value) =>
+                  setFilter((current) => ({ ...current, [group.field]: value ?? undefined }))
+                }
+                options={(limits.data?.find((row) => row.code === group.code)?.values ?? [])
+                  .filter((value) => value.id)
+                  .map((value) => ({
+                    value: value.id!,
+                    label: `${value.label} (${value.count})`,
+                  }))}
+              />
+            </Col>
+          ))}
+
           <Col xs={12} md={6}>
             <div style={{ marginBottom: 4 }}>Ký hiệu phân loại bắt đầu bằng</div>
             <Input

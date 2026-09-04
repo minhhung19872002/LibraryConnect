@@ -46,6 +46,13 @@ public class GetSitemapQueryHandler : IRequestHandler<GetSitemapQuery, string>
             Url($"{baseUrl}/duyet/chu-de", _clock.Now, "weekly", "0.7"),
             Url($"{baseUrl}/duyet/tac-gia", _clock.Now, "weekly", "0.7"),
             Url($"{baseUrl}/duyet/phan-loai", _clock.Now, "weekly", "0.7"),
+            Url($"{baseUrl}/duyet/bo-suu-tap", _clock.Now, "weekly", "0.7"),
+            Url($"{baseUrl}/duyet/nganh", _clock.Now, "weekly", "0.7"),
+            Url($"{baseUrl}/duyet/mon-hoc", _clock.Now, "weekly", "0.7"),
+            Url($"{baseUrl}/luan-van", _clock.Now, "weekly", "0.7"),
+            Url($"{baseUrl}/an-pham-dinh-ky", _clock.Now, "weekly", "0.7"),
+            Url($"{baseUrl}/tai-lieu-so", _clock.Now, "weekly", "0.8"),
+            Url($"{baseUrl}/thu-vien-anh", _clock.Now, "monthly", "0.5"),
             Url($"{baseUrl}/tin-tuc", _clock.Now, "daily", "0.8")
         };
 

@@ -364,6 +364,70 @@ public class CatalogTests
     }
 
     [Fact]
+    public async Task Nhap_danh_muc_nhan_ten_cho_cot_tham_chieu_va_bao_loi_khi_khong_khop()
+    {
+        // X.1 nói ngành đào tạo "Import từ Excel". Trước 04/09/2026 cột "Khoa quản lý" chỉ nhận khoá
+        // 36 ký tự: gõ tên khoa vào thì giá trị bị bỏ lặng lẽ, ngành nhập xong không thuộc khoa nào
+        // mà lượt nhập vẫn báo thành công — mất dữ liệu không một dòng lỗi.
+        var client = await ClientAsync();
+
+        var facultyCode = $"KHOA{Guid.NewGuid():N}"[..10].ToUpperInvariant();
+
+        var facultyId = await ReadAsync<Guid>(await client.PostAsJsonAsync("/api/catalogs/faculties/items", new
+        {
+            code = facultyCode,
+            name = "Khoa Công nghệ thông tin và Truyền thông",
+            isActive = true
+        }));
+
+        var majorCode = $"NG{Guid.NewGuid():N}"[..8].ToUpperInvariant();
+        var byNameCode = $"NG{Guid.NewGuid():N}"[..8].ToUpperInvariant();
+        var badCode = $"NG{Guid.NewGuid():N}"[..8].ToUpperInvariant();
+
+        var sheet = ExcelFixtures.BuildCatalogSheet(
+            "Ngành đào tạo",
+            new[] { "Mã", "Tên", "Tên tiếng Anh", "Mô tả", "Thứ tự", "Đang dùng", "Khoa quản lý" },
+            new List<string[]>
+            {
+                // Gõ **mã khoa**.
+                new[] { majorCode, "Kỹ thuật phần mềm", "", "", "1", "Có", facultyCode },
+                // Gõ **tên khoa**, không dấu và khác hoa thường — vẫn phải khớp.
+                new[] { byNameCode, "Hệ thống thông tin", "", "", "2", "Có",
+                        "khoa cong nghe thong tin va truyen thong" },
+                // Gõ một khoa không có thật: phải báo lỗi chứ không im lặng bỏ qua.
+                new[] { badCode, "Ngành không có khoa", "", "", "3", "Có", "Khoa Không Tồn Tại" }
+            });
+
+        using var content = new MultipartFormDataContent();
+        using var file = new ByteArrayContent(sheet);
+        file.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        content.Add(file, "file", "nganh.xlsx");
+
+        var result = await ReadAsync<CatalogImportResultDto>(
+            await client.PostAsync("/api/catalogs/majors/import", content));
+
+        result.ErrorRows.Should().Be(1, "chỉ dòng gõ sai tên khoa mới hỏng");
+        result.Errors.Should().Contain(error => error.Column == "Khoa quản lý");
+        result.CreatedRows.Should().Be(2);
+
+        var majors = await ReadAsync<PagedResult<CatalogItemDto>>(
+            await client.GetAsync("/api/catalogs/majors/items?pageSize=200"));
+
+        foreach (var code in new[] { majorCode, byNameCode })
+        {
+            var major = majors.Items.Single(item => item.Code == code);
+
+            major.Extras.Should().ContainKey("facultyId");
+            major.Extras["facultyId"].Should().Be(facultyId.ToString(),
+                "ngành {0} phải thuộc đúng khoa vừa lập", code);
+        }
+
+        majors.Items.Should().NotContain(item => item.Code == badCode,
+            "dòng có khoa không tồn tại thì không được nhập vào");
+    }
+
+    [Fact]
     public async Task An_import_template_is_available_for_every_catalogue()
     {
         var client = await ClientAsync();
@@ -385,5 +449,18 @@ public class CatalogTests
         var response = await client.GetAsync("/api/catalogs/khong-ton-tai/items");
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    private static async Task<T> ReadAsync<T>(HttpResponseMessage response)
+    {
+        response.IsSuccessStatusCode.Should().BeTrue(
+            "máy chủ trả về {0}: {1}", response.StatusCode, await response.Content.ReadAsStringAsync());
+
+        var payload = await response.Content.ReadFromJsonAsync<ApiResponse<T>>(LibraryConnectFactory.JsonOptions);
+
+        payload.Should().NotBeNull();
+        payload!.Success.Should().BeTrue(payload.Message);
+
+        return payload.Data!;
     }
 }

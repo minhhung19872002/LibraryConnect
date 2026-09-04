@@ -1,7 +1,19 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Breadcrumb, Button, Card, Col, Empty, List, Row, Space, Tag, Typography } from 'antd';
+import {
+  Breadcrumb,
+  Button,
+  Card,
+  Col,
+  Empty,
+  List,
+  Pagination,
+  Row,
+  Space,
+  Tag,
+  Typography,
+} from 'antd';
 import { clickable } from '@/components/clickable';
 import { opacApi } from '@/api/opac';
 import type { BrowseEntry } from '@/types/api';
@@ -11,7 +23,7 @@ const { Paragraph } = Typography;
 
 const ALPHABET = 'ABCDEFGHIKLMNOPQRSTUVXY'.split('');
 
-type BrowseKind = 'chu-de' | 'tac-gia' | 'phan-loai' | 'bo-suu-tap' | 'nganh';
+type BrowseKind = 'chu-de' | 'tac-gia' | 'phan-loai' | 'bo-suu-tap' | 'nganh' | 'mon-hoc';
 
 const TITLES: Record<BrowseKind, string> = {
   'chu-de': 'Duyệt theo chủ đề',
@@ -19,6 +31,7 @@ const TITLES: Record<BrowseKind, string> = {
   'phan-loai': 'Duyệt theo khung phân loại',
   'bo-suu-tap': 'Duyệt theo bộ sưu tập',
   nganh: 'Duyệt theo ngành đào tạo',
+  'mon-hoc': 'Duyệt theo môn học',
 };
 
 const HINTS: Record<BrowseKind, string> = {
@@ -27,6 +40,7 @@ const HINTS: Record<BrowseKind, string> = {
   'phan-loai': 'Cây phân loại theo khung DDC; chọn một nhánh để xem toàn bộ tài liệu thuộc nhánh đó.',
   'bo-suu-tap': 'Các bộ sưu tập do thư viện tổ chức.',
   nganh: 'Chọn ngành để xem danh sách môn học, rồi xem tài liệu của từng môn.',
+  'mon-hoc': 'Toàn bộ môn học của mọi ngành; chọn chữ cái đầu để thu hẹp danh sách.',
 };
 
 /** IX.2 — Duyệt theo danh mục: chủ đề, tác giả, phân loại, bộ sưu tập, ngành – môn học. */
@@ -50,6 +64,8 @@ export function BrowsePage() {
           return opacApi.browseCollections(letter);
         case 'nganh':
           return opacApi.browseMajors(letter);
+        case 'mon-hoc':
+          return opacApi.browseCourses(undefined, letter);
         default:
           return opacApi.browseSubjects(parentId, letter);
       }
@@ -68,6 +84,9 @@ export function BrowsePage() {
     }
 
     switch (kind) {
+      case 'mon-hoc':
+        navigate(`/tra-cuu?courseId=${entry.id}`);
+        break;
       case 'tac-gia':
         navigate(`/tra-cuu?authorId=${entry.id}`);
         break;
@@ -164,9 +183,11 @@ export function MajorCoursesPage() {
     queryFn: () => opacApi.browseCourses(majorId),
   });
 
+  const [page, setPage] = useState(1);
+
   const documents = useQuery({
-    queryKey: ['course-documents', majorId, courseId],
-    queryFn: () => opacApi.courseDocuments(majorId, courseId!),
+    queryKey: ['course-documents', majorId, courseId, page],
+    queryFn: () => opacApi.courseDocuments(majorId, courseId!, page),
     enabled: Boolean(courseId),
   });
 
@@ -201,7 +222,10 @@ export function MajorCoursesPage() {
               locale={{ emptyText: <Empty description="Ngành này chưa khai báo môn học." /> }}
               renderItem={(course) => (
                 <List.Item
-                  {...clickable(() => setCourseId(course.id), `${course.code} — ${course.name}`)}
+                  {...clickable(() => {
+                    setCourseId(course.id);
+                    setPage(1);
+                  }, `${course.code} — ${course.name}`)}
                   style={{
                     cursor: 'pointer',
                     background: courseId === course.id ? MAU.chinhNhat : undefined,
@@ -248,6 +272,19 @@ export function MajorCoursesPage() {
                 )}
               />
             )}
+
+            {/* Môn học có hơn một trang tài liệu thì phải đi tiếp được — trước đây danh sách dừng
+                ở 20 dòng đầu và không có cách nào xem phần còn lại. */}
+            {courseId && (documents.data?.totalCount ?? 0) > (documents.data?.pageSize ?? 20) ? (
+              <Pagination
+                style={{ marginTop: 16, textAlign: 'right' }}
+                current={documents.data?.page ?? 1}
+                pageSize={documents.data?.pageSize ?? 20}
+                total={documents.data?.totalCount ?? 0}
+                showSizeChanger={false}
+                onChange={setPage}
+              />
+            ) : null}
           </Card>
         </Col>
       </Row>

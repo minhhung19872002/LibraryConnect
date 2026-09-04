@@ -680,6 +680,18 @@ public class ContentAndOpacTests
         xml.Should().Contain("<urlset");
         xml.Should().Contain($"/tai-lieu/{bibId}");
 
+        // Mọi trang duyệt công khai phải có mặt: máy tìm kiếm không đoán ra đường dẫn của một trang
+        // đơn, nó chỉ đi theo sơ đồ trang. Thiếu dòng nào là nhánh ấy không ai tìm thấy.
+        foreach (var route in new[]
+                 {
+                     "/duyet/chu-de", "/duyet/tac-gia", "/duyet/phan-loai", "/duyet/bo-suu-tap",
+                     "/duyet/nganh", "/duyet/mon-hoc", "/luan-van", "/an-pham-dinh-ky",
+                     "/tai-lieu-so", "/thu-vien-anh", "/tin-tuc"
+                 })
+        {
+            xml.Should().Contain($"{route}</loc>", "sơ đồ trang phải có {0}", route);
+        }
+
         var robots = await anonymous.GetAsync("/robots.txt");
         var text = await robots.Content.ReadAsStringAsync();
 

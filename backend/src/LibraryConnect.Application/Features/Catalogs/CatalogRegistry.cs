@@ -305,4 +305,8 @@ public static class CatalogRegistry
             : throw new NotFoundException($"Không tìm thấy danh mục '{code}'.");
 
     public static bool Exists(string code) => ByCode.ContainsKey(code);
+
+    /// <summary>Như <see cref="Require"/> nhưng trả null khi không có — dùng khi mã danh mục đến từ
+    /// khai báo trường chứ không từ người dùng, và thiếu thì bỏ qua chứ không đổ cả lượt.</summary>
+    public static CatalogDefinition? Find(string code) => ByCode.GetValueOrDefault(code);
 }

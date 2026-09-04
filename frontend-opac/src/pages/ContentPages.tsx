@@ -285,6 +285,33 @@ export function StaticPageView() {
               </Space>
             </Card>
 
+            {settings.branches.length > 0 ? (
+              <Card type="inner" title="Các cơ sở" style={{ marginTop: 16 }}>
+                <Space direction="vertical" size={16} style={{ width: '100%' }}>
+                  {settings.branches.map((branch) => (
+                    <div key={branch.id}>
+                      <div>
+                        <b>{branch.name}</b>
+                        {branch.isHeadquarters ? ' (Trụ sở chính)' : ''}
+                      </div>
+                      {branch.address ? <div>Địa chỉ: {branch.address}</div> : null}
+                      {branch.phone ? <div>Điện thoại: {branch.phone}</div> : null}
+                      {branch.openingHours ? <div>Giờ mở cửa: {branch.openingHours}</div> : null}
+                      {branch.latitude != null && branch.longitude != null ? (
+                        <a
+                          href={`https://www.google.com/maps/dir/?api=1&destination=${branch.latitude},${branch.longitude}`}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Chỉ đường tới cơ sở này
+                        </a>
+                      ) : null}
+                    </div>
+                  ))}
+                </Space>
+              </Card>
+            ) : null}
+
             {settings.mapEmbedUrl ? (
               <iframe
                 title="Bản đồ đường tới thư viện"

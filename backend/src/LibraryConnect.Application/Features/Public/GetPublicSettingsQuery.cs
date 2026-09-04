@@ -1,6 +1,7 @@
 using LibraryConnect.Application.Common.Interfaces;
 using LibraryConnect.Application.Features.Cms;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace LibraryConnect.Application.Features.Public;
 
@@ -11,6 +12,19 @@ namespace LibraryConnect.Application.Features.Public;
 /// Everything comes from sys.system_parameters — the product ships with no customer name compiled in.
 /// </summary>
 public record GetPublicSettingsQuery : IRequest<PublicSettingsDto>;
+
+/// <summary>Một cơ sở của thư viện, hiện công khai trên trang tra cứu.</summary>
+public class PublicBranchDto
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string? Address { get; set; }
+    public string? Phone { get; set; }
+    public string? OpeningHours { get; set; }
+    public bool IsHeadquarters { get; set; }
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
+}
 
 public class PublicSettingsDto
 {
@@ -32,8 +46,17 @@ public class PublicSettingsDto
     public string? FaviconUrl { get; set; }
     public string? HeroImageUrl { get; set; }
     public string? FooterText { get; set; }
-    /// <summary>Giờ mở cửa, mỗi cơ sở một dòng.</summary>
+    /// <summary>Giờ mở cửa gõ tự do trong phần cấu hình trang, mỗi cơ sở một dòng.</summary>
     public string? OpeningHours { get; set; }
+
+    /// <summary>
+    /// Từng cơ sở kèm giờ mở cửa của chính nó (VIII.1 — "giờ mở cửa từng cơ sở").
+    ///
+    /// Dữ liệu này do màn hình Thư viện / Cơ sở nhập, nên nó luôn đúng với cơ sở thật; ô chữ tự do ở
+    /// trên chỉ còn là chỗ ghi thêm ngoại lệ (nghỉ lễ, đổi giờ tạm). Trang tra cứu ưu tiên danh sách
+    /// này, hết danh sách mới quay về ô chữ.
+    /// </summary>
+    public List<PublicBranchDto> Branches { get; set; } = new();
     public string? ContactNote { get; set; }
     public string? MapEmbedUrl { get; set; }
     public string? Facebook { get; set; }
@@ -58,11 +81,14 @@ public class GetPublicSettingsQueryHandler : IRequestHandler<GetPublicSettingsQu
 
     private readonly ISystemParameterService _parameters;
     private readonly ICmsSettingReader _site;
+    private readonly IApplicationDbContext _db;
 
-    public GetPublicSettingsQueryHandler(ISystemParameterService parameters, ICmsSettingReader site)
+    public GetPublicSettingsQueryHandler(
+        ISystemParameterService parameters, ICmsSettingReader site, IApplicationDbContext db)
     {
         _parameters = parameters;
         _site = site;
+        _db = db;
     }
 
     public async Task<PublicSettingsDto> Handle(GetPublicSettingsQuery request, CancellationToken ct)
@@ -76,8 +102,28 @@ public class GetPublicSettingsQueryHandler : IRequestHandler<GetPublicSettingsQu
         bool Flag(string key, bool fallback) =>
             bool.TryParse(Text(key), out var parsed) ? parsed : fallback;
 
+        var branches = await _db.Libraries
+            .AsNoTracking()
+            .Where(library => library.IsActive)
+            .OrderByDescending(library => library.IsHeadquarters)
+            .ThenBy(library => library.SortOrder)
+            .ThenBy(library => library.Name)
+            .Select(library => new PublicBranchDto
+            {
+                Id = library.Id,
+                Name = library.Name,
+                Address = library.Address,
+                Phone = library.Phone,
+                OpeningHours = library.OpeningHours,
+                IsHeadquarters = library.IsHeadquarters,
+                Latitude = library.Latitude,
+                Longitude = library.Longitude
+            })
+            .ToListAsync(ct);
+
         return new PublicSettingsDto
         {
+            Branches = branches,
             LibraryName = string.IsNullOrWhiteSpace(name) ? DefaultLibraryName : name,
             LibraryNameEn = await _parameters.GetAsync(ParameterKeysBridge.LibraryNameEn, ct),
             Address = await _parameters.GetAsync(ParameterKeysBridge.LibraryAddress, ct),

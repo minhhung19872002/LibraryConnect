@@ -36,6 +36,13 @@ export function InterlibraryPage() {
     mutationFn: () => opacApi.remoteSearch({ term: term.trim(), field, targetIds: selected }),
   });
 
+  // Gộp mọi biểu ghi lại, xếp theo nhan đề: cùng một cuốn ở hai thư viện phải nằm cạnh nhau thì bạn
+  // đọc mới so được. Cột "Nguồn" giữ nguyên tên thư viện của từng dòng.
+  const merged = (search.data?.targets ?? [])
+    .filter((target) => target.success)
+    .flatMap((target) => target.records)
+    .sort((left, right) => (left.title ?? '').localeCompare(right.title ?? '', 'vi'));
+
   return (
     <div className="lc-container" style={{ padding: '24px 16px 48px' }}>
       <Card title="Tìm ở thư viện khác">
@@ -90,6 +97,50 @@ export function InterlibraryPage() {
           />
         ) : null}
       </Card>
+
+      {/*
+        IX.5 nói "hiển thị kết quả **gộp** có ghi rõ nguồn". Bảng gộp đứng trước, xếp theo nhan đề để
+        cùng một cuốn ở hai thư viện nằm cạnh nhau; bảng theo từng thư viện giữ lại bên dưới vì nó là
+        chỗ duy nhất nói được máy chủ nào không tra được và mất bao lâu.
+      */}
+      {merged.length > 0 ? (
+        <Card
+          style={{ marginTop: 16 }}
+          title="Kết quả gộp từ mọi thư viện"
+          extra={<Tag color="green">{merged.length} biểu ghi</Tag>}
+        >
+          <Table
+            rowKey={(row) => `${row.sourceName}-${row.title}-${row.isbn ?? ''}`}
+            size="small"
+            pagination={merged.length > 20 ? { pageSize: 20, showSizeChanger: false } : false}
+            scroll={{ x: 1000 }}
+            dataSource={merged}
+            columns={[
+              { title: 'Nhan đề', dataIndex: 'title', width: 320 },
+              { title: 'Tác giả', dataIndex: 'author', width: 180 },
+              { title: 'Năm', dataIndex: 'publishYear', width: 80 },
+              { title: 'ISBN', dataIndex: 'isbn', width: 140 },
+              {
+                title: 'Nguồn',
+                dataIndex: 'sourceName',
+                width: 180,
+                render: (value: string) => <Tag>{value}</Tag>,
+              },
+              {
+                title: 'Ở thư viện mình',
+                dataIndex: 'existingBibId',
+                width: 200,
+                render: (bibId: string | undefined, row) =>
+                  bibId ? (
+                    <Link to={`/tai-lieu/${bibId}`}>{row.existingBibTitle ?? 'Đã có'}</Link>
+                  ) : (
+                    <span style={{ color: 'var(--lc-muted)' }}>Chưa có</span>
+                  ),
+              },
+            ]}
+          />
+        </Card>
+      ) : null}
 
       {search.data
         ? search.data.targets.map((target) => (

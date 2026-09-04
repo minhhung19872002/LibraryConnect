@@ -41,6 +41,11 @@ public static class ExcelFixtures
     public static byte[] BuildReaderSheet(IReadOnlyList<string[]> rows) =>
         Build("Bạn đọc", ReaderHeaders, rows);
 
+    /// <summary>Dựng một tệp nhập danh mục bất kỳ: tiêu đề cột lấy đúng tên trên tệp mẫu.</summary>
+    public static byte[] BuildCatalogSheet(
+        string sheetName, string[] headers, IReadOnlyList<string[]> rows) =>
+        Build(sheetName, headers, rows);
+
     private static byte[] Build(string sheetName, string[] headers, IReadOnlyList<string[]> rows)
     {
         using var workbook = new XLWorkbook();
