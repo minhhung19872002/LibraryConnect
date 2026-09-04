@@ -37,3 +37,6 @@ deploy/nginx/certs/*.pem
 
 # Rác của công cụ IDE, không phải workflow
 .github/modernize/
+
+# Worktree của các agent chạy song song (không phải mã nguồn)
+.claude/worktrees/

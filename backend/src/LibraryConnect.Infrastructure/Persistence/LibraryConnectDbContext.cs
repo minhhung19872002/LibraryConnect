@@ -32,7 +32,25 @@ public class LibraryConnectDbContext : DbContext, IApplicationDbContext
         [nameof(CatalogQueueItem)] = "catalog_queue"
     };
 
+    /// <summary>
+    /// Phạm vi dữ liệu của lượt gọi (mục 6.1). Để trống (tác vụ nền, seed, kiểm thử đơn vị) là không
+    /// giới hạn. Các thuộc tính bên dưới được bộ lọc truy vấn toàn cục tham chiếu qua <c>this</c>; EF
+    /// Core thay <c>this</c> bằng đúng thể hiện DbContext của từng lượt, nên giá trị đọc là của lượt
+    /// gọi hiện tại chứ không phải của thể hiện đầu tiên dựng mô hình.
+    /// </summary>
+    private readonly IDataScopeContext? _scope;
+
     public LibraryConnectDbContext(DbContextOptions<LibraryConnectDbContext> options) : base(options) { }
+
+    public LibraryConnectDbContext(DbContextOptions<LibraryConnectDbContext> options, IDataScopeContext? scope)
+        : base(options) => _scope = scope;
+
+    private bool ScopeWarehouseRestricted => _scope?.WarehouseRestricted ?? false;
+    private List<Guid> ScopeWarehouseIds => _scope?.WarehouseIds.ToList() ?? new List<Guid>();
+    private bool ScopeLibraryRestricted => _scope?.LibraryRestricted ?? false;
+    private List<Guid> ScopeLibraryIds => _scope?.LibraryIds.ToList() ?? new List<Guid>();
+    private bool ScopeDocumentTypeRestricted => _scope?.DocumentTypeRestricted ?? false;
+    private List<Guid> ScopeDocumentTypeIds => _scope?.DocumentTypeIds.ToList() ?? new List<Guid>();
 
     // ---- sys ----
     public DbSet<User> Users => Set<User>();
@@ -208,6 +226,42 @@ public class LibraryConnectDbContext : DbContext, IApplicationDbContext
             ApplyInstantConversions(entityType);
             ApplySoftDeleteFilter(modelBuilder, clrType);
         }
+
+        ApplyDataScopeFilters(modelBuilder);
+    }
+
+    /// <summary>
+    /// Mục 6.1: phạm vi dữ liệu cưỡng chế bằng bộ lọc truy vấn toàn cục. Mỗi thực thể chỉ có một bộ
+    /// lọc, nên điều kiện xoá mềm được viết lại vào đây cho các thực thể có phạm vi. Bộ lọc tham chiếu
+    /// thuộc tính của <c>this</c> để giá trị được lấy ở thời điểm chạy từng truy vấn.
+    /// </summary>
+    private void ApplyDataScopeFilters(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Item>().HasQueryFilter(e =>
+            e.DeletedAt == null && (!ScopeWarehouseRestricted || ScopeWarehouseIds.Contains(e.WarehouseId)));
+
+        modelBuilder.Entity<Shelf>().HasQueryFilter(e =>
+            e.DeletedAt == null && (!ScopeWarehouseRestricted || ScopeWarehouseIds.Contains(e.WarehouseId)));
+
+        modelBuilder.Entity<InventoryPeriod>().HasQueryFilter(e =>
+            e.DeletedAt == null && (!ScopeWarehouseRestricted || ScopeWarehouseIds.Contains(e.WarehouseId)));
+
+        modelBuilder.Entity<Warehouse>().HasQueryFilter(e =>
+            e.DeletedAt == null && (!ScopeWarehouseRestricted || ScopeWarehouseIds.Contains(e.Id)));
+
+        modelBuilder.Entity<Library>().HasQueryFilter(e =>
+            e.DeletedAt == null && (!ScopeLibraryRestricted || ScopeLibraryIds.Contains(e.Id)));
+
+        // KHÔNG lọc Loan qua điều hướng `e.Item.WarehouseId`: bộ lọc tham chiếu điều hướng làm EF đổi
+        // LEFT JOIN Fine→Loan thành INNER, tiền phạt không gắn phiếu (loại "Khác") biến mất khỏi mọi
+        // phép chiếu (5 phép thử tiền phạt đỏ khi thử). Phiếu mượn của kho ngoài phạm vi vẫn bị chặn
+        // ở chỗ người dùng chạm tới nó — ĐKCB (đã lọc) — còn danh sách phiếu lọc theo kho ở handler.
+
+        // Phạm vi dạng tài liệu: biểu ghi không thuộc dạng được gán thì không hiện.
+        modelBuilder.Entity<BibRecord>().HasQueryFilter(e =>
+            e.DeletedAt == null
+            && (!ScopeDocumentTypeRestricted
+                || (e.DocumentTypeId != null && ScopeDocumentTypeIds.Contains(e.DocumentTypeId.Value))));
     }
 
     /// <summary>Places every table in the schema matching the last segment of its namespace.</summary>

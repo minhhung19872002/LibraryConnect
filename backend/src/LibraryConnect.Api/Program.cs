@@ -8,6 +8,7 @@ using LibraryConnect.Api.Security;
 using LibraryConnect.Api.Swagger;
 using LibraryConnect.Application;
 using LibraryConnect.Application.Common.Interfaces;
+using LibraryConnect.Application.Common.Security;
 using LibraryConnect.Application.Common.Models;
 using LibraryConnect.Infrastructure;
 using LibraryConnect.Infrastructure.Configuration;
@@ -49,6 +50,8 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUser, CurrentUser>();
+// Phạm vi dữ liệu theo lượt gọi (mục 6.1): DbContext đọc từ đây để dựng bộ lọc truy vấn toàn cục.
+builder.Services.AddScoped<IDataScopeContext, DataScopeContext>();
 
 builder.Services
     .AddControllers(options =>
@@ -147,6 +150,8 @@ app.UseCors("LibraryConnect");
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
+// Sau xác thực, trước mọi handler: điền phạm vi kho / thư viện / dạng tài liệu của cán bộ.
+app.UseMiddleware<DataScopeMiddleware>();
 
 // Sau xác thực để đọc được thông tin tài khoản, trước khi vào bất kỳ endpoint nghiệp vụ nào.
 app.UseMiddleware<PasswordChangeRequiredMiddleware>();

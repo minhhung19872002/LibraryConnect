@@ -141,6 +141,14 @@ public class CurrentUser : ICurrentUser
             return Array.Empty<Guid>();
         }
 
+        // Bộ trung gian phạm vi dữ liệu đã tra và đệm cho lượt này; chỉ tự tra khi được gọi ngoài
+        // đường ống HTTP (không có bộ trung gian).
+        var scope = _accessor.HttpContext?.RequestServices.GetService<IDataScopeContext>();
+        if (scope is not null)
+        {
+            return scope.Raw(scopeType);
+        }
+
         _scopes ??= _permissionResolver.Value.GetUserScopesAsync(userId).GetAwaiter().GetResult();
 
         return _scopes.TryGetValue(scopeType, out var ids) ? ids : Array.Empty<Guid>();
@@ -155,6 +163,14 @@ public class CurrentUser : ICurrentUser
         if (IsSystemAdministrator)
         {
             return true;
+        }
+
+        // Suy diễn kho <-> thư viện nằm trong IDataScopeContext (gán thư viện thì mọi kho của nó
+        // là trong phạm vi), nên hỏi nó trước.
+        var scope = _accessor.HttpContext?.RequestServices.GetService<IDataScopeContext>();
+        if (scope is not null)
+        {
+            return scope.Allows(scopeType, id);
         }
 
         var ids = ScopeIds(scopeType);

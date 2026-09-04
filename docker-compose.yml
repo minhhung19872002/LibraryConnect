@@ -119,6 +119,10 @@ services:
       LC_DB_MAX_POOL_SIZE: ${LC_DB_MAX_POOL_SIZE:-60}
     ports:
       - "${API_PORT:-8080}:8080"
+      # Máy chủ Z39.50 (mục 3.3b): trong container lắng nghe cổng 2100 (tiến trình không chạy root nên
+      # không mở được cổng dưới 1024); ra ngoài là cổng 210 chuẩn để yaz-client / thư viện bạn kết
+      # nối thẳng. Bật/tắt và cổng trong bằng tham số ILL.Z3950_SERVER_*.
+      - "${Z3950_PORT:-210}:2100"
     volumes:
       - backup-data:/var/lib/libraryconnect/backups
       - api-logs:/app/logs

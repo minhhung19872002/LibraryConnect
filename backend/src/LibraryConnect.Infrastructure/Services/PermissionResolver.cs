@@ -55,16 +55,42 @@ public class PermissionResolver : IPermissionResolver
 
     public async Task<IReadOnlyDictionary<DataScopeType, IReadOnlyCollection<Guid>>> GetUserScopesAsync(Guid userId, CancellationToken ct = default)
     {
-        var rows = await _db.UserDataScopes
-            .Where(s => s.UserId == userId)
-            .Select(s => new { s.ScopeType, s.ScopeId })
-            .ToListAsync(ct);
+        // Được hỏi ở mọi lượt gọi của cán bộ (bộ trung gian phạm vi dữ liệu), nên đệm như quyền;
+        // xoá cùng lúc với quyền khi hồ sơ người dùng đổi.
+        var cached = await _cache.GetOrCreateAsync(
+            $"{CacheKeys.Permissions}scopes:{userId}",
+            async token =>
+            {
+                var rows = await _db.UserDataScopes
+                    .Where(s => s.UserId == userId)
+                    .Select(s => new { s.ScopeType, s.ScopeId })
+                    .ToListAsync(token);
 
-        return rows
-            .GroupBy(r => r.ScopeType)
-            .ToDictionary(
-                g => g.Key,
-                g => (IReadOnlyCollection<Guid>)g.Select(x => x.ScopeId).Distinct().ToList());
+                return string.Join(";", rows.Select(r => $"{(int)r.ScopeType}:{r.ScopeId:N}"));
+            },
+            CacheTtl,
+            ct);
+
+        var result = new Dictionary<DataScopeType, List<Guid>>();
+
+        foreach (var pair in (cached ?? string.Empty).Split(';', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var parts = pair.Split(':');
+            var type = (DataScopeType)int.Parse(parts[0]);
+            var id = Guid.ParseExact(parts[1], "N");
+
+            if (!result.TryGetValue(type, out var list))
+            {
+                result[type] = list = new List<Guid>();
+            }
+
+            if (!list.Contains(id))
+            {
+                list.Add(id);
+            }
+        }
+
+        return result.ToDictionary(g => g.Key, g => (IReadOnlyCollection<Guid>)g.Value);
     }
 
     public async Task<bool> IsSystemAdministratorAsync(Guid userId, CancellationToken ct = default)
@@ -85,6 +111,7 @@ public class PermissionResolver : IPermissionResolver
     {
         await _cache.RemoveAsync($"{CacheKeys.Permissions}user:{userId}", ct);
         await _cache.RemoveAsync($"{CacheKeys.Permissions}admin:{userId}", ct);
+        await _cache.RemoveAsync($"{CacheKeys.Permissions}scopes:{userId}", ct);
     }
 
     public async Task InvalidateGroupAsync(Guid groupId, CancellationToken ct = default)
