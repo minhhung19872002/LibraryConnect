@@ -48,6 +48,7 @@ public static class DependencyInjection
         services.AddScoped<ICodeGenerator, CodeGenerator>();
         services.AddScoped<IEmailSender, SmtpEmailSender>();
         services.AddScoped<INotificationSender, ReaderNotificationSender>();
+        services.AddScoped<IStaffNotifier, StaffNotifier>();
         services.AddScoped<IPushSender, FcmPushSender>();
         services.AddSingleton<IImageResizer, SkiaImageResizer>();
         services.AddHttpClient("fcm", client => client.Timeout = TimeSpan.FromSeconds(20));

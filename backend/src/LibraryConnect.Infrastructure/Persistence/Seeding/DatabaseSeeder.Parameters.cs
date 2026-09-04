@@ -104,6 +104,11 @@ public partial class DatabaseSeeder
         new("ACQ.APPROVAL_LEVELS", "ACQ", "Cấu hình bổ sung", "Số cấp duyệt yêu cầu đặt mua",
             "Yêu cầu phải đi qua đủ số cấp này mới thành Đã duyệt. Đặt 1 nếu chỉ một người duyệt.",
             ParameterDataType.Number, "1"),
+        new("ACQ.APPROVAL_GROUPS", "ACQ", "Cấu hình bổ sung", "Nhóm duyệt từng cấp",
+            "Mã nhóm người dùng duyệt từng cấp, ngăn cách bằng dấu phẩy theo đúng thứ tự cấp — ví dụ "
+            + "ACQUISITION,LIBRARIAN nghĩa là cấp 1 do Cán bộ bổ sung duyệt, cấp 2 do Thủ thư. Bỏ trống "
+            + "một vị trí thì cấp ấy ai có quyền duyệt cũng được. Một người không duyệt hai cấp liên tiếp.",
+            ParameterDataType.Text, ""),
         new("ACQ.DUPLICATE_WARNING", "ACQ", "Cấu hình bổ sung", "Cảnh báo khi tài liệu đã có trong thư viện",
             "Khi bật, form đề nghị mua tự tra ISBN và nhan đề rồi báo nếu thư viện đã có.",
             ParameterDataType.Boolean, "true"),

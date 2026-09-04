@@ -1,8 +1,11 @@
 using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
+using LibraryConnect.Application.Common.Interfaces;
 using LibraryConnect.Application.Common.Models;
+using LibraryConnect.Application.Common.Security;
 using LibraryConnect.Application.Features.Acquisition;
+using LibraryConnect.Application.Features.Admin.Notifications;
 using LibraryConnect.Application.Features.Catalogs;
 using LibraryConnect.Application.Features.Locations;
 using LibraryConnect.Domain.Enums;
@@ -75,6 +78,171 @@ public class AcquisitionTests
     // -----------------------------------------------------------------------------------------
     // III.3 — Quản lý kho
     // -----------------------------------------------------------------------------------------
+
+    [Fact]
+    public async Task Duyet_hai_cap_doi_dung_nhom_va_khong_cho_mot_nguoi_duyet_ca_hai()
+    {
+        // III.1 nói "cấu hình được quy trình duyệt nhiều cấp". Trước 04/09/2026 chỉ cấu hình được
+        // **số cấp**: ai cũng duyệt được mọi cấp, và cùng một người bấm hai lần là xong.
+        var admin = await ClientAsync();
+
+        // Cấp 2 là một nhóm do chính thư viện lập ra — đúng cách một đơn vị thật dựng quy trình hai cấp.
+        // Nhóm này được cấp **đủ quyền duyệt**, nên khi họ bị chặn ở cấp 1 thì đó là luật cấp duyệt chặn chứ
+        // không phải thiếu quyền — mượn sẵn nhóm Thủ thư thì phép thử xanh vì lý do sai.
+        var leaderCode = $"LEADER{Guid.NewGuid():N}"[..12].ToUpperInvariant();
+
+        var leaderGroupId = await ReadAsync<Guid>(await admin.PostAsJsonAsync("/api/admin/user-groups", new
+        {
+            code = leaderCode,
+            name = "Lãnh đạo thư viện (kiểm thử)",
+            description = "Duyệt cấp cuối yêu cầu đặt mua.",
+            isActive = true
+        }));
+
+        (await admin.PutAsJsonAsync($"/api/admin/user-groups/{leaderGroupId}/permissions", new
+        {
+            permissionCodes = new[]
+            {
+                PermissionCodes.AcqRequestView,
+                PermissionCodes.AcqRequestApprove
+            }
+        })).EnsureSuccessStatusCode();
+
+        await SetParameterAsync(admin, "ACQ.APPROVAL_LEVELS", "2");
+        await SetParameterAsync(admin, "ACQ.APPROVAL_GROUPS", $"ACQUISITION,{leaderCode}");
+
+        try
+        {
+            var acquisition = await GroupClientAsync(admin, "ACQUISITION", "bs");
+            var leader = await UserInGroupAsync(admin, leaderGroupId, "ld");
+
+            var requestId = await NewSubmittedRequestAsync(admin);
+
+            // Lãnh đạo có quyền duyệt nhưng không được duyệt cấp 1: cấp ấy thuộc nhóm Cán bộ bổ sung.
+            var wrongLevel = await leader.PostAsJsonAsync(
+                $"/api/acquisition/requests/{requestId}/approve", new { lines = Array.Empty<object>() });
+            wrongLevel.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+
+            // Cấp 1: đúng nhóm.
+            (await acquisition.PostAsJsonAsync(
+                $"/api/acquisition/requests/{requestId}/approve",
+                new { lines = Array.Empty<object>() })).EnsureSuccessStatusCode();
+
+            // Cùng người ấy bấm tiếp cấp 2: bị chặn, dù họ có quyền duyệt.
+            var again = await acquisition.PostAsJsonAsync(
+                $"/api/acquisition/requests/{requestId}/approve", new { lines = Array.Empty<object>() });
+            again.StatusCode.Should().BeOneOf(HttpStatusCode.Conflict, HttpStatusCode.Forbidden);
+
+            // Cấp 2 do người của nhóm lãnh đạo duyệt thì mới xong.
+            var final = await leader.PostAsJsonAsync(
+                $"/api/acquisition/requests/{requestId}/approve", new { lines = Array.Empty<object>() });
+            final.EnsureSuccessStatusCode();
+
+            var detail = await ReadAsync<PurchaseRequestDetailDto>(
+                await admin.GetAsync($"/api/acquisition/requests/{requestId}"));
+
+            detail.ApprovalLevel.Should().Be(2);
+            detail.Status.Should().Be(PurchaseRequestStatus.Approved);
+        }
+        finally
+        {
+            await SetParameterAsync(admin, "ACQ.APPROVAL_GROUPS", "");
+            await SetParameterAsync(admin, "ACQ.APPROVAL_LEVELS", "1");
+        }
+    }
+
+    [Fact]
+    public async Task Gui_duyet_thi_nguoi_duyet_nhan_duoc_thong_bao()
+    {
+        // III.1: "Gửi duyệt → chuyển trạng thái, **thông báo tới người duyệt**". Trước 04/09/2026
+        // bảng sys.notifications chỉ có dòng của bạn đọc: cán bộ duyệt phải tự vào màn hình xem có gì mới.
+        var admin = await ClientAsync();
+
+        await SetParameterAsync(admin, "ACQ.APPROVAL_GROUPS", "ACQUISITION");
+
+        try
+        {
+            var approver = await GroupClientAsync(admin, "ACQUISITION", "nd");
+
+            // Đọc sạch chuông trước, để không nhầm thông báo của lượt thử khác.
+            (await approver.PostAsync("/api/notifications/read-all", null)).EnsureSuccessStatusCode();
+
+            var requestId = await NewSubmittedRequestAsync(admin);
+
+            var page = await ReadAsync<StaffNotificationPage>(
+                await approver.GetAsync("/api/notifications?unreadOnly=true"));
+
+            page.UnreadCount.Should().BeGreaterThan(0);
+            page.Items.Items.Should().Contain(row => row.Link != null && row.Link.Contains(requestId.ToString()));
+            page.Items.Items.First(row => row.Link!.Contains(requestId.ToString()))
+                .Type.Should().Be(StaffNotificationTypes.PurchaseApproval);
+        }
+        finally
+        {
+            await SetParameterAsync(admin, "ACQ.APPROVAL_GROUPS", "");
+        }
+    }
+
+    /// <summary>Một yêu cầu đặt mua đã gửi duyệt, đủ để thử quy trình duyệt nhiều cấp.</summary>
+    private static async Task<Guid> NewSubmittedRequestAsync(HttpClient client)
+    {
+        var requestId = await ReadAsync<Guid>(await client.PostAsJsonAsync("/api/acquisition/requests", new
+        {
+            type = PurchaseRequestType.Monograph,
+            requesterName = "Khoa Kiểm Thử",
+            department = "Khoa KT",
+            reason = "Thử quy trình duyệt nhiều cấp",
+            items = new[]
+            {
+                new
+                {
+                    title = "Sách thử duyệt nhiều cấp",
+                    author = "Nguyễn Văn Duyệt",
+                    quantity = 2,
+                    unitPrice = 100000m
+                }
+            }
+        }));
+
+        (await client.PostAsync($"/api/acquisition/requests/{requestId}/submit", null))
+            .EnsureSuccessStatusCode();
+
+        return requestId;
+    }
+
+    private static async Task SetParameterAsync(HttpClient client, string key, string value) =>
+        (await client.PutAsJsonAsync("/api/admin/parameters",
+            new { parameters = new[] { new { key, value } } })).EnsureSuccessStatusCode();
+
+    /// <summary>Tài khoản cán bộ thuộc đúng một nhóm mẫu, đã qua bước đổi mật khẩu tạm.</summary>
+    private async Task<HttpClient> GroupClientAsync(HttpClient admin, string groupCode, string prefix)
+    {
+        var groups = await ReadAsync<PagedResult<Application.Features.Admin.UserGroups.UserGroupListItemDto>>(
+            await admin.GetAsync("/api/admin/user-groups?pageSize=50"));
+
+        return await UserInGroupAsync(admin, groups.Items.Single(item => item.Code == groupCode).Id, prefix);
+    }
+
+    /// <summary>Tài khoản cán bộ thuộc đúng một nhóm cho trước, đã qua bước đổi mật khẩu tạm.</summary>
+    private async Task<HttpClient> UserInGroupAsync(HttpClient admin, Guid groupId, string prefix)
+    {
+        var username = $"{prefix}{Guid.NewGuid():N}"[..14];
+
+        var created = await ReadAsync<Application.Features.Admin.Users.CreateUserResult>(
+            await admin.PostAsJsonAsync("/api/admin/users", new
+            {
+                username,
+                profile = new
+                {
+                    fullName = "Cán bộ kiểm thử quy trình duyệt",
+                    isActive = true,
+                    groupIds = new[] { groupId },
+                    dataScopes = Array.Empty<object>()
+                }
+            }));
+
+        return await _factory.CreateAuthenticatedClientAsync(username, created.TemporaryPassword);
+    }
 
     [Fact]
     public async Task Warehouse_and_shelf_can_be_created_and_appear_on_the_stack_map()

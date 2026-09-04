@@ -161,7 +161,8 @@ Cập nhật lần cuối: 02/09/2026, sau đợt hoàn thiện (bảo mật, b�
 | III.1 | Tra nhanh tài liệu thư viện đã có | **Có** | Tra theo ISBN trước, không có thì so nhan đề đã bỏ dấu; dòng trùng được đánh dấu ngay lúc lưu để người duyệt nhìn thấy |
 | III.1 | Nhập danh sách đề nghị từ Excel | **Có** | Tệp mẫu có sheet hướng dẫn; nhà cung cấp so theo tên không dấu; dòng lỗi báo theo đúng số dòng trong tệp |
 | III.1 | Duyệt yêu cầu, duyệt từng dòng, từ chối kèm lý do | **Có** | Sửa được số lượng duyệt từng dòng; duyệt thiếu thì yêu cầu thành "Duyệt một phần" |
-| III.1 | Quy trình duyệt nhiều cấp | **Có** | Tham số `ACQ.APPROVAL_LEVELS`; yêu cầu chỉ thành "Đã duyệt" sau khi qua đủ số cấp |
+| III.1 | Quy trình duyệt nhiều cấp | **Có** | Hai tham số: `ACQ.APPROVAL_LEVELS` là số cấp, `ACQ.APPROVAL_GROUPS` khai nhóm duyệt từng cấp theo thứ tự. Người ngoài nhóm bị từ chối, và một người không duyệt được hai cấp liên tiếp. Yêu cầu chỉ thành "Đã duyệt" sau khi qua đủ số cấp |
+| III.1 | Thông báo tới người duyệt khi gửi duyệt | **Có** | Chuông thông báo trên thanh trên của giao diện quản trị; gửi cho nhóm duyệt cấp kế tiếp, hoặc cho mọi cán bộ có quyền duyệt khi cấp ấy chưa gắn nhóm. Kết quả duyệt hoặc từ chối báo ngược cho người đề nghị |
 | III.1 | Tạo đơn đặt từ yêu cầu đã duyệt, gộp và nhóm theo NCC | **Có** | Một đơn cho mỗi nhà cung cấp; dòng đã nằm trong đơn trước đó được bỏ qua |
 | III.1 | In đơn đặt hàng theo mẫu | **Có** | Qua trình kết xuất biểu mẫu chung, mẫu `DH-DATHANG` |
 | III.1 | Theo dõi giao hàng, nhận từng phần, cảnh báo quá hạn | **Có** | Trạng thái đơn là hệ quả của số thực nhận; cảnh báo quá hạn theo tham số `ACQ.ORDER_OVERDUE_DAYS` |

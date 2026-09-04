@@ -438,6 +438,14 @@ xuống API. Lỗi ghi ở đây là chỗ **bảng đáp ứng ghi "Có" mà ng
 | JX3 | Nhẹ | **Dừng êm chỉ có mặc định 5 giây của .NET**: `docker compose stop` cắt ngang lượt nhập biểu ghi, phiên Z39.50 hay lượt tải tài liệu số đang chạy | Không ai đặt `ShutdownTimeout`; máy chủ Z39.50 không đóng ổ nghe khi dừng | Hạn dừng 30 giây (cấu hình được), compose cho container 45 giây; `Z3950ServerHost.StopAsync` đóng ổ nghe để trả cổng ngay cho lần khởi động sau |
 
 
+### J.A — Quy trình duyệt và thông báo cho cán bộ
+
+| Mã | Mức | Lỗi | Nguyên nhân | Sửa |
+|---|---|---|---|---|
+| JA1 | Vừa | **Quy trình duyệt nhiều cấp chỉ cấu hình được *số cấp*** dù III.1 nói "cấu hình được quy trình duyệt nhiều cấp": ai có quyền duyệt cũng duyệt được mọi cấp, và cùng một người bấm hai lần là xong — hai cấp thành hình thức | `ACQ.APPROVAL_LEVELS` đếm số lần bấm chứ không gắn cấp với ai; `ApprovedBy` chỉ ghi ở cấp cuối nên không có căn cứ để biết ai vừa duyệt cấp trước | Tham số `ACQ.APPROVAL_GROUPS` khai mã nhóm duyệt từng cấp theo thứ tự; người ngoài nhóm nhận 403, người vừa duyệt cấp trước nhận 409. `ApprovedBy/Name/At` nay ghi ở **mọi** cấp. Màn hình duyệt hiện "Chờ ‹nhóm› duyệt" trên cột trạng thái và giải thích cả hai luật trong hộp duyệt. `AcquisitionTests.Duyet_hai_cap_doi_dung_nhom_va_khong_cho_mot_nguoi_duyet_ca_hai` đỏ trước (cấp 1 trả 200 cho người sai nhóm), xanh sau. Nhóm dùng trong phép thử được cấp **đủ quyền duyệt** — mượn sẵn nhóm Thủ thư thì 403 ra từ chỗ thiếu quyền, phép thử xanh vì lý do sai |
+| JA2 | Vừa | **Không có thông báo nào cho cán bộ**: III.1 nói "gửi duyệt → chuyển trạng thái, **thông báo tới người duyệt**", V.2 nói cán bộ nhận danh sách yêu cầu chờ duyệt, II.4 phân công việc biên mục — cả ba đều im lặng, cán bộ phải tự mở màn hình ra dò | Bảng `sys.notifications` có cột `user_id` từ phase 1 nhưng không chỗ nào ghi vào — toàn bộ hệ thống thông báo làm cho **bạn đọc** rồi coi là xong | `IStaffNotifier` gửi theo tài khoản, theo nhóm, hoặc theo mã quyền (dùng khi cấp duyệt chưa gắn nhóm); điều kiện "ai nhận" nằm trong câu hỏi gửi xuống cơ sở dữ liệu. Gắn vào năm chỗ: gửi duyệt, duyệt xong còn cấp trên, duyệt/từ chối báo người đề nghị, phân công biên mục, yêu cầu đọc tài liệu hạn chế. Chuông trên thanh trên của giao diện quản trị, hỏi lại mỗi phút. Email chỉ là bản sao: SMTP hỏng được ghi nhật ký chứ không làm đổ nghiệp vụ đã gọi nó. `AcquisitionTests.Gui_duyet_thi_nguoi_duyet_nhan_duoc_thong_bao` đỏ trước (0 thông báo), xanh sau |
+
+
 ## Đ. Những chỗ đã thử phá nhưng hệ thống chịu được
 
 Ghi lại để biết chỗ nào đã kiểm và không phải kiểm lại — kèm bằng chứng, không ghi suông.
@@ -543,7 +551,7 @@ dạng quét mã nguồn chặn cả lớp lỗi quay lại thay vì chỉ chặ
 | Thiếu chức năng | 1 | 0 | 1 (H3, ghi ở "Làm tiếp") |
 | Nguy cơ | 1 | 0 | 1 (H9, ghi ở "Làm tiếp") |
 
-Cộng cả ba đợt, đợt áp thiết kế, đợt triển khai và đợt rà hoàn thiện 04/09/2026: **109 lỗi, đã sửa 107**, còn hai mục là thiếu chức năng và nguy cơ
+Cộng cả ba đợt, đợt áp thiết kế, đợt triển khai và đợt rà hoàn thiện 04/09/2026: **111 lỗi, đã sửa 109**, còn hai mục là thiếu chức năng và nguy cơ
 đã ghi rõ chỗ. Mỗi lỗi đã sửa của đợt này đều có phép thử chạy đỏ trước khi sửa và xanh sau khi sửa,
 kể cả H7: phép thử giả tiêu đề đỏ trước khi sửa `CurrentUser.Ip`.
 

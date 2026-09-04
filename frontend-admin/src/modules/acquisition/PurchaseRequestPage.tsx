@@ -191,6 +191,11 @@ export function PurchaseRequestPage() {
               Đã qua {row.approvalLevel}/{row.requiredLevels} cấp
             </Typography.Text>
           )}
+          {value === 'Submitted' && row.nextApprovalGroupName && (
+            <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+              Chờ {row.nextApprovalGroupName} duyệt
+            </Typography.Text>
+          )}
         </Space>
       ),
     },
@@ -983,11 +988,17 @@ function ApprovalModal({
     >
       {detail.data && (
         <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-          {detail.data.requiredLevels > 1 && (
+          {(detail.data.requiredLevels > 1 || detail.data.nextApprovalGroupName) && (
             <Alert
               type="info"
               showIcon
               message={`Quy trình duyệt ${detail.data.requiredLevels} cấp — yêu cầu này đã qua ${detail.data.approvalLevel} cấp.`}
+              description={
+                detail.data.nextApprovalGroupName
+                  ? `Cấp ${detail.data.approvalLevel + 1} thuộc nhóm “${detail.data.nextApprovalGroupName}”. `
+                    + 'Người ngoài nhóm, và người vừa duyệt cấp trước, không duyệt cấp này được.'
+                  : undefined
+              }
             />
           )}
 

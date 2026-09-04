@@ -10,6 +10,7 @@ import { useDrawerMenu } from './layoutBreakpoints';
 import { filterMenuByPermission, findMenuByPath, menuTree, type MenuNode } from './menuConfig';
 import { useLibraryName } from '@/hooks/useLibraryName';
 import { useServerStatus } from '@/hooks/useServerStatus';
+import { NotificationBell } from '@/components/NotificationBell';
 
 const { Header, Sider, Content, Footer } = Layout;
 const { useBreakpoint } = Grid;
@@ -176,6 +177,8 @@ export function MainLayout() {
             </span>
             {!compact && <span>{serverUp ? messages.app.serverUp : messages.app.serverDown}</span>}
           </span>
+
+          <NotificationBell />
 
           <Dropdown menu={{ items: accountMenu }} placement="bottomRight" trigger={['click']}>
             <button type="button" className="lc-account-button">

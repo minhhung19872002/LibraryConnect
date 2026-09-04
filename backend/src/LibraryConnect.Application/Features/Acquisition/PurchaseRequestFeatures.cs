@@ -29,6 +29,10 @@ public class PurchaseRequestDto
     public PurchaseRequestStatus Status { get; set; }
     public int ApprovalLevel { get; set; }
     public int RequiredLevels { get; set; }
+    /// <summary>Mã nhóm phải duyệt cấp kế tiếp; null nghĩa là cấp ấy không giới hạn nhóm.</summary>
+    public string? NextApprovalGroupCode { get; set; }
+    /// <summary>Tên nhóm phải duyệt cấp kế tiếp, để hiện thẳng trên màn hình duyệt.</summary>
+    public string? NextApprovalGroupName { get; set; }
     public DateTimeOffset? SubmittedAt { get; set; }
     public string? ApprovedByName { get; set; }
     public DateTimeOffset? ApprovedAt { get; set; }
@@ -160,7 +164,6 @@ public class SearchPurchaseRequestsQueryHandler
         SearchPurchaseRequestsQuery query, CancellationToken ct)
     {
         var request = query.Request;
-        var levels = await ApprovalFlow.RequiredLevelsAsync(_parameters, ct);
 
         var requests = _db.PurchaseRequests
             .AsNoTracking()
@@ -215,10 +218,7 @@ public class SearchPurchaseRequestsQueryHandler
             })
             .ToListAsync(ct);
 
-        foreach (var row in page)
-        {
-            row.RequiredLevels = levels;
-        }
+        await ApprovalFlow.Describe(page, _db, _parameters, ct);
 
         return new PagedResult<PurchaseRequestDto>(page, total, request.Page, request.PageSize);
     }
@@ -269,7 +269,7 @@ public class GetPurchaseRequestQueryHandler
             .FirstOrDefaultAsync(ct)
             ?? throw new NotFoundException("yêu cầu đặt mua", query.Id);
 
-        entity.RequiredLevels = await ApprovalFlow.RequiredLevelsAsync(_parameters, ct);
+        await ApprovalFlow.Describe(new[] { (PurchaseRequestDto)entity }, _db, _parameters, ct);
 
         entity.Items = await _db.PurchaseRequestItems
             .AsNoTracking()
@@ -544,11 +544,19 @@ public class SubmitPurchaseRequestCommandHandler : IRequestHandler<SubmitPurchas
 {
     private readonly IApplicationDbContext _db;
     private readonly IDateTimeProvider _clock;
+    private readonly IStaffNotifier _notifier;
+    private readonly ISystemParameterService _parameters;
 
-    public SubmitPurchaseRequestCommandHandler(IApplicationDbContext db, IDateTimeProvider clock)
+    public SubmitPurchaseRequestCommandHandler(
+        IApplicationDbContext db,
+        IDateTimeProvider clock,
+        IStaffNotifier notifier,
+        ISystemParameterService parameters)
     {
         _db = db;
         _clock = clock;
+        _notifier = notifier;
+        _parameters = parameters;
     }
 
     public async Task Handle(SubmitPurchaseRequestCommand command, CancellationToken ct)
@@ -573,6 +581,9 @@ public class SubmitPurchaseRequestCommandHandler : IRequestHandler<SubmitPurchas
         request.ApprovalLevel = 0;
 
         await _db.SaveChangesAsync(ct);
+
+        // Báo sau khi đã lưu: báo trước mà lượt lưu đổ là người duyệt đi tìm một yêu cầu không có.
+        await ApprovalFlow.NotifyApproversAsync(_notifier, _parameters, request, 1, ct);
     }
 }
 
@@ -595,17 +606,20 @@ public class ApprovePurchaseRequestCommandHandler
     private readonly ICurrentUser _currentUser;
     private readonly IDateTimeProvider _clock;
     private readonly ISystemParameterService _parameters;
+    private readonly IStaffNotifier _notifier;
 
     public ApprovePurchaseRequestCommandHandler(
         IApplicationDbContext db,
         ICurrentUser currentUser,
         IDateTimeProvider clock,
-        ISystemParameterService parameters)
+        ISystemParameterService parameters,
+        IStaffNotifier notifier)
     {
         _db = db;
         _currentUser = currentUser;
         _clock = clock;
         _parameters = parameters;
+        _notifier = notifier;
     }
 
     public async Task<PurchaseRequestStatus> Handle(
@@ -642,7 +656,40 @@ public class ApprovePurchaseRequestCommandHandler
             line.ApprovedQuantity * SerialSubscription.IssueCount(request.Type, line) * line.UnitPrice);
 
         var levels = await ApprovalFlow.RequiredLevelsAsync(_parameters, ct);
-        request.ApprovalLevel++;
+        var level = request.ApprovalLevel + 1;
+
+        // Cấp này có gán nhóm duyệt thì người bấm phải thuộc nhóm ấy. Quản trị hệ thống đi qua được
+        // mọi cấp — họ vốn có toàn quyền, chặn ở đây chỉ làm tắc việc khi thư viện thiếu người.
+        var group = await ApprovalFlow.GroupForLevelAsync(_parameters, level, ct);
+
+        if (group is not null && !_currentUser.IsSystemAdministrator)
+        {
+            var inGroup = _currentUser.UserId is { } userId
+                          && await _db.UserGroupMembers.AnyAsync(
+                              member => member.UserId == userId && member.Group!.Code == group, ct);
+
+            if (!inGroup)
+            {
+                throw new ForbiddenException(
+                    $"Cấp duyệt {level} thuộc nhóm \"{group}\"; tài khoản của bạn không nằm trong nhóm ấy.");
+            }
+        }
+
+        // Một người không duyệt hai cấp liên tiếp: duyệt nhiều cấp là để có hai cặp mắt, không phải
+        // để cùng một người bấm hai lần.
+        if (level > 1 && request.ApprovedBy is { } previous && previous == _currentUser.UserId)
+        {
+            throw new ConflictException(
+                "Bạn đã duyệt cấp trước của yêu cầu này; cấp tiếp theo phải do người khác duyệt.");
+        }
+
+        request.ApprovalLevel = level;
+
+        // Ghi người duyệt ở **mọi** cấp, không chỉ cấp cuối: đó vừa là lịch sử, vừa là căn cứ để
+        // chặn một người duyệt hai cấp liên tiếp.
+        request.ApprovedBy = _currentUser.UserId;
+        request.ApprovedByName = _currentUser.FullName;
+        request.ApprovedAt = _clock.Now;
 
         if (request.ApprovalLevel < levels)
         {
@@ -680,7 +727,44 @@ public class ApprovePurchaseRequestCommandHandler
         }
 
         await _db.SaveChangesAsync(ct);
+
+        if (request.Status == PurchaseRequestStatus.Submitted)
+        {
+            // Còn cấp trên: chuyển chuông sang nhóm duyệt cấp kế tiếp.
+            await ApprovalFlow.NotifyApproversAsync(_notifier, _parameters, request, level + 1, ct);
+        }
+        else
+        {
+            await NotifyRequesterAsync(request, ct);
+        }
+
         return request.Status;
+    }
+
+    /// <summary>Báo kết quả cho người đề nghị, nếu yêu cầu gắn với một tài khoản.</summary>
+    private async Task NotifyRequesterAsync(PurchaseRequest request, CancellationToken ct)
+    {
+        if (request.RequesterId is not { } requesterId)
+        {
+            return;
+        }
+
+        var verdict = request.Status switch
+        {
+            PurchaseRequestStatus.Approved => "đã được duyệt toàn bộ",
+            PurchaseRequestStatus.PartiallyApproved => "được duyệt một phần",
+            _ => "không được duyệt"
+        };
+
+        await _notifier.NotifyUsersAsync(
+            new[] { requesterId },
+            StaffNotificationTypes.PurchaseDecision,
+            $"Yêu cầu đặt mua {request.Code} {verdict}",
+            string.IsNullOrWhiteSpace(request.RejectReason)
+                ? $"Giá trị duyệt: {request.ApprovedAmount:N0} đ."
+                : $"Lý do: {request.RejectReason}",
+            $"/acquisition/requests/{request.Id}",
+            ct);
     }
 }
 
@@ -702,13 +786,18 @@ public class RejectPurchaseRequestCommandHandler : IRequestHandler<RejectPurchas
     private readonly IApplicationDbContext _db;
     private readonly ICurrentUser _currentUser;
     private readonly IDateTimeProvider _clock;
+    private readonly IStaffNotifier _notifier;
 
     public RejectPurchaseRequestCommandHandler(
-        IApplicationDbContext db, ICurrentUser currentUser, IDateTimeProvider clock)
+        IApplicationDbContext db,
+        ICurrentUser currentUser,
+        IDateTimeProvider clock,
+        IStaffNotifier notifier)
     {
         _db = db;
         _currentUser = currentUser;
         _clock = clock;
+        _notifier = notifier;
     }
 
     public async Task Handle(RejectPurchaseRequestCommand command, CancellationToken ct)
@@ -736,15 +825,148 @@ public class RejectPurchaseRequestCommandHandler : IRequestHandler<RejectPurchas
         }
 
         await _db.SaveChangesAsync(ct);
+
+        if (request.RequesterId is { } requesterId)
+        {
+            await _notifier.NotifyUsersAsync(
+                new[] { requesterId },
+                StaffNotificationTypes.PurchaseDecision,
+                $"Yêu cầu đặt mua {request.Code} bị từ chối",
+                $"Lý do: {request.RejectReason}",
+                $"/acquisition/requests/{request.Id}",
+                ct);
+        }
     }
 }
 
 /// <summary>Số cấp duyệt cấu hình được (III.1).</summary>
+/// <summary>
+/// Quy trình duyệt yêu cầu đặt mua (III.1 — "cấu hình được quy trình duyệt nhiều cấp").
+///
+/// Hai tham số hệ thống quyết định: <c>ACQ.APPROVAL_LEVELS</c> là số cấp, còn
+/// <c>ACQ.APPROVAL_GROUPS</c> là mã nhóm người dùng duyệt từng cấp, ngăn cách bằng dấu phẩy theo
+/// đúng thứ tự cấp — ví dụ <c>ACQUISITION,LIBRARIAN</c> nghĩa là cấp 1 do nhóm Cán bộ bổ sung duyệt,
+/// cấp 2 do nhóm Thủ thư. Bỏ trống một vị trí thì cấp ấy ai có quyền duyệt cũng được.
+/// </summary>
 internal static class ApprovalFlow
 {
+    public const string LevelsParameter = "ACQ.APPROVAL_LEVELS";
+    public const string GroupsParameter = "ACQ.APPROVAL_GROUPS";
+
     public static async Task<int> RequiredLevelsAsync(ISystemParameterService parameters, CancellationToken ct)
     {
-        var levels = await parameters.GetAsync("ACQ.APPROVAL_LEVELS", 1, ct);
+        var levels = await parameters.GetAsync(LevelsParameter, 1, ct);
         return Math.Clamp(levels, 1, 5);
+    }
+
+    /// <summary>
+    /// Gắn mã và tên nhóm duyệt cấp kế tiếp vào từng dòng yêu cầu. Tên lấy một lần cho cả trang
+    /// chứ không hỏi theo từng dòng — cả trang thường chỉ dùng một hai nhóm.
+    /// </summary>
+    public static async Task Describe(
+        IEnumerable<PurchaseRequestDto> rows,
+        IApplicationDbContext db,
+        ISystemParameterService parameters,
+        CancellationToken ct)
+    {
+        var list = rows.ToList();
+
+        if (list.Count == 0)
+        {
+            return;
+        }
+
+        var levels = await RequiredLevelsAsync(parameters, ct);
+        var codes = new Dictionary<int, string?>();
+
+        foreach (var row in list)
+        {
+            row.RequiredLevels = levels;
+
+            var next = row.ApprovalLevel + 1;
+
+            if (next > levels)
+            {
+                continue;
+            }
+
+            if (!codes.TryGetValue(next, out var code))
+            {
+                code = await GroupForLevelAsync(parameters, next, ct);
+                codes[next] = code;
+            }
+
+            row.NextApprovalGroupCode = code;
+        }
+
+        var wanted = codes.Values.Where(code => code is not null).Select(code => code!).Distinct().ToList();
+
+        if (wanted.Count == 0)
+        {
+            return;
+        }
+
+        var names = await db.UserGroups
+            .AsNoTracking()
+            .Where(group => wanted.Contains(group.Code))
+            .ToDictionaryAsync(group => group.Code, group => group.Name, ct);
+
+        foreach (var row in list.Where(row => row.NextApprovalGroupCode is not null))
+        {
+            row.NextApprovalGroupName = names.TryGetValue(row.NextApprovalGroupCode!, out var name)
+                ? name
+                : row.NextApprovalGroupCode;
+        }
+    }
+
+    /// <summary>
+    /// Báo cho những người phải duyệt cấp <paramref name="level"/> rằng có yêu cầu đang chờ họ.
+    /// Cấp ấy có gắn nhóm thì gửi đúng nhóm; không gắn thì gửi cho mọi cán bộ có quyền duyệt — không
+    /// cấu hình nhóm không có nghĩa là không ai cần biết.
+    /// </summary>
+    public static async Task NotifyApproversAsync(
+        IStaffNotifier notifier,
+        ISystemParameterService parameters,
+        PurchaseRequest request,
+        int level,
+        CancellationToken ct)
+    {
+        var group = await GroupForLevelAsync(parameters, level, ct);
+        var title = $"Yêu cầu đặt mua {request.Code} chờ duyệt";
+        var body = $"{request.RequesterName} đề nghị mua {request.Items.Count} đầu tài liệu, "
+                   + $"tổng {request.TotalAmount:N0} đ. Yêu cầu đang chờ duyệt cấp {level}.";
+        var link = $"/acquisition/requests/{request.Id}";
+
+        if (group is not null)
+        {
+            await notifier.NotifyGroupAsync(group, StaffNotificationTypes.PurchaseApproval, title, body, link, ct);
+            return;
+        }
+
+        await notifier.NotifyPermissionAsync(
+            Common.Security.PermissionCodes.AcqRequestApprove,
+            StaffNotificationTypes.PurchaseApproval, title, body, link, ct);
+    }
+
+    /// <summary>Mã nhóm phải duyệt cấp <paramref name="level"/> (đếm từ 1); null nghĩa là không giới hạn nhóm.</summary>
+    public static async Task<string?> GroupForLevelAsync(
+        ISystemParameterService parameters, int level, CancellationToken ct)
+    {
+        var configured = await parameters.GetAsync(GroupsParameter, string.Empty, ct);
+
+        if (string.IsNullOrWhiteSpace(configured) || level < 1)
+        {
+            return null;
+        }
+
+        var codes = configured.Split(',', StringSplitOptions.TrimEntries);
+
+        if (level > codes.Length)
+        {
+            return null;
+        }
+
+        var code = codes[level - 1];
+        return string.IsNullOrWhiteSpace(code) ? null : code.ToUpperInvariant();
     }
 }

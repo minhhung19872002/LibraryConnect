@@ -105,13 +105,18 @@ public class RequestDigitalAccessCommandHandler
     private readonly IApplicationDbContext _db;
     private readonly ICurrentUser _currentUser;
     private readonly IDateTimeProvider _clock;
+    private readonly IStaffNotifier _notifier;
 
     public RequestDigitalAccessCommandHandler(
-        IApplicationDbContext db, ICurrentUser currentUser, IDateTimeProvider clock)
+        IApplicationDbContext db,
+        ICurrentUser currentUser,
+        IDateTimeProvider clock,
+        IStaffNotifier notifier)
     {
         _db = db;
         _currentUser = currentUser;
         _clock = clock;
+        _notifier = notifier;
     }
 
     public async Task<DigitalAccessRequestRowDto> Handle(
@@ -155,6 +160,21 @@ public class RequestDigitalAccessCommandHandler
 
         _db.DigitalAccessRequests.Add(request);
         await _db.SaveChangesAsync(ct);
+
+        // V.2: cán bộ nhận danh sách yêu cầu chờ duyệt. Gửi cho người có quyền duyệt chứ không cho
+        // một nhóm cố định — thư viện nào giao việc ấy cho ai là quyền của họ.
+        var readerName = await _db.Readers
+            .Where(reader => reader.Id == readerId)
+            .Select(reader => reader.FullName)
+            .FirstOrDefaultAsync(ct) ?? "Bạn đọc";
+
+        await _notifier.NotifyPermissionAsync(
+            Common.Security.PermissionCodes.DigitalRequestApprove,
+            StaffNotificationTypes.DigitalAccessRequest,
+            $"Yêu cầu đọc tài liệu hạn chế: {document.Title}",
+            $"{readerName} xin đọc \"{document.Title}\". Lý do: {request.Reason}",
+            "/digital/requests",
+            ct);
 
         return await _db.DigitalAccessRequests
             .AsNoTracking()

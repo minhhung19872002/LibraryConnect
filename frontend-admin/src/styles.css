@@ -228,6 +228,69 @@ body {
   background: var(--lc-hover);
 }
 
+/*
+ * Chuông thông báo của cán bộ. Nút giữ đúng dáng nút tài khoản bên cạnh nó, còn tấm thả xuống là
+ * một tấm giấy riêng vì `dropdownRender` không mượn được nền của menu Ant Design.
+ */
+.lc-notification-button {
+  display: inline-flex;
+  align-items: center;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 17px;
+  color: inherit;
+  padding: 6px 10px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.lc-notification-button:hover,
+.lc-notification-button:focus-visible {
+  background: var(--lc-hover);
+}
+
+.lc-notification-panel {
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  max-height: 60vh;
+  overflow-y: auto;
+  background: var(--lc-paper);
+  border: 1px solid var(--lc-border);
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(42, 33, 24, 0.14);
+}
+
+.lc-notification-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--lc-border-soft);
+}
+
+.lc-notification-empty {
+  padding: 24px;
+  text-align: center;
+}
+
+.lc-notification-item {
+  cursor: pointer;
+  padding-left: 14px !important;
+  padding-right: 14px !important;
+}
+
+.lc-notification-item:hover {
+  background: var(--lc-hover);
+}
+
+/* Chưa đọc thì có vệt màu thương hiệu ở mép trái — dấu hiệu thấy được mà không cần màu nền lạ. */
+.lc-notification-item--moi {
+  border-left: 3px solid var(--lc-brand);
+  background: var(--lc-brand-soft);
+}
+
 .lc-library-name {
   flex: 1;
   margin: 0 !important;

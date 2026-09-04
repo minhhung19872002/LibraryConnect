@@ -328,8 +328,13 @@ public class AssignCatalogQueueCommandValidator : AbstractValidator<AssignCatalo
 public class AssignCatalogQueueCommandHandler : IRequestHandler<AssignCatalogQueueCommand, int>
 {
     private readonly IApplicationDbContext _db;
+    private readonly IStaffNotifier _notifier;
 
-    public AssignCatalogQueueCommandHandler(IApplicationDbContext db) => _db = db;
+    public AssignCatalogQueueCommandHandler(IApplicationDbContext db, IStaffNotifier notifier)
+    {
+        _db = db;
+        _notifier = notifier;
+    }
 
     public async Task<int> Handle(AssignCatalogQueueCommand request, CancellationToken ct)
     {
@@ -384,6 +389,21 @@ public class AssignCatalogQueueCommandHandler : IRequestHandler<AssignCatalogQue
         }
 
         await _db.SaveChangesAsync(ct);
+
+        // Phân công xong thì cán bộ phải biết, chứ không phải tự mở màn hình ra dò. Bỏ phân công
+        // (AssignedTo rỗng) thì không báo ai cả — không có người nhận để báo.
+        if (request.AssignedTo is { } assignee)
+        {
+            var deadline = request.Deadline is { } due ? $" Hạn xử lý: {due:dd/MM/yyyy}." : string.Empty;
+
+            await _notifier.NotifyUsersAsync(
+                new[] { assignee },
+                StaffNotificationTypes.CatalogAssignment,
+                $"Bạn được phân công {items.Count} việc biên mục",
+                $"Hàng đợi biên mục vừa chuyển {items.Count} biểu ghi sang tên bạn.{deadline}",
+                "/cataloging/queue",
+                ct);
+        }
 
         return items.Count;
     }

@@ -349,6 +349,9 @@ export interface PurchaseRequestDto {
   status: PurchaseRequestStatus;
   approvalLevel: number;
   requiredLevels: number;
+  /** Mã nhóm phải duyệt cấp kế tiếp; bỏ trống nghĩa là cấp ấy không giới hạn nhóm. */
+  nextApprovalGroupCode?: string | null;
+  nextApprovalGroupName?: string | null;
   submittedAt?: string | null;
   approvedByName?: string | null;
   approvedAt?: string | null;
