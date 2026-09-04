@@ -20,13 +20,23 @@ public record OpacSearchQuery(OpacSearchRequest Request) : IRequest<PagedResult<
 
 public class OpacSearchQueryHandler : IRequestHandler<OpacSearchQuery, PagedResult<OpacResultDto>>
 {
+    /// <summary>
+    /// Mục 6.3: đệm trang đầu của những lượt tra cứu lặp lại (một từ khoá được nhiều bạn đọc gõ
+    /// trong giờ cao điểm). Hạn ngắn vì kết quả mang số bản rảnh; không đệm lượt đồng bộ delta
+    /// (`updatedSince`) và các trang sâu — chúng ít lặp lại và mốc thời gian làm khoá vô dụng.
+    /// </summary>
+    private static readonly TimeSpan CacheTtl = TimeSpan.FromSeconds(60);
+    private const int CachedPages = 2;
+
     private readonly IApplicationDbContext _db;
     private readonly IOpacSearchLogger _logger;
+    private readonly ICacheService _cache;
 
-    public OpacSearchQueryHandler(IApplicationDbContext db, IOpacSearchLogger logger)
+    public OpacSearchQueryHandler(IApplicationDbContext db, IOpacSearchLogger logger, ICacheService cache)
     {
         _db = db;
         _logger = logger;
+        _cache = cache;
     }
 
     public async Task<PagedResult<OpacResultDto>> Handle(
@@ -34,6 +44,22 @@ public class OpacSearchQueryHandler : IRequestHandler<OpacSearchQuery, PagedResu
     {
         var request = query.Request;
         var stopwatch = Stopwatch.StartNew();
+
+        var cacheable = request.UpdatedSince is null && request.Page <= CachedPages;
+        var cacheKey = cacheable ? CacheKeyPrefixes.SearchPage(request) : null;
+
+        if (cacheKey is not null)
+        {
+            var cached = await _cache.GetAsync<PagedResult<OpacResultDto>>(cacheKey, ct);
+
+            if (cached is not null)
+            {
+                // Vẫn ghi nhật ký tra cứu: thống kê từ khoá phổ biến cần đủ lượt, kể cả lượt trúng đệm.
+                await _logger.LogAsync(request.Keyword, OpacScopeLabels.Describe(request.Scope),
+                    cached.TotalCount, 0, ct);
+                return cached;
+            }
+        }
 
         var records = OpacQueryBuilder.Published(_db.BibRecords.AsNoTracking());
 
@@ -51,6 +77,11 @@ public class OpacSearchQueryHandler : IRequestHandler<OpacSearchQuery, PagedResu
             .ToPagedResultAsync(request, OpacQueryBuilder.CountLimit, ct);
 
         stopwatch.Stop();
+
+        if (cacheKey is not null)
+        {
+            await _cache.SetAsync(cacheKey, result, CacheTtl, ct);
+        }
 
         await _logger.LogAsync(
             request.Keyword,

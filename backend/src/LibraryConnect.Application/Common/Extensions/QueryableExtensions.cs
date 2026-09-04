@@ -112,4 +112,31 @@ public static class CacheKeyPrefixes
     public const string Search = "search:";
     /// <summary>Bộ định nghĩa trường MARC 21, dùng cho kiểm tra biểu ghi.</summary>
     public const string MarcRules = "marc:";
+
+    /// <summary>Danh sách một danh mục theo bộ lọc (mục 6.3 — cache danh mục).</summary>
+    public static string CatalogList(string catalog, object request) =>
+        $"{Catalogs}list:{catalog.ToLowerInvariant()}:{CacheKeyHash.Of(request)}";
+
+    /// <summary>Cây của một danh mục phân cấp.</summary>
+    public static string CatalogTree(string catalog, bool activeOnly) =>
+        $"{Catalogs}tree:{catalog.ToLowerInvariant()}:{(activeOnly ? 1 : 0)}";
+
+    /// <summary>Một trang kết quả tra cứu OPAC (mục 6.3 — cache kết quả tra cứu phổ biến).</summary>
+    public static string SearchPage(object request) => $"{Search}basic:{CacheKeyHash.Of(request)}";
+}
+
+/// <summary>
+/// Băm một yêu cầu thành khoá cache ngắn: JSON của yêu cầu (ổn định theo thứ tự thuộc tính) → SHA-256
+/// → 16 ký tự hex. Hai yêu cầu giống hệt nhau về nội dung thì cùng khoá; khác một bộ lọc là khác khoá.
+/// </summary>
+public static class CacheKeyHash
+{
+    private static readonly System.Text.Json.JsonSerializerOptions Options = new(System.Text.Json.JsonSerializerDefaults.Web);
+
+    public static string Of(object request)
+    {
+        var json = System.Text.Json.JsonSerializer.Serialize(request, request.GetType(), Options);
+        var bytes = System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(json));
+        return Convert.ToHexString(bytes, 0, 8).ToLowerInvariant();
+    }
 }

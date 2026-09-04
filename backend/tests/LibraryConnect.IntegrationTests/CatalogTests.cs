@@ -2,7 +2,9 @@ using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
 using LibraryConnect.Application.Common.Models;
+using LibraryConnect.Application;
 using LibraryConnect.Application.Features.Catalogs;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace LibraryConnect.IntegrationTests;
 
@@ -39,6 +41,34 @@ public class CatalogTests
         var authors = catalogs.Single(c => c.Code == "authors");
         authors.SupportsMerge.Should().BeTrue();
         authors.Fields.Should().Contain(field => field.Key == "fullName");
+    }
+
+    [Fact]
+    public async Task Danh_muc_duoc_dem_trong_cache_va_xoa_khi_danh_muc_doi()
+    {
+        // 6.3: "Cache Redis cho: danh mục…". Trước 04/09/2026 các lệnh ghi xoá tiền tố catalog: nhưng
+        // không có gì từng ghi vào tiền tố ấy — xoá cache rỗng. Bộ kiểm thử chạy với bộ đệm trong bộ
+        // nhớ (Redis:Enabled=false) qua cùng ICacheService, nên thấy được khoá.
+        var client = await ClientAsync();
+        var request = new CatalogListRequest { Page = 1, PageSize = 20 };
+        var key = LibraryConnect.Application.Common.Extensions.CacheKeyPrefixes.CatalogList("languages", request);
+
+        using var scope = _factory.Services.CreateScope();
+        var cache = scope.ServiceProvider.GetRequiredService<LibraryConnect.Application.Common.Interfaces.ICacheService>();
+        await cache.RemoveAsync(key);
+
+        (await client.GetAsync("/api/catalogs/languages/items?page=1&pageSize=20")).EnsureSuccessStatusCode();
+        (await cache.GetAsync<PagedResult<CatalogItemDto>>(key)).Should().NotBeNull("lượt đọc đầu phải ghi vào cache");
+
+        var created = await client.PostAsJsonAsync("/api/catalogs/languages/items", new
+        {
+            code = "zz" + Guid.NewGuid().ToString("N")[..4],
+            name = "Ngôn ngữ kiểm cache",
+            isActive = true,
+        });
+        created.EnsureSuccessStatusCode();
+
+        (await cache.GetAsync<PagedResult<CatalogItemDto>>(key)).Should().BeNull("ghi vào danh mục phải xoá cache của nó");
     }
 
     [Fact]

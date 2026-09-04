@@ -35,14 +35,29 @@ public record GetCatalogItemsQuery(string Catalog, CatalogListRequest Request)
 
 public class GetCatalogItemsQueryHandler : IRequestHandler<GetCatalogItemsQuery, PagedResult<CatalogItemDto>>
 {
-    private readonly IApplicationDbContext _db;
+    /// <summary>Danh mục đổi hiếm; mọi lệnh ghi xoá cả tiền tố catalog: nên hạn này chỉ là lưới an toàn.</summary>
+    private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(10);
 
-    public GetCatalogItemsQueryHandler(IApplicationDbContext db) => _db = db;
+    private readonly IApplicationDbContext _db;
+    private readonly ICacheService _cache;
+
+    public GetCatalogItemsQueryHandler(IApplicationDbContext db, ICacheService cache)
+    {
+        _db = db;
+        _cache = cache;
+    }
 
     public Task<PagedResult<CatalogItemDto>> Handle(GetCatalogItemsQuery request, CancellationToken ct)
     {
         var definition = CatalogRegistry.Require(request.Catalog);
-        return definition.ExecuteAsync(_db, new ListOperation(request.Request), ct);
+
+        // Mục 6.3: danh mục là dữ liệu đọc nhiều ghi ít (ô chọn ở mọi biểu mẫu, bộ lọc OPAC). Khoá
+        // theo bộ lọc; các lệnh ghi của danh mục xoá cả tiền tố catalog:.
+        return _cache.GetOrCreateAsync(
+            CacheKeyPrefixes.CatalogList(definition.Code, request.Request),
+            token => definition.ExecuteAsync(_db, new ListOperation(request.Request), token),
+            CacheTtl,
+            ct);
     }
 
     private sealed class ListOperation : ICatalogOperation<PagedResult<CatalogItemDto>>
@@ -110,9 +125,16 @@ public class CatalogTreeNodeDto
 
 public class GetCatalogTreeQueryHandler : IRequestHandler<GetCatalogTreeQuery, IReadOnlyList<CatalogTreeNodeDto>>
 {
-    private readonly IApplicationDbContext _db;
+    private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(10);
 
-    public GetCatalogTreeQueryHandler(IApplicationDbContext db) => _db = db;
+    private readonly IApplicationDbContext _db;
+    private readonly ICacheService _cache;
+
+    public GetCatalogTreeQueryHandler(IApplicationDbContext db, ICacheService cache)
+    {
+        _db = db;
+        _cache = cache;
+    }
 
     public Task<IReadOnlyList<CatalogTreeNodeDto>> Handle(GetCatalogTreeQuery request, CancellationToken ct)
     {
@@ -123,7 +145,12 @@ public class GetCatalogTreeQueryHandler : IRequestHandler<GetCatalogTreeQuery, I
             throw new ConflictException($"Danh mục '{definition.PluralName}' không phải danh mục phân cấp.");
         }
 
-        return definition.ExecuteAsync(_db, new TreeOperation(request.ActiveOnly), ct);
+        // Cây phân loại vài nghìn dòng được dựng lại ở mỗi lượt mở bộ lọc; đệm như danh sách.
+        return _cache.GetOrCreateAsync(
+            CacheKeyPrefixes.CatalogTree(definition.Code, request.ActiveOnly),
+            token => definition.ExecuteAsync(_db, new TreeOperation(request.ActiveOnly), token),
+            CacheTtl,
+            ct);
     }
 
     private sealed class TreeOperation : ICatalogOperation<IReadOnlyList<CatalogTreeNodeDto>>
