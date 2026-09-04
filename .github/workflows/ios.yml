@@ -82,6 +82,10 @@ jobs:
     defaults:
       run:
         working-directory: mobile
+    env:
+      # `secrets` không dùng được trong `if` của bước, nên đưa qua env của job.
+      LC_TEST_IOS_PASSWORD: ${{ secrets.LC_TEST_IOS_PASSWORD }}
+      LC_TEST_ADMIN_PASSWORD: ${{ secrets.LC_TEST_ADMIN_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
       # `connectivity_plus` 7 gọi `NWPath.isUltraConstrained`, chỉ có trong SDK iOS mới nhất; Xcode
@@ -155,11 +159,8 @@ jobs:
       # Ba luồng ghi dữ liệu, chạy sau khói (khói đăng xuất xong, phép thử này đăng nhập bạn đọc
       # kiểm thử). Không có secret (pull request từ fork) thì bỏ qua thay vì đổ vì thiếu mật khẩu.
       - name: Đặt giữ, mượn tự phục vụ, gia hạn trên máy ảo, ghi vào máy chủ thật
-        if: ${{ secrets.LC_TEST_IOS_PASSWORD != '' }}
+        if: env.LC_TEST_IOS_PASSWORD != ''
         timeout-minutes: 25
-        env:
-          LC_TEST_IOS_PASSWORD: ${{ secrets.LC_TEST_IOS_PASSWORD }}
-          LC_TEST_ADMIN_PASSWORD: ${{ secrets.LC_TEST_ADMIN_PASSWORD }}
         run: |
           set -o pipefail
           flutter drive \
