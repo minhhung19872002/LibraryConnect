@@ -33,6 +33,8 @@ public class SerialIssueDto
     public Guid? WarehouseId { get; set; }
     public string? WarehouseName { get; set; }
     public Guid? BindingId { get; set; }
+    /// <summary>Tình trạng vật lý lúc nhận (IV.4).</summary>
+    public string? Condition { get; set; }
     public string? Note { get; set; }
     public int ArticleCount { get; set; }
     /// <summary>Quá hạn phát hành mà chưa nhận — dòng cần cán bộ để mắt tới.</summary>
@@ -129,6 +131,7 @@ public class SearchSerialIssuesQueryHandler
                 WarehouseId = issue.WarehouseId,
                 BindingId = issue.BindingId,
                 Note = issue.Note,
+                Condition = issue.Condition,
                 ArticleCount = issue.Articles.Count,
                 HasOpenClaim = _db.SerialClaims.Any(claim =>
                     claim.IssueId == issue.Id && claim.Status == SerialClaimStatus.Open)
@@ -326,7 +329,12 @@ public class GenerateSerialIssuesCommandHandler
 }
 
 /// <summary>Ghi nhận một số đã đến.</summary>
-public record ReceiveIssueInput(Guid IssueId, int Quantity, DateOnly? ReceivedDate, string? Note);
+/// <summary>
+/// Một dòng ghi nhận số đến. <c>Condition</c> là tình trạng vật lý lúc nhận (IV.4) — trước đây cán bộ
+/// chỉ ghi được vào ô ghi chú nên không lọc hay thống kê được số rách, thiếu trang.
+/// </summary>
+public record ReceiveIssueInput(
+    Guid IssueId, int Quantity, DateOnly? ReceivedDate, string? Note, string? Condition = null);
 
 /// <summary>
 /// Ghi nhận số đến, một số hoặc cả loạt (IV.3 và IV.4).
@@ -415,6 +423,7 @@ public class ReceiveSerialIssuesCommandHandler
             issue.ReceivedByName = _currentUser.FullName;
             issue.Quantity = input.Quantity;
             issue.Note = input.Note?.Trim() ?? issue.Note;
+            issue.Condition = input.Condition?.Trim() ?? issue.Condition;
 
             var warehouseId = command.WarehouseId ?? issue.WarehouseId ?? issue.Serial?.WarehouseId;
 

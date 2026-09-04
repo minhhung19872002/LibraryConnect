@@ -72,6 +72,50 @@ public class SerialTests
     // -----------------------------------------------------------------------------------------
 
     [Fact]
+    public async Task Ghi_nhan_so_bao_luu_duoc_tinh_trang_vat_ly()
+    {
+        // IV.4: "nhận từng số — ngày nhận, số lượng, tình trạng". Trước 04/09/2026 tình trạng chỉ ghi
+        // lẫn vào ô ghi chú nên không lọc hay thống kê được số rách, thiếu trang.
+        var client = await ClientAsync();
+
+        var serialId = await NewSerialAsync(
+            client, "Tạp chí Tình Trạng", SerialFrequency.Monthly, new { dayOfMonth = 10 });
+
+        await ReadAsync<GenerateIssuesResultDto>(await client.PostAsJsonAsync(
+            "/api/serials/issues/generate",
+            new { serialIds = new[] { serialId }, from = "2026-01-01", to = "2026-02-28" }));
+
+        var issues = await ReadAsync<PagedResult<SerialIssueDto>>(
+            await client.GetAsync($"/api/serials/issues?serialId={serialId}&pageSize=50"));
+
+        var target = issues.Items[0];
+
+        (await client.PostAsJsonAsync("/api/serials/issues/receive", new
+        {
+            issues = new[]
+            {
+                new
+                {
+                    issueId = target.Id,
+                    quantity = 2,
+                    receivedDate = "2026-01-12",
+                    note = "Nhận tại quầy",
+                    condition = "Rách bìa ngoài"
+                }
+            }
+        })).EnsureSuccessStatusCode();
+
+        var after = await ReadAsync<PagedResult<SerialIssueDto>>(
+            await client.GetAsync($"/api/serials/issues?serialId={serialId}&pageSize=50"));
+
+        var received = after.Items.Single(issue => issue.Id == target.Id);
+
+        received.Condition.Should().Be("Rách bìa ngoài", "tình trạng phải lưu riêng, không trộn vào ghi chú");
+        received.Note.Should().Be("Nhận tại quầy");
+        received.Quantity.Should().Be(2);
+    }
+
+    [Fact]
     public async Task Phieu_khieu_nai_in_ra_duoc_thanh_van_ban_gui_nha_cung_cap()
     {
         // IV.3 nói "tạo phiếu khiếu nại gửi nhà cung cấp". Trước 04/09/2026 chỉ có bản ghi trên màn

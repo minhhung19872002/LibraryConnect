@@ -67,6 +67,8 @@ public class SerialIssue : BaseEntity
     public Guid? ItemId { get; set; }
     public Guid? WarehouseId { get; set; }
     public Guid? BindingId { get; set; }
+    /// <summary>Tình trạng vật lý lúc nhận số báo (IV.4): nguyên vẹn, rách bìa, thiếu trang…</summary>
+    public string? Condition { get; set; }
     public string? Note { get; set; }
 
     public ICollection<SerialIssueArticle> Articles { get; set; } = new List<SerialIssueArticle>();

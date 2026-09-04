@@ -82,6 +82,8 @@ export interface SerialIssueDto {
   warehouseId?: string | null;
   warehouseName?: string | null;
   bindingId?: string | null;
+  /** Tình trạng vật lý lúc nhận (IV.4). */
+  condition?: string | null;
   note?: string | null;
   articleCount: number;
   isOverdue: boolean;

@@ -517,6 +517,7 @@ function ReceiveTab({
           quantity: quantities[id] ?? 1,
           receivedDate: (values.receivedDate as Dayjs | undefined)?.format('YYYY-MM-DD'),
           note: values.note,
+          condition: values.condition,
         })),
         createItems: values.createItems,
         warehouseId: values.warehouseId,
@@ -612,6 +613,7 @@ function ReceiveTab({
       width: 130,
       render: (value: string | null) => (value ? formatDate(value) : '—'),
     },
+    { title: 'Tình trạng', dataIndex: 'condition', width: 150, render: (value: string | null) => value ?? '—' },
     { title: 'Mã vạch', dataIndex: 'barcode', width: 150 },
     { title: 'Người nhận', dataIndex: 'receivedByName', width: 160 },
     { title: 'Bài trích', dataIndex: 'articleCount', width: 100, align: 'right' },
@@ -719,7 +721,14 @@ function ReceiveTab({
               options={(shelves.data ?? []).map((item) => ({ value: item.id, label: item.name }))}
             />
           </Form.Item>
-          <Form.Item name="note" label="Ghi chú">
+          <Form.Item
+              name="condition"
+              label="Tình trạng"
+              extra="Nguyên vẹn, rách bìa, thiếu trang… (IV.4)"
+            >
+              <Input placeholder="Nguyên vẹn" />
+            </Form.Item>
+            <Form.Item name="note" label="Ghi chú">
             <Input.TextArea rows={2} />
           </Form.Item>
         </Form>
