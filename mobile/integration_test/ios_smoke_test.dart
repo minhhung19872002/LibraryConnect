@@ -9,9 +9,8 @@ import 'package:libraryconnect_mobile/main.dart' as app;
 /// Chỉ đi những đường **không đổi dữ liệu**: xem trang chủ, tra cứu không dấu, chi tiết tài liệu,
 /// trích dẫn, duyệt danh mục, tin tức, đăng nhập – xem thẻ – xem tủ sách – đăng xuất, và chế độ
 /// tối + cỡ chữ lớn nhất (chỉ đổi tuỳ chọn lưu trong máy, không gọi máy chủ). Ba luồng có
-/// ghi (đặt giữ, gia hạn, mượn tự phục vụ) **không** chạy ở đây vì máy Mac của GitHub không dựng
-/// được máy chủ riêng (không có Docker), mà chạy vào máy chủ thật thì sinh phiếu mượn thật. Ba
-/// luồng ấy đã kiểm trên Android với máy chủ Docker — xem `docs/06`, MB.19–MB.20 và MB.30–MB.31.
+/// ghi (đặt giữ, gia hạn, mượn tự phục vụ) nằm ở `ios_write_flows_test.dart`, chạy ngay sau tệp
+/// này trong cùng workflow bằng một bạn đọc riêng cho phép thử.
 ///
 /// Cũng không chạm tới camera (`mobile_scanner`), sinh trắc học (`local_auth`) và tên Wi-Fi
 /// (`network_info_plus`): máy ảo không có phần cứng ấy.

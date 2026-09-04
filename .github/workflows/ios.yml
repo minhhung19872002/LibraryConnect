@@ -5,9 +5,12 @@
 #   1. `ios-build`  — dựng bản phát hành iOS (không ký). Bắt các lỗi cấu trúc: Swift Package Manager,
 #      iOS tối thiểu, gói không có bản iOS, mã Swift/ObjC của plugin.
 #   2. `ios-simulator` — chạy thật trên iPhone Simulator, gọi vào máy chủ thật, chụp ảnh từng màn
-#      hình làm bằng chứng nghiệm thu (E-HSMT mục 2.7).
+#      hình làm bằng chứng nghiệm thu (E-HSMT mục 2.7). Hai phép thử nối tiếp nhau:
+#        - `ios_smoke_test.dart`: các luồng KHÔNG đổi dữ liệu (tra cứu, chi tiết, đăng nhập, thẻ…).
+#        - `ios_write_flows_test.dart`: ba luồng GHI — đặt giữ, mượn tự phục vụ, gia hạn — bằng một
+#          bạn đọc riêng cho phép thử trên máy chủ thật (số thẻ ở LC_TEST_IOS_CARD bên dưới, mật
+#          khẩu và mật khẩu quản trị trong Secrets). Phép thử tự dọn: trả sách, hủy đặt giữ.
 #
-# Chỉ chạy những luồng KHÔNG đổi dữ liệu — xem chú thích đầu `integration_test/ios_smoke_test.dart`.
 # Ký và phát hành lên TestFlight cần tài khoản Apple Developer, chưa có.
 name: iOS
 
@@ -26,6 +29,9 @@ concurrency:
 env:
   FLUTTER_VERSION: 3.47.2
   LC_API_BASE_URL: https://thuvien.bluestar.com.vn/api
+  # Bạn đọc "Bạn đọc kiểm thử iOS" (loại Bạn đọc kiểm thử tự động) trên máy chủ thật — chỉ để phép
+  # thử ghi dữ liệu dùng. Mật khẩu: secret LC_TEST_IOS_PASSWORD; quản trị: LC_TEST_ADMIN_PASSWORD.
+  LC_TEST_IOS_CARD: TV2026000652
 
 jobs:
   ios-build:
@@ -72,7 +78,7 @@ jobs:
   ios-simulator:
     name: Chạy trên iPhone Simulator
     runs-on: macos-15
-    timeout-minutes: 45
+    timeout-minutes: 75
     defaults:
       run:
         working-directory: mobile
@@ -111,6 +117,9 @@ jobs:
           xcrun simctl boot "$UDID"
           xcrun simctl bootstatus "$UDID" -b
           xcrun simctl list devices | grep "$UDID"
+          # Bước xác thực trạm mở khung quét (mobile_scanner). Máy ảo không có camera, nhưng iOS vẫn
+          # hỏi quyền; cấp trước để hộp thoại hệ thống không hiện đè lên ứng dụng.
+          xcrun simctl privacy "$UDID" grant camera vn.bluestar.libraryconnect || true
       - run: flutter devices
 
       - name: Chờ máy chủ sẵn sàng
@@ -143,6 +152,26 @@ jobs:
             --dart-define=LC_PROFILE=dev \
             --dart-define=LC_API_BASE_URL=${{ env.LC_API_BASE_URL }} 2>&1 | tee drive.log
 
+      # Ba luồng ghi dữ liệu, chạy sau khói (khói đăng xuất xong, phép thử này đăng nhập bạn đọc
+      # kiểm thử). Không có secret (pull request từ fork) thì bỏ qua thay vì đổ vì thiếu mật khẩu.
+      - name: Đặt giữ, mượn tự phục vụ, gia hạn trên máy ảo, ghi vào máy chủ thật
+        if: ${{ secrets.LC_TEST_IOS_PASSWORD != '' }}
+        timeout-minutes: 25
+        env:
+          LC_TEST_IOS_PASSWORD: ${{ secrets.LC_TEST_IOS_PASSWORD }}
+          LC_TEST_ADMIN_PASSWORD: ${{ secrets.LC_TEST_ADMIN_PASSWORD }}
+        run: |
+          set -o pipefail
+          flutter drive \
+            --driver=test_driver/integration_test.dart \
+            --target=integration_test/ios_write_flows_test.dart \
+            -d ${{ steps.sim.outputs.udid }} \
+            --dart-define=LC_PROFILE=dev \
+            --dart-define=LC_API_BASE_URL=${{ env.LC_API_BASE_URL }} \
+            --dart-define=LC_TEST_CARD=${{ env.LC_TEST_IOS_CARD }} \
+            --dart-define=LC_TEST_PASSWORD="$LC_TEST_IOS_PASSWORD" \
+            --dart-define=LC_TEST_ADMIN_PASSWORD="$LC_TEST_ADMIN_PASSWORD" 2>&1 | tee drive-write.log
+
       - name: Ảnh chụp làm bằng chứng
         if: always()
         uses: actions/upload-artifact@v4
@@ -154,7 +183,10 @@ jobs:
 
       - name: Đuôi nhật ký flutter drive khi hỏng
         if: failure()
-        run: tail -150 drive.log || echo "không có drive.log"
+        run: |
+          tail -150 drive.log || echo "không có drive.log"
+          echo "===== drive-write.log ====="
+          tail -150 drive-write.log || echo "không có drive-write.log"
 
       - name: Nhật ký máy ảo khi hỏng
         if: failure()
@@ -166,6 +198,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ios-drive-log
-          path: mobile/drive.log
+          path: |
+            mobile/drive.log
+            mobile/drive-write.log
           retention-days: 7
           if-no-files-found: warn
