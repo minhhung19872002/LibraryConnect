@@ -72,6 +72,14 @@ class DigitalApi {
     return Uint8List.fromList(response.data ?? const []);
   }
 
+  /// Mục lục (bookmark PDF) do máy chủ đọc; tệp không có thì danh sách rỗng. Cùng quyền với
+  /// việc mở trang: không đọc được thì 403.
+  Future<List<DigitalOutlineEntry>> outline(String id) => _api.get(
+    '/reader/digital/$id/outline',
+    anonymous: true,
+    decode: DigitalOutlineEntry.listFromJson,
+  );
+
   Future<List<DigitalTextHit>> find(String id, String term) => _api.get(
     '/reader/digital/$id/find',
     query: {'q': term},

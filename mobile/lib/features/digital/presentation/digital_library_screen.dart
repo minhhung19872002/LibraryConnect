@@ -362,9 +362,16 @@ class _DigitalDetailScreenState extends ConsumerState<DigitalDetailScreen> {
       final api = ref.read(digitalApiProvider);
       final package = await api.createOfflinePackage(widget.id);
       final encrypted = await api.downloadPackage(package.packageId);
+      // Mục lục đi kèm gói để ngoại tuyến vẫn nhảy chương; không lấy được thì gói vẫn đọc được.
+      List<DigitalOutlineEntry> outline;
+      try {
+        outline = await api.outline(widget.id);
+      } on ApiException {
+        outline = const [];
+      }
       final entry = await ref
           .read(offlineStoreProvider)
-          .save(package, encrypted);
+          .save(package, encrypted, outline: outline);
       await ref.read(offlineListProvider.notifier).refresh();
       if (!mounted) return;
       _toast(l10n.offlineSaved(_date.format(entry.expiresAt.toLocal())));
