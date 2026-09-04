@@ -692,9 +692,13 @@ Bước 1 — backend bổ sung cho ứng dụng. Mỗi dòng có phép thử t�
 | MB.32 | Đặt giữ → Sách của tôi → hủy; gia hạn thành công (luồng 6, 7) | Bạn đọc `TV2026000008`: Gia hạn phiếu `LC00000006`; tra "co so du lieu" → chi tiết có bản rảnh → Đặt giữ chỗ → thẻ Đặt giữ → Hủy → Đồng ý | Máy chủ trả "Đã gia hạn, hạn trả mới 17/09/2026." (lần chạy sau hết lượt thì trả câu từ chối, ứng dụng hiện nguyên câu); "Đã đặt giữ. Thư viện sẽ báo khi sách sẵn sàng."; thẻ Đặt giữ có dòng với nút Hủy; hủy xong viên "Đã hủy", mất nút. Gia hạn bị từ chối vì quá hạn: MB.16 | Đúng như mong đợi (`integration_test/holds_renew_sync_flow_test.dart`) | Đạt (máy ảo) |
 | MB.33 | Đồng bộ dữ liệu trung tâm — `updatedSince` (luồng 12) | Trong phép thử: gọi API cán bộ sửa nhan đề tài liệu số `f6c04211…` thêm hậu tố; ứng dụng tra tài liệu số theo hậu tố; gọi `GET /api/reader/digital?updatedSince=<mốc 5 giây trước>`; trả lại nhan đề gốc khi dọn | Ứng dụng hiện nhan đề mới ngay; `updatedSince` trả đúng 1 tài liệu vừa sửa kèm `serverTime` | Đúng như mong đợi | Đạt (máy ảo) |
 
-Bước 11 — **iOS**. Máy phát triển chạy Windows nên iOS chưa từng được biên dịch; ba dòng dưới đây chạy
-trên máy Mac của GitHub Actions (`.github/workflows/ios.yml`, lượt chạy 33730957017, Xcode 26.3,
-iPhone Simulator iOS 26.2), gọi vào **máy chủ thật** `https://thuvien.bluestar.com.vn`.
+Bước 11 — **iOS**. Máy phát triển chạy Windows nên iOS chưa từng được biên dịch; các dòng dưới đây chạy
+trên máy Mac của GitHub Actions (`.github/workflows/ios.yml`, Xcode 26.3, iPhone Simulator iOS 26.2 —
+MB.34–MB.37 ở lượt 33730957017, MB.38–MB.40 ở lượt 33838388725 trên iPhone SE thế hệ 3, màn 375×667),
+gọi vào **máy chủ thật** `https://thuvien.bluestar.com.vn`. Ba kịch bản ghi dữ liệu dùng một bạn đọc
+riêng trên máy chủ ấy (`TV2026000652`, loại "Bạn đọc kiểm thử tự động", chính sách riêng: mượn 7 ngày,
+gia hạn 14 ngày); phép thử trả sách và hủy đặt giữ trước lẫn sau khi chạy, mã trạm lấy từ API quản
+trị lúc chạy, mã vạch chọn lúc chạy trong số bản đang rảnh.
 
 | Mã | Chức năng | Bước thực hiện | Kết quả mong đợi | Kết quả thực tế | Đạt |
 |---|---|---|---|---|---|
@@ -702,13 +706,17 @@ iPhone Simulator iOS 26.2), gọi vào **máy chủ thật** `https://thuvien.bl
 | MB.35 | Chạy trên iPhone Simulator, phần công khai | Trang chủ → thẻ Tra cứu (chưa gõ) → gõ không dấu "co so du lieu" → chi tiết → thẻ Bản in → Trích dẫn → duyệt Chủ đề → tin tức | Dữ liệu thật từ máy chủ trên mọi màn hình; gõ không dấu ra tài liệu có dấu; năm thẻ chi tiết; bảng trích dẫn sáu chuẩn | Đúng như mong đợi. Ảnh `docs/images/mobile/ios-01…ios-08` | Đạt (máy ảo) |
 | MB.36 | Chạy trên iPhone Simulator, phần bạn đọc | Tủ sách → đăng nhập `TV2026000002` → xem Tủ sách → Tài khoản → Thẻ thư viện → đăng xuất | Đăng nhập được bằng thẻ thật; Tủ sách hiện số liệu máy chủ; thẻ điện tử dựng mã vạch CODE128 và QR tại máy; đăng xuất về trạng thái khách | Đúng như mong đợi. Ảnh `docs/images/mobile/ios-09…ios-12` | Đạt (máy ảo) |
 | MB.37 | Chế độ tối và cỡ chữ lớn nhất trên iOS | Trong phiên đã đăng nhập: Tài khoản → chủ đề Tối → Sáng → Tối (đổi hai chiều) → kéo cỡ chữ lên hết nấc → xem Tài khoản, trang chủ, kết quả tra cứu, chi tiết, thẻ Bản in | Mỗi lần đổi, `Theme.of(context).brightness` đúng chiều; `MediaQuery.textScalerOf(context).scale(14) > 20` (cỡ chữ 14 nở quá 20); năm màn hình không tràn, không cắt chữ | Đúng như mong đợi. Ảnh `docs/images/mobile/ios-13…ios-17`. Đo bằng khẳng định chứ không nhìn ảnh — bài học số 13 của sổ lỗi | Đạt (máy ảo) |
+| MB.38 | Đặt giữ → Tủ sách → hủy, trên iOS (luồng 6) | Bạn đọc kiểm thử đăng nhập → tra "co so du lieu" → chi tiết có bản rảnh → Đặt giữ chỗ → thẻ Đặt giữ → Hủy → Đồng ý | SnackBar "Đã đặt giữ. Thư viện sẽ báo khi sách sẵn sàng."; `GET /api/reader/holds` có dòng `Waiting`; thẻ Đặt giữ có nút Hủy; hủy xong "Đã hủy đặt giữ.", viên "Đã hủy", mất nút | Đúng như mong đợi (`integration_test/ios_write_flows_test.dart`). Ảnh `ios-18…ios-20` | Đạt (máy ảo) |
+| MB.39 | Mượn tự phục vụ trên iOS — trạm bịa bị chặn, trạm thật cấp phiếu, mượn một cuốn thật (luồng 8) | Thẻ Đang mượn → nút Mượn tự phục vụ → nhập mã trạm bịa `LCST1\|GIA\|abc` → nhập nội dung QR thật của trạm `KHOMO-01` (lấy từ `/api/circulation/stations`) → nhập mã vạch `LC00000013` → nhập lại → Kết thúc | Mã bịa: ô đỏ câu của máy chủ; mã thật: dải "Đã xác thực tại Cửa kho mở tầng 2 · Hiệu lực đến HH:mm"; dòng xanh "Đã mượn · hạn trả"; lần hai "đã quét rồi"; phiếu "Đã mượn 1 cuốn". `GET /api/reader/loans/current` đúng một phiếu, đúng mã vạch, `loanType = SelfCheckout`, `channel = Mobile`, `renewedCount = 0` | Đúng như mong đợi; máy chủ ghi phiếu `PM00003111` ở lượt xanh 33838388725 (các lượt trước: PM00003107–PM00003110, đều đã trả). Máy ảo iPhone không có camera nên khung quét hiện lời báo, nhập bằng bàn phím. Ảnh `ios-21…ios-24`. Hai lỗi thật bắt được: I9 (không làm mới thẻ Đang mượn) và I10 (tràn 2 điểm ảnh khi bàn phím hiện trên iPhone SE) — sổ lỗi mục I | Đạt (máy ảo) |
+| MB.40 | Gia hạn thành công trên iOS, đúng phiếu vừa mượn (luồng 7) | Phiếu tóm tắt → "Xem Sách của tôi" → nút Gia hạn của phiếu ấy | "Đã gia hạn, hạn trả mới dd/MM/yyyy."; `GET /api/reader/loans/current`: `renewedCount = 1`, hạn mới sau hạn cũ | Đúng như mong đợi: hạn 11/09/2026 → 18/09/2026, chính sách riêng 7/14 ngày nên hạn mới luôn dài hơn hạn cũ (máy chủ từ chối gia hạn không kéo dài hạn). Ảnh `ios-25…ios-26`. Phép thử trả sách bằng API quầy sau khi xong | Đạt (máy ảo) |
 
-**Chưa chạy trên iOS:** ba luồng có ghi dữ liệu (đặt giữ, gia hạn, mượn tự phục vụ) — máy Mac của
-GitHub không có Docker nên không dựng được máy chủ riêng, mà chạy vào máy chủ thật thì sinh phiếu
-mượn thật; ba luồng ấy đã kiểm trên Android (MB.19–MB.20, MB.32). Cũng chưa kiểm: máy iPhone thật,
-camera, Face ID, thông báo đẩy, và bản IPA ký để phát hành (cần tài khoản Apple Developer).
+**Chưa kiểm trên iOS:** máy iPhone thật, camera, Face ID, thông báo đẩy, và bản IPA ký để phát hành
+(cần tài khoản Apple Developer). Ba luồng ghi dữ liệu mất bảy lượt chạy mới xanh trọn (33828688766 →
+33838388725): hai lượt lộ lỗi thật của ứng dụng (I9, I10), hai lượt lộ lỗi của chính phép thử (đọc
+nhầm SnackBar còn treo, chạm trượt vì bàn phím mềm của máy ảo), một lượt trúng lúc Deploy khởi động
+lại máy chủ — workflow giờ chờ Deploy của đúng commit xong hẳn rồi mới kiểm.
 
-**Đối chiếu 12 luồng bắt buộc của PROMPT-MOBILE mục 6:** 1 → MB.09 + MB.18 · 2 → MB.10 · 3 → MB.30 · 4 → MB.11 · 5 → MB.31 · 6 → MB.32 · 7 → MB.32 (thành công) + MB.16 (từ chối) · 8 → MB.19, MB.20 · 9 → MB.21, MB.23 · 10 → MB.22 (gói ngoại tuyến; chế độ máy bay kiểm qua MB.28) · 11 → MB.24 (phần trong ứng dụng; **đẩy thật chưa kiểm**) · 12 → MB.33.
+**Đối chiếu 12 luồng bắt buộc của PROMPT-MOBILE mục 6:** 1 → MB.09 + MB.18 · 2 → MB.10 · 3 → MB.30 · 4 → MB.11 · 5 → MB.31 · 6 → MB.32, MB.38 · 7 → MB.32, MB.40 (thành công) + MB.16 (từ chối) · 8 → MB.19, MB.20, MB.39 · 9 → MB.21, MB.23 · 10 → MB.22 (gói ngoại tuyến; chế độ máy bay kiểm qua MB.28) · 11 → MB.24 (phần trong ứng dụng; **đẩy thật chưa kiểm**) · 12 → MB.33.
 
 **Chưa kiểm được trong đợt này (không có thiết bị):** quét mã bằng camera trên sách thật (đủ sáng/thiếu sáng), thẻ điện tử quét bằng máy quét ở quầy, xoay ngang trên máy thật, cỡ chữ hệ thống lớn nhất trên máy thật, nhận thông báo đẩy FCM thật, bản iOS.
 

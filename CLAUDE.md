@@ -15,9 +15,11 @@
 Phần **web đã dựng xong toàn bộ Phase 1–14**: mười phân hệ I–X chạy thật, `docker compose up -d` là
 lên hệ thống hoàn chỉnh. **Phân hệ XI (ứng dụng di động Flutter, `mobile/`) đã làm xong cả 10 bước** của
 `PROMPT-MOBILE-LIBRARYCONNECT.md` trên Android: 76 phép thử đơn vị/widget, 12 luồng đầu-cuối chạy trên
-máy ảo với máy chủ Docker thật (`docs/06`, MB.01–MB.33), APK/AAB release dựng được. Chưa có: bản iOS
-(không có máy Mac), kiểm trên máy thật, nhận thông báo đẩy FCM thật, quét bằng camera thật — ghi rõ
-trong `docs/06`/`docs/07`, không đánh "Đạt". Cách làm việc, cạm bẫy dựng Android, cách chụp ảnh bằng
+máy ảo với máy chủ Docker thật (`docs/06`, MB.01–MB.33), APK/AAB release dựng được. **iOS** dựng và
+chạy trên iPhone Simulator của máy Mac GitHub Actions (`.github/workflows/ios.yml`, MB.34–MB.40), kể
+cả ba luồng ghi dữ liệu vào máy chủ thật bằng một bạn đọc kiểm thử riêng. Chưa có: máy iPhone thật,
+IPA ký (không có tài khoản Apple Developer), nhận thông báo đẩy FCM thật, quét bằng camera thật — ghi
+rõ trong `docs/06`/`docs/07`, không đánh "Đạt". Cách làm việc, cạm bẫy dựng Android, cách chụp ảnh bằng
 `flutter drive`: `mobile/README.md`.
 
 Sau khi xong Phase 14 đã chạy thêm **một đợt rà soát chất lượng toàn diện** — mở hệ thống như người
@@ -30,7 +32,7 @@ liệu trình diễn lớn, rà soát lần hai, và làm sạch bảng đáp �
 sổ lỗi) và **đợt rà thứ ba** (mục H) đi vào sáu chỗ hai đợt trước chưa tới — trình soạn MARC bằng
 chuột, ba trình thiết kế mẫu, kiểm kê, đóng tập, trình đọc có chữ chìm, sao lưu – phục hồi — và tìm
 ra hai lỗi nghiêm trọng đã sống từ phase 5: sửa biểu ghi đã có thì không lưu được, và địa chỉ IP người
-dùng vừa giả được vừa bị nhốt chung một ngăn giới hạn tốc độ. Cộng tất cả: **57 lỗi, đã sửa 55**; hai mục còn lại (thiếu chức
+dùng vừa giả được vừa bị nhốt chung một ngăn giới hạn tốc độ. Cộng tất cả: **59 lỗi, đã sửa 57**; hai mục còn lại (thiếu chức
 năng H3, nguy cơ H9) ghi rõ ở "Làm tiếp gì sau đây" của sổ lỗi. Trang tra cứu đã áp lại theo dự án
 Claude Design "LibraryConnect layout design".
 

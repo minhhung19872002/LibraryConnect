@@ -116,9 +116,13 @@ flutter test integration_test -d <device> --dart-define=LC_API_BASE_URL=http://1
   Pixel 9, ổ dữ liệu 8 GB), tạo bằng `avdmanager create avd -n LC_Pixel -k "system-images;android-36;google_apis_playstore;x86_64" -d pixel_9`.
 
 - **iOS dựng và chạy trên máy Mac của GitHub Actions** (`.github/workflows/ios.yml`): job `ios-build`
-  dựng bản phát hành không ký, job `ios-simulator` chạy `integration_test/ios_smoke_test.dart` trên
-  iPhone Simulator với máy chủ thật rồi tải ảnh chụp lên artifact `ios-screenshots`. Máy Mac ấy
-  không có Docker nên không dựng được máy chủ riêng: chỉ chạy các luồng không đổi dữ liệu.
+  dựng bản phát hành không ký, job `ios-simulator` chạy `integration_test/ios_smoke_test.dart` (các
+  luồng không đổi dữ liệu) rồi `ios_write_flows_test.dart` (đặt giữ, mượn tự phục vụ, gia hạn) trên
+  iPhone Simulator với máy chủ thật, tải ảnh chụp lên artifact `ios-screenshots`. Máy Mac ấy không có
+  Docker nên ba luồng ghi dùng một bạn đọc riêng trên máy chủ thật (thẻ trong `LC_TEST_IOS_CARD` của
+  workflow, mật khẩu và mật khẩu quản trị trong Secrets `LC_TEST_IOS_PASSWORD`, `LC_TEST_ADMIN_PASSWORD`);
+  phép thử tự trả sách, hủy đặt giữ. Job chờ Deploy của cùng commit xong rồi mới kiểm, vì Deploy khởi
+  động lại máy chủ.
 - **Soi ở bề rộng 360dp + cỡ chữ 1,3 trước khi phát hành** (lỗi I2 sổ lỗi): máy ảo Pixel 9 rộng 411dp nên
   giấu hết lỗi tràn của điện thoại thật. Trên máy ảo: `adb shell wm density 480` và
   `adb shell settings put system font_scale 1.3`; xong thì `wm density reset` + `font_scale 1.0`.
@@ -154,7 +158,7 @@ flutter gen-l10n                                            # tự chạy khi `f
 | 8 | Thông báo (danh sách, mở đúng màn hình, cài đặt loại), dịch vụ đẩy FCM (tắt lặng lẽ khi thiếu Firebase), tài khoản đầy đủ, khoá sinh trắc học, cài đặt lưu máy | Xong — MB.24–MB.26; đẩy thật chưa kiểm |
 | 9 | Ngoại tuyến (dải mất mạng, bộ đệm đang mượn/tra cứu/cài đặt, phông đóng gói), ghim chứng chỉ, chế độ tối + cỡ chữ lớn soi tràn chữ, đo khởi động lạnh | Xong — MB.27–MB.29; máy thật chưa đo |
 | 10 | 12 luồng đầu-cuối (MB.09–MB.33), APK/AAB release, biểu tượng, ký bằng `key.properties`, tài liệu 01/06/07 | Xong |
-| 11 | iOS: dựng bản phát hành không ký + chạy trên iPhone Simulator (MB.34–MB.36) qua `.github/workflows/ios.yml` | Xong — máy iPhone thật và IPA ký chưa có |
+| 11 | iOS: dựng bản phát hành không ký + chạy trên iPhone Simulator (MB.34–MB.40, gồm ba luồng ghi vào máy chủ thật) qua `.github/workflows/ios.yml` | Xong — máy iPhone thật và IPA ký chưa có |
 
 Chưa bước nào chạy được trên **máy thật**: máy phát triển không có điện thoại kết nối. Mỗi bước ghi rõ điều này trong báo cáo.
 Android đã cài thử trên một máy Samsung của người dùng (lỗi I2 sổ lỗi sinh ra từ đó).
