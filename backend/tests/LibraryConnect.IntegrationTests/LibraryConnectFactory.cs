@@ -164,8 +164,15 @@ public class LibraryConnectFactory : WebApplicationFactory<Program>, IAsyncLifet
             // Phase 15: thông báo đẩy đi qua bộ ghi giả để phép thử đọc lại được đã gửi gì tới thiết bị
             // nào — không có dự án Firebase nào trong bộ kiểm thử.
             services.AddSingleton<LibraryConnect.Application.Common.Interfaces.IPushSender>(PushSender);
+
+            // Mục 6.4: quét virus tuỳ chọn. Bộ kiểm thử không dựng ClamAV, nên đấu một bộ quét giả —
+            // tắt sẵn (mọi tệp sạch), bài nào cần thì bật RejectAll để thử đường từ chối.
+            services.AddSingleton<LibraryConnect.Application.Common.Interfaces.IVirusScanner>(VirusScanner);
         });
     }
+
+    /// <summary>Bộ quét virus giả dùng chung cho cả bộ kiểm thử.</summary>
+    public StubVirusScanner VirusScanner { get; } = new();
 
     /// <summary>Mọi thông báo đẩy máy chủ định gửi trong bộ kiểm thử đều rơi vào đây.</summary>
     public RecordingPushSender PushSender { get; } = new();

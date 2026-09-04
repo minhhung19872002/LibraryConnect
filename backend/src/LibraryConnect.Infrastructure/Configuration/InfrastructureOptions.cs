@@ -15,6 +15,21 @@ public class JwtOptions
     public int RefreshTokenDays { get; set; } = 30;
 }
 
+/// <summary>
+/// Quét virus tệp tải lên (mục 6.4 — "ClamAV tùy chọn"). Tắt mặc định: thư viện nhỏ không muốn dựng
+/// thêm container chỉ để quét. Bật thì phải nối được clamd, nếu không tệp bị từ chối chứ không lặng
+/// lẽ cho qua.
+/// </summary>
+public class ClamAvOptions
+{
+    public const string SectionName = "ClamAv";
+
+    public bool Enabled { get; set; }
+    public string Host { get; set; } = "clamav";
+    public int Port { get; set; } = 3310;
+    public int TimeoutSeconds { get; set; } = 60;
+}
+
 public class MinioOptions
 {
     public const string SectionName = "Minio";

@@ -27,6 +27,7 @@ public static class DependencyInjection
         services.Configure<SmtpOptions>(configuration.GetSection(SmtpOptions.SectionName));
         services.Configure<BackupOptions>(configuration.GetSection(BackupOptions.SectionName));
         services.Configure<FcmOptions>(configuration.GetSection(FcmOptions.SectionName));
+        services.Configure<ClamAvOptions>(configuration.GetSection(ClamAvOptions.SectionName));
 
         var connectionString = configuration.GetConnectionString("Default")
             ?? throw new InvalidOperationException(
@@ -53,6 +54,7 @@ public static class DependencyInjection
         services.AddScoped<IBackgroundJobService, HangfireBackgroundJobService>();
         services.AddScoped<IBackupService, PostgresBackupService>();
         services.AddScoped<IObjectStorageMirror, ObjectStorageMirror>();
+        services.AddSingleton<IVirusScanner, ClamAvScanner>();
         services.AddSingleton<IHtmlSanitizer, HtmlSanitizerService>();
         services.AddScoped<Application.Features.Cataloging.ICustomIndexHarvester, CustomIndexHarvester>();
         services.AddScoped<Application.Features.Cataloging.ICoverImageFinder, CoverImageFinder>();

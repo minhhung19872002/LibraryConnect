@@ -184,13 +184,16 @@ public class DigitalDocumentWriter
     private readonly IDateTimeProvider _clock;
     private readonly IBackgroundJobService _jobs;
 
+    private readonly IVirusScanner _scanner;
+
     public DigitalDocumentWriter(
         IApplicationDbContext db,
         IFileStorage storage,
         ISystemParameterService parameters,
         ICurrentUser currentUser,
         IDateTimeProvider clock,
-        IBackgroundJobService jobs)
+        IBackgroundJobService jobs,
+        IVirusScanner scanner)
     {
         _db = db;
         _storage = storage;
@@ -198,12 +201,14 @@ public class DigitalDocumentWriter
         _currentUser = currentUser;
         _clock = clock;
         _jobs = jobs;
+        _scanner = scanner;
     }
 
     public async Task<Guid> CreateAsync(
         string fileName, byte[] content, DigitalDocumentMetadata metadata, CancellationToken ct)
     {
         await GuardFileAsync(fileName, content.LongLength, ct);
+        await ScanAsync(content, fileName, ct);
 
         var mimeType = DigitalStorage.DetectMimeType(content, fileName)
             ?? throw new ValidationException(
@@ -281,6 +286,21 @@ public class DigitalDocumentWriter
     }
 
     /// <summary>Chặn tệp quá lớn hoặc phần mở rộng không nằm trong danh sách cho phép.</summary>
+    /// <summary>
+    /// Quét virus trước khi ghi vào kho đối tượng (mục 6.4). Đặt ở đây vì đây là cổng vào duy nhất
+    /// của cả tải một tệp lẫn ghép tệp tải theo mảnh — tệp nhiễm không bao giờ chạm tới MinIO.
+    /// </summary>
+    public async Task ScanAsync(byte[] content, string fileName, CancellationToken ct)
+    {
+        var result = await _scanner.ScanAsync(content, fileName, ct);
+
+        if (!result.IsClean)
+        {
+            throw new ValidationException(
+                "file", $"Tệp bị từ chối: máy chủ quét virus phát hiện {result.Signature}.");
+        }
+    }
+
     public async Task GuardFileAsync(string fileName, long size, CancellationToken ct)
     {
         var maxMb = await _parameters.GetAsync("UPLOAD.MAX_SIZE_MB", 500, ct);

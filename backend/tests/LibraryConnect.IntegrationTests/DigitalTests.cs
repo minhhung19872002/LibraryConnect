@@ -283,6 +283,43 @@ public class DigitalTests
     }
 
     [Fact]
+    public async Task Tep_nhiem_virus_bi_tu_choi_ngay_o_cong_vao()
+    {
+        // Mục 6.4: "quét virus (ClamAV tùy chọn)". Trước 04/09/2026 không có mã nào quét gì cả.
+        // Bộ quét giả đứng thay clamd: bật lên thì tệp bị từ chối và không hề chạm tới MinIO.
+        var client = await ClientAsync();
+        var scanner = _factory.VirusScanner;
+
+        scanner.Enabled = true;
+        scanner.RejectAll = true;
+        var before = scanner.Scans;
+
+        try
+        {
+            var form = new MultipartFormDataContent();
+            var file = new ByteArrayContent(BuildPdf("Tệp giả nhiễm virus", pages: 1));
+            file.Headers.ContentType = new MediaTypeHeaderValue("application/pdf");
+            form.Add(file, "file", "nhiem-virus.pdf");
+            form.Add(new StringContent("Tệp nhiễm"), "title");
+
+            var response = await client.PostAsync("/api/digital/documents/upload", form);
+
+            response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+            (await ErrorTextAsync(response)).Should().Contain("Eicar-Test-Signature");
+            scanner.Scans.Should().BeGreaterThan(before, "cổng vào phải thật sự gọi bộ quét");
+        }
+        finally
+        {
+            scanner.RejectAll = false;
+            scanner.Enabled = false;
+        }
+
+        // Tắt bộ quét thì tệp sạch đi qua như thường — bản cài không dựng ClamAV vẫn dùng được.
+        var ok = await UploadAndWaitAsync(client, "Tệp sạch sau khi tắt bộ quét");
+        ok.Document.Title.Should().Be("Tệp sạch sau khi tắt bộ quét");
+    }
+
+    [Fact]
     public async Task Tep_khong_nhan_ra_dinh_dang_thi_bi_tu_choi()
     {
         var client = await ClientAsync();
