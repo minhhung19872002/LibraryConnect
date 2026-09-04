@@ -144,3 +144,24 @@ export function beep(kind: 'ok' | 'error'): void {
     // Trình duyệt chặn âm thanh khi chưa có tương tác của người dùng — không phải lỗi đáng báo.
   }
 }
+
+/** Mã cảnh báo máy chủ trả về khi bản in thuộc kho đang đóng để kiểm kê (III.4 bước 1). */
+export const WAREHOUSE_CLOSED_WARNING = 'WAREHOUSE_CLOSED';
+
+/**
+ * Câu cảnh báo trên đầu màn hình quầy khi có kho đang đóng để kiểm kê. Trả về null khi không kho
+ * nào đóng, để màn hình không phải tự đếm.
+ */
+export function closedWarehouseNotice(
+  warehouses: ReadonlyArray<{ name: string; isClosedForInventory: boolean }>,
+): string | null {
+  const closed = warehouses.filter((warehouse) => warehouse.isClosedForInventory);
+
+  if (closed.length === 0) return null;
+
+  const names = closed.map((warehouse) => warehouse.name).join(', ');
+
+  return closed.length === 1
+    ? `Kho ${names} đang đóng để kiểm kê: không ghi mượn sách của kho này; sách trả về thì giữ ở quầy, chưa xếp lên giá.`
+    : `${closed.length} kho đang đóng để kiểm kê (${names}): không ghi mượn sách của các kho này; sách trả về thì giữ ở quầy, chưa xếp lên giá.`;
+}

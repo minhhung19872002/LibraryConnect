@@ -193,6 +193,25 @@ public class ReadersController : ApiControllerBase
         return Ok(Success(result, $"Đã cấp lại thẻ số {result.CardNumber}."));
     }
 
+    /// <summary>
+    /// In giấy xác nhận trả sách (VII.4) cho một bạn đọc theo mẫu biểu dùng chung. Đặt ở đây với quyền
+    /// xem bạn đọc, vì cán bộ bạn đọc không có quyền in chứng từ bổ sung mà lối in chung đòi hỏi.
+    /// </summary>
+    [HttpGet("{id:guid}/clearance/print")]
+    [RequirePermission(PermissionCodes.ReaderView)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> PrintClearance(Guid id, [FromQuery] Guid? templateId, CancellationToken ct)
+    {
+        var clearance = await Mediator.Send(new GetReaderClearanceQuery(id), ct);
+
+        var file = await Mediator.Send(
+            new Application.Features.Acquisition.PrintFormCommand(
+                Application.Features.Acquisition.FormTypes.Clearance, clearance.CardNumber, templateId), ct);
+
+        return File(file.Content, file.ContentType, file.FileName);
+    }
+
     /// <summary>Chuyển trạng thái ra trường; bạn đọc còn sách hoặc nợ phí bị giữ lại kèm lý do.</summary>
     [HttpPost("graduate")]
     [RequirePermission(PermissionCodes.ReaderUpdate)]
@@ -451,6 +470,26 @@ public class ReadersController : ApiControllerBase
             new StartReaderImportCommand(content, file.FileName, ParseOptions(options)), ct);
 
         return Ok(Success(batchId, "Đã xếp hàng đợt nhập. Theo dõi tiến độ ở danh sách bên dưới."));
+    }
+
+    /// <summary>
+    /// Kiểm tra lại (<c>dryRun</c>) hoặc nhập thật những dòng cán bộ đã sửa ngay trên bảng lỗi, không
+    /// cần sửa tệp Excel. Số dòng giữ nguyên như trong tệp để đối chiếu.
+    /// </summary>
+    [HttpPost("import/rows")]
+    [RequirePermission(PermissionCodes.ReaderImport)]
+    [ProducesResponseType(typeof(ApiResponse<ReaderImportRowsResultDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<ReaderImportRowsResultDto>>> ImportRows(
+        [FromBody] ImportReaderRowsCommand command, CancellationToken ct)
+    {
+        var result = await Mediator.Send(command, ct);
+
+        return Ok(Success(result, result.DryRun
+            ? (result.ErrorRows == 0
+                ? $"{result.TotalRows} dòng đã hợp lệ, có thể nhập."
+                : $"Còn {result.ErrorRows} dòng lỗi.")
+            : $"Đã nhập {result.Created + result.Updated} dòng" +
+              (result.ErrorRows > 0 ? $", còn {result.ErrorRows} dòng lỗi." : ".")));
     }
 
     /// <summary>Danh sách các đợt nhập bạn đọc.</summary>

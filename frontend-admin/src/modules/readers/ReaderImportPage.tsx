@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   App,
   Alert,
@@ -7,6 +7,7 @@ import {
   Checkbox,
   Col,
   Empty,
+  Input,
   Progress,
   Row,
   Select,
@@ -23,6 +24,8 @@ import {
   DownloadOutlined,
   FileExcelOutlined,
   PictureOutlined,
+  ReloadOutlined,
+  SyncOutlined,
 } from '@ant-design/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnsType } from 'antd/es/table';
@@ -33,7 +36,13 @@ import { PERMISSIONS } from '@/api/permissions';
 import { saveBlob } from '@/modules/marc/api';
 import { useCatalogOptions, toOptions } from '@/modules/cataloging/useCatalogOptions';
 import { readersApi } from './api';
-import { duplicateActionOptions, formatDateTime, importFieldLabels } from './labels';
+import {
+  duplicateActionOptions,
+  formatDateTime,
+  importFieldLabels,
+  parseSyncItems,
+  syncSummary,
+} from './labels';
 import { MAU } from '@/lib/palette';
 import type {
   ReaderImportBatchDto,
@@ -41,6 +50,8 @@ import type {
   ReaderImportErrorDto,
   ReaderImportOptions,
   ReaderImportPreviewDto,
+  ReaderImportRawRowDto,
+  ReaderSyncResultDto,
 } from './types';
 
 const statusLabels: Record<ReaderImportBatchDto['status'], string> = {
@@ -71,6 +82,14 @@ export function ReaderImportPage() {
 
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<ReaderImportPreviewDto | null>(null);
+  // Bảng lỗi sửa được tại chỗ: nguyên ô của các dòng lỗi, cán bộ sửa rồi kiểm tra lại và nhập,
+  // không phải mở lại Excel. Lỗi của từng dòng đi kèm để biết còn sai chỗ nào.
+  const [fixedRows, setFixedRows] = useState<ReaderImportRawRowDto[]>([]);
+  const [rowErrors, setRowErrors] = useState<ReaderImportErrorDto[]>([]);
+  // Đồng bộ từ hệ thống đào tạo: dán JSON, thử trước, rồi mới ghi.
+  const [syncText, setSyncText] = useState('');
+  const [syncTypeId, setSyncTypeId] = useState<string | undefined>(undefined);
+  const [syncResult, setSyncResult] = useState<ReaderSyncResultDto | null>(null);
   const [options, setOptions] = useState<ReaderImportOptions>({
     onDuplicate: 0,
     createMissingCatalogs: true,
@@ -100,10 +119,17 @@ export function ReaderImportPage() {
     onError: (error: Error) => message.error(error.message),
   });
 
+  const syncMapping = useQuery({
+    queryKey: ['reader-sync-mapping'],
+    queryFn: () => readersApi.syncMapping(),
+  });
+
   const validate = useMutation({
     mutationFn: () => readersApi.validateImport(file as File, currentOptions()),
     onSuccess: (result) => {
       setPreview(result);
+      setFixedRows(result.errorRowCells);
+      setRowErrors(result.errors);
 
       if (result.errorRows === 0) {
         message.success(`Tệp hợp lệ: ${result.validRows} dòng sẵn sàng nhập.`);
@@ -131,6 +157,74 @@ export function ReaderImportPage() {
     onSuccess: () => {
       message.success('Đã lưu ánh xạ cột cho lần nhập sau.');
       void queryClient.invalidateQueries({ queryKey: ['reader-import-mapping'] });
+    },
+    onError: (error: Error) => message.error(error.message),
+  });
+
+  const importRows = useMutation({
+    mutationFn: (dryRun: boolean) =>
+      readersApi.importRows({
+        rows: fixedRows,
+        options: currentOptions(),
+        dryRun,
+        fileName: preview?.fileName,
+      }),
+    onSuccess: (result, dryRun) => {
+      setRowErrors(result.errors);
+
+      if (dryRun) {
+        if (result.errorRows === 0) {
+          message.success(`${result.totalRows} dòng đã hợp lệ. Bấm "Nhập các dòng đã sửa" để ghi.`);
+        } else {
+          message.warning(`Còn ${result.errorRows} dòng lỗi.`);
+        }
+        return;
+      }
+
+      // Dòng nào đã vào hệ thống thì rời khỏi lưới; dòng còn lỗi ở lại để sửa tiếp.
+      setFixedRows(result.errorRowCells);
+      message.success(
+        `Đã nhập ${result.created + result.updated} dòng` +
+          (result.errorRows > 0 ? `, còn ${result.errorRows} dòng lỗi.` : '.'),
+      );
+      void queryClient.invalidateQueries({ queryKey: ['reader-import-batches'] });
+      void queryClient.invalidateQueries({ queryKey: ['readers'] });
+    },
+    onError: (error: Error) => message.error(error.message),
+  });
+
+  const saveSyncMapping = useMutation({
+    mutationFn: (next: Record<string, string>) => readersApi.saveSyncMapping(next),
+    onSuccess: () => {
+      message.success('Đã lưu ánh xạ trường của hệ thống đào tạo.');
+      void queryClient.invalidateQueries({ queryKey: ['reader-sync-mapping'] });
+    },
+    onError: (error: Error) => message.error(error.message),
+  });
+
+  const sync = useMutation({
+    mutationFn: (dryRun: boolean) => {
+      const parsed = parseSyncItems(syncText);
+
+      if (parsed.error) {
+        return Promise.reject(new Error(parsed.error));
+      }
+
+      return readersApi.sync({
+        items: parsed.items,
+        dryRun,
+        defaultReaderTypeId: syncTypeId,
+      });
+    },
+    onSuccess: (result) => {
+      setSyncResult(result);
+
+      if (result.dryRun) {
+        message.info(syncSummary(result));
+      } else {
+        message.success(syncSummary(result));
+        void queryClient.invalidateQueries({ queryKey: ['readers'] });
+      }
     },
     onError: (error: Error) => message.error(error.message),
   });
@@ -183,6 +277,72 @@ export function ReaderImportPage() {
     { title: 'Giá trị', dataIndex: 'value', width: 180, ellipsis: true },
     { title: 'Lỗi', dataIndex: 'message' },
   ];
+
+  // Cột của lưới sửa tại chỗ: đúng tiêu đề trong tệp, cột nào có lỗi ở dòng nào thì ô ấy viền đỏ.
+  const fixedHeaders = useMemo(() => {
+    const seen = new Set<string>(preview?.headers ?? []);
+
+    fixedRows.forEach((row) => Object.keys(row.cells).forEach((header) => seen.add(header)));
+
+    return Array.from(seen);
+  }, [fixedRows, preview?.headers]);
+
+  const errorsOf = (row: number, column?: string) =>
+    rowErrors.filter((error) => error.row === row && (column === undefined || error.column === column));
+
+  const fixedColumns: ColumnsType<ReaderImportRawRowDto> = [
+    { title: 'Dòng', dataIndex: 'row', width: 70, fixed: 'left' },
+    ...fixedHeaders.map(
+      (header): ColumnsType<ReaderImportRawRowDto>[number] => ({
+        title: header,
+        width: 160,
+        render: (_, row) => {
+          const cellErrors = errorsOf(row.row, header);
+
+          return (
+            <Input
+              size="small"
+              status={cellErrors.length > 0 ? 'error' : undefined}
+              title={cellErrors.map((error) => error.message).join(' ')}
+              value={row.cells[header] ?? ''}
+              onChange={(event) =>
+                setFixedRows((current) =>
+                  current.map((item) =>
+                    item.row === row.row
+                      ? { ...item, cells: { ...item.cells, [header]: event.target.value } }
+                      : item,
+                  ),
+                )
+              }
+            />
+          );
+        },
+      }),
+    ),
+    {
+      title: 'Lỗi còn lại',
+      width: 260,
+      fixed: 'right',
+      render: (_, row) => {
+        const remaining = errorsOf(row.row);
+
+        return remaining.length === 0 ? (
+          <Tag color="green">Hợp lệ</Tag>
+        ) : (
+          <Space direction="vertical" size={0}>
+            {remaining.map((error) => (
+              <Typography.Text key={`${error.column}-${error.message}`} type="danger" style={{ fontSize: 12 }}>
+                {error.column ? `${error.column}: ` : ''}
+                {error.message}
+              </Typography.Text>
+            ))}
+          </Space>
+        );
+      },
+    },
+  ];
+
+  const remainingErrorRows = new Set(rowErrors.map((error) => error.row)).size;
 
   const batchColumns: ColumnsType<ReaderImportBatchDto> = [
     { title: 'Tệp', dataIndex: 'fileName', ellipsis: true },
@@ -239,7 +399,7 @@ export function ReaderImportPage() {
     <Space direction="vertical" size={16} style={{ width: '100%' }}>
       <PageHeader
         title="Nhập xuất dữ liệu bạn đọc"
-        description="Nhập danh sách bạn đọc từ Excel, nhập ảnh hàng loạt và khai ánh xạ trường cho hệ thống quản lý đào tạo."
+        description="Nhập danh sách bạn đọc từ Excel (sửa lỗi ngay trên bảng), đồng bộ từ hệ thống quản lý đào tạo và nhập ảnh hàng loạt."
         actions={
           <Button
             icon={<FileExcelOutlined />}
@@ -406,6 +566,48 @@ export function ReaderImportPage() {
               showIcon
               message="Tệp không có lỗi. Bấm bước 3 để nhập vào hệ thống."
             />
+          ) : fixedRows.length > 0 ? (
+            <Space direction="vertical" size={12} style={{ width: '100%' }}>
+              <Alert
+                type="warning"
+                showIcon
+                message="Sửa thẳng các dòng lỗi dưới đây rồi kiểm tra lại, không cần mở lại tệp Excel."
+                description="Bước 3 nhập những dòng đã hợp lệ của tệp; các dòng sửa ở đây nhập bằng nút riêng bên dưới, nên không dòng nào bị nhập hai lần."
+              />
+              <Table
+                rowKey="row"
+                size="small"
+                dataSource={fixedRows}
+                columns={fixedColumns}
+                pagination={{ pageSize: 10 }}
+                scroll={{ x: 160 * fixedHeaders.length + 330 }}
+              />
+              <Space>
+                <Button
+                  icon={<ReloadOutlined />}
+                  loading={importRows.isPending}
+                  onClick={() => importRows.mutate(true)}
+                >
+                  Kiểm tra lại
+                </Button>
+                <Can permission={PERMISSIONS.reader.import}>
+                  <Button
+                    type="primary"
+                    icon={<CheckCircleOutlined />}
+                    disabled={remainingErrorRows > 0}
+                    loading={importRows.isPending}
+                    onClick={() => importRows.mutate(false)}
+                  >
+                    Nhập các dòng đã sửa ({fixedRows.length})
+                  </Button>
+                </Can>
+                {remainingErrorRows > 0 && (
+                  <Typography.Text type="secondary">
+                    Còn {remainingErrorRows} dòng lỗi — sửa xong bấm Kiểm tra lại.
+                  </Typography.Text>
+                )}
+              </Space>
+            </Space>
           ) : (
             <Table
               rowKey={(row) => `${row.row}-${row.column}-${row.message}`}
@@ -465,6 +667,140 @@ export function ReaderImportPage() {
           pagination={false}
           locale={{ emptyText: <Empty description="Chưa có đợt nhập nào" /> }}
         />
+      </Card>
+
+      <Card
+        size="small"
+        title={
+          <Space>
+            <SyncOutlined />
+            Đồng bộ từ hệ thống quản lý đào tạo
+          </Space>
+        }
+      >
+        <Row gutter={16}>
+          <Col span={10}>
+            <Typography.Paragraph type="secondary" style={{ fontSize: 12 }}>
+              Hệ thống đào tạo gọi <Typography.Text code>POST /api/readers/sync</Typography.Text> với
+              danh sách sinh viên theo tên trường của họ. Khai ở đây trường nào của họ ứng với trường
+              nào của thư viện; bỏ trống là dùng đúng tên trường của thư viện.
+            </Typography.Paragraph>
+            <Table
+              rowKey="field"
+              size="small"
+              pagination={false}
+              scroll={{ y: 300 }}
+              dataSource={Object.entries(syncMapping.data ?? {}).map(([field, source]) => ({
+                field,
+                source,
+              }))}
+              columns={[
+                {
+                  title: 'Trường của thư viện',
+                  dataIndex: 'field',
+                  width: 150,
+                  render: (field: string) => importFieldLabels[field] ?? field,
+                },
+                {
+                  title: 'Tên trường bên đào tạo',
+                  dataIndex: 'source',
+                  render: (source: string, row) => (
+                    <Input
+                      size="small"
+                      defaultValue={source}
+                      placeholder={row.field}
+                      onBlur={(event) => {
+                        const next = event.target.value.trim() || row.field;
+
+                        if (next !== source) {
+                          saveSyncMapping.mutate({ ...(syncMapping.data ?? {}), [row.field]: next });
+                        }
+                      }}
+                    />
+                  ),
+                },
+              ]}
+            />
+          </Col>
+          <Col span={14}>
+            <Space direction="vertical" size={8} style={{ width: '100%' }}>
+              <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                Dán hoặc tải lên tệp JSON do phòng đào tạo xuất — một mảng bản ghi, mỗi bản ghi là các
+                cặp tên trường/giá trị. Thử trước để xem sẽ thêm, cập nhật hay lỗi bao nhiêu, rồi mới đồng bộ.
+              </Typography.Text>
+              <Input.TextArea
+                rows={8}
+                value={syncText}
+                onChange={(event) => setSyncText(event.target.value)}
+                placeholder='[{"MaSinhVien": "2151010101", "HoTen": "Nguyễn Văn A", "MaLop": "DH21TH1", "DoiTuong": "Sinh viên"}]'
+                style={{ fontFamily: 'monospace' }}
+              />
+              <Space wrap>
+                <Upload
+                  accept=".json,application/json"
+                  showUploadList={false}
+                  beforeUpload={(selected) => {
+                    selected
+                      .text()
+                      .then((text) => setSyncText(text))
+                      .catch(() => message.error('Không đọc được tệp.'));
+                    return false;
+                  }}
+                >
+                  <Button icon={<CloudUploadOutlined />}>Tải tệp JSON</Button>
+                </Upload>
+                <Space size={4}>
+                  <span>Loại bạn đọc mặc định:</span>
+                  <Select
+                    allowClear
+                    style={{ width: 180 }}
+                    placeholder="Lấy theo dữ liệu gửi"
+                    options={toOptions(readerTypes.data)}
+                    value={syncTypeId}
+                    onChange={(value) => setSyncTypeId(value)}
+                  />
+                </Space>
+                <Button
+                  disabled={!syncText.trim()}
+                  loading={sync.isPending}
+                  onClick={() => sync.mutate(true)}
+                >
+                  Thử (không ghi)
+                </Button>
+                <Can permission={PERMISSIONS.reader.import}>
+                  <Button
+                    type="primary"
+                    icon={<SyncOutlined />}
+                    disabled={!syncText.trim()}
+                    loading={sync.isPending}
+                    onClick={() => sync.mutate(false)}
+                  >
+                    Đồng bộ
+                  </Button>
+                </Can>
+              </Space>
+
+              {syncResult && (
+                <Space direction="vertical" size={8} style={{ width: '100%' }}>
+                  <Alert
+                    type={syncResult.errorItems > 0 ? 'warning' : 'success'}
+                    showIcon
+                    message={syncSummary(syncResult)}
+                  />
+                  {syncResult.errors.length > 0 && (
+                    <Table
+                      rowKey={(row) => `${row.row}-${row.column}-${row.message}`}
+                      size="small"
+                      dataSource={syncResult.errors}
+                      columns={errorColumns}
+                      pagination={{ pageSize: 5 }}
+                    />
+                  )}
+                </Space>
+              )}
+            </Space>
+          </Col>
+        </Row>
       </Card>
 
       <Card

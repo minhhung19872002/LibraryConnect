@@ -119,6 +119,32 @@ public class ReaderImportPreviewDto
     public List<ReaderImportErrorDto> Errors { get; set; } = new();
     /// <summary>Vài dòng đầu đã tách trường, cho cán bộ nhìn thấy dữ liệu vào đúng cột chưa.</summary>
     public List<ReaderImportRowDto> Sample { get; set; } = new();
+    /// <summary>
+    /// Nguyên ô của những dòng lỗi (tiêu đề cột → giá trị), để lưới sửa tại chỗ có đúng thứ trong
+    /// tệp mà sửa rồi gửi lại qua <c>POST /api/readers/import/rows</c>.
+    /// </summary>
+    public List<ReaderImportRawRowDto> ErrorRowCells { get; set; } = new();
+}
+
+/// <summary>Một dòng của tệp ở dạng thô: số dòng và các ô theo tiêu đề cột.</summary>
+public class ReaderImportRawRowDto
+{
+    public int Row { get; set; }
+    public Dictionary<string, string> Cells { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+}
+
+/// <summary>Kết quả kiểm tra lại hoặc nhập các dòng đã sửa tại chỗ (VI.4).</summary>
+public class ReaderImportRowsResultDto
+{
+    public bool DryRun { get; set; }
+    public int TotalRows { get; set; }
+    public int Created { get; set; }
+    public int Updated { get; set; }
+    public int Skipped { get; set; }
+    public int ErrorRows { get; set; }
+    public List<ReaderImportErrorDto> Errors { get; set; } = new();
+    /// <summary>Những dòng vẫn còn lỗi, trả lại nguyên ô để sửa tiếp.</summary>
+    public List<ReaderImportRawRowDto> ErrorRowCells { get; set; } = new();
 }
 
 /// <summary>Một dòng đã tách trường, dùng cho phần xem trước.</summary>

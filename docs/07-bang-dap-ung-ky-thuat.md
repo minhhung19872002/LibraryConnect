@@ -177,6 +177,7 @@ Cập nhật lần cuối: 02/09/2026, sau đợt hoàn thiện (bảo mật, b�
 | III.3 | Thông tin thư viện / cơ sở | **Có** | CRUD kèm địa chỉ, giờ mở cửa, người phụ trách, tọa độ |
 | III.3 | Thông tin kho, giá, ngăn, quy tắc ký hiệu | **Có** | CRUD kho và giá; mã giá duy nhất trong phạm vi kho |
 | III.4 | Đóng kho khi bắt đầu kiểm kê | **Có** | Kho đóng thì ngưng nhận chuyển kho; trạng thái từng kho hiện ngay trên màn hình kiểm kê |
+| III.4 | Kho đóng thì ngưng cho mượn/trả tại kho đó, cảnh báo trên màn hình lưu thông | **Có** | Bổ sung 04/09/2026: quầy từ chối ghi mượn bản thuộc kho đang đóng (cả khi gọi thẳng API, HTTP 409); ghi trả vẫn nhận nhưng báo giữ ở quầy; banner trên Quầy lưu thông liệt kê kho đang đóng. Kịch bản LT.30–LT.31 |
 | III.4 | Tạo kỳ kiểm kê, snapshot danh sách kỳ vọng | **Có** | Phạm vi toàn kho / theo khoảng ĐKCB / theo dạng tài liệu; danh sách chốt ngay lúc tạo kỳ |
 | III.4 | Quét barcode liên tục, phản hồi khớp / thừa / sai kho | **Có** | Ô quét giữ tiêu điểm sau mỗi lần quét; nhật ký quét hiện ngay bên dưới |
 | III.4 | Nhập tệp quét từ máy đọc rời | **Có** | Mỗi dòng một mã, hoặc CSV lấy cột đầu |
@@ -233,6 +234,7 @@ Cập nhật lần cuối: 02/09/2026, sau đợt hoàn thiện (bảo mật, b�
 | VI.1 | Gia hạn thẻ đơn lẻ và hàng loạt theo bộ lọc | **Có** | Thẻ còn hạn thì cộng tiếp vào hạn cũ, thẻ đã hết hạn thì tính từ hôm nay; danh sách hàng loạt dựng lại ở máy chủ từ chính bộ lọc đang xem |
 | VI.1 | Tạm khóa / mở khóa kèm lý do | **Có** | Bắt buộc ghi lý do khi khóa; khóa có thời hạn hoặc khóa tới khi mở lại |
 | VI.1 | Cấp lại thẻ, giữ lịch sử thẻ cũ | **Có** | Thẻ cũ chuyển sang "đã thu hồi" và vẫn nằm trong sổ cấp thẻ, vì sổ mượn trả cũ ghi theo số thẻ cũ; thẻ hỏng thì giữ nguyên số, thẻ mất thì cấp số mới |
+| VI.1 | Cấp lại thẻ từ giao diện: nút, hộp thoại lý do, lịch sử thẻ cũ/mới | **Có** | Bổ sung 04/09/2026: trước đó chỉ có API. Hộp thoại phân biệt thẻ mất (số mới) và thẻ hỏng (giữ số); tab "Thẻ đã cấp" hiện cả thẻ thu hồi lẫn thẻ mới. Kịch bản BD.51 |
 | VI.1 | Chuyển trạng thái ra trường hàng loạt theo khóa | **Có** | Lọc theo khóa rồi áp dụng cho toàn bộ kết quả |
 | VI.1 | Kiểm tra công nợ trước khi cho ra trường | **Có** | Còn tài liệu chưa trả hoặc còn nợ phí thì bị giữ lại kèm lý do từng người; có màn hình xác nhận công nợ cho giấy xác nhận trả sách |
 | VI.2 | Thiết kế mẫu thẻ: kéo thả, mặt trước và mặt sau | **Có** | Kéo trực tiếp từng ô trên khung xem trước đúng khổ thẻ, hoặc gõ số milimét cho chuẩn |
@@ -240,13 +242,16 @@ Cập nhật lần cuối: 02/09/2026, sau đợt hoàn thiện (bảo mật, b�
 | VI.2 | Đặt ảnh nền, logo, ảnh bạn đọc, các trường thông tin, mã vạch/QR số thẻ | **Có** | Màu nền và dải màu đầu thẻ, ô logo lấy từ tham số hệ thống, ô ảnh bạn đọc, 18 trường thông tin, mã vạch Code 128 / Code 39 / QR |
 | VI.2 | In hàng loạt theo bộ lọc, xem trước, xuất PDF đúng khổ | **Có** | Hai kiểu in: mỗi thẻ một trang đúng khổ cho máy in thẻ nhựa, hoặc xếp nhiều thẻ trên tờ A4 để cắt; trang mặt sau đảo thứ tự cột để lật giấy in hai mặt là khớp |
 | VI.2 | Đếm số lần in mỗi thẻ | **Có** | Xem trước không tính là một lần in |
+| VI.2 | Xem trước thẻ trên màn hình in hàng loạt và trong hồ sơ | **Có** | Bổ sung 04/09/2026: nút "Xem trước (không tính lần in)" gửi `preview: true`; phép thử `Previewing_a_card_does_not_count_as_a_print` giữ đúng số lần in. Kịch bản BD.54 |
 | VI.3 | CRUD loại bạn đọc kèm chính sách, thời hạn thẻ, phí thẻ | **Có** | Danh mục loại bạn đọc có hạn thẻ, phí làm thẻ, tiền đặt cọc |
 | VI.3 | CRUD khoa, ngành, lớp, khóa học, loại vi phạm | **Có** | Năm danh mục, đủ nhập xuất Excel và gộp trùng như mọi danh mục khác |
 | VI.4 | Import Excel: tệp mẫu, ánh xạ cột, validate, bảng lỗi, chạy nền, log lỗi | **Có** | Tệp mẫu có sheet hướng dẫn từng cột; ánh xạ cột lưu lại cho lần sau; bước kiểm tra không ghi gì vào hệ thống; nhập chạy nền có thanh tiến độ; nhật ký lỗi tải về dạng Excel để sửa rồi nhập lại |
+| VI.4 | Bảng lỗi sửa được tại chỗ rồi nhập lại | **Có** | Bổ sung 04/09/2026: trước đó bảng lỗi chỉ đọc. Lưới sửa nguyên ô của dòng lỗi, "Kiểm tra lại" và "Nhập các dòng đã sửa" qua `POST /api/readers/import/rows` — cùng bộ xử lý với nhập tệp nên luật kiểm tra chỉ có một. Kịch bản BD.52 |
 | VI.4 | Xử lý trùng mã sinh viên | **Có** | Ba cách: báo lỗi, bỏ qua, hoặc cập nhật hồ sơ đang có — nhập lại danh sách lớp đã sửa không sinh hồ sơ trùng |
 | VI.4 | Import ảnh hàng loạt từ ZIP đặt tên theo mã SV | **Có** | Khớp theo mã sinh viên rồi tới số thẻ; ảnh không khớp hoặc không phải ảnh được liệt kê riêng |
 | VI.4 | Export danh sách bạn đọc ra Excel theo bộ lọc | **Có** | Xuất đúng bộ lọc đang xem, có ghi nhật ký ai xuất và bao nhiêu hồ sơ |
 | VI.4 | Đồng bộ từ hệ thống quản lý đào tạo qua API, cấu hình mapping | **Có** | Endpoint `POST /api/readers/sync` nhận dữ liệu theo tên trường của phía đào tạo; bảng ánh xạ khai được trên giao diện; khớp theo mã sinh viên nên gọi lại là cập nhật chứ không nhân đôi; có chế độ chạy thử |
+| VI.4 | Màn hình đồng bộ từ hệ thống đào tạo: ánh xạ trường, dán/tải JSON, thử rồi ghi | **Có** | Bổ sung 04/09/2026: trước đó chỉ có API và bảng ánh xạ; nay thao tác trọn trên màn hình Nhập xuất dữ liệu. Kịch bản BD.53 |
 | VI.5 | Số lượng bạn đọc theo loại / khoa / ngành / khóa / trạng thái, bảng và biểu đồ | **Có** | Bảy chiều thống kê (thêm lớp và giới tính), bảng có dòng tổng cộng và biểu đồ tròn |
 | VI.5 | Bạn đọc mới đăng ký theo thời gian | **Có** | Gộp theo ngày, tháng, quý hoặc năm; biểu đồ đường kèm cột cộng dồn |
 | VI.5 | Thẻ sắp hết hạn / đã hết hạn | **Có** | Ba con số tổng quan và danh sách cần nhắc gia hạn kèm số ngày còn lại; bạn đọc đã ra trường không nằm trong danh sách nhắc |
@@ -282,6 +287,7 @@ Cập nhật lần cuối: 02/09/2026, sau đợt hoàn thiện (bảo mật, b�
 | VII.3 | Trả tủ bằng quét thẻ hoặc nhập số tủ | **Có** | Cả hai cách đều nhận |
 | VII.3 | Cảnh báo tủ quá giờ chưa trả, báo hỏng tủ | **Có** | Ngưỡng quá giờ lấy từ tham số `CIRCULATION.LOCKER_MAX_HOURS`; ô tủ quá giờ viền đỏ; tủ hỏng khóa lại không giao được |
 | VII.4 | Thiết kế mẫu phiếu mượn, phiếu trả, biên lai phạt, giấy xác nhận trả sách | **Có** | Dùng lại trình thiết kế biểu mẫu chung thay vì làm bộ mẫu riêng — quyết định ghi ở `docs/00-quyet-dinh-ky-thuat.md` |
+| VII.4 | Giấy xác nhận trả sách in từ hồ sơ bạn đọc, chặn khi còn nợ | **Có** | Bổ sung 04/09/2026: nút "In giấy xác nhận" trong hồ sơ; còn tài liệu hay nợ phí thì nút khóa kèm lý do; lối in riêng `GET /api/readers/{id}/clearance/print` chỉ đòi quyền xem bạn đọc. Kịch bản BD.55 |
 | VII.4 | Chọn mẫu mặc định, in trực tiếp hoặc xuất PDF | **Có** | In thẳng từ màn hình quầy ngay sau khi ghi mượn / ghi trả |
 | VII.5.1 | Báo cáo bạn đọc ra vào thư viện, biểu đồ giờ cao điểm | **Có** | Chia 24 khung giờ; lọc theo loại bạn đọc và cổng |
 | VII.5.2 | Báo cáo bạn đọc đang mượn sách trong thư viện | **Có** | Danh sách hiện tại kèm số ngày còn lại của từng phiếu |

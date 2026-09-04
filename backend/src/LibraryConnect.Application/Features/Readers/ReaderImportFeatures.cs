@@ -99,7 +99,143 @@ public class ValidateReaderImportQueryHandler
             ErrorRows = outcome.ErrorRows,
             Headers = sheet.Headers.ToList(),
             Errors = outcome.Errors,
-            Sample = outcome.Rows
+            Sample = outcome.Rows,
+            ErrorRowCells = ReaderImportRows.ErrorCells(sheet, outcome)
+        };
+    }
+}
+
+/// <summary>Chuyển qua lại giữa dòng thô của giao diện và sheet mà bộ xử lý nhập đọc.</summary>
+public static class ReaderImportRows
+{
+    /// <summary>Nguyên ô của những dòng có lỗi, giữ đúng số dòng của tệp.</summary>
+    public static List<ReaderImportRawRowDto> ErrorCells(ExcelSheet sheet, ReaderImportOutcome outcome)
+    {
+        var failed = outcome.Errors.Select(error => error.Row).ToHashSet();
+
+        return sheet.Rows
+            .Where(row => failed.Contains(row.RowNumber))
+            .Select(row => new ReaderImportRawRowDto
+            {
+                Row = row.RowNumber,
+                Cells = row.Cells.ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.OrdinalIgnoreCase)
+            })
+            .ToList();
+    }
+
+    /// <summary>Dựng sheet ảo từ các dòng cán bộ đã sửa trên lưới; tiêu đề là hợp của mọi ô đã gửi.</summary>
+    public static ExcelSheet ToSheet(IReadOnlyList<ReaderImportRawRowDto> rows)
+    {
+        var headers = new List<string>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var header in rows.SelectMany(row => row.Cells.Keys))
+        {
+            if (seen.Add(header))
+            {
+                headers.Add(header);
+            }
+        }
+
+        return new ExcelSheet
+        {
+            Name = "sua-tai-cho",
+            Headers = headers,
+            Rows = rows.Select(row => new ExcelRow
+            {
+                RowNumber = row.Row,
+                Cells = row.Cells.ToDictionary(
+                    pair => pair.Key, pair => pair.Value?.Trim() ?? string.Empty, StringComparer.OrdinalIgnoreCase)
+            }).ToList()
+        };
+    }
+}
+
+/// <summary>
+/// Kiểm tra lại hoặc nhập thật những dòng cán bộ đã sửa ngay trên bảng lỗi (VI.4), không phải mở lại
+/// Excel. Đi qua đúng bộ xử lý của nhập tệp nên luật kiểm tra chỉ có một.
+/// </summary>
+public class ImportReaderRowsCommand : IRequest<ReaderImportRowsResultDto>
+{
+    public List<ReaderImportRawRowDto> Rows { get; set; } = new();
+    public ReaderImportOptions Options { get; set; } = new();
+    /// <summary>Chỉ kiểm tra, không ghi.</summary>
+    public bool DryRun { get; set; }
+    /// <summary>Tên tệp gốc, để đợt nhập tại chỗ ghi vào sổ kèm tên tệp ấy.</summary>
+    public string? FileName { get; set; }
+}
+
+public class ImportReaderRowsCommandHandler : IRequestHandler<ImportReaderRowsCommand, ReaderImportRowsResultDto>
+{
+    /// <summary>Lưới sửa tại chỗ là để sửa vài chục dòng lỗi; nhiều hơn thì sửa trong tệp rồi nhập lại.</summary>
+    public const int MaxRows = 500;
+
+    private readonly IApplicationDbContext _db;
+    private readonly ReaderImportProcessor _processor;
+    private readonly IDateTimeProvider _clock;
+    private readonly IAuditService _audit;
+
+    public ImportReaderRowsCommandHandler(
+        IApplicationDbContext db, ReaderImportProcessor processor, IDateTimeProvider clock, IAuditService audit)
+    {
+        _db = db;
+        _processor = processor;
+        _clock = clock;
+        _audit = audit;
+    }
+
+    public async Task<ReaderImportRowsResultDto> Handle(ImportReaderRowsCommand command, CancellationToken ct)
+    {
+        if (command.Rows.Count == 0)
+        {
+            throw new ValidationException("rows", "Chưa có dòng nào để kiểm tra.");
+        }
+
+        if (command.Rows.Count > MaxRows)
+        {
+            throw new ValidationException(
+                "rows", $"Sửa tại chỗ tối đa {MaxRows} dòng một lần; nhiều hơn thì sửa trong tệp rồi nhập lại.");
+        }
+
+        var sheet = ReaderImportRows.ToSheet(command.Rows);
+        var outcome = await _processor.ProcessAsync(sheet, command.Options, command.DryRun, ct);
+
+        if (!command.DryRun)
+        {
+            await _db.SaveChangesAsync(ct);
+
+            // Vào sổ như một đợt nhập đã xong, để danh sách "các đợt nhập gần đây" không thiếu dòng nào.
+            _db.ReaderImportBatches.Add(new ReaderImportBatch
+            {
+                FileName = string.IsNullOrWhiteSpace(command.FileName)
+                    ? "Sửa tại chỗ trên bảng lỗi"
+                    : $"{command.FileName.Trim()} (sửa tại chỗ)",
+                TotalRows = outcome.TotalRows,
+                SuccessRows = outcome.Created + outcome.Updated,
+                ErrorRows = outcome.ErrorRows,
+                Status = JobStatus.Completed,
+                FinishedAt = _clock.Now,
+                Errors = JsonSerializer.Serialize(outcome.Errors, ReaderImportJson.Options)
+            });
+
+            await _db.SaveChangesAsync(ct);
+
+            await _audit.LogAsync(AuditAction.Create, "Reader", null,
+                message: $"Nhập {outcome.Created + outcome.Updated} dòng bạn đọc sửa tại chỗ" +
+                         $"{(outcome.ErrorRows > 0 ? $", còn {outcome.ErrorRows} dòng lỗi" : string.Empty)}",
+                ct: ct);
+        }
+
+        return new ReaderImportRowsResultDto
+        {
+            DryRun = command.DryRun,
+            TotalRows = outcome.TotalRows,
+            Created = outcome.Created,
+            Updated = outcome.Updated,
+            Skipped = outcome.Skipped,
+            ErrorRows = outcome.ErrorRows,
+            Errors = outcome.Errors,
+            ErrorRowCells = ReaderImportRows.ErrorCells(sheet, outcome)
         };
     }
 }

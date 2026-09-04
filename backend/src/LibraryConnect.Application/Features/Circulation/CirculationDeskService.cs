@@ -261,6 +261,7 @@ public class CirculationDeskService : ICirculationDeskService
                 entity.CallNumber,
                 entity.WarehouseId,
                 WarehouseName = entity.Warehouse!.Name,
+                WarehouseClosed = entity.Warehouse!.IsClosedForInventory,
                 entity.BibId,
                 Title = entity.Bib!.Title,
                 Author = entity.Bib!.AuthorMain,
@@ -306,6 +307,13 @@ public class CirculationDeskService : ICirculationDeskService
         {
             result.Warnings.Add(new CirculationWarningDto(CirculationWarnings.ItemLocked,
                 $"Ấn phẩm đang bị khóa lưu thông: {item.LockReason ?? "không ghi lý do"}.", true));
+        }
+
+        // III.4 bước 1: kho đã đóng để kiểm kê thì mọi bản trong kho đứng yên tới khi chốt kỳ.
+        if (item.WarehouseClosed)
+        {
+            result.Warnings.Add(new CirculationWarningDto(CirculationWarnings.WarehouseClosed,
+                $"Kho {item.WarehouseName} đang đóng để kiểm kê, không ghi mượn được.", true));
         }
 
         if (!policy.AllowLoan)
@@ -565,6 +573,7 @@ public class CirculationDeskService : ICirculationDeskService
         {
             var item = await _db.Items
                 .Include(entity => entity.Bib)
+                .Include(entity => entity.Warehouse)
                 .FirstOrDefaultAsync(entity => entity.Barcode == raw || entity.RegisterNumber == raw, ct);
 
             if (item is null)
@@ -671,6 +680,15 @@ public class CirculationDeskService : ICirculationDeskService
             else
             {
                 item.Status = ItemStatus.InStock;
+            }
+
+            // Kho đang kiểm kê vẫn nhận trả — bạn đọc mang sách tới thì không đuổi về được — nhưng bản
+            // này ở lại quầy chứ không lên giá, để danh sách kỳ vọng của kỳ kiểm kê không bị xáo.
+            if (item.Warehouse?.IsClosedForInventory == true)
+            {
+                row.Warnings.Add(new CirculationWarningDto(CirculationWarnings.WarehouseClosed,
+                    $"Kho {item.Warehouse.Name} đang đóng để kiểm kê: giữ bản này ở quầy, chưa xếp lên giá.",
+                    false));
             }
 
             result.Items.Add(row);

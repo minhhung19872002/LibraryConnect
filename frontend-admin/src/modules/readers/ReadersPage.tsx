@@ -24,6 +24,7 @@ import {
 import {
   DownOutlined,
   ExportOutlined,
+  EyeOutlined,
   LockOutlined,
   PlusOutlined,
   PrinterOutlined,
@@ -44,6 +45,7 @@ import { ReaderDetailDrawer } from './ReaderDetailDrawer';
 import { useReaderPhoto } from './useReaderPhoto';
 import { MAU } from '@/lib/palette';
 import {
+  cardPrintRequest,
   describeExpiry,
   formatDate,
   genderOptions,
@@ -194,10 +196,17 @@ export function ReadersPage() {
   });
 
   const printCards = useMutation({
-    mutationFn: (values: { templateId?: string; multiplePerPage: boolean }) =>
-      readersApi.printCards({ selection: selection(), ...values }),
-    onSuccess: ({ blob, fileName }) => {
+    mutationFn: (values: { templateId?: string; multiplePerPage: boolean; preview: boolean }) =>
+      readersApi.printCards(cardPrintRequest(selection(), values, values.preview)),
+    onSuccess: ({ blob, fileName }, values) => {
       saveBlob(blob, fileName);
+
+      if (values.preview) {
+        // Xem trước thì giữ hộp thoại mở để cán bộ chỉnh mẫu rồi in thật; số lần in không đổi.
+        message.info('Bản xem trước — không tính vào số lần in.');
+        return;
+      }
+
       setAction(null);
       actionForm.resetFields();
       invalidate();
@@ -566,6 +575,7 @@ export function ReadersPage() {
                 printCards.mutate({
                   templateId: values.templateId,
                   multiplePerPage: values.multiplePerPage ?? true,
+                  preview: false,
                 });
                 return;
               }
@@ -659,6 +669,21 @@ export function ReadersPage() {
                   Xếp nhiều thẻ trên tờ A4 (bỏ chọn nếu in thẳng lên phôi thẻ nhựa)
                 </Checkbox>
               </Form.Item>
+              <Button
+                icon={<EyeOutlined />}
+                loading={printCards.isPending}
+                onClick={() => {
+                  const values = actionForm.getFieldsValue();
+
+                  printCards.mutate({
+                    templateId: values.templateId,
+                    multiplePerPage: values.multiplePerPage ?? true,
+                    preview: true,
+                  });
+                }}
+              >
+                Xem trước (không tính lần in)
+              </Button>
             </>
           )}
         </Form>

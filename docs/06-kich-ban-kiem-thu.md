@@ -396,6 +396,11 @@ Ký hiệu bám theo **Mục 5 phần 2 của E-HSMT**.
 | BD.48 | Báo cáo mức độ sử dụng | Chọn Mức độ sử dụng, đổi giữa hai chế độ | Ra danh sách mượn nhiều nhất kèm biểu đồ cột, và danh sách chưa từng mượn |
 | BD.49 | Xuất báo cáo | Bấm Excel và PDF ở từng báo cáo | Tệp xuất đúng bằng bộ lọc đang hiển thị |
 | BD.50 | Phân quyền | Đăng nhập tài khoản Cán bộ biên mục | Menu Bạn đọc không hiện; gọi thẳng API trả 403 |
+| BD.51 | Cấp lại thẻ từ hồ sơ | Mở hồ sơ bạn đọc → Cấp lại thẻ → chọn "Thẻ mất — cấp số mới", ghi lý do → Cấp lại | Thông báo nêu số thẻ mới và số cũ bị thu hồi; tab "Thẻ đã cấp" có hai dòng: thẻ cũ "Đã thu hồi" kèm lý do, thẻ mới "Đang dùng"; bỏ lý do thì bị chặn |
+| BD.52 | Bảng lỗi nhập Excel sửa tại chỗ | Kiểm tra một tệp có dòng thiếu họ tên và dòng sai ngày sinh → sửa ngay trên lưới → Kiểm tra lại → Nhập các dòng đã sửa | Ô sai viền đỏ kèm lý do; Kiểm tra lại báo hợp lệ; nhập xong dòng rời khỏi lưới, hồ sơ tìm thấy trong danh sách, đợt nhập "(sửa tại chỗ)" xuất hiện ở "Các đợt nhập gần đây". Gọi thẳng `POST /api/readers/import/rows` với `dryRun: true` không tạo hồ sơ |
+| BD.53 | Đồng bộ từ hệ thống đào tạo trên màn hình | Nhập xuất dữ liệu → Đồng bộ: khai `studentCode → MaSinhVien`, dán JSON hai sinh viên → Thử (không ghi) → Đồng bộ | Lần thử báo "Thử (chưa ghi) — 2 bản ghi: thêm 2…" và danh sách bạn đọc chưa đổi; lần ghi tạo hồ sơ; dán chữ không phải JSON thì báo lỗi tiếng Việt, không gọi máy chủ |
+| BD.54 | Xem trước thẻ không tính lần in | Danh sách bạn đọc → chọn vài người → In thẻ → Xem trước (không tính lần in); rồi In thẻ thật | Sau xem trước, số lần in trong tab Thẻ đã cấp vẫn 0; sau in thật tăng lên 1 |
+| BD.55 | In giấy xác nhận trả sách | Mở hồ sơ một bạn đọc còn giữ sách → nút "In giấy xác nhận" | Nút bị khóa, rê chuột thấy lý do "Còn … tài liệu chưa trả"; trả hết sách và nộp phạt thì nút mở, bấm ra PDF; endpoint `GET /api/readers/{id}/clearance/print` chỉ cần quyền xem bạn đọc |
 
 ## Nhóm chức năng — Phân hệ VII: Lưu thông
 
@@ -430,6 +435,8 @@ Ký hiệu bám theo **Mục 5 phần 2 của E-HSMT**.
 | LT.27 | Thẻ điện tử | `GET /api/reader/card` | Trả số thẻ, hạn thẻ và chuỗi mã vạch để hiện lên điện thoại |
 | LT.28 | Bạn đọc chỉ thấy dữ liệu của mình | Đăng nhập bạn đọc A rồi gọi `POST /api/reader/loans/{id}/renew` với phiếu của bạn đọc B | Trả HTTP 403 |
 | LT.29 | Mượn tự phục vụ khi chưa bật | `POST /api/reader/loans/self-checkout` | Bị chặn kèm thông báo thư viện chưa mở chức năng; bật tham số rồi gọi lại kèm mã điểm quét đúng thì mượn được |
+| LT.30 | Kho đang đóng để kiểm kê thì không ghi mượn | Kiểm kê → đóng một kho; ở quầy quét thẻ rồi quét mã vạch một bản thuộc kho ấy; gọi thẳng `POST /api/circulation/desk/checkout` với mã vạch ấy | Lần quét bị từ chối kèm "Kho … đang đóng để kiểm kê"; gọi thẳng API trả HTTP 409 cùng câu ấy; bản vẫn "Trong kho". Đầu màn hình quầy có banner liệt kê kho đang đóng |
+| LT.31 | Trả sách về kho đang kiểm kê | Mượn một bản trước khi đóng kho, đóng kho, rồi quét trả | Vẫn ghi trả được (tiền phạt dừng đúng ngày), cột Ghi chú hiện "Giữ ở quầy — kho đang kiểm kê" thay vì "Xếp lên giá" |
 
 ## Nhóm chức năng — Phân hệ V: Tài liệu số
 

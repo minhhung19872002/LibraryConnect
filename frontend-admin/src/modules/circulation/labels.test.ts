@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   channelLabels,
+  closedWarehouseNotice,
   describeDue,
   fineTypeLabels,
   formatDate,
@@ -80,3 +81,38 @@ describe('Hiển thị ngày và tiền', () => {
     expect(money(null)).toBe('0');
   });
 });
+
+describe('Cảnh báo kho đang đóng để kiểm kê trên quầy', () => {
+  it('không kho nào đóng thì không có cảnh báo', () => {
+    expect(
+      closedWarehouseNotice([
+        { name: 'Kho mở', isClosedForInventory: false },
+        { name: 'Kho đóng', isClosedForInventory: false },
+      ]),
+    ).toBeNull();
+  });
+
+  it('một kho đóng thì gọi tên kho và nói rõ hai việc: không mượn, trả thì giữ ở quầy', () => {
+    const notice = closedWarehouseNotice([
+      { name: 'Kho mở', isClosedForInventory: false },
+      { name: 'Kho đọc Nhà Bè', isClosedForInventory: true },
+    ]);
+
+    expect(notice).toContain('Kho đọc Nhà Bè');
+    expect(notice).toContain('kiểm kê');
+    expect(notice).toContain('không ghi mượn');
+    expect(notice).toContain('giữ ở quầy');
+    expect(notice).not.toContain('Kho mở');
+  });
+
+  it('nhiều kho đóng thì đếm và liệt kê đủ tên', () => {
+    const notice = closedWarehouseNotice([
+      { name: 'Kho A', isClosedForInventory: true },
+      { name: 'Kho B', isClosedForInventory: true },
+    ]);
+
+    expect(notice).toContain('2 kho');
+    expect(notice).toContain('Kho A, Kho B');
+  });
+});
+

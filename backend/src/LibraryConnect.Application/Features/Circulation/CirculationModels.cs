@@ -31,6 +31,8 @@ public static class CirculationWarnings
     public const string PolicyForbidsLoan = "POLICY_NO_LOAN";
     public const string PolicyForbidsTakeHome = "POLICY_NO_TAKE_HOME";
     public const string AlreadyInList = "ALREADY_IN_LIST";
+    /// <summary>Kho của bản in đang đóng để kiểm kê (III.4 bước 1): chặn mượn, nhận trả nhưng giữ ở quầy.</summary>
+    public const string WarehouseClosed = "WAREHOUSE_CLOSED";
 }
 
 /// <summary>Thông tin bạn đọc hiện ở quầy ngay sau khi quét thẻ (VII.2).</summary>

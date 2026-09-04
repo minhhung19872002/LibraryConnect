@@ -32,10 +32,13 @@ import { ApiRequestError } from '@/api/client';
 import { saveBlob } from '@/modules/marc/api';
 import { useReaderPhoto } from '@/modules/readers/useReaderPhoto';
 import { initials } from '@/modules/readers/labels';
+import { locationsApi } from '@/modules/acquisition/api';
 import { circulationApi } from './api';
 import { MAU } from '@/lib/palette';
 import {
+  WAREHOUSE_CLOSED_WARNING,
   beep,
+  closedWarehouseNotice,
   describeDue,
   formatDate,
   loanStatusColors,
@@ -81,6 +84,8 @@ export function CirculationDeskPage() {
   const [busy, setBusy] = useState(false);
   const [lastResult, setLastResult] = useState<CheckoutResultDto | null>(null);
   const [lastReturnSlip, setLastReturnSlip] = useState<string | null>(null);
+  // III.4 bước 1: kho đang đóng để kiểm kê phải hiện ngay trên quầy, trước khi cán bộ quét quyển đầu.
+  const [closedNotice, setClosedNotice] = useState<string | null>(null);
 
   const cardRef = useRef<InputRef | null>(null);
   const barcodeRef = useRef<InputRef | null>(null);
@@ -110,6 +115,19 @@ export function CirculationDeskPage() {
   useEffect(() => {
     focusCard();
   }, [focusCard]);
+
+  const refreshClosedWarehouses = useCallback(async () => {
+    try {
+      setClosedNotice(closedWarehouseNotice(await locationsApi.warehouses()));
+    } catch {
+      // Không tra được danh sách kho thì máy chủ vẫn tự chặn ở từng lượt quét; banner chỉ là báo trước.
+      setClosedNotice(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshClosedWarehouses();
+  }, [refreshClosedWarehouses]);
 
   const error = useCallback(
     (text: string) => {
@@ -393,12 +411,23 @@ export function CirculationDeskPage() {
     {
       title: 'Ghi chú',
       width: 220,
-      render: (_, row) =>
-        row.holdWaiting ? (
-          <Tag color="green">Giữ cho {row.holdForReaderName}</Tag>
-        ) : (
-          <Tag>Xếp lên giá</Tag>
-        ),
+      render: (_, row) => {
+        const closed = row.warnings.find((warning) => warning.code === WAREHOUSE_CLOSED_WARNING);
+
+        if (row.holdWaiting) {
+          return <Tag color="green">Giữ cho {row.holdForReaderName}</Tag>;
+        }
+
+        if (closed) {
+          return (
+            <Tag color="orange" title={closed.message}>
+              Giữ ở quầy — kho đang kiểm kê
+            </Tag>
+          );
+        }
+
+        return <Tag>Xếp lên giá</Tag>;
+      },
     },
   ];
 
@@ -439,6 +468,20 @@ export function CirculationDeskPage() {
           </Space>
         }
       />
+
+      {closedNotice ? (
+        <Alert
+          type="warning"
+          showIcon
+          message="Có kho đang đóng để kiểm kê"
+          description={closedNotice}
+          action={
+            <Button size="small" onClick={() => void refreshClosedWarehouses()}>
+              Tải lại
+            </Button>
+          }
+        />
+      ) : null}
 
       <Row gutter={16}>
         <Col span={8}>

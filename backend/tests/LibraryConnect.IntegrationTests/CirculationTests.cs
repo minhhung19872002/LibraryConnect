@@ -81,7 +81,7 @@ public class CirculationTests
 
     /// <summary>Tạo một biểu ghi kèm số bản đã kiểm nhận, sẵn sàng lưu thông.</summary>
     private static async Task<List<string>> NewCirculatableItemsAsync(
-        HttpClient client, string title, int quantity = 1)
+        HttpClient client, string title, int quantity = 1, Guid? warehouseId = null)
     {
         var warehouses = await ReadAsync<IReadOnlyList<WarehouseDto>>(
             await client.GetAsync("/api/locations/warehouses"));
@@ -96,7 +96,7 @@ public class CirculationTests
                 price = 90000m,
                 ddc = "005",
                 itemQuantity = quantity,
-                warehouseId = warehouses[0].Id
+                warehouseId = warehouseId ?? warehouses[0].Id
             }));
 
         var page = await ReadAsync<PagedResult<StockItemDto>>(await client.PostAsJsonAsync(
@@ -499,6 +499,100 @@ public class CirculationTests
         scan.Allowed.Should().BeFalse();
         scan.Warnings.Should().Contain(warning =>
             warning.Code == CirculationWarnings.ItemLocked && warning.Message.Contains("số hóa"));
+    }
+
+    /// <summary>
+    /// Kho riêng cho kịch bản kiểm kê: đóng kho dùng chung của bộ kiểm thử là mọi kịch bản khác
+    /// đang chạy cùng lúc đều bị chặn theo.
+    /// </summary>
+    private static async Task<Guid> NewWarehouseAsync(HttpClient client, string name)
+    {
+        var libraries = await ReadAsync<IReadOnlyList<LibraryDto>>(
+            await client.GetAsync("/api/locations/libraries"));
+
+        return await ReadAsync<Guid>(await client.PostAsJsonAsync("/api/locations/warehouses", new
+        {
+            code = $"KK{Unique()}",
+            name,
+            libraryId = libraries[0].Id,
+            type = WarehouseType.OpenStack,
+            isActive = true,
+            // Xếp cuối danh sách: các kịch bản khác lấy warehouses[0] làm kho mặc định, kho này mà
+            // đứng đầu rồi bị đóng là mọi kịch bản chạy sau đều bị chặn theo.
+            sortOrder = 900
+        }));
+    }
+
+    private static Task<HttpResponseMessage> SetWarehouseClosedAsync(HttpClient client, Guid warehouseId, bool closed) =>
+        client.PostAsJsonAsync($"/api/inventory/warehouses/{warehouseId}/closed", new { closed });
+
+    [Fact]
+    public async Task Kho_dang_dong_de_kiem_ke_thi_khong_ghi_muon_duoc()
+    {
+        var client = await ClientAsync();
+        var warehouseId = await NewWarehouseAsync(client, "Kho đang kiểm kê");
+        var readerId = await NewReaderAsync(client, "Bạn đọc gặp kho đóng");
+        var barcodes = await NewCirculatableItemsAsync(client, "Sách trong kho đang kiểm kê", 1, warehouseId);
+
+        await ReadAsync<object?>(await SetWarehouseClosedAsync(client, warehouseId, true));
+
+        try
+        {
+            var scan = await ReadAsync<ScanForLoanDto>(await client.PostAsJsonAsync(
+                "/api/circulation/desk/scan", new { readerId, barcode = barcodes[0] }));
+
+            scan.Allowed.Should().BeFalse();
+            scan.Warnings.Should().Contain(warning =>
+                warning.Code == CirculationWarnings.WarehouseClosed && warning.Blocking);
+
+            // Gọi thẳng ghi mượn không qua bước quét: máy chủ vẫn phải tự chặn.
+            var response = await client.PostAsJsonAsync(
+                "/api/circulation/desk/checkout", new { readerId, barcodes });
+
+            response.StatusCode.Should().Be(HttpStatusCode.Conflict);
+            (await ErrorTextAsync(response)).Should().Contain("đang đóng để kiểm kê");
+
+            var stock = await ReadAsync<PagedResult<StockItemDto>>(await client.PostAsJsonAsync(
+                "/api/stock/items/search",
+                new { page = 1, pageSize = 5, filter = new { keyword = barcodes[0] } }));
+
+            stock.Items[0].Status.Should().Be(ItemStatus.InStock);
+        }
+        finally
+        {
+            await SetWarehouseClosedAsync(client, warehouseId, false);
+        }
+    }
+
+    [Fact]
+    public async Task Tra_sach_ve_kho_dang_kiem_ke_van_nhan_nhung_bao_giu_o_quay()
+    {
+        var client = await ClientAsync();
+        var warehouseId = await NewWarehouseAsync(client, "Kho kiểm kê nhận trả");
+        var readerId = await NewReaderAsync(client, "Bạn đọc trả về kho đóng");
+        var barcodes = await NewCirculatableItemsAsync(client, "Sách trả về kho đang kiểm kê", 1, warehouseId);
+
+        await ReadAsync<CheckoutResultDto>(await client.PostAsJsonAsync(
+            "/api/circulation/desk/checkout", new { readerId, barcodes }));
+
+        await ReadAsync<object?>(await SetWarehouseClosedAsync(client, warehouseId, true));
+
+        try
+        {
+            // Bạn đọc mang sách tới trả thì không đuổi về được: nhận trả, nhưng cán bộ phải biết giữ ở quầy.
+            var result = await ReadAsync<ReturnResultDto>(await client.PostAsJsonAsync(
+                "/api/circulation/desk/return", new { barcodes }));
+
+            result.Items.Should().ContainSingle();
+            result.Items[0].Warnings.Should().Contain(warning =>
+                warning.Code == CirculationWarnings.WarehouseClosed
+                && !warning.Blocking
+                && warning.Message.Contains("kiểm kê"));
+        }
+        finally
+        {
+            await SetWarehouseClosedAsync(client, warehouseId, false);
+        }
     }
 
     [Fact]
