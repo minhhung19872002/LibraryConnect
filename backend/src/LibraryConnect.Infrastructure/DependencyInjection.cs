@@ -73,6 +73,7 @@ public static class DependencyInjection
     {
         services.AddScoped<AuditableEntityInterceptor>();
         services.AddScoped<AuditLogInterceptor>();
+        services.AddScoped<SearchCacheInvalidationInterceptor>();
 
         services.AddDbContext<LibraryConnectDbContext>((provider, options) =>
         {
@@ -84,7 +85,8 @@ public static class DependencyInjection
 
             options.AddInterceptors(
                 provider.GetRequiredService<AuditableEntityInterceptor>(),
-                provider.GetRequiredService<AuditLogInterceptor>());
+                provider.GetRequiredService<AuditLogInterceptor>(),
+                provider.GetRequiredService<SearchCacheInvalidationInterceptor>());
         });
 
         services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<LibraryConnectDbContext>());
