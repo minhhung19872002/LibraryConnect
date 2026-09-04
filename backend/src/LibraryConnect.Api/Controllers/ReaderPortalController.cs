@@ -557,4 +557,31 @@ public class ReaderPortalController : ApiControllerBase
         public List<Guid>? BibIds { get; set; }
         public string? Note { get; set; }
     }
+
+    // ---- Đợt hoàn thiện 04/09/2026 ----
+
+    /// <summary>
+    /// Trình đọc báo tổng số giây đã đọc của lượt mở gần nhất (V.2 — thời lượng đọc).
+    /// </summary>
+    /// <remarks>
+    /// Gọi định kỳ trong lúc đọc và một lần cuối khi rời trang (bằng <c>fetch keepalive</c>). Gửi
+    /// tổng số giây kể từ lúc mở, không phải phần tăng thêm; máy chủ giữ số lớn nhất từng nhận.
+    /// Khách chưa đăng nhập cũng gọi được vì tài liệu công khai không cần đăng nhập để đọc.
+    /// </remarks>
+    [HttpPost("digital/{id:guid}/reading-time")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<ApiResponse>> RecordReadingTime(
+        Guid id, [FromBody] ReadingTimeBody body, CancellationToken ct)
+    {
+        await Mediator.Send(new RecordDigitalReadingTimeCommand { DocumentId = id, Seconds = body.Seconds }, ct);
+        return Ok(SuccessMessage("Đã ghi thời lượng đọc."));
+    }
+
+    /// <summary>Tổng số giây đã đọc kể từ lúc mở trình đọc.</summary>
+    public class ReadingTimeBody
+    {
+        public int Seconds { get; set; }
+    }
 }

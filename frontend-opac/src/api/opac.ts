@@ -1,4 +1,5 @@
-import { api, http } from '@/api/client';
+import { api, http, tokenStorage } from '@/api/client';
+import { buildReadingTimeRequest } from '@/lib/readingTime';
 import type {
   AuthResult,
   BibDetail,
@@ -259,4 +260,19 @@ export const readerApi = {
 
   requestDigitalAccess: (documentId: string, reason: string) =>
     api.post<string>(`/reader/digital/${documentId}/request`, { reason }),
+
+  /**
+   * Báo tổng số giây đã đọc của lượt mở gần nhất (V.2). Dùng fetch keepalive thay vì axios để lần
+   * báo cuối lúc rời trang vẫn được gửi nốt; lỗi thì nuốt — không có gì để người đọc phải biết.
+   */
+  reportReadingTime(documentId: string, seconds: number): void {
+    const request = buildReadingTimeRequest(
+      http.defaults.baseURL ?? '/api',
+      documentId,
+      seconds,
+      tokenStorage.getAccessToken(),
+    );
+
+    void fetch(request.url, request.init).catch(() => undefined);
+  },
 };

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import {
@@ -26,6 +26,7 @@ import { useAuthStore } from '@/stores/authStore';
 import type { DigitalDocumentRow } from '@/types/api';
 import type { DigitalFilter } from '@/types/api';
 import { MAU } from '@/lib/palette';
+import { elapsedSeconds, REPORT_INTERVAL_MS } from '@/lib/readingTime';
 import {
   MUC_TRUY_CAP,
   NHOM_DINH_DANG,
@@ -227,6 +228,31 @@ export function DigitalViewerPage() {
     queryFn: () => readerApi.openDigital(id),
     enabled: Boolean(id) && canRead,
   });
+
+  // Thời lượng đọc (V.2): tính từ lúc máy chủ mở lượt đọc; báo định kỳ và một lần cuối khi rời
+  // trang hoặc ẩn thẻ — tổng số giây, nên gọi lặp không cộng dồn sai.
+  const sessionOpened = session.isSuccess;
+
+  useEffect(() => {
+    if (!id || !sessionOpened) return undefined;
+
+    const startedAt = Date.now();
+    const report = () => readerApi.reportReadingTime(id, elapsedSeconds(startedAt, Date.now()));
+    const onHide = () => {
+      if (window.document.visibilityState === 'hidden') report();
+    };
+
+    const timer = window.setInterval(report, REPORT_INTERVAL_MS);
+    window.addEventListener('pagehide', report);
+    window.document.addEventListener('visibilitychange', onHide);
+
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener('pagehide', report);
+      window.document.removeEventListener('visibilitychange', onHide);
+      report();
+    };
+  }, [id, sessionOpened]);
 
   const pageImage = useQuery({
     queryKey: ['digital-page', id, page],
