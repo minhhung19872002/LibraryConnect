@@ -172,9 +172,13 @@ public class CoursesController : ApiControllerBase
     [RequirePermission(PermissionCodes.CourseReportView)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> ExportReport(
-        [FromQuery] string format, [FromQuery] Guid? majorId, CancellationToken ct)
+        [FromQuery] string format,
+        [FromQuery] Guid? majorId,
+        [FromQuery] string? report,
+        CancellationToken ct)
     {
-        var file = await Mediator.Send(new ExportCourseReportQuery(format ?? "excel", majorId), ct);
+        var file = await Mediator.Send(
+            new ExportCourseReportQuery(format ?? "excel", majorId, report ?? "coverage"), ct);
         return File(file.Content, file.ContentType, file.FileName);
     }
 }

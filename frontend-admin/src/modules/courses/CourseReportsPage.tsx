@@ -29,6 +29,8 @@ import { MAU } from '@/lib/palette';
  */
 export function CourseReportsPage() {
   const [majorId, setMajorId] = useState<string | undefined>();
+  // Nút Xuất luôn xuất **đúng bảng đang xem**; trước đây ba tab cùng ra một tệp.
+  const [tab, setTab] = useState<'coverage' | 'missing' | 'shared'>('coverage');
 
   const majors = useQuery({
     queryKey: ['catalog', 'majors'],
@@ -49,10 +51,17 @@ export function CourseReportsPage() {
     percent: row.coveragePercent,
   }));
 
+  const tenTep: Record<typeof tab, string> = {
+    coverage: 'bao-cao-tai-lieu-mon-hoc',
+    missing: 'mon-chua-co-tai-lieu',
+    shared: 'tai-lieu-dung-chung',
+  };
+
   const xuatBaoCao = (format: 'excel' | 'pdf') =>
     downloadFile(
-      `/courses/reports/export?format=${format}${majorId ? `&majorId=${majorId}` : ''}`,
-      `bao-cao-tai-lieu-mon-hoc.${format === 'excel' ? 'xlsx' : 'pdf'}`,
+      `/courses/reports/export?format=${format}&report=${tab === 'missing' ? 'uncovered' : tab}` +
+        (majorId ? `&majorId=${majorId}` : ''),
+      `${tenTep[tab]}.${format === 'excel' ? 'xlsx' : 'pdf'}`,
     );
 
   return (
@@ -93,6 +102,8 @@ export function CourseReportsPage() {
 
       <Card loading={report.isLoading}>
         <Tabs
+          activeKey={tab}
+          onChange={(key) => setTab(key as typeof tab)}
           items={[
             {
               key: 'coverage',

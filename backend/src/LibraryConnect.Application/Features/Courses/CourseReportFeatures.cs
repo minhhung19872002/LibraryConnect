@@ -152,7 +152,13 @@ public class GetCourseReportQueryHandler : IRequestHandler<GetCourseReportQuery,
 }
 
 /// <summary>Xuất báo cáo tài liệu môn học ra Excel hoặc PDF (yêu cầu 6 của mục 1).</summary>
-public record ExportCourseReportQuery(string Format, Guid? MajorId = null)
+/// <summary>
+/// Xuất một trong ba bảng của báo cáo tài liệu môn học (X.3). Trước 04/09/2026 chỉ bảng "mức độ đáp
+/// ứng" xuất được, hai bảng kia tính ra rồi bỏ đó; <paramref name="Report"/> chọn bảng nào:
+/// <c>coverage</c> (mặc định), <c>uncovered</c> — môn chưa có tài liệu, <c>shared</c> — tài liệu dùng
+/// chung nhiều môn.
+/// </summary>
+public record ExportCourseReportQuery(string Format, Guid? MajorId = null, string Report = "coverage")
     : IRequest<ExportedFileDto>;
 
 public record ExportedFileDto(byte[] Content, string FileName, string ContentType);
@@ -183,60 +189,136 @@ public class ExportCourseReportQueryHandler
     public async Task<ExportedFileDto> Handle(ExportCourseReportQuery query, CancellationToken ct)
     {
         var report = await _mediator.Send(new GetCourseReportQuery(query.MajorId, 200), ct);
+        var excel = string.Equals(query.Format, "excel", StringComparison.OrdinalIgnoreCase);
+        var kind = (query.Report ?? "coverage").Trim().ToLowerInvariant();
 
-        if (string.Equals(query.Format, "excel", StringComparison.OrdinalIgnoreCase))
+        var criteria = new[]
         {
-            var content = _excel.Write(
-                "Mức độ đáp ứng theo ngành",
-                new List<ExcelColumn<MajorCoverageDto>>
-                {
-                    new("Mã ngành", row => row.Code, 14),
-                    new("Tên ngành", row => row.Name, 40),
-                    new("Khoa quản lý", row => row.FacultyName, 30),
-                    new("Số môn học", row => row.CourseCount, 14),
-                    new("Môn đã có tài liệu", row => row.CoveredCourseCount, 20),
-                    new("Tỷ lệ đáp ứng (%)", row => row.CoveragePercent, 18),
-                    new("Số liên kết tài liệu", row => row.DocumentCount, 20)
-                },
-                report.Coverage,
-                "Báo cáo mức độ đáp ứng tài liệu theo ngành đào tạo");
+            $"Tổng số môn học: {report.TotalCourses}",
+            $"Môn đã có tài liệu: {report.CoveredCourses}",
+            $"Tổng số liên kết: {report.TotalLinks}"
+        };
 
-            return new ExportedFileDto(
-                content,
-                "bao-cao-tai-lieu-mon-hoc.xlsx",
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-        }
+        return kind switch
+        {
+            "uncovered" => excel
+                ? Excel(
+                    "Môn chưa có tài liệu",
+                    new List<ExcelColumn<CourseWithoutDocumentDto>>
+                    {
+                        new("Mã môn", row => row.Code, 14),
+                        new("Tên môn học", row => row.Name, 40),
+                        new("Số tín chỉ", row => row.Credits, 12),
+                        new("Học kỳ", row => row.Semester, 12),
+                        new("Ngành đào tạo", row => row.Majors, 40)
+                    },
+                    report.WithoutDocuments,
+                    "Danh sách môn học chưa gắn tài liệu",
+                    "mon-chua-co-tai-lieu.xlsx")
+                : await PdfAsync(
+                    "Môn học chưa gắn tài liệu",
+                    criteria,
+                    new List<PdfColumn<CourseWithoutDocumentDto>>
+                    {
+                        new("Mã môn", row => row.Code, 1f),
+                        new("Tên môn học", row => row.Name, 3f),
+                        new("Tín chỉ", row => row.Credits.ToString(), 0.8f, PdfAlign.Right),
+                        new("Học kỳ", row => row.Semester ?? string.Empty, 1f),
+                        new("Ngành đào tạo", row => row.Majors, 3f)
+                    },
+                    report.WithoutDocuments,
+                    "mon-chua-co-tai-lieu.pdf",
+                    ct),
 
+            "shared" => excel
+                ? Excel(
+                    "Tài liệu dùng chung",
+                    new List<ExcelColumn<SharedDocumentDto>>
+                    {
+                        new("Nhan đề", row => row.Title, 45),
+                        new("Tác giả", row => row.AuthorMain, 28),
+                        new("Số môn dùng", row => row.CourseCount, 14),
+                        new("Bản sẵn sàng", row => row.AvailableItemCount, 14),
+                        new("Các môn học", row => row.Courses, 60)
+                    },
+                    report.SharedDocuments,
+                    "Tài liệu được gán cho nhiều môn học nhất",
+                    "tai-lieu-dung-chung.xlsx")
+                : await PdfAsync(
+                    "Tài liệu được gán cho nhiều môn học nhất",
+                    criteria,
+                    new List<PdfColumn<SharedDocumentDto>>
+                    {
+                        new("Nhan đề", row => row.Title, 3f),
+                        new("Tác giả", row => row.AuthorMain ?? string.Empty, 2f),
+                        new("Số môn", row => row.CourseCount.ToString(), 0.8f, PdfAlign.Right),
+                        new("Bản rảnh", row => row.AvailableItemCount.ToString(), 0.9f, PdfAlign.Right),
+                        new("Các môn học", row => row.Courses, 4f)
+                    },
+                    report.SharedDocuments,
+                    "tai-lieu-dung-chung.pdf",
+                    ct),
+
+            _ => excel
+                ? Excel(
+                    "Mức độ đáp ứng theo ngành",
+                    new List<ExcelColumn<MajorCoverageDto>>
+                    {
+                        new("Mã ngành", row => row.Code, 14),
+                        new("Tên ngành", row => row.Name, 40),
+                        new("Khoa quản lý", row => row.FacultyName, 30),
+                        new("Số môn học", row => row.CourseCount, 14),
+                        new("Môn đã có tài liệu", row => row.CoveredCourseCount, 20),
+                        new("Tỷ lệ đáp ứng (%)", row => row.CoveragePercent, 18),
+                        new("Số liên kết tài liệu", row => row.DocumentCount, 20)
+                    },
+                    report.Coverage,
+                    "Báo cáo mức độ đáp ứng tài liệu theo ngành đào tạo",
+                    "bao-cao-tai-lieu-mon-hoc.xlsx")
+                : await PdfAsync(
+                    "Mức độ đáp ứng tài liệu theo ngành đào tạo",
+                    criteria,
+                    new List<PdfColumn<MajorCoverageDto>>
+                    {
+                        new("Mã ngành", row => row.Code, 1f),
+                        new("Tên ngành", row => row.Name, 3f),
+                        new("Khoa quản lý", row => row.FacultyName ?? string.Empty, 2.5f),
+                        new("Số môn", row => row.CourseCount.ToString(), 1f, PdfAlign.Right),
+                        new("Môn có tài liệu", row => row.CoveredCourseCount.ToString(), 1.2f, PdfAlign.Right),
+                        new("Tỷ lệ", row => $"{row.CoveragePercent}%", 1f, PdfAlign.Right),
+                        new("Liên kết", row => row.DocumentCount.ToString(), 1f, PdfAlign.Right)
+                    },
+                    report.Coverage,
+                    "bao-cao-tai-lieu-mon-hoc.pdf",
+                    ct)
+        };
+    }
+
+    private ExportedFileDto Excel<T>(
+        string sheet, IReadOnlyList<ExcelColumn<T>> columns, IEnumerable<T> rows, string title, string fileName) =>
+        new(_excel.Write(sheet, columns, rows, title),
+            fileName,
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+
+    private async Task<ExportedFileDto> PdfAsync<T>(
+        string title,
+        IReadOnlyList<string> criteria,
+        IReadOnlyList<PdfColumn<T>> columns,
+        IReadOnlyList<T> rows,
+        string fileName,
+        CancellationToken ct)
+    {
         var header = new PdfReportHeader
         {
             LibraryName = await _parameters.GetAsync("LIBRARY.NAME", "Thư viện", ct),
             LibraryAddress = await _parameters.GetAsync("LIBRARY.ADDRESS", ct),
-            Title = "Mức độ đáp ứng tài liệu theo ngành đào tạo",
-            Criteria = new[]
-            {
-                $"Tổng số môn học: {report.TotalCourses}",
-                $"Môn đã có tài liệu: {report.CoveredCourses}",
-                $"Tổng số liên kết: {report.TotalLinks}"
-            },
+            Title = title,
+            Criteria = criteria,
             PreparedBy = _currentUser.FullName,
             Landscape = true
         };
 
-        var pdf = _pdf.RenderTable(
-            header,
-            new List<PdfColumn<MajorCoverageDto>>
-            {
-                new("Mã ngành", row => row.Code, 1f),
-                new("Tên ngành", row => row.Name, 3f),
-                new("Khoa quản lý", row => row.FacultyName ?? string.Empty, 2.5f),
-                new("Số môn", row => row.CourseCount.ToString(), 1f, PdfAlign.Right),
-                new("Môn có tài liệu", row => row.CoveredCourseCount.ToString(), 1.2f, PdfAlign.Right),
-                new("Tỷ lệ", row => $"{row.CoveragePercent}%", 1f, PdfAlign.Right),
-                new("Liên kết", row => row.DocumentCount.ToString(), 1f, PdfAlign.Right)
-            },
-            report.Coverage);
-
-        return new ExportedFileDto(pdf, "bao-cao-tai-lieu-mon-hoc.pdf", "application/pdf");
+        return new ExportedFileDto(_pdf.RenderTable(header, columns, rows), fileName, "application/pdf");
     }
 }
 

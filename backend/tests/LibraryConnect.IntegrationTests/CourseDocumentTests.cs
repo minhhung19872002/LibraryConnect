@@ -98,6 +98,46 @@ public class CourseDocumentTests
     // -----------------------------------------------------------------------------------------
 
     [Fact]
+    public async Task Xuat_duoc_ca_ba_bang_bao_cao_tai_lieu_mon_hoc()
+    {
+        // X.3 có ba báo cáo; trước 04/09/2026 chỉ "mức độ đáp ứng theo ngành" xuất được, hai bảng
+        // kia tính ra rồi bỏ đó nên nút Xuất ở hai tab ấy trả về đúng bảng thứ ba.
+        var client = await StaffAsync();
+
+        foreach (var report in new[] { "coverage", "uncovered", "shared" })
+        {
+            foreach (var (format, mime) in new[]
+                     {
+                         ("excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
+                         ("pdf", "application/pdf")
+                     })
+            {
+                var response = await client.GetAsync(
+                    $"/api/courses/reports/export?format={format}&report={report}");
+
+                response.IsSuccessStatusCode.Should().BeTrue(
+                    "xuất {0} dạng {1} phải chạy được", report, format);
+                response.Content.Headers.ContentType!.MediaType.Should().Be(mime);
+
+                var bytes = await response.Content.ReadAsByteArrayAsync();
+                bytes.Length.Should().BeGreaterThan(500, "tệp {0}/{1} không được rỗng", report, format);
+            }
+        }
+
+        // Ba bảng phải ra ba tệp khác nhau, không phải cùng một bảng đổi tên.
+        var names = new List<string>();
+        foreach (var report in new[] { "coverage", "uncovered", "shared" })
+        {
+            var response = await client.GetAsync($"/api/courses/reports/export?format=excel&report={report}");
+            names.Add(response.Content.Headers.ContentDisposition?.FileNameStar
+                      ?? response.Content.Headers.ContentDisposition?.FileName
+                      ?? string.Empty);
+        }
+
+        names.Should().OnlyHaveUniqueItems("mỗi bảng có tên tệp riêng");
+    }
+
+    [Fact]
     public async Task Danh_muc_mon_hoc_va_nganh_duoc_nap_san_khi_cai_dat()
     {
         var staff = await StaffAsync();
