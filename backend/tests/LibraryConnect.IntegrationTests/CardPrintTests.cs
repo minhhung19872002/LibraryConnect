@@ -254,4 +254,45 @@ public class CardPrintTests
         titleTemplates.Single(item => item.IsDefault).Id.Should().Be(second);
         titleTemplates.Single(item => item.Id == first).IsDefault.Should().BeFalse();
     }
+
+    /// <summary>
+    /// Xem trước chỉ dựng vài biểu ghi đầu (II.10): cán bộ nhìn phích đã điền dữ liệu thật trước
+    /// khi xuất cả lượt, và một bộ lọc khớp hàng nghìn biểu ghi vẫn xem trước được ngay.
+    /// </summary>
+    [Fact]
+    public async Task Xem_truoc_chi_dung_vai_bieu_ghi_dau()
+    {
+        var client = await ClientAsync();
+        var marker = Guid.NewGuid().ToString("N");
+        var ids = new List<Guid>();
+
+        for (var index = 0; index < 4; index++)
+        {
+            ids.Add(await CreateRecordAsync(client, $"Sách xem trước {index} {marker}", "Chủ đề"));
+        }
+
+        async Task<byte[]> PrintAllAsync(bool preview)
+        {
+            var response = await client.PostAsJsonAsync("/api/cataloging/cards/print", new
+            {
+                bibIds = ids,
+                cardTypes = new[] { "MAIN" },
+                multiplePerPage = false,
+                preview,
+                previewRecords = 1
+            }, LibraryConnectFactory.JsonOptions);
+
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            response.Content.Headers.ContentType!.MediaType.Should().Be("application/pdf");
+
+            return await response.Content.ReadAsByteArrayAsync();
+        }
+
+        var full = await PrintAllAsync(preview: false);
+        var previewPdf = await PrintAllAsync(preview: true);
+
+        // One card per page, so four records make a bigger file than one.
+        previewPdf.Length.Should().BeLessThan(full.Length, "bản xem trước chỉ dựng một biểu ghi");
+        Encoding.ASCII.GetString(previewPdf, 0, 5).Should().Be("%PDF-");
+    }
 }

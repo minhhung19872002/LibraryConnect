@@ -310,6 +310,9 @@ export const cardApi = {
     templateId?: string;
     cardTypes: string[];
     multiplePerPage: boolean;
+    /** Chỉ dựng vài biểu ghi đầu để xem trước, không phải cả lượt in. */
+    preview?: boolean;
+    previewRecords?: number;
   }): Promise<{ blob: Blob; fileName: string }> {
     const response = await http.post<Blob>('/cataloging/cards/print', request, { responseType: 'blob' });
 

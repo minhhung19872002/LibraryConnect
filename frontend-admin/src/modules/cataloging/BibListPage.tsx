@@ -20,6 +20,7 @@ import {
   EyeOutlined,
   PictureOutlined,
   PlusOutlined,
+  PrinterOutlined,
 } from '@ant-design/icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { PageHeader } from '@/components/PageHeader';
@@ -39,6 +40,7 @@ import {
 } from './types';
 import { BIB_LIST_COLUMN_WIDTHS, BIB_LIST_SCROLL_X } from './bibListColumns';
 import { FILTER_LABEL_PARAM, linkedFilters, parseBibListParams } from './bibListFilters';
+import { PrintCardsModal } from './PrintCardsModal';
 
 const MONOSPACE = { fontFamily: 'ui-monospace, Consolas, monospace' } as const;
 
@@ -63,6 +65,7 @@ export function BibListPage() {
   const [keyword, setKeyword] = useState(fromUrl.keyword ?? '');
   const [filter, setFilter] = useState<BibListParams>(fromUrl);
   const [selected, setSelected] = useState<string[]>([]);
+  const [printOpen, setPrintOpen] = useState(false);
 
   const documentTypes = useCatalogOptions('document-types');
   const languages = useCatalogOptions('languages');
@@ -181,6 +184,11 @@ export function BibListPage() {
                 onClick={() => exportRecords.mutate('marcxml')}
               >
                 MARCXML
+              </Button>
+            </Can>
+            <Can permission={PERMISSIONS.cataloging.cardPrint}>
+              <Button icon={<PrinterOutlined />} onClick={() => setPrintOpen(true)}>
+                {selected.length > 0 ? `In phích ${selected.length} biểu ghi` : 'In phích theo bộ lọc'}
               </Button>
             </Can>
             <Can permission={PERMISSIONS.cataloging.bibUpdate}>
@@ -439,6 +447,13 @@ export function BibListPage() {
             ),
           },
         ]}
+      />
+
+      <PrintCardsModal
+        open={printOpen}
+        bibIds={selected}
+        filter={{ ...filter, keyword: keyword.trim() || undefined }}
+        onClose={() => setPrintOpen(false)}
       />
     </Space>
   );

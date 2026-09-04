@@ -6,10 +6,12 @@ import {
   Card,
   Col,
   Input,
+  Modal,
   Row,
   Select,
   Space,
   Spin,
+  Switch,
   Tag,
   Tooltip,
   Typography,
@@ -21,6 +23,7 @@ import {
   ReadOutlined,
   SafetyCertificateOutlined,
   SaveOutlined,
+  SnippetsOutlined,
 } from '@ant-design/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { PageHeader } from '@/components/PageHeader';
@@ -199,6 +202,29 @@ export function BibEditorPage() {
   const [isbd, setIsbd] = useState<MarcPreview | null>(null);
   const [pickerField, setPickerField] = useState<RemoteSearchField | null>(null);
 
+  // Lưu biểu ghi đang soạn thành mẫu biên mục (II.5): cách tự nhiên nhất để có một mẫu là soạn
+  // một biểu ghi ưng ý rồi giữ lại khung của nó.
+  const [templateOpen, setTemplateOpen] = useState(false);
+  const [templateForm, setTemplateForm] = useState({ name: '', isDefault: false, keepValues: false });
+
+  const saveAsTemplate = useMutation({
+    mutationFn: () =>
+      catalogingApi.saveTemplate(null, {
+        name: templateForm.name.trim(),
+        documentTypeId: documentTypeId ?? null,
+        isDefault: templateForm.isDefault,
+        isActive: true,
+        fields: JSON.stringify(record),
+        clearValues: !templateForm.keepValues,
+      }),
+    onSuccess: async () => {
+      message.success(`Đã lưu mẫu biên mục "${templateForm.name.trim()}".`);
+      setTemplateOpen(false);
+      await queryClient.invalidateQueries({ queryKey: ['marc-templates'] });
+    },
+    onError: (error: unknown) => message.error(errorMessage(error)),
+  });
+
   // Đọc soát mô tả thư mục **trước khi lưu** (II.2): trước đây phải lưu xuống rồi mới xem được,
   // nghĩa là lưu rồi mới biết nó đọc sai chỗ nào.
   const describe = useMutation({
@@ -317,6 +343,11 @@ export function BibEditorPage() {
             >
               Kiểm tra
             </Button>
+            <Tooltip title="Giữ lại khung trường của biểu ghi này làm mẫu biên mục">
+              <Button icon={<SnippetsOutlined />} onClick={() => setTemplateOpen(true)}>
+                Lưu thành mẫu
+              </Button>
+            </Tooltip>
             <Tooltip title="Ctrl + S">
               <Button
                 type="primary"
@@ -471,6 +502,64 @@ export function BibEditorPage() {
           </Space>
         </Col>
       </Row>
+
+      <Modal
+        open={templateOpen}
+        title="Lưu biểu ghi này thành mẫu biên mục"
+        okText="Lưu mẫu"
+        cancelText="Hủy"
+        confirmLoading={saveAsTemplate.isPending}
+        onCancel={() => setTemplateOpen(false)}
+        onOk={() => {
+          if (!templateForm.name.trim()) {
+            message.error('Chưa đặt tên cho mẫu.');
+            return;
+          }
+
+          saveAsTemplate.mutate();
+        }}
+      >
+        <Space direction="vertical" size={12} style={{ width: '100%' }}>
+          <div>
+            <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+              Tên mẫu
+            </Typography.Text>
+            <Input
+              value={templateForm.name}
+              onChange={(event) => setTemplateForm((current) => ({ ...current, name: event.target.value }))}
+              placeholder="Ví dụ: Luận văn thạc sĩ"
+              maxLength={200}
+              autoFocus
+            />
+          </div>
+
+          <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+            Mẫu áp dụng cho dạng tài liệu đang chọn ở cột bên phải
+            {documentTypeId ? '' : ' (chưa chọn: áp dụng cho mọi dạng)'}.
+          </Typography.Text>
+
+          <Space size={16}>
+            <Space size={6}>
+              <Switch
+                checked={templateForm.keepValues}
+                onChange={(checked) => setTemplateForm((current) => ({ ...current, keepValues: checked }))}
+              />
+              <Typography.Text>Giữ cả nội dung các trường</Typography.Text>
+            </Space>
+            <Space size={6}>
+              <Switch
+                checked={templateForm.isDefault}
+                onChange={(checked) => setTemplateForm((current) => ({ ...current, isDefault: checked }))}
+              />
+              <Typography.Text>Đặt làm mẫu mặc định</Typography.Text>
+            </Space>
+          </Space>
+
+          <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+            Tắt "giữ nội dung" thì mẫu chỉ còn khung: nhãn trường, chỉ thị và mã trường con.
+          </Typography.Text>
+        </Space>
+      </Modal>
 
       <RemoteRecordPicker
         open={pickerField !== null}

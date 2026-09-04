@@ -93,4 +93,13 @@ public class PrintCardsRequestDto
 
     /// <summary>In nhiều phích trên một trang A4 thay vì mỗi phích một trang.</summary>
     public bool MultiplePerPage { get; set; } = true;
+
+    /// <summary>
+    /// Chỉ dựng vài biểu ghi đầu để xem trước trên màn hình, không phải cả lượt in — một bộ lọc
+    /// khớp hàng nghìn biểu ghi vẫn xem trước được ngay.
+    /// </summary>
+    public bool Preview { get; set; }
+
+    /// <summary>Số biểu ghi dựng khi xem trước.</summary>
+    public int PreviewRecords { get; set; } = 3;
 }

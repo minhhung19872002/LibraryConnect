@@ -207,15 +207,18 @@ public class PrintCardsCommandHandler : IRequestHandler<PrintCardsCommand, MarcE
                 "Không có biểu ghi nào khớp với lựa chọn, nên không in được phích.");
         }
 
-        if (total > MaxRecords)
+        if (!request.Preview && total > MaxRecords)
         {
             throw new Common.Exceptions.ValidationException("BibIds",
                 $"Bộ lọc đang khớp {total:N0} biểu ghi, vượt giới hạn {MaxRecords:N0} biểu ghi một lần in. " +
                 "Hãy thu hẹp bộ lọc.");
         }
 
-        var records = await query
-            .OrderBy(bib => bib.Title)
+        var ordered = query.OrderBy(bib => bib.Title);
+
+        var records = await (request.Preview
+                ? ordered.Take(Math.Clamp(request.PreviewRecords, 1, 20))
+                : ordered)
             .Select(bib => new { bib.Id, bib.MarcData })
             .ToListAsync(ct);
 
