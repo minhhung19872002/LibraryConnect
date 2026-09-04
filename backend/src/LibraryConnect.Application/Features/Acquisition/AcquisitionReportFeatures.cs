@@ -695,6 +695,8 @@ public class SupplierHistoryDto
 {
     public Guid SupplierId { get; set; }
     public string SupplierName { get; set; } = string.Empty;
+    /// <summary>Đánh giá đã chấm cho nhà cung cấp, 0 là chưa chấm, tối đa 5 sao.</summary>
+    public int Rating { get; set; }
     public int OrderCount { get; set; }
     public decimal TotalAmount { get; set; }
     public int ItemCount { get; set; }
@@ -752,6 +754,7 @@ public class GetSupplierHistoryQueryHandler : IRequestHandler<GetSupplierHistory
         {
             SupplierId = supplier.Id,
             SupplierName = supplier.Name,
+            Rating = supplier.Rating,
             OrderCount = orders.Count,
             TotalAmount = orders.Sum(order => order.TotalAmount),
             ItemCount = orders.Sum(order => order.ReceivedQuantity),

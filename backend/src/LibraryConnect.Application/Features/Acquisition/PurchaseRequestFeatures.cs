@@ -63,8 +63,63 @@ public class PurchaseRequestItemDto
     public int? IssuesPerYear { get; set; }
     public DateOnly? SubscriptionFrom { get; set; }
     public DateOnly? SubscriptionTo { get; set; }
+    /// <summary>
+    /// Số kỳ trong thời gian đặt (ấn phẩm định kỳ); tài liệu đơn bản luôn là 1. Thành tiền của dòng
+    /// bằng số bản × số kỳ × đơn giá một kỳ.
+    /// </summary>
+    public int IssueCount { get; set; } = 1;
     /// <summary>Số bản thư viện đang có của đúng tài liệu này, hiện kèm cảnh báo trùng.</summary>
     public int ExistingCopies { get; set; }
+}
+
+/// <summary>
+/// Tính tiền cho dòng đề nghị đặt ấn phẩm định kỳ (III.1).
+///
+/// Đặt báo không mua "một cuốn" mà mua một khoảng thời gian: đơn giá khai theo kỳ, số kỳ suy ra
+/// từ thời gian đặt và kỳ hạn. Nếu tính như sách — số bản × đơn giá — thì đặt trọn năm một tạp chí
+/// tháng chỉ ra tiền của một số, và kế hoạch kinh phí sai đi mười hai lần.
+/// </summary>
+public static class SerialSubscription
+{
+    /// <summary>
+    /// Số kỳ dự kiến trong khoảng đặt, tính theo tháng: một khoảng từ tháng 1 đến tháng 12 là 12
+    /// tháng, nhân với số kỳ mỗi năm rồi chia 12, làm tròn. Thiếu dữ liệu hoặc khoảng ngược thì
+    /// coi như một kỳ để dòng vẫn có tiền.
+    /// </summary>
+    public static int IssueCount(DateOnly? from, DateOnly? to, int? issuesPerYear)
+    {
+        if (from is null || to is null || issuesPerYear is null or <= 0 || to < from)
+        {
+            return 1;
+        }
+
+        var months = (to.Value.Year - from.Value.Year) * 12 + (to.Value.Month - from.Value.Month) + 1;
+        var issues = (int)Math.Round(months * issuesPerYear.Value / 12d, MidpointRounding.AwayFromZero);
+
+        return Math.Max(1, issues);
+    }
+
+    /// <summary>Thành tiền một dòng: sách là số bản × đơn giá, báo là số bản × số kỳ × đơn giá kỳ.</summary>
+    public static decimal LineAmount(
+        PurchaseRequestType type,
+        int quantity,
+        decimal unitPrice,
+        DateOnly? subscriptionFrom,
+        DateOnly? subscriptionTo,
+        int? issuesPerYear)
+    {
+        var issues = type == PurchaseRequestType.Serial
+            ? IssueCount(subscriptionFrom, subscriptionTo, issuesPerYear)
+            : 1;
+
+        return quantity * issues * unitPrice;
+    }
+
+    /// <summary>Số kỳ của một dòng đã lưu, theo loại của yêu cầu chứa nó.</summary>
+    public static int IssueCount(PurchaseRequestType type, PurchaseRequestItem line) =>
+        type == PurchaseRequestType.Serial
+            ? IssueCount(line.SubscriptionFrom, line.SubscriptionTo, line.IssuesPerYear)
+            : 1;
 }
 
 public class PurchaseRequestDetailDto : PurchaseRequestDto
@@ -250,6 +305,18 @@ public class GetPurchaseRequestQueryHandler
             })
             .ToListAsync(ct);
 
+        // Số kỳ tính trong bộ nhớ: phép tính theo tháng không dịch được sang SQL và cũng không cần.
+        foreach (var line in entity.Items)
+        {
+            line.IssueCount = SerialSubscription.IssueCount(
+                entity.Type, new PurchaseRequestItem
+                {
+                    SubscriptionFrom = line.SubscriptionFrom,
+                    SubscriptionTo = line.SubscriptionTo,
+                    IssuesPerYear = line.IssuesPerYear
+                });
+        }
+
         entity.OrderCodes = await _db.PurchaseOrderItems
             .AsNoTracking()
             .Where(line => line.RequestItem!.RequestId == query.Id)
@@ -409,7 +476,9 @@ public class SavePurchaseRequestCommandHandler : IRequestHandler<SavePurchaseReq
             line.Issn = input.Issn?.Trim();
             line.Quantity = input.Quantity;
             line.UnitPrice = input.UnitPrice;
-            line.EstimatedAmount = input.Quantity * input.UnitPrice;
+            line.EstimatedAmount = SerialSubscription.LineAmount(
+                command.Type, input.Quantity, input.UnitPrice,
+                input.SubscriptionFrom, input.SubscriptionTo, input.IssuesPerYear);
             line.SupplierId = input.SupplierId;
             line.Note = input.Note?.Trim();
             line.Frequency = input.Frequency;
@@ -429,7 +498,9 @@ public class SavePurchaseRequestCommandHandler : IRequestHandler<SavePurchaseReq
             }
         }
 
-        request.TotalAmount = command.Items.Sum(line => line.Quantity * line.UnitPrice);
+        request.TotalAmount = command.Items.Sum(line => SerialSubscription.LineAmount(
+            command.Type, line.Quantity, line.UnitPrice,
+            line.SubscriptionFrom, line.SubscriptionTo, line.IssuesPerYear));
 
         await _db.SaveChangesAsync(ct);
         return request.Id;
@@ -567,7 +638,8 @@ public class ApprovePurchaseRequestCommandHandler
             line.ApprovedQuantity = approved;
         }
 
-        request.ApprovedAmount = request.Items.Sum(line => line.ApprovedQuantity * line.UnitPrice);
+        request.ApprovedAmount = request.Items.Sum(line =>
+            line.ApprovedQuantity * SerialSubscription.IssueCount(request.Type, line) * line.UnitPrice);
 
         var levels = await ApprovalFlow.RequiredLevelsAsync(_parameters, ct);
         request.ApprovalLevel++;

@@ -16,7 +16,11 @@ public enum AcquisitionReportKind
     /// <summary>Thống kê theo một chiều.</summary>
     Statistics,
     /// <summary>Bảng tổng hợp đa chiều.</summary>
-    Pivot
+    Pivot,
+    /// <summary>Báo cáo tổng quát kho: theo kho, dạng tài liệu, tình trạng.</summary>
+    Overview,
+    /// <summary>Báo cáo duyệt mua: theo trạng thái, đơn vị đề nghị, tháng.</summary>
+    PurchaseApproval
 }
 
 /// <summary>
@@ -71,8 +75,124 @@ public class ExportAcquisitionReportQueryHandler
             AcquisitionReportKind.Disposal => await ExportDisposalAsync(query, header, ct),
             AcquisitionReportKind.Statistics => await ExportStatisticsAsync(query, header, ct),
             AcquisitionReportKind.Pivot => await ExportPivotAsync(query, header, ct),
+            AcquisitionReportKind.Overview => await ExportOverviewAsync(query, header, ct),
+            AcquisitionReportKind.PurchaseApproval => await ExportPurchaseApprovalAsync(query, header, ct),
             _ => await ExportAcquisitionListAsync(query, header, ct)
         };
+    }
+
+    /// <summary>Một dòng của báo cáo nhiều nhóm: nhóm nào, nhãn gì, đếm bao nhiêu, giá trị bao nhiêu.</summary>
+    private record GroupedRow(string Group, string Label, int TitleCount, int ItemCount, double Percent, decimal Value);
+
+    private static IEnumerable<GroupedRow> Grouped(string group, IEnumerable<AcquisitionStatRowDto> rows) =>
+        rows.Select(row => new GroupedRow(group, row.Label, row.TitleCount, row.ItemCount, row.Percent, row.Value));
+
+    private ExportedFile WriteGrouped(
+        ExportFormat format,
+        PdfReportHeader header,
+        string name,
+        string groupHeader,
+        string countHeader,
+        bool showTitles,
+        IReadOnlyList<GroupedRow> rows)
+    {
+        if (format == ExportFormat.Excel)
+        {
+            var columns = new List<ExcelColumn<GroupedRow>>
+            {
+                new(groupHeader, row => row.Group, 24),
+                new("Nhãn", row => row.Label, 35)
+            };
+
+            if (showTitles)
+            {
+                columns.Add(new ExcelColumn<GroupedRow>("Số đầu tài liệu", row => row.TitleCount, 16));
+            }
+
+            columns.Add(new ExcelColumn<GroupedRow>(countHeader, row => row.ItemCount, 14));
+            columns.Add(new ExcelColumn<GroupedRow>("Tỷ trọng (%)", row => row.Percent, 14, "#,##0.0"));
+            columns.Add(new ExcelColumn<GroupedRow>("Giá trị (VNĐ)", row => row.Value, 18, "#,##0"));
+
+            return new ExportedFile(
+                _excel.Write("Báo cáo", columns, rows, header.Title),
+                $"{name}.xlsx",
+                ExportedFile.ExcelContentType);
+        }
+
+        var pdfColumns = new List<PdfColumn<GroupedRow>>
+        {
+            new(groupHeader, row => row.Group, 1.6f),
+            new("Nhãn", row => row.Label, 3f)
+        };
+
+        if (showTitles)
+        {
+            pdfColumns.Add(new PdfColumn<GroupedRow>(
+                "Số đầu", row => row.TitleCount.ToString("#,##0", Vietnamese), 1f, PdfAlign.Right));
+        }
+
+        pdfColumns.Add(new PdfColumn<GroupedRow>(
+            countHeader, row => row.ItemCount.ToString("#,##0", Vietnamese), 1f, PdfAlign.Right));
+        pdfColumns.Add(new PdfColumn<GroupedRow>(
+            "Tỷ trọng", row => $"{row.Percent.ToString("#,##0.0", Vietnamese)}%", 1f, PdfAlign.Right));
+        pdfColumns.Add(new PdfColumn<GroupedRow>(
+            "Giá trị", row => row.Value.ToString("#,##0", Vietnamese), 1.4f, PdfAlign.Right));
+
+        return new ExportedFile(
+            _pdf.RenderTable(header, pdfColumns, rows), $"{name}.pdf", ExportedFile.PdfContentType);
+    }
+
+    /// <summary>Báo cáo tổng quát kho (III.2): ba cách cắt lát trong một tệp, kèm các con số tổng.</summary>
+    private async Task<ExportedFile> ExportOverviewAsync(
+        ExportAcquisitionReportQuery query, PdfReportHeader header, CancellationToken ct)
+    {
+        var overview = await _mediator.Send(new GetStockOverviewQuery(query.Filter), ct);
+
+        header.Title = "BÁO CÁO TỔNG QUÁT KHO";
+        header.Landscape = false;
+        header.Criteria = header.Criteria.Concat(new[]
+        {
+            $"Tổng biểu ghi: {overview.TotalBibs:#,##0} · Tổng số bản: {overview.TotalItems:#,##0} · " +
+            $"Sẵn sàng cho mượn: {overview.AvailableItems:#,##0} · Đang khóa: {overview.LockedItems:#,##0}",
+            $"Tổng giá trị: {overview.TotalValue.ToString("#,##0", Vietnamese)} đ"
+        }).ToList();
+
+        var rows = Grouped("Theo kho", overview.ByWarehouse)
+            .Concat(Grouped("Theo dạng tài liệu", overview.ByDocumentType))
+            .Concat(Grouped("Theo tình trạng", overview.ByStatus))
+            .ToList();
+
+        return WriteGrouped(
+            query.Format, header, $"tong-quat-kho-{_clock.Today:yyyyMMdd}",
+            "Cắt lát", "Số bản", showTitles: true, rows);
+    }
+
+    /// <summary>Báo cáo duyệt mua (III.1): theo trạng thái, đơn vị đề nghị và tháng.</summary>
+    private async Task<ExportedFile> ExportPurchaseApprovalAsync(
+        ExportAcquisitionReportQuery query, PdfReportHeader header, CancellationToken ct)
+    {
+        var report = await _mediator.Send(
+            new GetPurchaseApprovalReportQuery(query.Filter.From, query.Filter.To), ct);
+
+        header.Title = "BÁO CÁO DUYỆT MUA";
+        header.Landscape = false;
+        header.Criteria = header.Criteria.Concat(new[]
+        {
+            $"Tổng yêu cầu: {report.TotalRequests:#,##0} · Đã duyệt: {report.ApprovedRequests:#,##0} · " +
+            $"Từ chối: {report.RejectedRequests:#,##0} · Chờ xử lý: {report.PendingRequests:#,##0} · " +
+            $"Tỷ lệ duyệt: {report.ApprovalRate.ToString("#,##0.0", Vietnamese)}%",
+            $"Kinh phí đề nghị: {report.RequestedAmount.ToString("#,##0", Vietnamese)} đ · " +
+            $"Kinh phí duyệt: {report.ApprovedAmount.ToString("#,##0", Vietnamese)} đ"
+        }).ToList();
+
+        var rows = Grouped("Theo trạng thái", report.ByStatus)
+            .Concat(Grouped("Theo đơn vị đề nghị", report.ByDepartment))
+            .Concat(Grouped("Theo tháng", report.ByMonth))
+            .ToList();
+
+        return WriteGrouped(
+            query.Format, header, $"duyet-mua-{_clock.Today:yyyyMMdd}",
+            "Cắt lát", "Số yêu cầu", showTitles: false, rows);
     }
 
     private async Task<PdfReportHeader> BuildHeaderAsync(

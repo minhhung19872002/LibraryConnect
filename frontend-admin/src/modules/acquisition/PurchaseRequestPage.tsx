@@ -35,7 +35,10 @@ import {
 } from '@ant-design/icons';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnsType } from 'antd/es/table';
-import type { Dayjs } from 'dayjs';
+import dayjs, { type Dayjs } from 'dayjs';
+import { frequencyLabels, issuesPerYear as issuesPerYearOf } from '@/modules/serials/labels';
+import type { SerialFrequency } from '@/modules/serials/types';
+import { requestLineAmount, subscriptionIssueCount, type RequestLineDraft } from './serialRequest';
 import { PageHeader } from '@/components/PageHeader';
 import { FilterBar } from '@/components/FilterBar';
 import { Can } from '@/components/PermissionGate';
@@ -51,6 +54,7 @@ import type {
   PurchaseRequestDto,
   PurchaseRequestItemDto,
   PurchaseRequestStatus,
+  PurchaseRequestType,
 } from './types';
 
 /**
@@ -444,6 +448,11 @@ function RequestEditorDrawer({
   const loaded = detail.data;
   const readOnly = Boolean(loaded && loaded.status !== 'Draft');
 
+  // Loại yêu cầu và các dòng đang gõ — để đổi cột bảng và tính thành tiền ngay khi gõ.
+  const type = (Form.useWatch('type', form) as PurchaseRequestType | undefined) ?? 'Monograph';
+  const draftLines = (Form.useWatch('items', form) as EditorLine[] | undefined) ?? [];
+  const isSerial = type === 'Serial';
+
   useEffect(() => {
     if (!loaded) return;
 
@@ -453,12 +462,22 @@ function RequestEditorDrawer({
       department: loaded.department,
       fundingSourceId: loaded.fundingSourceId,
       reason: loaded.reason,
-      items: loaded.items,
+      items: loaded.items.map((item) => ({
+        ...item,
+        subscription:
+          item.subscriptionFrom && item.subscriptionTo
+            ? [dayjs(item.subscriptionFrom), dayjs(item.subscriptionTo)]
+            : undefined,
+      })),
     });
   }, [form, loaded]);
 
   const save = useMutation({
-    mutationFn: (values: Record<string, unknown>) => purchaseApi.saveRequest(id, values),
+    mutationFn: (values: Record<string, unknown>) =>
+      purchaseApi.saveRequest(id, {
+        ...values,
+        items: ((values.items as EditorLine[] | undefined) ?? []).map(toLineInput),
+      }),
     onSuccess: () => {
       message.success('Đã lưu yêu cầu.');
       onSaved();
@@ -570,152 +589,270 @@ function RequestEditorDrawer({
           </Col>
         </Row>
 
-        <Typography.Title level={5}>Danh sách tài liệu đề nghị</Typography.Title>
+        <Typography.Title level={5}>
+          {isSerial ? 'Danh sách báo, tạp chí đề nghị đặt' : 'Danh sách tài liệu đề nghị'}
+        </Typography.Title>
+
+        {isSerial && (
+          <Typography.Paragraph type="secondary">
+            Đơn giá khai theo một kỳ; số kỳ suy ra từ thời gian đặt và số kỳ mỗi năm, thành tiền là
+            số bản × số kỳ × đơn giá kỳ.
+          </Typography.Paragraph>
+        )}
 
         <Form.List name="items">
-          {(fields, { add, remove }) => (
-            <>
-              <Table
-                rowKey="key"
-                size="small"
-                pagination={false}
-                dataSource={fields}
-                scroll={{ x: 1100 }}
-                columns={[
-                  {
-                    title: 'Nhan đề',
-                    width: 280,
-                    render: (_, field) => (
-                      <>
-                        <Form.Item name={[field.name, 'id']} hidden>
-                          <Input />
-                        </Form.Item>
-                        <Form.Item
-                          name={[field.name, 'title']}
-                          rules={[{ required: true, message: 'Chưa nhập nhan đề.' }]}
-                          style={{ marginBottom: 0 }}
-                        >
-                          <Input placeholder="Giáo trình cơ sở dữ liệu" />
-                        </Form.Item>
-                      </>
-                    ),
-                  },
-                  {
-                    title: 'Tác giả',
-                    width: 170,
-                    render: (_, field) => (
-                      <Form.Item name={[field.name, 'author']} style={{ marginBottom: 0 }}>
-                        <Input />
-                      </Form.Item>
-                    ),
-                  },
-                  {
-                    title: 'Nhà xuất bản',
-                    width: 170,
-                    render: (_, field) => (
-                      <Form.Item name={[field.name, 'publisherName']} style={{ marginBottom: 0 }}>
-                        <Input />
-                      </Form.Item>
-                    ),
-                  },
-                  {
-                    title: 'Năm',
-                    width: 90,
-                    render: (_, field) => (
-                      <Form.Item name={[field.name, 'publishYear']} style={{ marginBottom: 0 }}>
-                        <InputNumber min={1400} max={2200} style={{ width: '100%' }} />
-                      </Form.Item>
-                    ),
-                  },
-                  {
-                    title: 'ISBN',
-                    width: 160,
-                    render: (_, field) => (
-                      <Form.Item name={[field.name, 'isbn']} style={{ marginBottom: 0 }}>
-                        <Input />
-                      </Form.Item>
-                    ),
-                  },
-                  {
-                    title: 'SL',
-                    width: 80,
-                    render: (_, field) => (
-                      <Form.Item
-                        name={[field.name, 'quantity']}
-                        rules={[{ required: true, message: '' }]}
-                        style={{ marginBottom: 0 }}
-                      >
-                        <InputNumber min={1} max={10000} style={{ width: '100%' }} />
-                      </Form.Item>
-                    ),
-                  },
-                  {
-                    title: 'Đơn giá',
-                    width: 130,
-                    render: (_, field) => (
-                      <Form.Item name={[field.name, 'unitPrice']} style={{ marginBottom: 0 }}>
-                        <InputNumber<number>
-                          min={0}
-                          step={1000}
-                          style={{ width: '100%' }}
-                          formatter={(value) => money(Number(value ?? 0))}
-                          parser={(value) => Number((value ?? '').replace(/\D/g, ''))}
-                        />
-                      </Form.Item>
-                    ),
-                  },
-                  {
-                    title: 'Nhà cung cấp',
-                    width: 190,
-                    render: (_, field) => (
-                      <Form.Item name={[field.name, 'supplierId']} style={{ marginBottom: 0 }}>
-                        <Select allowClear options={suppliers} />
-                      </Form.Item>
-                    ),
-                  },
-                  {
-                    title: '',
-                    width: 90,
-                    render: (_, field) => (
-                      <Space>
-                        <Tooltip title="Thư viện đã có tài liệu này chưa?">
-                          <Button
-                            size="small"
-                            icon={<SearchOutlined />}
-                            loading={check.isPending}
-                            onClick={() => {
-                              const line = form.getFieldValue(['items', field.name]) ?? {};
-                              check.mutate({
-                                isbn: line.isbn,
-                                title: line.title,
-                                index: field.name,
-                              });
-                            }}
-                          />
-                        </Tooltip>
-                        <Button
-                          size="small"
-                          danger
-                          icon={<CloseOutlined />}
-                          onClick={() => remove(field.name)}
-                        />
-                      </Space>
-                    ),
-                  },
-                ]}
-              />
+          {(fields, { add, remove }) => {
+            const titleColumn = {
+              title: isSerial ? 'Tên báo, tạp chí' : 'Nhan đề',
+              width: 260,
+              render: (_: unknown, field: { name: number }) => (
+                <>
+                  <Form.Item name={[field.name, 'id']} hidden>
+                    <Input />
+                  </Form.Item>
+                  <Form.Item
+                    name={[field.name, 'title']}
+                    rules={[{ required: true, message: 'Chưa nhập nhan đề.' }]}
+                    style={{ marginBottom: 0 }}
+                  >
+                    <Input placeholder={isSerial ? 'Tạp chí Khoa học và Công nghệ' : 'Giáo trình cơ sở dữ liệu'} />
+                  </Form.Item>
+                </>
+              ),
+            };
 
-              <Button
-                type="dashed"
-                block
-                icon={<PlusOutlined />}
-                style={{ marginTop: 8 }}
-                onClick={() => add({ quantity: 1, unitPrice: 0 })}
-              >
-                Thêm đầu tài liệu
-              </Button>
-            </>
-          )}
+            const quantityColumn = {
+              title: isSerial ? 'Số bản/kỳ' : 'SL',
+              width: isSerial ? 100 : 80,
+              render: (_: unknown, field: { name: number }) => (
+                <Form.Item
+                  name={[field.name, 'quantity']}
+                  rules={[{ required: true, message: '' }]}
+                  style={{ marginBottom: 0 }}
+                >
+                  <InputNumber min={1} max={10000} style={{ width: '100%' }} />
+                </Form.Item>
+              ),
+            };
+
+            const priceColumn = {
+              title: isSerial ? 'Đơn giá/kỳ' : 'Đơn giá',
+              width: 130,
+              render: (_: unknown, field: { name: number }) => (
+                <Form.Item name={[field.name, 'unitPrice']} style={{ marginBottom: 0 }}>
+                  <InputNumber<number>
+                    min={0}
+                    step={1000}
+                    style={{ width: '100%' }}
+                    formatter={(value) => money(Number(value ?? 0))}
+                    parser={(value) => Number((value ?? '').replace(/\D/g, ''))}
+                  />
+                </Form.Item>
+              ),
+            };
+
+            const supplierColumn = {
+              title: 'Nhà cung cấp',
+              width: 190,
+              render: (_: unknown, field: { name: number }) => (
+                <Form.Item name={[field.name, 'supplierId']} style={{ marginBottom: 0 }}>
+                  <Select allowClear options={suppliers} />
+                </Form.Item>
+              ),
+            };
+
+            const actionColumn = {
+              title: '',
+              width: 90,
+              render: (_: unknown, field: { name: number }) => (
+                <Space>
+                  {!isSerial && (
+                    <Tooltip title="Thư viện đã có tài liệu này chưa?">
+                      <Button
+                        size="small"
+                        icon={<SearchOutlined />}
+                        loading={check.isPending}
+                        onClick={() => {
+                          const line = form.getFieldValue(['items', field.name]) ?? {};
+                          check.mutate({
+                            isbn: line.isbn,
+                            title: line.title,
+                            index: field.name,
+                          });
+                        }}
+                      />
+                    </Tooltip>
+                  )}
+                  <Button
+                    size="small"
+                    danger
+                    icon={<CloseOutlined />}
+                    onClick={() => remove(field.name)}
+                  />
+                </Space>
+              ),
+            };
+
+            const monographColumns = [
+              titleColumn,
+              {
+                title: 'Tác giả',
+                width: 170,
+                render: (_: unknown, field: { name: number }) => (
+                  <Form.Item name={[field.name, 'author']} style={{ marginBottom: 0 }}>
+                    <Input />
+                  </Form.Item>
+                ),
+              },
+              {
+                title: 'Nhà xuất bản',
+                width: 170,
+                render: (_: unknown, field: { name: number }) => (
+                  <Form.Item name={[field.name, 'publisherName']} style={{ marginBottom: 0 }}>
+                    <Input />
+                  </Form.Item>
+                ),
+              },
+              {
+                title: 'Năm',
+                width: 90,
+                render: (_: unknown, field: { name: number }) => (
+                  <Form.Item name={[field.name, 'publishYear']} style={{ marginBottom: 0 }}>
+                    <InputNumber min={1400} max={2200} style={{ width: '100%' }} />
+                  </Form.Item>
+                ),
+              },
+              {
+                title: 'ISBN',
+                width: 160,
+                render: (_: unknown, field: { name: number }) => (
+                  <Form.Item name={[field.name, 'isbn']} style={{ marginBottom: 0 }}>
+                    <Input />
+                  </Form.Item>
+                ),
+              },
+              quantityColumn,
+              priceColumn,
+              supplierColumn,
+              actionColumn,
+            ];
+
+            const serialColumns = [
+              titleColumn,
+              {
+                title: 'ISSN',
+                width: 120,
+                render: (_: unknown, field: { name: number }) => (
+                  <Form.Item name={[field.name, 'issn']} style={{ marginBottom: 0 }}>
+                    <Input placeholder="1859-1450" />
+                  </Form.Item>
+                ),
+              },
+              {
+                title: 'Kỳ hạn',
+                width: 150,
+                render: (_: unknown, field: { name: number }) => (
+                  <Form.Item name={[field.name, 'frequency']} style={{ marginBottom: 0 }}>
+                    <Select
+                      allowClear
+                      options={Object.entries(frequencyLabels).map(([value, label]) => ({ value, label }))}
+                      onChange={(value: SerialFrequency | undefined) => {
+                        // Kỳ hạn quyết định số kỳ mỗi năm; điền sẵn để không phải nhớ 52 hay 12.
+                        if (value && issuesPerYearOf[value] > 0) {
+                          form.setFieldValue(['items', field.name, 'issuesPerYear'], issuesPerYearOf[value]);
+                        }
+                      }}
+                    />
+                  </Form.Item>
+                ),
+              },
+              {
+                title: 'Số kỳ/năm',
+                width: 100,
+                render: (_: unknown, field: { name: number }) => (
+                  <Form.Item
+                    name={[field.name, 'issuesPerYear']}
+                    rules={[{ required: true, message: 'Chưa có số kỳ/năm.' }]}
+                    style={{ marginBottom: 0 }}
+                  >
+                    <InputNumber min={1} max={366} style={{ width: '100%' }} />
+                  </Form.Item>
+                ),
+              },
+              {
+                title: 'Thời gian đặt',
+                width: 230,
+                render: (_: unknown, field: { name: number }) => (
+                  <Form.Item
+                    name={[field.name, 'subscription']}
+                    rules={[{ required: true, message: 'Chưa chọn thời gian đặt.' }]}
+                    style={{ marginBottom: 0 }}
+                  >
+                    <DatePicker.RangePicker
+                      picker="month"
+                      format="MM/YYYY"
+                      placeholder={['Từ tháng', 'đến tháng']}
+                      style={{ width: '100%' }}
+                    />
+                  </Form.Item>
+                ),
+              },
+              quantityColumn,
+              priceColumn,
+              {
+                title: 'Số kỳ × thành tiền',
+                width: 170,
+                align: 'right' as const,
+                render: (_: unknown, field: { name: number }) => {
+                  const line = toLineInput(draftLines[field.name] ?? {});
+
+                  return (
+                    <Space direction="vertical" size={0} style={{ alignItems: 'flex-end' }}>
+                      <Typography.Text type="secondary">
+                        {line.issueCount} kỳ
+                      </Typography.Text>
+                      <Typography.Text strong>{money(requestLineAmount('Serial', line))}</Typography.Text>
+                    </Space>
+                  );
+                },
+              },
+              supplierColumn,
+              actionColumn,
+            ];
+
+            return (
+              <>
+                <Table
+                  rowKey="key"
+                  size="small"
+                  pagination={false}
+                  dataSource={fields}
+                  scroll={{ x: isSerial ? 1440 : 1100 }}
+                  columns={isSerial ? serialColumns : monographColumns}
+                />
+
+                <Space style={{ marginTop: 8, width: '100%', justifyContent: 'space-between' }}>
+                  <Button
+                    type="dashed"
+                    icon={<PlusOutlined />}
+                    onClick={() => add({ quantity: 1, unitPrice: 0 })}
+                  >
+                    {isSerial ? 'Thêm đầu báo, tạp chí' : 'Thêm đầu tài liệu'}
+                  </Button>
+                  <Typography.Text strong>
+                    Tổng tiền dự kiến:{' '}
+                    {money(
+                      draftLines.reduce(
+                        (sum, line) => sum + requestLineAmount(type, toLineInput(line ?? {})),
+                        0,
+                      ),
+                    )}{' '}
+                    đ
+                  </Typography.Text>
+                </Space>
+              </>
+            );
+          }}
         </Form.List>
       </Form>
 
@@ -733,6 +870,38 @@ function RequestEditorDrawer({
       )}
     </Drawer>
   );
+}
+
+/** Một dòng trên form soạn yêu cầu: giống dòng gửi máy chủ, riêng thời gian đặt là một cặp tháng. */
+interface EditorLine extends RequestLineDraft {
+  id?: string | null;
+  title?: string;
+  author?: string | null;
+  publisherName?: string | null;
+  publishYear?: number | null;
+  isbn?: string | null;
+  issn?: string | null;
+  supplierId?: string | null;
+  note?: string | null;
+  frequency?: SerialFrequency | null;
+  subscription?: [Dayjs | null, Dayjs | null] | null;
+}
+
+/**
+ * Đổi dòng trên form thành dòng máy chủ nhận: cặp tháng thành ngày đầu tháng bắt đầu và ngày đầu
+ * tháng kết thúc — máy chủ đếm số kỳ theo tháng nên ngày trong tháng không ảnh hưởng.
+ */
+function toLineInput(line: EditorLine) {
+  const { subscription, ...rest } = line;
+  const subscriptionFrom = subscription?.[0]?.startOf('month').format('YYYY-MM-DD') ?? null;
+  const subscriptionTo = subscription?.[1]?.startOf('month').format('YYYY-MM-DD') ?? null;
+
+  return {
+    ...rest,
+    subscriptionFrom,
+    subscriptionTo,
+    issueCount: subscriptionIssueCount(subscriptionFrom, subscriptionTo, rest.issuesPerYear),
+  };
 }
 
 /** Duyệt yêu cầu: sửa được số lượng từng dòng trước khi chốt. */
@@ -787,10 +956,12 @@ function ApprovalModal({
 
   const approvedFor = (item: PurchaseRequestItemDto) => lines[item.id] ?? item.quantity;
 
-  const total = (detail.data?.items ?? []).reduce(
-    (sum, item) => sum + approvedFor(item) * item.unitPrice,
-    0,
-  );
+  // Báo, tạp chí: giá trị duyệt nhân thêm số kỳ trong thời gian đặt, như máy chủ tính.
+  const lineTotal = (item: PurchaseRequestItemDto) =>
+    approvedFor(item) * (item.issueCount || 1) * item.unitPrice;
+
+  const total = (detail.data?.items ?? []).reduce((sum, item) => sum + lineTotal(item), 0);
+  const isSerial = detail.data?.type === 'Serial';
 
   return (
     <Modal
@@ -838,8 +1009,26 @@ function ApprovalModal({
                   </Space>
                 ),
               },
-              { title: 'Tác giả', dataIndex: 'author', width: 150 },
-              { title: 'Đề nghị', dataIndex: 'quantity', width: 90, align: 'right' },
+              isSerial
+                ? {
+                    title: 'Thời gian đặt',
+                    width: 200,
+                    render: (_: unknown, row: PurchaseRequestItemDto) => (
+                      <Space direction="vertical" size={0}>
+                        <span>
+                          {row.subscriptionFrom && row.subscriptionTo
+                            ? `${dayjs(row.subscriptionFrom).format('MM/YYYY')} – ${dayjs(row.subscriptionTo).format('MM/YYYY')}`
+                            : '—'}
+                        </span>
+                        <Typography.Text type="secondary">
+                          {row.frequency ? frequencyLabels[row.frequency as SerialFrequency] : ''}
+                          {row.issueCount ? ` · ${row.issueCount} kỳ` : ''}
+                        </Typography.Text>
+                      </Space>
+                    ),
+                  }
+                : { title: 'Tác giả', dataIndex: 'author', width: 150 },
+              { title: isSerial ? 'Bản/kỳ' : 'Đề nghị', dataIndex: 'quantity', width: 90, align: 'right' },
               {
                 title: 'Duyệt',
                 width: 110,
@@ -854,7 +1043,7 @@ function ApprovalModal({
                 ),
               },
               {
-                title: 'Đơn giá',
+                title: isSerial ? 'Đơn giá/kỳ' : 'Đơn giá',
                 dataIndex: 'unitPrice',
                 width: 120,
                 align: 'right',
@@ -864,7 +1053,7 @@ function ApprovalModal({
                 title: 'Thành tiền duyệt',
                 width: 140,
                 align: 'right',
-                render: (_, row: PurchaseRequestItemDto) => money(approvedFor(row) * row.unitPrice),
+                render: (_, row: PurchaseRequestItemDto) => money(lineTotal(row)),
               },
             ]}
             summary={() => (

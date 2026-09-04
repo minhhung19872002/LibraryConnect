@@ -262,7 +262,12 @@ public static class CatalogRegistry
                 CatalogFields.Text<Supplier>("bankAccount", "Số tài khoản",
                     e => e.BankAccount, (e, v) => e.BankAccount = v, showInList: false),
                 CatalogFields.Text<Supplier>("bankName", "Ngân hàng",
-                    e => e.BankName, (e, v) => e.BankName = v, showInList: false)
+                    e => e.BankName, (e, v) => e.BankName = v, showInList: false),
+                // Đánh giá nhà cung cấp (III.1): 0 là chưa đánh giá, 1–5 sao. Cột ở thực thể có từ
+                // phase 6 nhưng chưa bao giờ được khai ở đây nên không sửa được từ giao diện.
+                CatalogFields.Number<Supplier>("rating", "Đánh giá (1–5 sao)",
+                    e => e.Rating, (e, v) => e.Rating = Math.Clamp(v ?? 0, 0, 5),
+                    description: "Bỏ trống hoặc 0 là chưa đánh giá; hiện kèm lịch sử giao dịch ở báo cáo bổ sung.")
             }
         },
 

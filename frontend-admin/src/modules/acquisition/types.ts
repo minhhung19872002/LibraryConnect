@@ -285,9 +285,18 @@ export interface LabelBarcodeDto {
   source: string;
 }
 
+/** Khối ảnh logo thư viện trên tem; ảnh lấy từ tham số hệ thống lúc in. */
+export interface LabelImageDto {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 export interface LabelLayoutDto {
   boxes: LabelBoxDto[];
   barcode?: LabelBarcodeDto | null;
+  logo?: LabelImageDto | null;
   padding: number;
   showBorder: boolean;
 }
@@ -372,6 +381,8 @@ export interface PurchaseRequestItemDto {
   issuesPerYear?: number | null;
   subscriptionFrom?: string | null;
   subscriptionTo?: string | null;
+  /** Số kỳ trong thời gian đặt; tài liệu đơn bản luôn là 1. */
+  issueCount: number;
   existingCopies: number;
 }
 
@@ -745,6 +756,8 @@ export interface SupplierOrderRowDto {
 export interface SupplierHistoryDto {
   supplierId: string;
   supplierName: string;
+  /** Đánh giá đã chấm ở danh mục nhà cung cấp, 0 là chưa chấm, tối đa 5 sao. */
+  rating: number;
   orderCount: number;
   totalAmount: number;
   itemCount: number;

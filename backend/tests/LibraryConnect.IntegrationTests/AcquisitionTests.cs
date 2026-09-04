@@ -308,6 +308,56 @@ public class AcquisitionTests
     }
 
     [Fact]
+    public async Task Serial_request_prices_the_subscription_by_the_number_of_issues()
+    {
+        var client = await ClientAsync();
+
+        // Hai bản một kỳ, tạp chí tháng, đặt trọn năm 2026, 25.000 đ một kỳ → 2 × 12 × 25.000.
+        var requestId = await ReadAsync<Guid>(await client.PostAsJsonAsync("/api/acquisition/requests", new
+        {
+            type = PurchaseRequestType.Serial,
+            requesterName = "Phòng Đào tạo",
+            department = "Phòng Đào tạo",
+            items = new[]
+            {
+                new
+                {
+                    title = "Tạp chí Khoa học và Công nghệ",
+                    issn = "1859-1450",
+                    frequency = SerialFrequency.Monthly,
+                    issuesPerYear = 12,
+                    subscriptionFrom = "2026-01-01",
+                    subscriptionTo = "2026-12-01",
+                    quantity = 2,
+                    unitPrice = 25000m
+                }
+            }
+        }));
+
+        var detail = await ReadAsync<PurchaseRequestDetailDto>(
+            await client.GetAsync($"/api/acquisition/requests/{requestId}"));
+
+        detail.Type.Should().Be(PurchaseRequestType.Serial);
+        detail.Items.Should().ContainSingle();
+        detail.Items[0].IssueCount.Should().Be(12);
+        detail.Items[0].EstimatedAmount.Should().Be(600000m);
+        detail.TotalAmount.Should().Be(600000m);
+
+        // Duyệt một bản thay vì hai: giá trị duyệt cũng phải tính theo số kỳ.
+        await EnsureAsync(await client.PostAsync($"/api/acquisition/requests/{requestId}/submit", null));
+
+        await EnsureAsync(await client.PostAsJsonAsync($"/api/acquisition/requests/{requestId}/approve", new
+        {
+            lines = new[] { new { itemId = detail.Items[0].Id, approvedQuantity = 1 } }
+        }));
+
+        var approved = await ReadAsync<PurchaseRequestDetailDto>(
+            await client.GetAsync($"/api/acquisition/requests/{requestId}"));
+
+        approved.ApprovedAmount.Should().Be(300000m);
+    }
+
+    [Fact]
     public async Task Duplicate_check_finds_a_title_the_library_already_holds()
     {
         var client = await ClientAsync();
@@ -620,6 +670,14 @@ public class AcquisitionTests
         pdf.IsSuccessStatusCode.Should().BeTrue();
         (await pdf.Content.ReadAsByteArrayAsync()).Take(5)
             .Should().Equal((byte)'%', (byte)'P', (byte)'D', (byte)'F', (byte)'-');
+
+        // Danh sách phiếu đã lập — nơi cán bộ quay lại in lại phiếu bị thất lạc — phải có phiếu này,
+        // và lọc theo kho nhận vẫn thấy nó.
+        var slips = await ReadAsync<IReadOnlyList<TransferSlipDto>>(
+            await client.GetAsync($"/api/stock/transfers?warehouseId={target.Id}"));
+
+        slips.Should().Contain(entry => entry.BatchCode == moved.DocumentCode);
+        slips.Single(entry => entry.BatchCode == moved.DocumentCode).ItemCount.Should().Be(2);
     }
 
     [Fact]
@@ -660,6 +718,14 @@ public class AcquisitionTests
         detail.ShelfId.Should().BeNull();
         detail.Disposal.Should().NotBeNull();
         detail.Disposal!.DecisionNo.Should().Be(disposed.DocumentCode);
+
+        // Quyết định thanh lý in được ngay từ số quyết định vừa sinh (III.6).
+        var pdf = await client.GetAsync(
+            $"/api/acquisition/forms/print/DISPOSAL/{Uri.EscapeDataString(disposed.DocumentCode!)}");
+
+        pdf.IsSuccessStatusCode.Should().BeTrue(await pdf.Content.ReadAsStringAsync());
+        (await pdf.Content.ReadAsByteArrayAsync()).Take(5)
+            .Should().Equal((byte)'%', (byte)'P', (byte)'D', (byte)'F', (byte)'-');
 
         // Xử lý lần thứ hai không có tác dụng gì thêm.
         var twice = await client.PostAsJsonAsync("/api/stock/items/dispose",
@@ -1067,6 +1133,23 @@ public class AcquisitionTests
 
         items.IsSuccessStatusCode.Should().BeTrue();
         (await items.Content.ReadAsByteArrayAsync()).Take(2).Should().Equal((byte)'P', (byte)'K');
+
+        // Báo cáo tổng quát và báo cáo duyệt mua cũng phải ra được tệp (III.2, III.1): E-HSMT đòi
+        // mọi báo cáo có đủ ba dạng đầu ra.
+        var overview = await client.PostAsJsonAsync(
+            $"/api/acquisition/reports/export?kind={AcquisitionReportKind.Overview}&format=Excel&measure=Items&grouping=Month",
+            new AcquisitionReportFilter());
+
+        overview.IsSuccessStatusCode.Should().BeTrue(await overview.Content.ReadAsStringAsync());
+        (await overview.Content.ReadAsByteArrayAsync()).Take(2).Should().Equal((byte)'P', (byte)'K');
+
+        var approval = await client.PostAsJsonAsync(
+            $"/api/acquisition/reports/export?kind={AcquisitionReportKind.PurchaseApproval}&format=Pdf&measure=Items&grouping=Month",
+            new AcquisitionReportFilter());
+
+        approval.IsSuccessStatusCode.Should().BeTrue(await approval.Content.ReadAsStringAsync());
+        (await approval.Content.ReadAsByteArrayAsync()).Take(5)
+            .Should().Equal((byte)'%', (byte)'P', (byte)'D', (byte)'F', (byte)'-');
     }
 
     [Fact]
@@ -1096,6 +1179,26 @@ public class AcquisitionTests
         history.ItemCount.Should().Be(5);
         history.FulfilmentRate.Should().Be(100);
         history.Orders.Should().ContainSingle();
+        history.Rating.Should().Be(0, "chưa ai chấm điểm nhà cung cấp này");
+
+        // Đánh giá nhà cung cấp (III.1) chấm qua màn hình danh mục và hiện kèm lịch sử giao dịch.
+        var rated = await ReadAsync<Guid>(await client.PostAsJsonAsync("/api/catalogs/suppliers/items", new
+        {
+            code = "NCC-DANHGIA",
+            name = "Công ty Sách Đánh Giá",
+            extras = new Dictionary<string, string> { ["rating"] = "4" },
+            isActive = true
+        }));
+
+        var item = await ReadAsync<CatalogItemDto>(
+            await client.GetAsync($"/api/catalogs/suppliers/items/{rated}"));
+
+        item.Extras.Should().ContainKey("rating").WhoseValue.Should().Be("4");
+
+        var ratedHistory = await ReadAsync<SupplierHistoryDto>(
+            await client.GetAsync($"/api/acquisition/reports/suppliers/{rated}"));
+
+        ratedHistory.Rating.Should().Be(4);
     }
 
     [Fact]

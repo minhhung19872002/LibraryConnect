@@ -50,6 +50,8 @@ public class SerialIssueListRequest : PagedRequest
     /// <summary>Chỉ các số đã đến hạn phát hành mà chưa ghi nhận — màn hình ghi nhận hàng loạt.</summary>
     public bool? DueOnly { get; set; }
     public bool? OverdueOnly { get; set; }
+    /// <summary>Số chưa về dù đã đến hạn: quá hạn, đã ghi thiếu hoặc đang khiếu nại.</summary>
+    public bool? UnresolvedOnly { get; set; }
 }
 
 public record SearchSerialIssuesQuery(SerialIssueListRequest Request)
@@ -83,7 +85,13 @@ public class SearchSerialIssuesQueryHandler
             .WhereIf(request.DueOnly == true,
                 issue => issue.Status == SerialIssueStatus.Expected && issue.ExpectedDate <= today)
             .WhereIf(request.OverdueOnly == true,
-                issue => issue.Status == SerialIssueStatus.Expected && issue.ExpectedDate < today);
+                issue => issue.Status == SerialIssueStatus.Expected && issue.ExpectedDate < today)
+            // Danh sách đối chiếu của bổ sung tổng thể (IV.3): mọi số lẽ ra đã về mà chưa về — quá
+            // hạn còn dự kiến, đã ghi thiếu, hay đang khiếu nại — bất kể thuộc đầu báo nào.
+            .WhereIf(request.UnresolvedOnly == true,
+                issue => issue.Status == SerialIssueStatus.Missing
+                         || issue.Status == SerialIssueStatus.Claimed
+                         || (issue.Status == SerialIssueStatus.Expected && issue.ExpectedDate < today));
 
         if (request.HasKeyword())
         {

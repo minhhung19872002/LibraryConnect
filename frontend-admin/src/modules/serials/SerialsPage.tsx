@@ -631,8 +631,8 @@ function SerialEditorDrawer({
   );
 }
 
-/** IV.3 — Sinh số cho nhiều đầu báo cùng lúc. */
-function BatchGenerateModal({
+/** IV.3 — Sinh số cho nhiều đầu báo cùng lúc. Dùng chung với màn hình Bổ sung tổng thể. */
+export function BatchGenerateModal({
   open,
   serialIds,
   onClose,

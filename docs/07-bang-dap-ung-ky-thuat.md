@@ -156,7 +156,7 @@ Cập nhật lần cuối: 02/09/2026, sau đợt hoàn thiện (bảo mật, b�
 | # | Yêu cầu của E-HSMT | Đáp ứng | Thực hiện |
 |---|---|---|---|
 | III.1 | Yêu cầu đặt mua ấn phẩm đơn bản | **Có** | Form đề nghị có người đề nghị, đơn vị, lý do, nguồn kinh phí; thêm từng đầu sách kèm số lượng và đơn giá dự kiến |
-| III.1 | Yêu cầu đặt mua ấn phẩm định kỳ | **Có** | Cùng màn hình, chọn loại "Ấn phẩm định kỳ"; dòng đề nghị nhận thêm ISSN, kỳ hạn, số kỳ/năm và thời gian đặt |
+| III.1 | Yêu cầu đặt mua ấn phẩm định kỳ | **Có** | Cùng màn hình, chọn loại "Ấn phẩm định kỳ" là bảng đổi sang cột ISSN, kỳ hạn, số kỳ/năm (điền sẵn theo kỳ hạn), thời gian đặt từ tháng/năm đến tháng/năm, đơn giá/kỳ; số kỳ và thành tiền tự tính ngay khi gõ, máy chủ tính lại cùng công thức (số bản × số kỳ × đơn giá kỳ) cho cả giá trị duyệt |
 | III.1 | Tra nhanh tài liệu thư viện đã có | **Có** | Tra theo ISBN trước, không có thì so nhan đề đã bỏ dấu; dòng trùng được đánh dấu ngay lúc lưu để người duyệt nhìn thấy |
 | III.1 | Nhập danh sách đề nghị từ Excel | **Có** | Tệp mẫu có sheet hướng dẫn; nhà cung cấp so theo tên không dấu; dòng lỗi báo theo đúng số dòng trong tệp |
 | III.1 | Duyệt yêu cầu, duyệt từng dòng, từ chối kèm lý do | **Có** | Sửa được số lượng duyệt từng dòng; duyệt thiếu thì yêu cầu thành "Duyệt một phần" |
@@ -165,29 +165,29 @@ Cập nhật lần cuối: 02/09/2026, sau đợt hoàn thiện (bảo mật, b�
 | III.1 | In đơn đặt hàng theo mẫu | **Có** | Qua trình kết xuất biểu mẫu chung, mẫu `DH-DATHANG` |
 | III.1 | Theo dõi giao hàng, nhận từng phần, cảnh báo quá hạn | **Có** | Trạng thái đơn là hệ quả của số thực nhận; cảnh báo quá hạn theo tham số `ACQ.ORDER_OVERDUE_DAYS` |
 | III.1 | Biên bản bàn giao, in PDF, đính kèm bản scan | **Có** | Số liệu lấy từ số thực nhận của đơn; bản scan lưu ở kho đối tượng, không nằm dưới thư mục web |
-| III.1 | Báo cáo duyệt mua | **Có** | Theo trạng thái, đơn vị đề nghị, theo tháng; tỷ lệ duyệt và tổng kinh phí duyệt |
-| III.1 | Quản lý nhà cung cấp và lịch sử giao dịch | **Có** | CRUD ở màn hình danh mục; lịch sử giao dịch, tỷ lệ giao đủ và số đơn chưa giao đủ ở màn hình báo cáo |
-| III.2 | Biên mục sơ lược tuân thủ MARC 21 | **Có** | Mười trường, lưu thành biểu ghi MARC 21 mức biên mục 3, tự đẩy vào hàng đợi biên mục chi tiết |
+| III.1 | Báo cáo duyệt mua | **Có** | Theo trạng thái, đơn vị đề nghị, theo tháng; tỷ lệ duyệt và tổng kinh phí duyệt; biểu đồ tròn/cột cho từng lát cắt; xuất Excel và PDF (`kind=PurchaseApproval`) |
+| III.1 | Quản lý nhà cung cấp và lịch sử giao dịch | **Có** | CRUD ở màn hình danh mục, kèm ô đánh giá 1–5 sao; lịch sử giao dịch, tỷ lệ giao đủ, số đơn chưa giao đủ và số sao đã chấm ở màn hình báo cáo |
+| III.2 | Biên mục sơ lược tuân thủ MARC 21 | **Có** | Mười trường, lưu thành biểu ghi MARC 21 mức biên mục 3, tự đẩy vào hàng đợi biên mục chi tiết. Nhập nhanh liên tục ở menu Bổ sung › Biên mục sơ lược: lưu xong giữ nguyên kho, dạng tài liệu, nhà xuất bản, xóa phần của cuốn vừa nhập, trả tiêu điểm về ô nhan đề, đếm "đã nhập N" kèm mã vạch đã sinh |
 | III.2 | Xếp giá, sinh ký hiệu tự động, xếp giá hàng loạt | **Có** | Quy tắc theo kho, không có thì theo tham số chung; xếp giá cho danh sách tick chọn hoặc cho toàn bộ kết quả lọc |
 | III.2 | Bản đồ kho trực quan | **Có** | Lưới giá theo hàng/cột, tô mức lấp đầy; số bản đếm lại từ bảng ấn phẩm |
 | III.2 | In mã vạch — CODE39, CODE128, QR | **Có** | ZXing sinh ma trận, SkiaSharp đóng PNG ở 300 dpi; chọn theo danh sách, theo khoảng ĐKCB hoặc theo bộ lọc |
-| III.2 | In nhãn gáy sách | **Có** | Cùng trình thiết kế, ký hiệu xếp giá tách sẵn thành ba dòng |
-| III.2 | Mẫu tem, xem trước, xuất PDF đúng khổ tờ tem | **Có** | Số cột, số hàng, lề trên và lề trái lấy đúng từ mẫu; màn hình chặn mẫu vượt khổ A4 |
-| III.2 | Báo cáo bổ sung, ĐKCB hủy bỏ, tổng quát, tổng hợp (pivot) | **Có** | Bốn báo cáo, đều xuất được Excel và PDF từ đúng bộ lọc đang xem |
+| III.2 | In nhãn gáy sách | **Có** | Cùng trình thiết kế, ký hiệu xếp giá tách sẵn thành ba dòng; khối logo thư viện đặt theo milimét, ảnh lấy từ tham số `LIBRARY.LOGO_URL` lúc in |
+| III.2 | Mẫu tem, xem trước, xuất PDF đúng khổ tờ tem | **Có** | Số cột, số hàng, lề trên và lề trái lấy đúng từ mẫu; màn hình chặn mẫu vượt khổ A4. Xem trước là ảnh mô phỏng một tem (5 điểm ảnh/mm) với mã vạch thật do máy chủ dựng và logo thật — trong trình thiết kế với dữ liệu mẫu, trong hộp in với ấn phẩm đầu tiên đang chọn |
+| III.2 | Báo cáo bổ sung, ĐKCB hủy bỏ, tổng quát, tổng hợp (pivot) | **Có** | Bốn báo cáo, đều xuất được Excel và PDF từ đúng bộ lọc đang xem; báo cáo tổng quát có ba biểu đồ (kho, dạng tài liệu, tình trạng) đổi được cột/tròn và xuất tệp riêng (`kind=Overview`) |
 | III.3 | Thông tin thư viện / cơ sở | **Có** | CRUD kèm địa chỉ, giờ mở cửa, người phụ trách, tọa độ |
 | III.3 | Thông tin kho, giá, ngăn, quy tắc ký hiệu | **Có** | CRUD kho và giá; mã giá duy nhất trong phạm vi kho |
 | III.4 | Đóng kho khi bắt đầu kiểm kê | **Có** | Kho đóng thì ngưng nhận chuyển kho; trạng thái từng kho hiện ngay trên màn hình kiểm kê |
 | III.4 | Tạo kỳ kiểm kê, snapshot danh sách kỳ vọng | **Có** | Phạm vi toàn kho / theo khoảng ĐKCB / theo dạng tài liệu; danh sách chốt ngay lúc tạo kỳ |
 | III.4 | Quét barcode liên tục, phản hồi khớp / thừa / sai kho | **Có** | Ô quét giữ tiêu điểm sau mỗi lần quét; nhật ký quét hiện ngay bên dưới |
 | III.4 | Nhập tệp quét từ máy đọc rời | **Có** | Mỗi dòng một mã, hoặc CSV lấy cột đầu |
-| III.4 | Tiến độ realtime | **Có** | Đếm số bản kỳ vọng đã quét; mã lạ không đẩy tiến độ vượt tổng |
+| III.4 | Tiến độ realtime | **Có** | Đếm số bản kỳ vọng đã quét; mã lạ không đẩy tiến độ vượt tổng; kỳ đang chạy tự nạp lại tiến độ mỗi 5 giây để thấy cả lượt quét từ máy rời và điện thoại |
 | III.4 | Đóng kỳ, đối chiếu, sinh kết quả | **Có** | Chốt kỳ mở lại kho và ra bốn nhóm kết quả |
 | III.4 | Báo cáo kết quả, xuất Excel, lập quyết định từ danh sách thiếu | **Có** | Lọc theo nhóm kết quả, xuất Excel, và lập thẳng quyết định ghi mất cho các bản thiếu |
 | III.5 | Xếp giá chưa kiểm nhận / trong kho / thanh lý | **Có** | Các thẻ đếm theo trạng thái lọc thẳng danh sách |
-| III.5 | Chuyển kho đơn lẻ và hàng loạt, in phiếu, lịch sử | **Có** | Mỗi lần chuyển sinh một số phiếu; lịch sử hiện trên chính bản sách |
+| III.5 | Chuyển kho đơn lẻ và hàng loạt, in phiếu, lịch sử | **Có** | Mỗi lần chuyển sinh một số phiếu; hộp chuyển kho có ô quét mã vạch liên tục gom thêm bản ngoài danh sách đã tick; chuyển xong mời in phiếu ngay; ngăn "Phiếu chuyển kho" liệt kê mọi phiếu đã lập kèm nút in lại; lịch sử hiện trên chính bản sách. Quyết định thanh lý cũng in được ngay sau khi lập và từ chi tiết bản đã thanh lý |
 | III.5 | Kiểm nhận và mở khóa, khóa lại kèm lý do | **Có** | Chưa kiểm nhận thì không mở khóa được; khóa lại bắt buộc ghi lý do |
 | III.6 | Trình thiết kế biểu mẫu dùng chung | **Có** | Một bộ kết xuất cho sáu loại chứng từ; chọn nguồn dữ liệu, cột bảng, khổ giấy, logo, ô ký |
-| III.7 | Thống kê theo dạng tài liệu, vật mang tin, thời gian, ngôn ngữ | **Có** | Chín chiều thống kê, nhóm thời gian theo ngày/tháng/quý/năm; đều có bảng, biểu đồ và xuất Excel/PDF |
+| III.7 | Thống kê theo dạng tài liệu, vật mang tin, thời gian, ngôn ngữ | **Có** | Chín chiều thống kê, nhóm thời gian theo ngày/tháng/quý/năm; đều có bảng, biểu đồ Recharts cột/tròn đủ mọi dòng theo số bản, số đầu hoặc giá trị (màu phân loại, không dùng màu ngữ nghĩa), và xuất Excel/PDF |
 
 ---
 
@@ -201,16 +201,16 @@ Cập nhật lần cuối: 02/09/2026, sau đợt hoàn thiện (bảo mật, b�
 | IV.2 | Sinh biểu ghi MARC riêng cho bài trích, liên kết ấn phẩm mẹ qua trường 773 | **Có** | Leader vị trí 07 = 'a', trường 773 mang $t tên tạp chí, $g định vị số và trang, $x ISSN; bài tra được trên OPAC bằng chính tên bài |
 | IV.2 | Import mục lục từ Excel | **Có** | Tệp mẫu có sheet hướng dẫn; dòng lỗi báo theo đúng số dòng trong tệp |
 | IV.3 | Sinh số: chọn nhiều đầu báo, chọn khoảng thời gian | **Có** | Mỗi đầu báo sinh theo kỳ hạn của chính nó; số đã có được bỏ qua nên chạy lại không nhân đôi |
-| IV.3 | Ghi nhận: bảng các số đến hạn, tick nhận hàng loạt | **Có** | Nhận nhiều số một lần, nhập số lượng thực nhận và ngày nhận cho từng số |
-| IV.3 | Kiểm tra: đối chiếu dự kiến với đã nhận, liệt kê số thiếu | **Có** | Bộ lọc "quá hạn" và "đến hạn"; đánh dấu thiếu hàng loạt |
-| IV.3 | Tạo phiếu khiếu nại gửi nhà cung cấp | **Có** | Sinh số phiếu tự động, nội dung soạn sẵn kèm tên số và ngày phát hành dự kiến; ghi nhận phản hồi, hủy khiếu nại thì số quay lại danh sách thiếu |
+| IV.3 | Ghi nhận: bảng các số đến hạn, tick nhận hàng loạt | **Có** | Màn hình Ấn phẩm định kỳ › Bổ sung tổng thể liệt kê số đến hạn của mọi đầu báo trong một bảng; tick nhận hàng loạt, số lượng và ngày nhận nhập riêng từng dòng; kho để trống thì mỗi số vào kho của đầu báo nó |
+| IV.3 | Kiểm tra: đối chiếu dự kiến với đã nhận, liệt kê số thiếu | **Có** | Tab "Đối chiếu số thiếu" (bộ lọc `unresolvedOnly`: quá hạn, đã ghi thiếu, đang khiếu nại) gom theo đầu báo với số cũ nhất chưa về; đánh dấu thiếu hàng loạt |
+| IV.3 | Tạo phiếu khiếu nại gửi nhà cung cấp | **Có** | Lập cho nhiều số của nhiều đầu báo một lần, mỗi số một phiếu gửi tới nhà cung cấp của đầu báo ấy; sinh số phiếu tự động, nội dung soạn sẵn kèm tên số và ngày phát hành dự kiến; ghi nhận phản hồi, hủy khiếu nại thì số quay lại danh sách thiếu |
 | IV.4 | Phân kho: chọn kho, giá, ký hiệu xếp giá cho đầu báo | **Có** | Khai ngay trên form đầu báo; số nhận về lấy mặc định từ đây |
 | IV.4 | Định kỳ: dạng chu kỳ, số kỳ/năm, ngày phát hành, quy tắc đánh số, năm và số bắt đầu, kỳ nghỉ | **Có** | Mười kỳ hạn; ngày phát hành theo thứ trong tuần hoặc ngày trong tháng; ba cách đánh số; khai được các tháng không xuất bản |
 | IV.4 | Sinh số theo cấu hình, cho sửa tay từng số trước khi chốt | **Có** | Bước xem trước không ghi gì vào cơ sở dữ liệu; sửa được số, tập và ngày của từng dòng rồi mới chốt |
 | IV.4 | Ghi nhận từng số: ngày nhận, số lượng, sinh barcode, ghi vào kho | **Có** | Mỗi bản nhận về thành một ĐKCB thật có mã vạch, vào kho ở trạng thái cho mượn ngay |
 | IV.4 | Kiểm tra: lưới tình trạng, đánh dấu số thiếu, tạo khiếu nại | **Có** | Cùng bàn làm việc, không phải chuyển màn hình |
-| IV.4 | Đóng tập: chọn khoảng số, sinh ĐKCB mới, số lẻ chuyển "đã đóng tập" | **Có** | Tập đóng là một ấn phẩm mới có mã vạch và ký hiệu xếp giá riêng; số lẻ giữ nguyên trong sổ nhận số để đối chiếu khi kiểm kê |
-| IV.4 | In nhãn gáy tập | **Có** | Qua màn hình in nhãn gáy của Phân hệ III, lọc theo mã vạch của tập |
+| IV.4 | Đóng tập: chọn khoảng số, sinh ĐKCB mới, số lẻ chuyển "đã đóng tập" | **Có** | Chọn năm rồi "từ số → đến số" (thứ tự theo ngày phát hành, số không có trong năm bị chặn), màn hình báo trước sẽ đóng những số nào; tập đóng là một ấn phẩm mới có mã vạch và ký hiệu xếp giá riêng; số lẻ giữ nguyên trong sổ nhận số để đối chiếu khi kiểm kê |
+| IV.4 | In nhãn gáy tập | **Có** | Nút "In nhãn gáy tập" ngay trên dòng tập đã đóng, dùng dịch vụ in nhãn của Phân hệ III với ĐKCB của tập |
 | IV.4 | Tổng hợp tình hình nhận số theo năm | **Có** | Bảng số kỳ dự kiến, đã nhận, thiếu, đã đóng tập, tỷ lệ nhận và giá trị |
 | IV.5 | Báo cáo tổng hợp (số đầu báo, số kỳ đã nhận, giá trị) | **Có** | Chiều "Tổng hợp" |
 | IV.5 | Báo cáo theo môn loại (DDC) | **Có** | Gộp theo lớp trăm của DDC, kèm tên lớp bằng tiếng Việt |

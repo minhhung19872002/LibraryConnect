@@ -45,12 +45,28 @@ public class LabelBarcodeDto
     public string Source { get; set; } = LabelFields.Barcode;
 }
 
+/// <summary>
+/// Khối ảnh logo thư viện trên tem (III.2: "nhãn gáy sách có ký hiệu xếp giá, logo thư viện").
+///
+/// Ảnh lấy từ tham số hệ thống `LIBRARY.LOGO_URL` lúc in, không lưu trong mẫu — đổi logo một lần
+/// là mọi mẫu đổi theo. Chưa tải logo lên thì khối này bỏ trống, nhãn vẫn in được.
+/// </summary>
+public class LabelImageDto
+{
+    public double X { get; set; }
+    public double Y { get; set; }
+    public double Width { get; set; } = 8;
+    public double Height { get; set; } = 8;
+}
+
 /// <summary>Bố cục một mẫu tem hoặc nhãn.</summary>
 public class LabelLayoutDto
 {
     public List<LabelBoxDto> Boxes { get; set; } = new();
     /// <summary>Khối mã vạch; null với nhãn gáy thuần chữ.</summary>
     public LabelBarcodeDto? Barcode { get; set; }
+    /// <summary>Khối logo thư viện; null nếu mẫu không in logo.</summary>
+    public LabelImageDto? Logo { get; set; }
     public double Padding { get; set; } = 1.5;
     public bool ShowBorder { get; set; }
 }

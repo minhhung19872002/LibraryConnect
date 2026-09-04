@@ -368,13 +368,21 @@ public class PrintBarcodesCommandHandler : IRequestHandler<PrintBarcodesCommand,
     private readonly IApplicationDbContext _db;
     private readonly ILabelPrintService _printer;
     private readonly IDateTimeProvider _clock;
+    private readonly IFileStorage _storage;
+    private readonly ISystemParameterService _parameters;
 
     public PrintBarcodesCommandHandler(
-        IApplicationDbContext db, ILabelPrintService printer, IDateTimeProvider clock)
+        IApplicationDbContext db,
+        ILabelPrintService printer,
+        IDateTimeProvider clock,
+        IFileStorage storage,
+        ISystemParameterService parameters)
     {
         _db = db;
         _printer = printer;
         _clock = clock;
+        _storage = storage;
+        _parameters = parameters;
     }
 
     public async Task<PrintedFileDto> Handle(PrintBarcodesCommand command, CancellationToken ct)
@@ -394,7 +402,8 @@ public class PrintBarcodesCommandHandler : IRequestHandler<PrintBarcodesCommand,
         var items = await LabelDataLoader.LoadAsync(_db, command.ItemIds, command.Filter, ct);
         var expanded = LabelDataLoader.Repeat(items, command.Copies);
 
-        var pdf = _printer.RenderBarcodes(GetBarcodeTemplatesQueryHandler.Map(template), expanded);
+        var logo = await LibraryLogo.LoadAsync(_storage, _parameters, ct);
+        var pdf = _printer.RenderBarcodes(GetBarcodeTemplatesQueryHandler.Map(template), expanded, logo);
 
         return new PrintedFileDto(
             pdf,
@@ -424,13 +433,21 @@ public class PrintSpineLabelsCommandHandler : IRequestHandler<PrintSpineLabelsCo
     private readonly IApplicationDbContext _db;
     private readonly ILabelPrintService _printer;
     private readonly IDateTimeProvider _clock;
+    private readonly IFileStorage _storage;
+    private readonly ISystemParameterService _parameters;
 
     public PrintSpineLabelsCommandHandler(
-        IApplicationDbContext db, ILabelPrintService printer, IDateTimeProvider clock)
+        IApplicationDbContext db,
+        ILabelPrintService printer,
+        IDateTimeProvider clock,
+        IFileStorage storage,
+        ISystemParameterService parameters)
     {
         _db = db;
         _printer = printer;
         _clock = clock;
+        _storage = storage;
+        _parameters = parameters;
     }
 
     public async Task<PrintedFileDto> Handle(PrintSpineLabelsCommand command, CancellationToken ct)
@@ -450,12 +467,27 @@ public class PrintSpineLabelsCommandHandler : IRequestHandler<PrintSpineLabelsCo
         var items = await LabelDataLoader.LoadAsync(_db, command.ItemIds, command.Filter, ct);
         var expanded = LabelDataLoader.Repeat(items, command.Copies);
 
-        var pdf = _printer.RenderLabels(GetLabelTemplatesQueryHandler.Map(template), expanded);
+        var logo = await LibraryLogo.LoadAsync(_storage, _parameters, ct);
+        var pdf = _printer.RenderLabels(GetLabelTemplatesQueryHandler.Map(template), expanded, logo);
 
         return new PrintedFileDto(
             pdf,
             $"nhan-gay-{_clock.Today:yyyyMMdd}.pdf",
             "application/pdf");
+    }
+}
+
+/// <summary>
+/// Logo thư viện cho khối logo trên tem — cùng nguồn với biểu mẫu in: tham số `LIBRARY.LOGO_URL`
+/// trỏ tới tệp trong kho đối tượng. Không có tệp thì trả null và tem in không logo.
+/// </summary>
+internal static class LibraryLogo
+{
+    public static async Task<byte[]?> LoadAsync(
+        IFileStorage storage, ISystemParameterService parameters, CancellationToken ct)
+    {
+        var objectName = await parameters.GetAsync("LIBRARY.LOGO_URL", ct);
+        return await Admin.Parameters.ParameterFileLoader.LoadAsync(storage, objectName, ct);
     }
 }
 
