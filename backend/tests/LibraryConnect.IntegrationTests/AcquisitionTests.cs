@@ -1133,6 +1133,23 @@ public class AcquisitionTests
 
         items.IsSuccessStatusCode.Should().BeTrue();
         (await items.Content.ReadAsByteArrayAsync()).Take(2).Should().Equal((byte)'P', (byte)'K');
+
+        // Báo cáo tổng quát và báo cáo duyệt mua cũng phải ra được tệp (III.2, III.1): E-HSMT đòi
+        // mọi báo cáo có đủ ba dạng đầu ra.
+        var overview = await client.PostAsJsonAsync(
+            $"/api/acquisition/reports/export?kind={AcquisitionReportKind.Overview}&format=Excel&measure=Items&grouping=Month",
+            new AcquisitionReportFilter());
+
+        overview.IsSuccessStatusCode.Should().BeTrue(await overview.Content.ReadAsStringAsync());
+        (await overview.Content.ReadAsByteArrayAsync()).Take(2).Should().Equal((byte)'P', (byte)'K');
+
+        var approval = await client.PostAsJsonAsync(
+            $"/api/acquisition/reports/export?kind={AcquisitionReportKind.PurchaseApproval}&format=Pdf&measure=Items&grouping=Month",
+            new AcquisitionReportFilter());
+
+        approval.IsSuccessStatusCode.Should().BeTrue(await approval.Content.ReadAsStringAsync());
+        (await approval.Content.ReadAsByteArrayAsync()).Take(5)
+            .Should().Equal((byte)'%', (byte)'P', (byte)'D', (byte)'F', (byte)'-');
     }
 
     [Fact]

@@ -26,12 +26,10 @@ import { saveBlob } from '@/modules/marc/api';
 import { useCatalogOptions, toOptions } from '@/modules/cataloging/useCatalogOptions';
 import { acqReportsApi, locationsApi } from './api';
 import { acquisitionTypeLabels, formatDate, money, orderStatusLabels } from './labels';
+import { StatChart } from './StatChart';
+import type { ChartMeasure } from './chartData';
 import { MAU } from '@/lib/palette';
-import type {
-  AcquisitionReportFilter,
-  AcquisitionStatRowDto,
-  DisposalReportRowDto,
-} from './types';
+import type { AcquisitionReportFilter, DisposalReportRowDto } from './types';
 
 /**
  * III.2 và III.7 — Báo cáo bổ sung.
@@ -48,6 +46,8 @@ export function AcquisitionReportsPage() {
   const [pivotRow, setPivotRow] = useState('WAREHOUSE');
   const [pivotColumn, setPivotColumn] = useState('DOCTYPE');
   const [measure, setMeasure] = useState('Items');
+  /** Chỉ tiêu vẽ trên biểu đồ của tab thống kê theo chiều. */
+  const [chartMeasure, setChartMeasure] = useState<ChartMeasure>('itemCount');
 
   const warehouses = useQuery({
     queryKey: ['acq-warehouses', null],
@@ -233,6 +233,9 @@ export function AcquisitionReportsPage() {
             label: 'Tổng quát',
             children: (
               <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+                <Space style={{ justifyContent: 'flex-end', width: '100%' }}>
+                  {exportButtons('Overview')}
+                </Space>
                 <Row gutter={12}>
                   <Col span={5}>
                     <Card size="small">
@@ -271,19 +274,48 @@ export function AcquisitionReportsPage() {
                 <Row gutter={12}>
                   <Col span={8}>
                     <Card variant="borderless" size="small" title="Theo kho">
-                      <StatBars rows={overview.data?.byWarehouse ?? []} />
+                      <StatChart rows={overview.data?.byWarehouse ?? []} />
                     </Card>
                   </Col>
                   <Col span={8}>
                     <Card variant="borderless" size="small" title="Theo dạng tài liệu">
-                      <StatBars rows={overview.data?.byDocumentType ?? []} />
+                      <StatChart rows={overview.data?.byDocumentType ?? []} defaultKind="pie" />
                     </Card>
                   </Col>
                   <Col span={8}>
                     <Card variant="borderless" size="small" title="Theo tình trạng">
-                      <StatBars rows={overview.data?.byStatus ?? []} />
+                      <StatChart rows={overview.data?.byStatus ?? []} defaultKind="pie" />
                     </Card>
                   </Col>
+                </Row>
+                <Row gutter={12}>
+                  {[
+                    { title: 'Theo kho', rows: overview.data?.byWarehouse ?? [] },
+                    { title: 'Theo dạng tài liệu', rows: overview.data?.byDocumentType ?? [] },
+                    { title: 'Theo tình trạng', rows: overview.data?.byStatus ?? [] },
+                  ].map((block) => (
+                    <Col span={8} key={block.title}>
+                      <Card variant="borderless" size="small" title={`${block.title} — bảng`}>
+                        <Table
+                          rowKey="label"
+                          size="small"
+                          pagination={false}
+                          dataSource={block.rows}
+                          columns={[
+                            { title: 'Nhãn', dataIndex: 'label', width: 160, ellipsis: true },
+                            { title: 'Số bản', dataIndex: 'itemCount', width: 90, align: 'right' },
+                            {
+                              title: 'Giá trị (VNĐ)',
+                              dataIndex: 'value',
+                              width: 120,
+                              align: 'right',
+                              render: (value: number) => money(value),
+                            },
+                          ]}
+                        />
+                      </Card>
+                    </Col>
+                  ))}
                 </Row>
               </Space>
             ),
@@ -320,9 +352,30 @@ export function AcquisitionReportsPage() {
                   </Space>
                 }
               >
+                <Space style={{ marginBottom: 8 }}>
+                  <Typography.Text type="secondary">Biểu đồ theo</Typography.Text>
+                  <Select
+                    size="small"
+                    style={{ width: 140 }}
+                    value={chartMeasure}
+                    onChange={setChartMeasure}
+                    options={[
+                      { value: 'itemCount', label: 'Số bản' },
+                      { value: 'titleCount', label: 'Số đầu' },
+                      { value: 'value', label: 'Giá trị' },
+                    ]}
+                  />
+                </Space>
+                <StatChart
+                  rows={stats.data?.rows ?? []}
+                  measure={chartMeasure}
+                  unit={chartMeasure === 'titleCount' ? 'đầu' : 'bản'}
+                  height={320}
+                />
                 <Table
                   rowKey="label"
                   size="small"
+                  style={{ marginTop: 12 }}
                   loading={stats.isFetching}
                   columns={statColumns}
                   dataSource={stats.data?.rows ?? []}
@@ -536,6 +589,9 @@ export function AcquisitionReportsPage() {
             label: 'Duyệt mua',
             children: (
               <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+                <Space style={{ justifyContent: 'flex-end', width: '100%' }}>
+                  {exportButtons('PurchaseApproval')}
+                </Space>
                 <Row gutter={12}>
                   <Col span={4}>
                     <Card size="small">
@@ -585,17 +641,42 @@ export function AcquisitionReportsPage() {
                 </Row>
 
                 <Row gutter={12}>
-                  <Col span={12}>
+                  <Col span={8}>
                     <Card variant="borderless" size="small" title="Theo trạng thái">
-                      <StatBars rows={approval.data?.byStatus ?? []} unit="yêu cầu" />
+                      <StatChart rows={approval.data?.byStatus ?? []} unit="yêu cầu" defaultKind="pie" />
                     </Card>
                   </Col>
-                  <Col span={12}>
+                  <Col span={8}>
                     <Card variant="borderless" size="small" title="Theo đơn vị đề nghị">
-                      <StatBars rows={approval.data?.byDepartment ?? []} unit="yêu cầu" />
+                      <StatChart rows={approval.data?.byDepartment ?? []} unit="yêu cầu" />
+                    </Card>
+                  </Col>
+                  <Col span={8}>
+                    <Card variant="borderless" size="small" title="Kinh phí duyệt theo tháng">
+                      <StatChart rows={approval.data?.byMonth ?? []} measure="value" />
                     </Card>
                   </Col>
                 </Row>
+
+                <Card variant="borderless" size="small" title="Theo đơn vị đề nghị — bảng">
+                  <Table
+                    rowKey="label"
+                    size="small"
+                    pagination={false}
+                    dataSource={approval.data?.byDepartment ?? []}
+                    columns={[
+                      { title: 'Đơn vị', dataIndex: 'label', width: 300 },
+                      { title: 'Số yêu cầu', dataIndex: 'itemCount', width: 120, align: 'right' },
+                      {
+                        title: 'Kinh phí duyệt (VNĐ)',
+                        dataIndex: 'value',
+                        width: 180,
+                        align: 'right',
+                        render: (value: number) => money(value),
+                      },
+                    ]}
+                  />
+                </Card>
 
                 {filter.supplierId && supplierHistory.data && (
                   <Card
@@ -673,41 +754,5 @@ export function AcquisitionReportsPage() {
         ]}
       />
     </div>
-  );
-}
-
-/**
- * Biểu đồ cột ngang đơn giản.
- *
- * Đủ để trả lời "cái nào nhiều hơn cái nào" mà không kéo theo một thư viện vẽ đồ thị; báo cáo cần
- * in ra giấy thì đã có nút xuất PDF bên cạnh.
- */
-function StatBars({ rows, unit = 'bản' }: { rows: AcquisitionStatRowDto[]; unit?: string }) {
-  if (rows.length === 0) {
-    return <Typography.Text type="secondary">Chưa có số liệu trong phạm vi lọc.</Typography.Text>;
-  }
-
-  const max = Math.max(...rows.map((row) => row.itemCount), 1);
-
-  return (
-    <Space direction="vertical" style={{ width: '100%' }}>
-      {rows.slice(0, 10).map((row) => (
-        <div key={row.label}>
-          <Space style={{ justifyContent: 'space-between', width: '100%' }}>
-            <Typography.Text ellipsis style={{ maxWidth: 200 }}>
-              {row.label}
-            </Typography.Text>
-            <Typography.Text type="secondary">
-              {row.itemCount} {unit}
-            </Typography.Text>
-          </Space>
-          <Progress
-            percent={Math.round((row.itemCount * 100) / max)}
-            size="small"
-            showInfo={false}
-          />
-        </div>
-      ))}
-    </Space>
   );
 }
