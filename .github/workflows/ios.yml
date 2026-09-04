@@ -127,10 +127,20 @@ jobs:
       - run: flutter devices
 
       - name: Chờ máy chủ sẵn sàng
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           # Cùng một lần đẩy mã cũng chạy workflow Deploy, và nó khởi động lại `lc-api`. Một lượt
-          # kiểm đã đăng nhập được (máy chủ ghi 200) rồi đứng im vì trúng đúng lúc ấy. Chờ máy chủ
-          # trả lời đã rồi hãy chạy.
+          # kiểm đã đăng nhập được (máy chủ ghi 200) rồi đứng im vì trúng đúng lúc ấy; lượt
+          # 33831592830 qua được bước chờ này rồi vẫn đổ vì Deploy khởi động lại máy chủ **giữa** bài
+          # tra cứu đầu tiên. Nên chờ cho Deploy của đúng commit này xong hẳn, rồi mới chờ máy chủ.
+          for i in $(seq 1 90); do
+            busy=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow=deploy.yml --commit "$GITHUB_SHA" \
+              --json status --jq '[.[] | select(.status != "completed")] | length' 2>/dev/null || echo 0)
+            if [ "${busy:-0}" = "0" ]; then echo "không còn Deploy nào đang chạy cho $GITHUB_SHA"; break; fi
+            echo "t=$((i * 20))s Deploy của commit này còn chạy ($busy)"
+            sleep 20
+          done
           for i in $(seq 1 60); do
             code=$(curl -s -o /dev/null -m 15 -w '%{http_code}' "${LC_API_BASE_URL}/public/settings" || echo 000)
             if [ "$code" = "200" ]; then echo "máy chủ sẵn sàng sau $((i * 10)) giây"; exit 0; fi
