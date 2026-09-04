@@ -314,6 +314,37 @@ nhất trên máy.
 
 ---
 
+## J. Đợt rà hoàn thiện (04/09/2026) — đối chiếu từng gạch đầu dòng của đặc tả vào mã
+
+Sau khi iOS xong, rà lại **toàn bộ** đặc tả mục 5 (11 phân hệ), mục 6 (phi chức năng), mục 7–8 và
+PROMPT-MOBILE theo cách khác ba đợt trước: năm nhóm rà độc lập, mỗi nhóm cầm một đoạn đặc tả, với
+**từng ý nhỏ trong từng gạch đầu dòng** phải chỉ ra endpoint + handler + màn hình gọi tới, và kết luận
+Đủ / Một phần / Thiếu. Bảng đáp ứng `docs/07` tự khai "Có" gần hết; đối chiếu vào mã thì lộ ra một
+mô-típ lặp đi lặp lại: **backend đã làm xong nhưng giao diện không có nút nào gọi tới** (in phiếu
+chuyển kho, quyết định thanh lý, cấp lại thẻ, đồng bộ đào tạo, quản lý tủ, mẫu biên mục…), và vài
+chỗ **"hứa mà không làm"** nghiêm trọng hơn. Các dòng dưới đây là phần xuyên suốt backend; các nhóm
+phân hệ ghi tiếp J-số theo nhóm.
+
+| Mã | Mức | Lỗi | Nguyên nhân | Sửa |
+|---|---|---|---|---|
+| J1 | Nghiêm trọng | **Phạm vi dữ liệu (kho / thư viện / dạng tài liệu) không được cưỡng chế ở đâu cả.** Cán bộ gán kho A vẫn thấy, sửa và cho mượn ĐKCB kho B ở mọi màn hình; `docs/07` dòng A7 còn ghi "được máy chủ áp bằng bộ lọc toàn cục của EF Core" — sai | `UserDataScope` được lưu ở màn hình Người dùng và trả về lúc đăng nhập; `ICurrentUser.IsInScope`/`ScopeIds` có cài đặt nhưng **không nơi nào gọi**; bộ lọc toàn cục duy nhất là xoá mềm. Kiểm thử 2.3 E-HSMT tạo tài khoản giới hạn kho sẽ trượt | `DataScopeMiddleware` điền `IDataScopeContext` sau xác thực (gán thư viện → mọi kho của nó; gán kho → thư viện chứa nó; đệm cùng quyền), `LibraryConnectDbContext` dựng bộ lọc toàn cục cho ĐKCB, giá, kỳ kiểm kê, kho, thư viện và (theo dạng tài liệu) biểu ghi. `DataScopeTests` (2 bài) đỏ trước, xanh sau. **Không** lọc phiếu mượn qua điều hướng `Loan→Item`: EF đổi LEFT JOIN Fine→Loan thành INNER, 5 phép thử tiền phạt đỏ — ghi lại làm bài học |
+| J2 | Nặng | **Sửa tài liệu số là mất liên kết biểu ghi và phần mô tả.** Form "Sửa" chỉ gửi bảy trường; handler gán `BibId`/`Description` vô điều kiện | Không có ô chọn biểu ghi trên form nên chưa ai gắn biểu ghi bằng tay để thấy nó mất; import ZIP tự khớp thì gắn được, rồi lần Lưu đầu tiên là mất | Luật mới: `null` = giữ nguyên, bỏ liên kết phải nói rõ `clearBibId`, xoá mô tả gửi chuỗi rỗng; form có ô Mô tả và ô chọn biểu ghi (`BibSearchSelect` dùng chung). `DigitalTests.Sua_tai_lieu_khong_gui_bieu_ghi…` đỏ trước, xanh sau |
+| J3 | Nặng | **Cán bộ quầy không in được phiếu mượn / phiếu trả / biên lai phạt** — nhận 403 dù nút hiện ra | Endpoint in biểu mẫu dùng chung gắn quyền `ACQ.ORDER.PRINT` của phân hệ Bổ sung cho cả mười loại mẫu | Quyền theo loại mẫu (`FormTypes.PermissionsToPrint`): phiếu mượn/trả theo quyền lưu thông, biên lai theo thu phạt, giấy xác nhận theo xem hồ sơ, phiếu chuyển kho / quyết định thanh lý / biên bản kiểm kê theo quyền kho. `PermissionAndAuditTests.Can_bo_luu_thong_in_duoc_phieu_muon…` đỏ trước, xanh sau |
+| J4 | Nặng | **"Sao lưu kèm tệp tài liệu số" chỉ ghi một README** nêu tên bucket và tổng dung lượng rồi trả 0 — giao diện vẫn có ô tuỳ chọn ấy | Hàm `MirrorObjectStorageAsync` được viết như chỗ giữ chỗ từ phase 2 và không ai quay lại; phép thử sao lưu chỉ kiểm "có người chạy job" | `IObjectStorageMirror` liệt kê và tải mọi object của hai bucket tài liệu + ảnh về `<bản sao lưu>-files/<bucket>/<tên object>`, chặn tên đi ra ngoài thư mục, README ghi cách phục hồi bằng `mc mirror`. `BackupTests.Sao_luu_kem_tep…` (thử thẳng bộ chép vì máy kiểm thử không có pg_dump) đỏ trước, xanh sau |
+| J5 | Vừa | **Cửa đăng nhập bạn đọc không có giới hạn tốc độ** trong khi cửa cán bộ có; số thẻ dễ đoán (TV2026000001, 2, 3…) | `[EnableRateLimiting("login")]` chỉ gắn ở `AuthController` | Gắn cùng chính sách cho `POST /api/reader/auth/login`; `RateLimitTests.Cua_dang_nhap_ban_doc…` đỏ trước, xanh sau |
+| J6 | Vừa | **Hạn đổi mật khẩu không có tác dụng**: `SECURITY.PASSWORD_EXPIRY_DAYS` được seed, đọc vào `PasswordPolicy.ExpiryDays`, hiện trên màn hình Tham số, mà không nơi nào dùng | Cột `password_changed_at` có từ phase 2 và được ghi khi đổi mật khẩu, chỉ thiếu đúng chỗ đọc | Lúc đăng nhập, quá hạn thì phiên mang cờ buộc đổi và bộ trung gian `PasswordChangeRequired` chặn mọi việc khác — đúng đường của mật khẩu tạm. `PasswordExpiryTests` đỏ trước, xanh sau |
+| J7 | Nhẹ | `/health/ready` không hỏi MinIO: kho đối tượng chết mà điểm sẵn sàng vẫn xanh | Chỉ có kiểm tra PostgreSQL và Redis | `MinioHealthCheck` (BucketExists, hạn 5 giây) gắn thẻ `ready`; `InstallationTests` đòi "minio" trong thân trả về, đỏ trước |
+| J8 | Nhẹ | Cache Redis cho **danh mục** và **kết quả tra cứu** chỉ có tiền tố khai sẵn: lệnh ghi danh mục xoá tiền tố `catalog:` mà không ai từng ghi vào; `search:` không dùng ở đâu | Cache chỉ được nối cho tham số hệ thống, quyền và bộ trường MARC | Danh sách + cây danh mục đệm 10 phút (xoá theo tiền tố khi ghi), hai trang đầu tra cứu OPAC đệm 60 giây (không đệm lượt `updatedSince`). `CatalogTests.Danh_muc_duoc_dem_trong_cache…` đỏ trước |
+| J9 | Nhẹ | Trang SPA công khai **không có CSP, không có HSTS**; API trả **hai dòng X-Frame-Options mâu thuẫn** (DENY của API + SAMEORIGIN của nginx) | Tiêu đề bảo mật chỉ đặt ở `SecurityHeadersMiddleware` của API; nginx thêm bộ của nó lên mọi phản hồi | nginx đặt CSP riêng cho hai SPA (`script-src 'self'`, phông Google, iframe YouTube/Vimeo/Drive/Maps), HSTS ở bản sau proxy, và `proxy_hide_header` bộ trùng của API. Kiểm bằng `curl -D` và mở hai SPA trong Chrome: 0 lỗi CSP ở console |
+| J10 | Vừa | **Không client Z39.50 nào bên ngoài kết nối được** sau `docker compose up`: cổng 210 không được công bố, máy chủ Z39.50 mặc định tắt, `.env.example` không có dòng nào | Máy chủ Z39.50 chạy trong tiến trình API (được phép theo đặc tả) nhưng compose chỉ mở 8080; tiến trình không chạy root nên không mở được cổng dưới 1024 | Compose công bố `${Z3950_PORT:-210}:2100`, seed bật máy chủ mặc định cho bản cài mới, `.env.example` có `Z3950_PORT`; bản cài cũ bật bằng tham số `ILL.Z3950_SERVER_ENABLED` |
+
+Bài học của đợt: **bảng đáp ứng tự khai không phải bằng chứng.** Dòng A7 ghi "áp bằng bộ lọc toàn
+cục" từ phase 1 mà bộ lọc ấy chưa từng tồn tại; không ai kiểm lại vì mọi phép thử đều chạy bằng tài
+khoản quản trị không bị giới hạn. Muốn tin một dòng "Có" thì phải có một phép thử dựng đúng bối cảnh
+của người bị giới hạn — và đợt này thêm đúng những phép thử ấy.
+
+---
+
 ## Đ. Những chỗ đã thử phá nhưng hệ thống chịu được
 
 Ghi lại để biết chỗ nào đã kiểm và không phải kiểm lại — kèm bằng chứng, không ghi suông.

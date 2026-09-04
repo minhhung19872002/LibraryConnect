@@ -367,3 +367,19 @@ khi nâng cấp** (Quản trị hệ thống → Sao lưu cơ sở dữ liệu �
 | Log ghi `could not resize shared memory segment` | Bộ nhớ chia sẻ của container PostgreSQL quá nhỏ | Đặt `shm_size: 1gb` cho dịch vụ `postgres` (đã có sẵn trong tệp compose kèm theo) |
 | Log ghi `sorry, too many clients already` | Số kết nối vượt `max_connections` | Nâng `max_connections` của PostgreSQL, hoặc hạ `LC_DB_MAX_POOL_SIZE` |
 | Kho có sẵn 200 đầu sách lạ sau khi cài | Bộ dữ liệu minh họa được nạp theo mặc định | Đặt `LC_SEED_DEMO=false` rồi cài lại; bộ minh họa chỉ nạp khi kho còn trống |
+
+## Máy chủ Z39.50 (kết nối liên thư viện chiều vào)
+
+`docker compose up -d` công bố cổng **210** (biến `Z3950_PORT` trong `.env`, trong container là 2100 vì
+tiến trình API không chạy root). Thư viện bạn khai vào phần mềm của họ: `tcp:<máy chủ>:210`, cơ sở dữ
+liệu theo tham số `ILL.Z3950_DATABASE_NAME` (mặc định `LIBRARYCONNECT`). Bật/tắt bằng tham số
+`ILL.Z3950_SERVER_ENABLED` (bản cài mới bật sẵn; bản cài trước 04/09/2026 giữ giá trị đang có).
+Kiểm nhanh từ máy ngoài:
+
+```bash
+yaz-client tcp:<máy chủ>:210/LIBRARYCONNECT
+Z> find "cơ sở dữ liệu"
+Z> show 1
+```
+
+Sau proxy dùng chung (Caddy) cổng 210 vẫn do Docker công bố thẳng, không đi qua proxy.

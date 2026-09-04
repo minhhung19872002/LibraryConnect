@@ -22,9 +22,9 @@ Cập nhật lần cuối: 02/09/2026, sau đợt hoàn thiện (bảo mật, b�
 | A2 | Unicode UTF-8 theo TCVN 6909:2001, không dùng VNI/TCVN3 | **Có** | CSDL PostgreSQL encoding UTF8, collation ICU `vi-VN`; API và giao diện đều UTF-8 | Kịch bản 2.1.9 |
 | A3 | Chạy trên máy chủ vật lý lẫn ảo hóa, Windows Server 2019+ / Linux / Unix | **Có** | .NET 8 đa nền tảng; đóng gói Docker chạy trên Linux, chạy trực tiếp được trên Windows Server | `docs/04-cai-dat-cau-hinh.md` mục 1 |
 | A4 | Tương thích đa trình duyệt (2 phiên bản gần nhất của Chrome, Edge, Firefox, Safari) | **Có** | SPA React 18 + Ant Design 5, build ES2022 | Kiểm thử thủ công trên trình duyệt |
-| A5 | Hỗ trợ vận hành 24/7, có health check | **Có** | `/health` (liveness) và `/health/ready` (readiness: PostgreSQL, Redis) | Kịch bản 2.1.3, 2.1.4 |
+| A5 | Hỗ trợ vận hành 24/7, có health check | **Có** | `/health` (liveness) và `/health/ready` (readiness: PostgreSQL, Redis, MinIO) | Kịch bản 2.1.3, 2.1.4 |
 | A6 | Dữ liệu lưu trữ vĩnh viễn, không tự động xóa cứng | **Có** | Xóa mềm (`deleted_at`) trên toàn bộ 113 bảng nghiệp vụ; nhật ký mặc định giữ vĩnh viễn | `docs/02-tai-lieu-quan-tri.md` mục 1.3, 3.3; kịch bản 2.3.13 |
-| A7 | Phân quyền chi tiết đến từng chức năng và từng phạm vi dữ liệu | **Có** | 161 mã quyền `MODULE.ĐỐI_TƯỢNG.HÀNH_ĐỘNG`; phạm vi dữ liệu theo thư viện / kho / dạng tài liệu gán được trên màn hình Người dùng và được máy chủ áp bằng bộ lọc toàn cục của EF Core | Kịch bản 2.3.2 → 2.3.6. Kiểm bằng curl ngoài giao diện: tài khoản chưa đổi mật khẩu tạm bị chặn 403 ở cả sáu endpoint nghiệp vụ thử |
+| A7 | Phân quyền chi tiết đến từng chức năng và từng phạm vi dữ liệu | **Có** | 161 mã quyền `MODULE.ĐỐI_TƯỢNG.HÀNH_ĐỘNG`; phạm vi dữ liệu theo thư viện / kho / dạng tài liệu gán được trên màn hình Người dùng và được máy chủ áp bằng bộ lọc toàn cục của EF Core (`DataScopeMiddleware` + `LibraryConnectDbContext.ApplyDataScopeFilters`, có từ 04/09/2026 — trước đó chỉ lưu, không áp; sổ lỗi J1) | Kịch bản 2.3.2 → 2.3.6; `DataScopeTests`: cán bộ gán kho A không thấy kho B lẫn ĐKCB của nó, gán thư viện thì thấy mọi kho của thư viện ấy. Kiểm bằng curl ngoài giao diện: tài khoản chưa đổi mật khẩu tạm bị chặn 403 ở cả sáu endpoint nghiệp vụ thử |
 | A8 | Báo cáo có 3 dạng đầu ra: bảng, đồ họa, xuất tệp PDF/Excel | **Có** | Đủ ba dạng ở mọi báo cáo nghiệp vụ của bảy phân hệ: Bổ sung (4 báo cáo), Ấn phẩm định kỳ (4), Bạn đọc (4), Lưu thông (7), Tài liệu số (4), Tài liệu môn học (3), cùng trang Báo cáo thống kê tổng hợp. Bảng dựng bằng AntD Table, đồ họa bằng Recharts, xuất tệp bằng `ExcelService` (ClosedXML) và `PdfReportService` (QuestPDF) | Kịch bản 2.3.14 và các kịch bản báo cáo của từng phân hệ |
 | A9 | Không hardcode danh mục nghiệp vụ, cấu hình được từ giao diện | **Có** | 20 danh mục nghiệp vụ đều thêm/sửa/xóa/nhập/xuất được tại màn hình Danh mục; toàn bộ giá trị cấu hình nằm trong `sys.system_parameters`, sửa tại màn hình I.3 | Kịch bản I.3.2, I.3.6, DM.1 → DM.12 |
 
@@ -43,7 +43,7 @@ Cập nhật lần cuối: 02/09/2026, sau đợt hoàn thiện (bảo mật, b�
 | I.2.b | Thêm/sửa: thông tin cá nhân, gán nhiều nhóm, gán phạm vi dữ liệu | **Có** | Người dùng → Thêm mới / Sửa | Kịch bản I.2.2 |
 | I.2.c | Đặt lại mật khẩu, buộc đổi ở lần đăng nhập đầu | **Có** | Người dùng → Đặt lại mật khẩu | Kịch bản I.2.4, 2.1.8 |
 | I.2.d | Khóa / mở khóa tài khoản | **Có** | Người dùng → Khóa / Mở khóa | Kịch bản I.2.5 |
-| I.2.e | Chính sách mật khẩu cấu hình được: độ dài, ký tự đặc biệt, hạn đổi, khóa sau N lần sai | **Có** | Tham số hệ thống → Chính sách mật khẩu (8 tham số) | Kịch bản 2.3.15, 2.3.16 |
+| I.2.e | Chính sách mật khẩu cấu hình được: độ dài, ký tự đặc biệt, hạn đổi, khóa sau N lần sai | **Có** | Tham số hệ thống → Chính sách mật khẩu (8 tham số); hạn đổi thực thi lúc đăng nhập — quá `SECURITY.PASSWORD_EXPIRY_DAYS` ngày thì phiên bị buộc đổi (`PasswordExpiryTests`, từ 04/09/2026 — sổ lỗi J6) | Kịch bản 2.3.15, 2.3.16 |
 | I.2.f | Import người dùng từ Excel | **Có** | Người dùng → Nhập từ Excel, có bước kiểm tra trước, báo lỗi theo từng dòng | Kịch bản I.2.9 → I.2.12 |
 | I.2.g | Xem lịch sử đăng nhập của từng user | **Có** | Người dùng → Lịch sử đăng nhập | Kịch bản I.2.8 |
 | I.3.a | Chỉnh sửa tham số theo nhóm, mỗi tham số render đúng loại điều khiển theo kiểu dữ liệu | **Có** | Quản trị hệ thống → Tham số hệ thống | Kịch bản I.3.1 |
@@ -59,7 +59,7 @@ Cập nhật lần cuối: 02/09/2026, sau đợt hoàn thiện (bảo mật, b�
 | I.5.c | Danh sách bản sao lưu: tên, dung lượng, thời gian, trạng thái; tải về, xóa, phục hồi | **Có** | Sao lưu cơ sở dữ liệu | Kịch bản 2.6.2 |
 | I.5.d | Phục hồi có cảnh báo 2 bước, yêu cầu nhập lại mật khẩu, ghi log | **Có** | Sao lưu → Phục hồi. Lượt phục hồi **chạy ở tiến trình nền**, hộp thoại theo dõi tiến độ tại chỗ và không đóng được khi đang chạy; tiến độ đọc từ bộ nhớ đệm vì chính cơ sở dữ liệu đang bị ghi đè | Kịch bản 2.6.3, 2.6.4, 2.6.6, 2.6.11 |
 | I.5.e | Gọi `pg_dump` / `pg_restore` thật qua process | **Có** | `PostgresBackupService`; PostgreSQL client đóng gói sẵn trong ảnh API | `docs/03-sao-luu-phuc-hoi.md` mục 1 |
-| I.5.f | Sao lưu kèm tệp MinIO | **Có** | Tùy chọn *Sao lưu kèm tệp tài liệu số* | Kịch bản 2.6.1 |
+| I.5.f | Sao lưu kèm tệp MinIO | **Có** | Tùy chọn *Sao lưu kèm tệp tài liệu số* — chép mọi object của bucket tài liệu và ảnh về `<bản sao lưu>-files/<bucket>/…` (`ObjectStorageMirror`, từ 04/09/2026; trước đó chỉ ghi README — sổ lỗi J4) | Kịch bản 2.6.1; `BackupTests.Sao_luu_kem_tep_tai_lieu_so…` |
 
 ---
 
@@ -130,12 +130,12 @@ Cập nhật lần cuối: 02/09/2026, sau đợt hoàn thiện (bảo mật, b�
 | C3 | Ghi nhật ký đăng nhập, đăng xuất, đăng nhập thất bại, thay đổi quyền, thay đổi tham số, sao lưu/phục hồi, xuất dữ liệu | **Có** | Ghi tự động và ghi tường minh | `docs/02-tai-lieu-quan-tri.md` mục 3.1 |
 | C4 | Lưu diff dạng jsonb | **Có** | Cột `old_value`, `new_value` kiểu `jsonb` trong `sys.audit_logs` | Kịch bản 2.3.10 |
 | C5 | Phân trang server-side toàn bộ, không tải hết dữ liệu về client | **Có** | Mọi endpoint danh sách trả `{ items, totalCount, page, pageSize }` | Kịch bản 2.1.x, I.1.1 |
-| C6 | Cache Redis cho danh mục, kết quả tra cứu, cấu hình | **Có** | `RedisCacheService`, tự suy giảm sang cache nội bộ khi Redis mất kết nối | Mã nguồn `Infrastructure/Services/RedisCacheService.cs` |
+| C6 | Cache Redis cho danh mục, kết quả tra cứu, cấu hình | **Có** | `RedisCacheService`, tự suy giảm sang cache nội bộ khi Redis mất kết nối; danh sách + cây danh mục đệm 10 phút và xoá theo tiền tố khi ghi, hai trang đầu tra cứu OPAC đệm 60 giây, tham số hệ thống và quyền đệm 15 phút | Mã nguồn `Infrastructure/Services/RedisCacheService.cs` |
 | C7 | Response nén gzip/brotli | **Có** | `UseResponseCompression` với Brotli và Gzip | Kiểm tra header `Content-Encoding` |
 | C8 | Security headers (CSP, X-Frame-Options, X-Content-Type-Options), HSTS khi chạy HTTPS | **Có** | `SecurityHeadersMiddleware` | Kiểm tra header phản hồi |
 | C9 | Mật khẩu băm BCrypt work factor ≥ 12 | **Có** | `BCryptPasswordHasher` | Unit — `BCryptPasswordHasherTests` |
 | C10 | Chống SQL Injection | **Có** | Truy vấn tham số hóa qua EF Core; không ghép chuỗi SQL |  |
-| C11 | Rate limiting cho endpoint đăng nhập và API công khai | **Có** | Cấu hình được qua `LC_RateLimit__*` | `docs/04-cai-dat-cau-hinh.md` mục 4.2 |
+| C11 | Rate limiting cho endpoint đăng nhập và API công khai | **Có** | Cấu hình được qua `LC_RateLimit__*`; áp cho cả cửa cán bộ `/api/auth/login` lẫn cửa bạn đọc `/api/reader/auth/login` (`RateLimitTests`, 2 bài) | `docs/04-cai-dat-cau-hinh.md` mục 4.2 |
 | C12 | Không log thông tin nhạy cảm | **Có** | Interceptor loại bỏ mật khẩu, khóa bí mật, token khỏi nhật ký | Kịch bản 2.3.11 |
 | C13 | Structured logging, log rotation | **Có** | Serilog JSON, luân chuyển theo ngày, giữ 90 tệp | `docs/02-tai-lieu-quan-tri.md` mục 4.2 |
 | C14 | Background jobs (Hangfire), dashboard bảo vệ bằng quyền admin | **Có** | 3 tác vụ định kỳ; `/hangfire` yêu cầu quyền `SYSTEM.JOB.VIEW` | `docs/02-tai-lieu-quan-tri.md` mục 4.3 |
@@ -369,7 +369,7 @@ Cập nhật lần cuối: 02/09/2026, sau đợt hoàn thiện (bảo mật, b�
 | 3.3a | Cấu hình danh sách server đích trong giao diện | **Có** | Tên, địa chỉ, cổng, cơ sở dữ liệu, tài khoản, bảng mã, cú pháp biểu ghi, thời gian chờ, bật tắt, thứ tự hiển thị |
 | 3.3a | Server mẫu Library of Congress để test | **Có** | Nạp sẵn khi cài đặt, cùng một lối SRU dự phòng và một máy chủ của Đại học Yale |
 | 3.3a | Nút kiểm tra kết nối | **Có** | Bắt tay đầy đủ rồi tra thử một từ khóa, vì máy chủ mở cổng mà từ chối phiên là chuyện thường; kết quả lưu lại để nhìn danh sách là biết nơi nào hỏng |
-| 3.3b | Z39.50 Server: lắng nghe TCP, xử lý Init/Search/Present | **Có** | Chạy như một dịch vụ nền trong chính máy chủ API, tra thẳng vào kho thư mục, trả biểu ghi ISO 2709 |
+| 3.3b | Z39.50 Server: lắng nghe TCP, xử lý Init/Search/Present | **Có** | Chạy như một dịch vụ nền trong chính máy chủ API, tra thẳng vào kho thư mục, trả biểu ghi ISO 2709; `docker compose up` công bố cổng 210 (`Z3950_PORT`, trong container 2100), bật/tắt bằng `ILL.Z3950_SERVER_ENABLED` |
 | 3.3b | Cấu hình bật/tắt, giới hạn IP | **Có** | `ILL.Z3950_SERVER_ENABLED`, `ILL.Z3950_SERVER_PORT`, `ILL.Z3950_ALLOWED_IPS`; mặc định tắt vì đây là cổng mở ra ngoài không có mật khẩu |
 | 3.3 | SRU/SRW song song làm giải pháp tương đương | **Có** | `/sru?operation=searchRetrieve&version=1.2&query=…&recordSchema=marcxml` đúng như đặc tả ghi; gọi trần trụi thì trả về bản tự khai liệt kê các chỉ mục tra được |
 | 3.3 | SRU trả MARCXML | **Có** | Trả được cả MARCXML lẫn Dublin Core; truy vấn CQL sai cú pháp trả về phần chẩn đoán đúng chuẩn chứ không phải lỗi máy chủ |
