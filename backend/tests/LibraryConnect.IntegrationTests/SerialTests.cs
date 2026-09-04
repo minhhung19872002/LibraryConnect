@@ -72,6 +72,47 @@ public class SerialTests
     // -----------------------------------------------------------------------------------------
 
     [Fact]
+    public async Task Phieu_khieu_nai_in_ra_duoc_thanh_van_ban_gui_nha_cung_cap()
+    {
+        // IV.3 nói "tạo phiếu khiếu nại gửi nhà cung cấp". Trước 04/09/2026 chỉ có bản ghi trên màn
+        // hình, không có tờ giấy nào để ký và gửi đi.
+        var client = await ClientAsync();
+
+        // Tự dựng một phiếu khiếu nại: bài này phải luôn đi qua đường in, không đỗ suông khi kho
+        // kiểm thử tình cờ chưa có khiếu nại nào.
+        var serialId = await NewSerialAsync(
+            client, "Tạp chí In Khiếu Nại", SerialFrequency.Monthly, new { dayOfMonth = 5 });
+
+        await ReadAsync<GenerateIssuesResultDto>(await client.PostAsJsonAsync(
+            "/api/serials/issues/generate",
+            new { serialIds = new[] { serialId }, from = "2026-01-01", to = "2026-03-31" }));
+
+        var issues = await ReadAsync<PagedResult<SerialIssueDto>>(
+            await client.GetAsync($"/api/serials/issues?serialId={serialId}&pageSize=50"));
+
+        var missing = issues.Items.Take(2).Select(issue => issue.Id).ToArray();
+
+        await ReadAsync<int>(await client.PostAsJsonAsync(
+            "/api/serials/issues/mark-missing", new { issueIds = missing, note = "Chưa thấy về" }));
+
+        var created = await ReadAsync<CreateClaimsResultDto>(await client.PostAsJsonAsync(
+            "/api/serials/claims", new { issueIds = missing }));
+
+        created.ClaimNumbers.Should().NotBeEmpty();
+        var claimNo = created.ClaimNumbers[0];
+        var response = await client.GetAsync($"/api/acquisition/forms/print/SERIAL_CLAIM/{claimNo}");
+
+        response.IsSuccessStatusCode.Should().BeTrue(
+            "in phiếu khiếu nại phải chạy được, máy chủ trả: " + await response.Content.ReadAsStringAsync());
+        response.Content.Headers.ContentType!.MediaType.Should().Be("application/pdf");
+        (await response.Content.ReadAsByteArrayAsync()).Length.Should().BeGreaterThan(500);
+
+        // Số phiếu không có thật thì báo không tìm thấy, không dựng ra một tờ giấy trống.
+        (await client.GetAsync("/api/acquisition/forms/print/SERIAL_CLAIM/KN-KHONG-CO"))
+            .StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
     public async Task A_new_title_gets_its_own_marc_record_marked_as_a_serial()
     {
         var client = await ClientAsync();

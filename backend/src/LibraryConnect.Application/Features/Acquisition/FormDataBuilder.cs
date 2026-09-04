@@ -78,6 +78,9 @@ public class FormDataBuilder : IFormDataBuilder
             case FormTypes.Clearance:
                 await BuildClearanceAsync(data, documentId, ct);
                 break;
+            case FormTypes.SerialClaim:
+                await BuildSerialClaimAsync(data, documentId, ct);
+                break;
             default:
                 throw new Common.Exceptions.ValidationException(
                     "formType", $"Chưa có bộ dựng dữ liệu cho loại biểu mẫu {formType}.");
@@ -676,6 +679,68 @@ public class FormDataBuilder : IFormDataBuilder
     /// Đây là tờ giấy sinh viên mang đi làm thủ tục ra trường, nên nó phải nói rõ còn nợ gì
     /// không, chứ không chỉ liệt kê.
     /// </summary>
+    /// <summary>
+    /// Phiếu khiếu nại số báo thiếu (IV.3): một phiếu gửi nhà cung cấp, liệt kê những số cùng đầu báo
+    /// và cùng nhà cung cấp đang mở khiếu nại — cán bộ ký rồi gửi đi, không phải chép tay từ màn hình.
+    /// <paramref name="documentId"/> là số phiếu khiếu nại.
+    /// </summary>
+    private async Task BuildSerialClaimAsync(FormDataDto data, string documentId, CancellationToken ct)
+    {
+        var claim = await _db.SerialClaims
+            .AsNoTracking()
+            .Where(entity => entity.ClaimNo == documentId)
+            .Select(entity => new
+            {
+                entity.Id,
+                entity.ClaimNo,
+                entity.ClaimDate,
+                entity.Content,
+                entity.SupplierId,
+                SupplierName = entity.Supplier!.Name,
+                SupplierAddress = entity.Supplier!.Address,
+                SupplierPhone = entity.Supplier!.Phone,
+                SerialId = entity.Issue!.SerialId,
+                SerialTitle = entity.Issue!.Serial!.Title,
+                Issn = entity.Issue!.Serial!.Issn
+            })
+            .FirstOrDefaultAsync(ct)
+            ?? throw new NotFoundException("phiếu khiếu nại", documentId);
+
+        // Một lượt lập khiếu nại có thể phủ nhiều số của cùng đầu báo; gom lại thành một tờ giấy
+        // theo số phiếu, đúng như cán bộ vẫn gửi cho nhà cung cấp.
+        var lines = await _db.SerialClaims
+            .AsNoTracking()
+            .Where(entity => entity.ClaimNo == documentId)
+            .OrderBy(entity => entity.Issue!.ExpectedDate)
+            .Select(entity => new
+            {
+                Caption = entity.Issue!.IssueNo,
+                entity.Issue!.ExpectedDate,
+                entity.Status
+            })
+            .ToListAsync(ct);
+
+        data.Fields["claimNo"] = claim.ClaimNo;
+        data.Fields["claimDate"] = Date(claim.ClaimDate);
+        data.Fields["supplierName"] = claim.SupplierName ?? string.Empty;
+        data.Fields["supplierAddress"] = claim.SupplierAddress ?? string.Empty;
+        data.Fields["supplierPhone"] = claim.SupplierPhone ?? string.Empty;
+        data.Fields["serialTitle"] = claim.SerialTitle ?? string.Empty;
+        data.Fields["issn"] = claim.Issn ?? string.Empty;
+        data.Fields["content"] = claim.Content ?? string.Empty;
+        data.Fields["staffName"] = _currentUser.FullName ?? string.Empty;
+
+        data.Rows = lines
+            .Select((line, index) => new Dictionary<string, string>
+            {
+                ["index"] = Number(index + 1),
+                ["issueCaption"] = line.Caption ?? string.Empty,
+                ["expectedDate"] = Date(line.ExpectedDate),
+                ["status"] = line.Status == Domain.Enums.SerialClaimStatus.Open ? "Chưa nhận" : "Đã xử lý"
+            })
+            .ToList();
+    }
+
     private async Task BuildClearanceAsync(FormDataDto data, string documentId, CancellationToken ct)
     {
         var reader = await _db.Readers

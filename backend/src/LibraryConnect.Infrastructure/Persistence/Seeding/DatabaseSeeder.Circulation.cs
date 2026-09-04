@@ -161,21 +161,17 @@ public partial class DatabaseSeeder
     /// <summary>Bốn mẫu biểu của quầy lưu thông (VII.4), dùng chung trình thiết kế của Phase 6.</summary>
     private async Task SeedCirculationFormTemplatesAsync(CancellationToken ct)
     {
-        var existing = await _db.FormTemplates
-            .Where(template => template.FormType == "LOAN_SLIP"
-                               || template.FormType == "RETURN_SLIP"
-                               || template.FormType == "FINE_RECEIPT"
-                               || template.FormType == "CLEARANCE")
-            .AnyAsync(ct);
-
-        if (existing)
-        {
-            return;
-        }
+        // Hỏi theo từng loại chứ không hỏi gộp "đã có mẫu nào chưa": bản cài cũ đã có bốn mẫu lưu
+        // thông nhưng chưa có phiếu khiếu nại, hỏi gộp thì mẫu mới không bao giờ được nạp.
+        var seeded = await _db.FormTemplates
+            .Select(template => template.FormType)
+            .Distinct()
+            .ToListAsync(ct);
 
         var organisation = new[] { "{libraryName}" };
 
-        _db.FormTemplates.AddRange(
+        var candidates = new[]
+        {
             FormTemplate("PM-QUAY", "Phiếu mượn tài liệu", "LOAN_SLIP", Json(new
             {
                 showLogo = true,
@@ -330,9 +326,60 @@ public partial class DatabaseSeeder
                     new { role = "Cán bộ thư viện", note = "{staffName}" }
                 },
                 fontSize = 10.0
-            })));
+            })),
+
+            // Phiếu khiếu nại số báo thiếu (IV.3): cán bộ in ra, ký rồi gửi nhà cung cấp.
+            FormTemplate("PKN-BAOTHIEU", "Phiếu khiếu nại số báo thiếu", "SERIAL_CLAIM", Json(new
+            {
+                showLogo = true,
+                organisationLines = organisation,
+                showNationalHeading = true,
+                title = "Phiếu khiếu nại ấn phẩm định kỳ",
+                subtitle = "Số {claimNo}",
+                introLines = new[]
+                {
+                    "Kính gửi: {supplierName}",
+                    "Địa chỉ: {supplierAddress} — Điện thoại: {supplierPhone}",
+                    "Thư viện chưa nhận được các số dưới đây của ấn phẩm đã đặt mua, đề nghị quý đơn vị kiểm tra và gửi bổ sung:"
+                },
+                fields = new object[]
+                {
+                    new { label = "Tên báo, tạp chí", key = "serialTitle", fullWidth = true },
+                    new { label = "ISSN", key = "issn", fullWidth = false },
+                    new { label = "Ngày lập phiếu", key = "claimDate", fullWidth = false }
+                },
+                columns = new object[]
+                {
+                    new { header = "TT", key = "index", width = 0.5, align = "center", sum = false },
+                    new { header = "Số báo", key = "issueCaption", width = 3.0, align = "left", sum = false },
+                    new { header = "Ngày dự kiến", key = "expectedDate", width = 1.5, align = "center", sum = false },
+                    new { header = "Tình trạng", key = "status", width = 1.5, align = "center", sum = false }
+                },
+                showTotals = false,
+                closingLines = new[]
+                {
+                    "{content}",
+                    "Đề nghị quý đơn vị phản hồi trong vòng 15 ngày kể từ ngày nhận phiếu."
+                },
+                signatures = new object[]
+                {
+                    new { role = "Cán bộ lập phiếu", note = "{staffName}" },
+                    new { role = "Phụ trách thư viện", note = "(Ký, ghi rõ họ tên)" }
+                },
+                fontSize = 10.0
+            }))
+        };
+
+        var missing = candidates.Where(template => !seeded.Contains(template.FormType)).ToList();
+
+        if (missing.Count == 0)
+        {
+            return;
+        }
+
+        _db.FormTemplates.AddRange(missing);
 
         await _db.SaveChangesAsync(ct);
-        _logger.LogInformation("Đã nạp 4 mẫu biểu của quầy lưu thông");
+        _logger.LogInformation("Đã nạp {Count} mẫu biểu còn thiếu của quầy lưu thông và ấn phẩm định kỳ", missing.Count);
     }
 }

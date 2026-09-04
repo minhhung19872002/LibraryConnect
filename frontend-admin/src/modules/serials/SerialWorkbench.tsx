@@ -22,7 +22,7 @@ import {
   Typography,
   Upload,
 } from 'antd';
-import {
+import { PrinterOutlined,
   BookOutlined,
   DownloadOutlined,
   ImportOutlined,
@@ -42,6 +42,7 @@ import { saveBlob } from '@/modules/marc/api';
 import { locationsApi, stockApi } from '@/modules/acquisition/api';
 import { formatDate, money } from '@/modules/acquisition/labels';
 import { serialsApi } from './api';
+import { formsApi } from '@/modules/acquisition/api';
 import { bindableIssues, issuesInRange } from './binding';
 import { MAU } from '@/lib/palette';
 import {
@@ -1130,6 +1131,25 @@ function ClaimsTab({
             width: 140,
             render: (value: import('./types').SerialClaimStatus) => (
               <Tag color={claimStatusColors[value]}>{claimStatusLabels[value]}</Tag>
+            ),
+          },
+          {
+            // Phiếu khiếu nại phải ra được tờ giấy gửi nhà cung cấp (IV.3), không chỉ là dòng trên
+            // màn hình. In theo số phiếu: mọi số cùng phiếu nằm chung một tờ.
+            title: 'In phiếu',
+            width: 110,
+            render: (_, row) => (
+              <Can permission={PERMISSIONS.serial.claim}>
+                <Button
+                  size="small"
+                  icon={<PrinterOutlined />}
+                  onClick={() =>
+                    formsApi.print('SERIAL_CLAIM', row.claimNo)
+                  }
+                >
+                  In
+                </Button>
+              </Can>
             ),
           },
           {

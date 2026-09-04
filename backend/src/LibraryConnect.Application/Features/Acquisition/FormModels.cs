@@ -29,6 +29,9 @@ public static class FormTypes
     /// <summary>Giấy xác nhận đã trả hết tài liệu, cấp cho sinh viên ra trường.</summary>
     public const string Clearance = "CLEARANCE";
 
+    /// <summary>Phiếu khiếu nại số báo thiếu, gửi nhà cung cấp (IV.3).</summary>
+    public const string SerialClaim = "SERIAL_CLAIM";
+
     public static readonly IReadOnlyDictionary<string, string> Labels = new Dictionary<string, string>
     {
         [GoodsReceipt] = "Phiếu nhập kho",
@@ -40,7 +43,8 @@ public static class FormTypes
         [LoanSlip] = "Phiếu mượn",
         [ReturnSlip] = "Phiếu trả",
         [FineReceipt] = "Biên lai thu tiền phạt",
-        [Clearance] = "Giấy xác nhận trả sách"
+        [Clearance] = "Giấy xác nhận trả sách",
+        [SerialClaim] = "Phiếu khiếu nại số báo thiếu"
     };
 
     /// <summary>
@@ -62,6 +66,11 @@ public static class FormTypes
             Common.Security.PermissionCodes.CirculationFineView,
         },
         Clearance => new[] { Common.Security.PermissionCodes.ReaderView },
+        SerialClaim => new[]
+        {
+            Common.Security.PermissionCodes.SerialClaim,
+            Common.Security.PermissionCodes.SerialView,
+        },
         Transfer => new[] { Common.Security.PermissionCodes.AcqItemMove, Common.Security.PermissionCodes.AcqItemView },
         Disposal => new[] { Common.Security.PermissionCodes.AcqItemDispose, Common.Security.PermissionCodes.AcqItemView },
         Inventory => new[] { Common.Security.PermissionCodes.AcqInventoryReport, Common.Security.PermissionCodes.AcqInventoryView },
@@ -77,6 +86,8 @@ public static class FormTypes
         Common.Security.PermissionCodes.CirculationFineCollect,
         Common.Security.PermissionCodes.CirculationFineView,
         Common.Security.PermissionCodes.ReaderView,
+        Common.Security.PermissionCodes.SerialClaim,
+        Common.Security.PermissionCodes.SerialView,
         Common.Security.PermissionCodes.AcqItemMove,
         Common.Security.PermissionCodes.AcqItemView,
         Common.Security.PermissionCodes.AcqItemDispose,
@@ -319,6 +330,23 @@ public static class FormFieldCatalog
             new FormFieldOption("barcode", "Mã vạch", IsRow: true),
             new FormFieldOption("title", "Nhan đề", IsRow: true),
             new FormFieldOption("dueDate", "Hạn trả", IsRow: true)
+        },
+
+        [FormTypes.SerialClaim] = new[]
+        {
+            new FormFieldOption("claimNo", "Số phiếu khiếu nại"),
+            new FormFieldOption("claimDate", "Ngày lập phiếu"),
+            new FormFieldOption("supplierName", "Nhà cung cấp"),
+            new FormFieldOption("supplierAddress", "Địa chỉ nhà cung cấp"),
+            new FormFieldOption("supplierPhone", "Điện thoại nhà cung cấp"),
+            new FormFieldOption("serialTitle", "Tên báo, tạp chí"),
+            new FormFieldOption("issn", "ISSN"),
+            new FormFieldOption("content", "Nội dung khiếu nại"),
+            new FormFieldOption("staffName", "Cán bộ lập phiếu"),
+            new FormFieldOption("index", "Số thứ tự", IsRow: true),
+            new FormFieldOption("issueCaption", "Số báo", IsRow: true),
+            new FormFieldOption("expectedDate", "Ngày dự kiến", IsRow: true),
+            new FormFieldOption("status", "Tình trạng", IsRow: true)
         },
 
         [FormTypes.Transfer] = new[]
