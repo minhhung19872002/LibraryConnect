@@ -126,6 +126,9 @@ services:
     volumes:
       - backup-data:/var/lib/libraryconnect/backups
       - api-logs:/app/logs
+    # Dừng êm (mục 6.5): ứng dụng tự cho mình 30 giây để tác vụ đang chạy kết thúc, Docker phải chờ
+    # lâu hơn thế rồi mới bắn SIGKILL.
+    stop_grace_period: 45s
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:8080/health || exit 1"]
       interval: 15s

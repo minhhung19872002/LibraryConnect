@@ -30,6 +30,15 @@ Console.OutputEncoding = System.Text.Encoding.UTF8;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Mục 6.5 — dừng êm. Mặc định của .NET là 5 giây: một lượt nhập biểu ghi, một phiên Z39.50 hay một
+// lượt tải tài liệu số đang dở đều bị cắt ngang khi `docker compose stop`. 30 giây đủ để các tác vụ
+// đang chạy kết thúc; docker-compose dùng `stop_grace_period` dài hơn con số này.
+builder.Services.Configure<HostOptions>(options =>
+{
+    options.ShutdownTimeout = TimeSpan.FromSeconds(
+        builder.Configuration.GetValue("Host:ShutdownTimeoutSeconds", 30));
+});
+
 // ---------------------------------------------------------------------------
 // Configuration: every setting is overridable by an LC_-prefixed environment
 // variable so a deployment needs no file edits (see .env.example).

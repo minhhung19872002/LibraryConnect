@@ -109,6 +109,26 @@ public class Z3950ServerHost : BackgroundService
         _logger = logger;
     }
 
+    /// <summary>
+    /// Dừng êm (mục 6.5): đóng hẳn ổ nghe trước khi chờ vòng chính thoát. `AcceptTcpClientAsync` có
+    /// nhận thẻ huỷ, nhưng đóng ổ nghe ở đây trả cổng lại ngay cho lần khởi động sau — không phải
+    /// chờ hết hạn TIME_WAIT khi container dựng lại liền.
+    /// </summary>
+    public override async Task StopAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            _listener?.Stop();
+        }
+        catch (SocketException ex)
+        {
+            _logger.LogDebug(ex, "Lỗi khi đóng ổ nghe Z39.50 lúc dừng.");
+        }
+
+        await base.StopAsync(cancellationToken);
+        _logger.LogInformation("Máy chủ Z39.50 đã dừng.");
+    }
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         // Chờ một nhịp cho cơ sở dữ liệu chạy migration xong rồi mới đọc tham số.
