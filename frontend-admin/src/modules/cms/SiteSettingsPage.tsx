@@ -30,6 +30,7 @@ import { Can } from '@/components/PermissionGate';
 import { PERMISSIONS } from '@/api/permissions';
 import { ApiRequestError } from '@/api/client';
 import { cmsApi } from './api';
+import { MENU_ICONS, dropModeOf, moveMenu, toPositions } from './menuTree';
 import type { CmsBanner, CmsLink, CmsMenu, CmsSettingItem } from './types';
 import { MAU } from '@/lib/palette';
 
@@ -243,6 +244,19 @@ function MenusTab() {
       message.error(error instanceof ApiRequestError ? error.message : 'Không xóa được.'),
   });
 
+  // Kéo thả: tính cây mới ở máy khách, gửi toàn bộ vị trí về máy chủ trong một lượt, rồi nạp lại.
+  const reorder = useMutation({
+    mutationFn: (tree: CmsMenu[]) => cmsApi.reorderMenus(toPositions(tree)),
+    onSuccess: () => {
+      message.success('Đã lưu thứ tự menu.');
+      void queryClient.invalidateQueries({ queryKey: ['cms-menus'] });
+    },
+    onError: (error) => {
+      message.error(error instanceof ApiRequestError ? error.message : 'Không lưu được thứ tự.');
+      void queryClient.invalidateQueries({ queryKey: ['cms-menus'] });
+    },
+  });
+
   const flat = flatten(menus.data ?? []);
 
   return (
@@ -264,7 +278,8 @@ function MenusTab() {
       </Space>
 
       <Paragraph type="secondary">
-        Thanh điều hướng của trang tra cứu. Mục cha bị tắt thì cả nhánh bên dưới cũng ẩn theo.
+        Thanh điều hướng của trang tra cứu. Kéo thả để sắp lại thứ tự hoặc đưa một mục vào trong
+        mục khác; mục cha bị tắt thì cả nhánh bên dưới cũng ẩn theo.
       </Paragraph>
 
       <Tree
@@ -278,6 +293,19 @@ function MenusTab() {
         })}
         defaultExpandAll
         selectable={false}
+        draggable={{ icon: false }}
+        blockNode
+        onDrop={(info) => {
+          const mode = dropModeOf(info.dropToGap, info.dropPosition, info.node.pos);
+          const next = moveMenu(menus.data ?? [], String(info.dragNode.key), String(info.node.key), mode);
+
+          if (!next) {
+            message.warning('Không thể đặt một mục vào trong mục con của chính nó.');
+            return;
+          }
+
+          reorder.mutate(next);
+        }}
       />
 
       <Drawer
@@ -325,6 +353,17 @@ function MenusTab() {
                 { value: '_self', label: 'Cùng cửa sổ' },
                 { value: '_blank', label: 'Cửa sổ mới' },
               ]}
+            />
+          </Form.Item>
+          <Form.Item
+            name="icon"
+            label="Biểu tượng"
+            extra="Hiện trước tên mục trên thanh điều hướng của trang tra cứu."
+          >
+            <Select
+              allowClear
+              placeholder="Không dùng biểu tượng"
+              options={MENU_ICONS.map((icon) => ({ value: icon.value, label: icon.label }))}
             />
           </Form.Item>
           <Form.Item name="isActive" label="Đang hiển thị" valuePropName="checked" initialValue>

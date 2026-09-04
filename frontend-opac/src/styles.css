@@ -177,6 +177,14 @@ body {
   text-decoration: none;
 }
 
+/* Biểu tượng cán bộ chọn cho mục menu (VIII.1), đứng trước tên mục. */
+.lc-header__icon {
+  display: inline-block;
+  margin-right: 6px;
+  font-size: 14px;
+  vertical-align: -1px;
+}
+
 .lc-header__link--active {
   color: var(--lc-ink);
 }
