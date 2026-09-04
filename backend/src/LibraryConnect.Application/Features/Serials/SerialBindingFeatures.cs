@@ -127,7 +127,10 @@ public class BindSerialIssuesCommandHandler : IRequestHandler<BindSerialIssuesCo
             .WhereIf(command.IssueIds.Count > 0, issue => command.IssueIds.Contains(issue.Id))
             .WhereIf(command.IssueIds.Count == 0 && command.Year is not null,
                 issue => issue.Year == command.Year)
+            .OrderBy(issue => issue.ExpectedDate)
             .ToListAsync(ct);
+
+        candidates = SelectIssueRange(candidates, command);
 
         // Chỉ số đã nhận mới đóng được thành tập: đóng một số chưa về là đóng một tập thiếu ruột.
         var issues = candidates
@@ -228,6 +231,55 @@ public class BindSerialIssuesCommandHandler : IRequestHandler<BindSerialIssuesCo
             CallNumber = item.CallNumber,
             Note = binding.Note
         };
+    }
+
+    /// <summary>
+    /// Thu hẹp danh sách số theo khoảng "từ số → đến số" (IV.4: "chọn khoảng số, ví dụ số 1–12").
+    ///
+    /// Số hiệu là chuỗi ("1", "12", "Xuân") nên không so sánh bằng số học: thứ tự lấy theo ngày
+    /// phát hành dự kiến, và khoảng là đoạn giữa hai số đã nêu. Số không có trong năm thì báo rõ
+    /// thay vì lặng lẽ đóng cả năm — đó chính là lỗi cũ: hai ô này chỉ được dùng làm nhãn.
+    /// </summary>
+    private static List<SerialIssue> SelectIssueRange(List<SerialIssue> ordered, BindSerialIssuesCommand command)
+    {
+        if (command.IssueIds.Count > 0
+            || (string.IsNullOrWhiteSpace(command.FromIssue) && string.IsNullOrWhiteSpace(command.ToIssue)))
+        {
+            return ordered;
+        }
+
+        var start = 0;
+        var end = ordered.Count - 1;
+
+        if (!string.IsNullOrWhiteSpace(command.FromIssue))
+        {
+            start = ordered.FindIndex(issue => issue.IssueNo == command.FromIssue.Trim());
+
+            if (start < 0)
+            {
+                throw new Common.Exceptions.ValidationException(
+                    "fromIssue", $"Không có số \"{command.FromIssue}\" trong năm đã chọn.");
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(command.ToIssue))
+        {
+            end = ordered.FindIndex(issue => issue.IssueNo == command.ToIssue.Trim());
+
+            if (end < 0)
+            {
+                throw new Common.Exceptions.ValidationException(
+                    "toIssue", $"Không có số \"{command.ToIssue}\" trong năm đã chọn.");
+            }
+        }
+
+        if (end < start)
+        {
+            throw new Common.Exceptions.ValidationException(
+                "toIssue", "Số kết thúc phát hành trước số bắt đầu — hãy đảo lại khoảng số.");
+        }
+
+        return ordered.GetRange(start, end - start + 1);
     }
 
     private async Task RefreshBibCountsAsync(Guid bibId, CancellationToken ct)

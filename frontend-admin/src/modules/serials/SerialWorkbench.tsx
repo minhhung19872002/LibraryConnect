@@ -29,6 +29,7 @@ import {
   InboxOutlined,
   PlusOutlined,
   ProfileOutlined,
+  TagOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -38,9 +39,10 @@ import { Can } from '@/components/PermissionGate';
 import { PERMISSIONS } from '@/api/permissions';
 import { ApiRequestError } from '@/api/client';
 import { saveBlob } from '@/modules/marc/api';
-import { locationsApi } from '@/modules/acquisition/api';
+import { locationsApi, stockApi } from '@/modules/acquisition/api';
 import { formatDate, money } from '@/modules/acquisition/labels';
 import { serialsApi } from './api';
+import { bindableIssues, issuesInRange } from './binding';
 import { MAU } from '@/lib/palette';
 import {
   claimStatusColors,
@@ -1208,6 +1210,13 @@ function BindingsTab({
 
   const years = Array.from(new Set(issues.map((issue) => issue.year))).sort((a, b) => b - a);
 
+  // Khoảng số đang chọn trên form, để hiện trước "sẽ đóng N số" và chặn khoảng rỗng.
+  const year = Form.useWatch('year', form) as number | undefined;
+  const fromIssue = Form.useWatch('fromIssue', form) as string | undefined;
+  const toIssue = Form.useWatch('toIssue', form) as string | undefined;
+  const candidates = year ? bindableIssues(issues, year) : [];
+  const selectedRun = year ? issuesInRange(issues, year, fromIssue, toIssue) : [];
+
   const bind = useMutation({
     mutationFn: (values: Record<string, unknown>) =>
       serialsApi.bind({
@@ -1224,6 +1233,17 @@ function BindingsTab({
     },
     onError: (error) =>
       message.error(error instanceof ApiRequestError ? error.message : 'Không đóng tập được.'),
+  });
+
+  // Nhãn gáy của tập in bằng đúng dịch vụ in nhãn của Phân hệ III, theo ĐKCB của tập.
+  const printLabel = useMutation({
+    mutationFn: (itemId: string) => stockApi.printLabels({ itemIds: [itemId], copies: 1 }),
+    onSuccess: ({ blob, fileName }) => {
+      saveBlob(blob, fileName);
+      message.success('Đã tạo tệp in nhãn gáy tập.');
+    },
+    onError: (error) =>
+      message.error(error instanceof ApiRequestError ? error.message : 'Không in được nhãn.'),
   });
 
   return (
@@ -1276,7 +1296,24 @@ function BindingsTab({
             },
             { title: 'Mã vạch tập', dataIndex: 'barcode', width: 160 },
             { title: 'Ký hiệu xếp giá', dataIndex: 'callNumber', width: 160 },
-            { title: 'Ghi chú', dataIndex: 'note' },
+            { title: 'Ghi chú', dataIndex: 'note', width: 200, ellipsis: true },
+            {
+              title: '',
+              width: 150,
+              render: (_, row) =>
+                row.itemId ? (
+                  <Can permission={PERMISSIONS.acquisition.itemPrintLabel}>
+                    <Button
+                      size="small"
+                      icon={<TagOutlined />}
+                      loading={printLabel.isPending && printLabel.variables === row.itemId}
+                      onClick={() => printLabel.mutate(row.itemId!)}
+                    >
+                      In nhãn gáy tập
+                    </Button>
+                  </Can>
+                ) : null,
+            },
           ]}
         />
       )}
@@ -1292,13 +1329,60 @@ function BindingsTab({
         destroyOnHidden
       >
         <Typography.Paragraph type="secondary">
-          Chỉ các số đã nhận trong năm được chọn mới đóng được thành tập.
+          Chỉ các số đã nhận trong năm được chọn mới đóng được thành tập. Bỏ trống khoảng số thì
+          đóng cả năm.
         </Typography.Paragraph>
 
-        <Form form={form} layout="vertical" onFinish={(values) => bind.mutate(values)}>
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={(values) => bind.mutate(values)}
+          onValuesChange={(changed) => {
+            // Đổi năm thì khoảng số của năm cũ không còn nghĩa.
+            if ('year' in changed) form.setFieldsValue({ fromIssue: undefined, toIssue: undefined });
+          }}
+        >
           <Form.Item name="year" label="Năm" rules={[{ required: true, message: 'Chưa chọn năm.' }]}>
-            <Select options={years.map((year) => ({ value: year, label: `Năm ${year}` }))} />
+            <Select options={years.map((value) => ({ value, label: `Năm ${value}` }))} />
           </Form.Item>
+          <Row gutter={12}>
+            <Col span={12}>
+              <Form.Item name="fromIssue" label="Từ số">
+                <Select
+                  allowClear
+                  placeholder="Số đầu năm"
+                  options={candidates.map((issue) => ({
+                    value: issue.issueNo,
+                    label: `Số ${issue.issueNo} — ${formatDate(issue.expectedDate)}`,
+                  }))}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="toIssue" label="Đến số">
+                <Select
+                  allowClear
+                  placeholder="Số cuối năm"
+                  options={candidates.map((issue) => ({
+                    value: issue.issueNo,
+                    label: `Số ${issue.issueNo} — ${formatDate(issue.expectedDate)}`,
+                  }))}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+          {year && (
+            <Alert
+              type={selectedRun.length === 0 ? 'warning' : 'info'}
+              showIcon
+              style={{ marginBottom: 12 }}
+              message={
+                selectedRun.length === 0
+                  ? 'Không có số đã nhận nào trong khoảng này để đóng tập.'
+                  : `Sẽ đóng ${selectedRun.length} số: ${selectedRun.map((issue) => issue.issueNo).join(', ')}.`
+              }
+            />
+          )}
           <Form.Item name="bindingDate" label="Ngày đóng tập">
             <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
           </Form.Item>

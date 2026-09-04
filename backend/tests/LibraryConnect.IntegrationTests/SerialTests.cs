@@ -644,6 +644,73 @@ public class SerialTests
     }
 
     [Fact]
+    public async Task Binding_by_issue_range_takes_only_that_run_and_prints_a_spine_label()
+    {
+        var client = await ClientAsync();
+        var warehouseId = await WarehouseAsync(client);
+
+        var id = await NewSerialAsync(
+            client, "Tạp chí Đóng Nửa Năm", SerialFrequency.Quarterly, new { dayOfMonth = 1 },
+            warehouseId, price: 40000);
+
+        await ReadAsync<GenerateIssuesResultDto>(await client.PostAsJsonAsync(
+            "/api/serials/issues/generate",
+            new { serialIds = new[] { id }, from = "2026-01-01", to = "2026-12-31" }));
+
+        var issues = await ReadAsync<PagedResult<SerialIssueDto>>(
+            await client.GetAsync($"/api/serials/issues?serialId={id}&pageSize=50"));
+
+        await ReadAsync<ReceiveIssuesResultDto>(await client.PostAsJsonAsync(
+            "/api/serials/issues/receive",
+            new
+            {
+                issues = issues.Items.Select(issue => new
+                {
+                    issueId = issue.Id, quantity = 1, receivedDate = (string?)null, note = (string?)null
+                }),
+                createItems = true,
+                warehouseId
+            }));
+
+        // Chọn khoảng số 1–2: chỉ hai số ấy vào tập, số 3–4 vẫn là số lẻ đã nhận.
+        var first = await ReadAsync<SerialBindingDto>(await client.PostAsJsonAsync(
+            "/api/serials/bindings",
+            new { serialId = id, year = 2026, fromIssue = "1", toIssue = "2" }));
+
+        first.IssueCount.Should().Be(2);
+        first.FromIssue.Should().Be("1");
+        first.ToIssue.Should().Be("2");
+        first.ItemId.Should().NotBeNull();
+
+        var afterFirst = await ReadAsync<PagedResult<SerialIssueDto>>(
+            await client.GetAsync($"/api/serials/issues?serialId={id}&pageSize=50"));
+
+        afterFirst.Items.Count(issue => issue.Status == SerialIssueStatus.Bound).Should().Be(2);
+        afterFirst.Items.Count(issue => issue.Status == SerialIssueStatus.Received).Should().Be(2);
+
+        // Số không có trong năm thì báo rõ, không âm thầm đóng cả năm.
+        var unknown = await client.PostAsJsonAsync(
+            "/api/serials/bindings",
+            new { serialId = id, year = 2026, fromIssue = "3", toIssue = "9" });
+
+        unknown.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+        var second = await ReadAsync<SerialBindingDto>(await client.PostAsJsonAsync(
+            "/api/serials/bindings",
+            new { serialId = id, year = 2026, fromIssue = "3", toIssue = "4" }));
+
+        second.IssueCount.Should().Be(2);
+
+        // Nhãn gáy của tập in bằng đúng dịch vụ in nhãn của Phân hệ III, theo ĐKCB của tập.
+        var label = await client.PostAsJsonAsync("/api/stock/print/labels",
+            new { itemIds = new[] { first.ItemId!.Value }, copies = 1 });
+
+        label.IsSuccessStatusCode.Should().BeTrue(await label.Content.ReadAsStringAsync());
+        (await label.Content.ReadAsByteArrayAsync()).Take(5)
+            .Should().Equal((byte)'%', (byte)'P', (byte)'D', (byte)'F', (byte)'-');
+    }
+
+    [Fact]
     public async Task A_title_that_has_received_issues_cannot_be_deleted()
     {
         var client = await ClientAsync();
