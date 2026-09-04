@@ -13,6 +13,14 @@ public record DocumentInspection(int? PageCount, string Text, bool NeedsOcr);
 public record WatermarkOptions(IReadOnlyList<string> Lines);
 
 /// <summary>
+/// Một mục trong mục lục (bookmark / outline) của tệp, đã làm phẳng theo thứ tự xuất hiện.
+/// </summary>
+/// <param name="Level">Độ sâu, 0 là chương cấp cao nhất.</param>
+/// <param name="Title">Tên mục như tác giả tệp đặt.</param>
+/// <param name="PageNumber">Trang đích bắt đầu từ 1; null khi mục trỏ ra ngoài tệp hoặc không có đích.</param>
+public record DocumentOutlineEntry(int Level, string Title, int? PageNumber);
+
+/// <summary>
 /// Xử lý tệp tài liệu số: đếm trang, rút văn bản, kết xuất từng trang thành ảnh và nhận dạng ký tự.
 ///
 /// Tách thành giao diện riêng vì phần này phải gọi tới thư viện kết xuất PDF và tới Tesseract cài
@@ -42,4 +50,11 @@ public interface IDocumentProcessor
     /// trang hoặc không có lớp chữ thì trả danh sách rỗng — dùng cho "tìm trong văn bản" của trình đọc.
     /// </summary>
     Task<IReadOnlyList<string>> ExtractPageTextsAsync(byte[] content, string mimeType, CancellationToken ct = default);
+
+    /// <summary>
+    /// Mục lục tác giả tệp đã gắn sẵn (bookmark PDF), làm phẳng theo thứ tự đọc — dùng cho nút
+    /// "Mục lục" của trình đọc trên ứng dụng di động. Định dạng không có mục lục thì trả danh
+    /// sách rỗng; tuyệt đối không tự đoán chương từ lớp chữ.
+    /// </summary>
+    Task<IReadOnlyList<DocumentOutlineEntry>> ExtractOutlineAsync(byte[] content, string mimeType, CancellationToken ct = default);
 }
