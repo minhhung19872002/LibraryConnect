@@ -147,6 +147,12 @@ Nhờ vậy sản phẩm triển khai lại được cho khách hàng khác ch�
 | `docs/05-api-reference.md` | Tài liệu API, kèm chương "API cho ứng dụng khách" |
 | `docs/06-kich-ban-kiem-thu.md` | Kịch bản kiểm thử dùng làm phụ lục nghiệm thu |
 | `docs/07-bang-dap-ung-ky-thuat.md` | Bảng đối chiếu đáp ứng yêu cầu kỹ thuật E-HSMT |
+| `docs/08-so-loi.md` | Sổ lỗi bảy đợt rà, kèm cách sửa và phép thử canh lại |
+| `docs/09-nguon-du-lieu.md` | Khảo sát nguồn dữ liệu thư mục và kết quả nạp |
+| `docs/10-ke-hoach-trien-khai.md` | Kế hoạch triển khai, chạy thử, chuyển đổi và đối soát dữ liệu |
+| `docs/11-ke-hoach-dao-tao.md` | Kế hoạch đào tạo và chuyển giao công nghệ |
+| `docs/12-bao-hanh-ho-tro.md` | Bảo hành 12 tháng, mức sự cố, cập nhật, quyền quản lý dữ liệu |
+| `docs/13-bieu-mau-ban-giao.md` | Hồ sơ bàn giao và biểu mẫu nghiệm thu |
 
 `CLAUDE.md` ở thư mục gốc là đặc tả đầy đủ của sản phẩm.
 

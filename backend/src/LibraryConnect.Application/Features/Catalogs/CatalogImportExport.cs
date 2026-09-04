@@ -99,19 +99,38 @@ public class GetCatalogTemplateQueryHandler : IRequestHandler<GetCatalogTemplate
 
 // ---------------------------------------------------------------------------
 
-/// <summary>Xuất toàn bộ giá trị của một danh mục ra Excel.</summary>
-public record ExportCatalogQuery(string Catalog) : IRequest<ExportedFile>;
+/// <summary>
+/// Xuất toàn bộ giá trị của một danh mục.
+///
+/// Hai định dạng cho hai việc khác nhau: Excel để sửa hàng loạt rồi nhập ngược lại — tệp xuất ra
+/// dùng đúng tiêu đề cột của tệp mẫu — còn PDF để **in** ra giấy, đúng câu "cho phép in, xóa danh
+/// mục nếu đủ thẩm quyền" ở phần yêu cầu chung của Chương V.
+/// </summary>
+public record ExportCatalogQuery(string Catalog, ExportFormat Format = ExportFormat.Excel)
+    : IRequest<ExportedFile>;
 
 public class ExportCatalogQueryHandler : IRequestHandler<ExportCatalogQuery, ExportedFile>
 {
     private readonly IApplicationDbContext _db;
     private readonly IExcelService _excel;
+    private readonly IPdfReportService _pdf;
+    private readonly ISystemParameterService _parameters;
+    private readonly ICurrentUser _currentUser;
     private readonly IAuditService _audit;
 
-    public ExportCatalogQueryHandler(IApplicationDbContext db, IExcelService excel, IAuditService audit)
+    public ExportCatalogQueryHandler(
+        IApplicationDbContext db,
+        IExcelService excel,
+        IPdfReportService pdf,
+        ISystemParameterService parameters,
+        ICurrentUser currentUser,
+        IAuditService audit)
     {
         _db = db;
         _excel = excel;
+        _pdf = pdf;
+        _parameters = parameters;
+        _currentUser = currentUser;
         _audit = audit;
     }
 
@@ -141,13 +160,52 @@ public class ExportCatalogQueryHandler : IRequestHandler<ExportCatalogQuery, Exp
         columns.AddRange(definition.Fields.Select(field =>
             new ExcelColumn<CatalogExportRow>(field.Label, row => row.Extras.GetValueOrDefault(field.Key) ?? string.Empty, 24)));
 
-        var content = _excel.Write(definition.PluralName, columns, rows);
-        var fileName = $"{definition.Code}-{DateTimeOffset.Now:yyyyMMdd-HHmm}.xlsx";
+        var stem = $"{definition.Code}-{DateTimeOffset.Now:yyyyMMdd-HHmm}";
 
         await _audit.LogAsync(AuditAction.Export, definition.EntityType.Name, null, definition.PluralName,
             message: $"Xuất {rows.Count} giá trị danh mục {definition.PluralName}", ct: ct);
 
-        return new ExportedFile(content, fileName, ExportedFile.ExcelContentType);
+        if (request.Format == ExportFormat.Pdf)
+        {
+            return new ExportedFile(await PdfAsync(definition, rows, ct), $"{stem}.pdf", "application/pdf");
+        }
+
+        return new ExportedFile(
+            _excel.Write(definition.PluralName, columns, rows), $"{stem}.xlsx", ExportedFile.ExcelContentType);
+    }
+
+    /// <summary>
+    /// Bản in danh mục: mã, tên, cấp trên và trạng thái. Không in các trường riêng của từng danh mục
+    /// vì tờ giấy chỉ vừa chừng ấy cột; ai cần đủ trường thì xuất Excel.
+    /// </summary>
+    private async Task<byte[]> PdfAsync(
+        CatalogDefinition definition, IReadOnlyList<CatalogExportRow> rows, CancellationToken ct)
+    {
+        var header = new PdfReportHeader
+        {
+            LibraryName = await _parameters.GetAsync("LIBRARY.NAME", "Thư viện", ct),
+            LibraryAddress = await _parameters.GetAsync("LIBRARY.ADDRESS", ct),
+            Title = $"DANH MỤC {definition.PluralName.ToUpperInvariant()}",
+            Criteria = new[] { $"Tổng số: {rows.Count:N0} giá trị" },
+            PreparedBy = _currentUser.FullName
+        };
+
+        var columns = new List<PdfColumn<CatalogExportRow>>
+        {
+            new("Mã", row => row.Code, 2),
+            new("Tên", row => row.Name, 5),
+            new("Tên tiếng Anh", row => row.NameEn ?? string.Empty, 3)
+        };
+
+        if (definition.IsHierarchical)
+        {
+            columns.Add(new PdfColumn<CatalogExportRow>("Cấp trên", row => row.ParentCode ?? string.Empty, 2));
+        }
+
+        columns.Add(new PdfColumn<CatalogExportRow>(
+            "Đang dùng", row => row.IsActive ? "Có" : "Không", 1.4f, Align: PdfAlign.Center));
+
+        return _pdf.RenderTable(header, columns, rows);
     }
 
     internal sealed class CatalogExportRow

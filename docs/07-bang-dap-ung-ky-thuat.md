@@ -10,7 +10,11 @@ Cột **Đáp ứng** chỉ được đánh **Có** khi chức năng đã chạy
 Mỗi ô đánh **Có** chỉ đúng màn hình thao tác được và đúng mã kịch bản kiểm thử trong
 `06-kich-ban-kiem-thu.md`; không có ô nào đánh **Có** dựa trên mã nguồn đã viết mà chưa chạy thật.
 
-Cập nhật lần cuối: 02/09/2026, sau đợt hoàn thiện (bảo mật, bộ ánh xạ Dublin Core → MARC 21, ảnh bìa, dữ liệu thật).
+Bảng phủ **toàn bộ Chương V**, không chỉ danh sách phân hệ ở mục II.2: mục A dưới đây đối chiếu các
+yêu cầu chung ở mục II.1, mục B → D đối chiếu 11 phân hệ, mục C đối chiếu yêu cầu phi chức năng, và
+hai mục cuối E, F đối chiếu mục III (Các yêu cầu khác) cùng mục 5 (Kiểm tra và thử nghiệm).
+
+Cập nhật lần cuối: 05/09/2026, sau ba đợt rà theo đặc tả và đợt rà yêu cầu phi chức năng.
 
 ---
 
@@ -26,6 +30,7 @@ Cập nhật lần cuối: 02/09/2026, sau đợt hoàn thiện (bảo mật, b�
 | A6 | Dữ liệu lưu trữ vĩnh viễn, không tự động xóa cứng | **Có** | Xóa mềm (`deleted_at`) trên toàn bộ 113 bảng nghiệp vụ; nhật ký mặc định giữ vĩnh viễn | `docs/02-tai-lieu-quan-tri.md` mục 1.3, 3.3; kịch bản 2.3.13 |
 | A7 | Phân quyền chi tiết đến từng chức năng và từng phạm vi dữ liệu | **Có** | 161 mã quyền `MODULE.ĐỐI_TƯỢNG.HÀNH_ĐỘNG`; phạm vi dữ liệu theo thư viện / kho / dạng tài liệu gán được trên màn hình Người dùng và được máy chủ áp bằng bộ lọc toàn cục của EF Core (`DataScopeMiddleware` + `LibraryConnectDbContext.ApplyDataScopeFilters`, có từ 04/09/2026 — trước đó chỉ lưu, không áp; sổ lỗi J1) | Kịch bản 2.3.2 → 2.3.6; `DataScopeTests`: cán bộ gán kho A không thấy kho B lẫn ĐKCB của nó, gán thư viện thì thấy mọi kho của thư viện ấy. Kiểm bằng curl ngoài giao diện: tài khoản chưa đổi mật khẩu tạm bị chặn 403 ở cả sáu endpoint nghiệp vụ thử |
 | A8 | Báo cáo có 3 dạng đầu ra: bảng, đồ họa, xuất tệp PDF/Excel | **Có** | Đủ ba dạng ở mọi báo cáo nghiệp vụ của bảy phân hệ: Bổ sung (4 báo cáo), Ấn phẩm định kỳ (4), Bạn đọc (4), Lưu thông (7), Tài liệu số (4), Tài liệu môn học (3), cùng trang Báo cáo thống kê tổng hợp. Bảng dựng bằng AntD Table, đồ họa bằng Recharts, xuất tệp bằng `ExcelService` (ClosedXML) và `PdfReportService` (QuestPDF) | Kịch bản 2.3.14 và các kịch bản báo cáo của từng phân hệ |
+| A10 | Cho phép **in**, xóa danh mục nếu đủ thẩm quyền | **Có** | Bổ sung 05/09/2026: mỗi danh mục có nút In ra PDF (mã, tên, tên tiếng Anh, cấp trên, trạng thái, kèm tiêu đề thư viện và người in) bên cạnh nút Xuất Excel; xóa vẫn gác quyền `CATALOG.LIST.DELETE` và chặn khi giá trị đang được tham chiếu | Kịch bản DM.14 |
 | A9 | Không hardcode danh mục nghiệp vụ, cấu hình được từ giao diện | **Có** | 20 danh mục nghiệp vụ đều thêm/sửa/xóa/nhập/xuất được tại màn hình Danh mục; toàn bộ giá trị cấu hình nằm trong `sys.system_parameters`, sửa tại màn hình I.3 | Kịch bản I.3.2, I.3.6, DM.1 → DM.12 |
 
 ---
@@ -501,3 +506,49 @@ Cập nhật lần cuối: 02/09/2026, sau đợt hoàn thiện (bảo mật, b�
 | D11 | Phân hệ IX — Tra cứu OPAC | **Có** | Chi tiết ở mục B12. Trang tra cứu là ứng dụng riêng, chạy ở đường dẫn gốc |
 | D12 | Phân hệ X — Tài liệu môn học | **Có** | Chi tiết ở mục B13 |
 | D13 | Phân hệ XI — Ứng dụng di động | **Có** (Android dựng và kiểm trên máy ảo; iOS dựng và chạy trên iPhone Simulator của máy Mac GitHub Actions) | Chi tiết ở mục B14. Ứng dụng Flutter trong `mobile/`, gọi nhóm `/api/reader/*`, `/api/search/*`, `/api/browse/*`, `/api/public/*`; 76 phép thử đơn vị/widget và 12 luồng đầu-cuối trên máy ảo Android với máy chủ Docker thật (`docs/06`, MB.01–MB.33), thêm bảy kịch bản iOS MB.34–MB.40 (dựng, tra cứu, đăng nhập, chế độ tối, đặt giữ, mượn tự phục vụ, gia hạn — ba kịch bản cuối ghi thật vào máy chủ bằng bạn đọc kiểm thử riêng) |
+
+
+---
+
+## E. Mục III — Các yêu cầu khác
+
+| # | Yêu cầu (Chương V, mục III) | Đáp ứng | Chức năng / hồ sơ tương ứng |
+|---|---|---|---|
+| E1 | III.1 — Khảo sát hạ tầng thực tế, lập kế hoạch triển khai chi tiết, xác nhận điều kiện triển khai | **Có** | `10-ke-hoach-trien-khai.md` mục 2, kèm mẫu biên bản khảo sát ở `13-bieu-mau-ban-giao.md` (Mẫu 4) |
+| E2 | III.1 — Cài đặt phần mềm, cấu hình CSDL, các phân hệ, tài khoản, phân quyền, kết nối | **Có** | `04-cai-dat-cau-hinh.md`; trình tự 9 bước ở `10-ke-hoach-trien-khai.md` mục 3 |
+| E3 | III.1 — Chuyển đổi dữ liệu, kiểm tra toàn vẹn và đối soát sau chuyển đổi | **Có** | Ba đường nhập (ISO 2709, Z39.50, Excel) sẵn trong sản phẩm; quy trình đối soát 5 bước và mẫu biên bản ở `10` mục 4 và `13` (Mẫu 5) |
+| E4 | III.1 — Kiểm thử toàn bộ phân hệ, khắc phục lỗi, vận hành thử trước nghiệm thu | **Có** | `06-kich-ban-kiem-thu.md`; hai tuần vận hành thử ở `10` mục 5; sổ lỗi `08-so-loi.md` |
+| E5 | III.2 — Kế hoạch đào tạo cụ thể về thời gian, đối tượng, nội dung, hình thức, tài liệu | **Có** | `11-ke-hoach-dao-tao.md`: 7 nhóm học viên, 16 buổi, nội dung từng buổi kèm bài thực hành nghiệm thu |
+| E6 | III.2 — Nội dung đào tạo tối thiểu 12 chủ đề | **Có** | Bảng ở `11` mục 2, cột cuối ánh xạ từng buổi sang chủ đề bắt buộc; đủ 12 chủ đề |
+| E7 | III.2 — Thực hành trực tiếp trên hệ thống đã triển khai | **Có** | `11` mục 3: mỗi học viên một tài khoản đúng nhóm quyền, dữ liệu thật của đơn vị |
+| E8 | III.2 — Tài liệu tiếng Việt: sử dụng, quản trị, sao lưu/phục hồi, cài đặt/cấu hình, API | **Có** | `01`, `02`, `03`, `04`, `05` — toàn bộ bằng tiếng Việt |
+| E9 | III.3 — Bảo hành, bảo trì, hỗ trợ vận hành tối thiểu 12 tháng | **Có** | `12-bao-hanh-ho-tro.md` mục 1 |
+| E10 | III.3 — Sửa miễn phí lỗi phần mềm trong thời gian bảo hành | **Có** | `12` mục 1, kèm định nghĩa "lỗi phần mềm" và phạm vi loại trừ |
+| E11 | III.3 — Đầu mối hỗ trợ qua điện thoại/email/hệ thống trực tuyến; phản hồi sự cố nghiêm trọng **không quá 04 giờ làm việc** | **Có** | `12` mục 2 và mục 3: bảng bốn mức sự cố, mức nghiêm trọng phản hồi ≤ 4 giờ làm việc |
+| E12 | III.3 — Cung cấp bản vá lỗi và bản vá an toàn thông tin | **Có** | `12` mục 5.3 |
+| E13 | III.3 — Cập nhật không làm mất hoặc sai lệch dữ liệu; có sao lưu/phục hồi trước thay đổi quan trọng | **Có** | `12` mục 5.2: quy trình 6 bước, bắt buộc sao lưu trước cập nhật, có đường quay lui |
+| E14 | III.4 — Dữ liệu thuộc quyền quản lý của Chủ đầu tư | **Có** | `12` mục 7 |
+| E15 | III.4 — Không tự ý dùng, sao chép, cung cấp dữ liệu cho bên thứ ba | **Có** | `12` mục 7.2 |
+| E16 | III.4 — Hỗ trợ xuất dữ liệu theo định dạng đã cam kết; không khoá dữ liệu | **Có** | `12` mục 7.3: sáu đường xuất sẵn trên giao diện (ISO 2709, MARCXML, Dublin Core, Excel, PDF, `pg_dump`); mục 7.4 nói rõ không có biện pháp kỹ thuật khoá dữ liệu |
+| E17 | Dịch vụ — Cài đặt, chuyển giao công nghệ, hỗ trợ cán bộ dùng thuần thục phần mềm và quy trình biên mục, số hóa | **Có** | `11` mục 5: chuyển giao quy trình biên mục, quy trình số hóa, vận hành hằng ngày, xử lý sự cố |
+| E18 | Dịch vụ — Hỗ trợ bảo trì và vận hành trong 12 tháng | **Có** | `12` mục 6: sáu việc bảo trì định kỳ, ai làm, căn cứ kiểm |
+
+---
+
+## F. Mục 5 — Kiểm tra, thử nghiệm và hồ sơ bàn giao
+
+| # | Yêu cầu (Chương V, mục 5) | Đáp ứng | Chứng minh |
+|---|---|---|---|
+| F1 | 5.2.1 Kiểm tra cài đặt | **Có** | Kịch bản nhóm 2.1 |
+| F2 | 5.2.2 Kiểm tra chức năng 11 phân hệ và kết nối liên thư viện | **Có** | Kịch bản theo từng phân hệ; 1.072 phép thử tự động (606 đơn vị + 466 tích hợp) |
+| F3 | 5.2.3 Kiểm tra phân quyền và nhật ký | **Có** | Kịch bản nhóm 2.3; `PermissionAndAuditTests`, `DataScopeTests` |
+| F4 | 5.2.4 Kiểm tra trao đổi dữ liệu: ISO 2709, Z39.50, OAI-PMH, API | **Có** | Mục B3 và B10; đã tra thật tới Thư viện Quốc hội Mỹ, và đọc tệp xuất bằng thư viện MARC bên thứ ba |
+| F5 | 5.2.5 Kiểm tra chuyển đổi dữ liệu | **Có** | Kịch bản nhóm 2.5; quy trình đối soát ở `10` mục 4.2 và Mẫu 5 |
+| F6 | 5.2.6 Kiểm tra sao lưu / phục hồi | **Có** | Kịch bản nhóm 2.6; phục hồi kéo cả tệp tài liệu số về từ 04/09/2026 |
+| F7 | 5.2.7 Kiểm tra Mobile Application | **Có** | Kịch bản nhóm 2.7 (MB.01–MB.40); Android kiểm trên máy ảo với máy chủ thật, iOS kiểm trên iPhone Simulator gồm ba luồng ghi dữ liệu |
+| F8 | 5.2.8 Kiểm tra báo cáo | **Có** | Mỗi báo cáo có kịch bản riêng; số liệu đối chiếu bằng truy vấn độc lập trong phép thử tích hợp |
+| F9 | 5.3 Tiêu chí "Đạt" cho một chức năng | **Có** | Ghi ở đầu `06-kich-ban-kiem-thu.md`; mỗi kịch bản có cột Kết quả mong đợi và cột Đạt/Không đạt |
+| F10 | 5.4 Điều kiện nghiệm thu hoàn thành | **Có** | Danh mục 8 điều kiện ở `10` mục 6, đối chiếu sang từng hồ sơ |
+| F11 | 5.5 Hồ sơ bàn giao tối thiểu (6 nhóm) | **Có** | `13-bieu-mau-ban-giao.md`: danh mục 16 hồ sơ và 8 biểu mẫu điền sẵn khung |
+| F12 | Ghi chú chung — Bảng đáp ứng lập đúng thứ tự yêu cầu, mô tả khi tên chức năng khác tên gọi E-HSMT | **Có** | Chính tài liệu này; mỗi dòng ghi tên màn hình tương ứng trong sản phẩm |
+| F13 | Ghi chú chung — Không cam kết phát triển sau khi hoàn thành gói thầu | **Có** | Mọi chức năng trong bảng đều chạy được thật ở thời điểm nộp; hai hạng mục phụ thuộc bên thứ ba (IPA ký và thông báo đẩy FCM thật) ghi rõ điều kiện ở dòng D13 |

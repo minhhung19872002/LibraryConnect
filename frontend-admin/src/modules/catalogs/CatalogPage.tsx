@@ -16,6 +16,7 @@ import {
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import {
+  PrinterOutlined,
   DeleteOutlined,
   DownloadOutlined,
   EditOutlined,
@@ -95,13 +96,17 @@ export function CatalogPage() {
     onError: (error: unknown) => message.error(errorMessage(error)),
   });
 
-  const handleExport = async () => {
+  // Hai định dạng cho hai việc: Excel để sửa hàng loạt rồi nhập ngược lại, PDF để in ra giấy —
+  // "cho phép in, xóa danh mục nếu đủ thẩm quyền" ở phần yêu cầu chung của Chương V.
+  const handleExport = async (format: 'Excel' | 'Pdf' = 'Excel') => {
     setExporting(true);
 
     try {
-      const { blob, fileName } = await api.download(`/catalogs/${catalog}/export`);
+      const { blob, fileName } = await api.download(`/catalogs/${catalog}/export`, {
+        params: { format },
+      });
       downloadFile(blob, fileName);
-      message.success('Đã tải tệp xuống.');
+      message.success(format === 'Pdf' ? 'Đã tải bản in xuống.' : 'Đã tải tệp xuống.');
     } catch (error) {
       message.error(errorMessage(error));
     } finally {
@@ -267,8 +272,13 @@ export function CatalogPage() {
               </Can>
             )}
             <Can permission={PERMISSIONS.catalogList.export}>
-              <Button icon={<DownloadOutlined />} loading={exporting} onClick={handleExport}>
+              <Button icon={<DownloadOutlined />} loading={exporting} onClick={() => handleExport('Excel')}>
                 {messages.actions.exportExcel}
+              </Button>
+            </Can>
+            <Can permission={PERMISSIONS.catalogList.export}>
+              <Button icon={<PrinterOutlined />} loading={exporting} onClick={() => handleExport('Pdf')}>
+                {messages.actions.print}
               </Button>
             </Can>
             <Can permission={PERMISSIONS.catalogList.import}>

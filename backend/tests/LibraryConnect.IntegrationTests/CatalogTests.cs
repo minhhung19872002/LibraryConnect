@@ -428,6 +428,31 @@ public class CatalogTests
     }
 
     [Fact]
+    public async Task In_danh_muc_ra_PDF_duoc_ngoai_xuat_Excel()
+    {
+        // Phần yêu cầu chung của Chương V: "Cho phép in, xóa danh mục nếu đủ thẩm quyền". Trước
+        // 05/09/2026 danh mục chỉ xuất được ra Excel — tệp để sửa hàng loạt, không phải tờ giấy
+        // mang đi ký hay dán ở quầy.
+        var client = await ClientAsync();
+
+        var pdf = await client.GetAsync("/api/catalogs/document-types/export?format=Pdf");
+
+        pdf.StatusCode.Should().Be(HttpStatusCode.OK);
+        pdf.Content.Headers.ContentType!.MediaType.Should().Be("application/pdf");
+
+        var bytes = await pdf.Content.ReadAsByteArrayAsync();
+
+        bytes.Length.Should().BeGreaterThan(1000);
+        System.Text.Encoding.ASCII.GetString(bytes, 0, 5).Should().Be("%PDF-");
+
+        // Excel vẫn là mặc định: vòng xuất – sửa – nhập lại không đổi.
+        var excel = await client.GetAsync("/api/catalogs/document-types/export");
+
+        excel.Content.Headers.ContentType!.MediaType.Should()
+            .Be("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    }
+
+    [Fact]
     public async Task An_import_template_is_available_for_every_catalogue()
     {
         var client = await ClientAsync();

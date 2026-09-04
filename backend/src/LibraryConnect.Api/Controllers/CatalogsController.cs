@@ -141,12 +141,16 @@ public class CatalogsController : ApiControllerBase
         return File(file.Content, file.ContentType, file.FileName);
     }
 
-    /// <summary>Xuất toàn bộ danh mục ra Excel. Tệp xuất ra dùng đúng tiêu đề cột của tệp mẫu nên sửa xong nhập lại được.</summary>
+    /// <summary>
+    /// Xuất toàn bộ danh mục. Excel dùng đúng tiêu đề cột của tệp mẫu nên sửa xong nhập lại được;
+    /// <c>format=Pdf</c> cho bản in ra giấy.
+    /// </summary>
     [HttpGet("{catalog}/export")]
     [RequirePermission(PermissionCodes.CatalogListExport)]
-    public async Task<IActionResult> Export(string catalog, CancellationToken ct)
+    public async Task<IActionResult> Export(
+        string catalog, [FromQuery] Application.Features.Admin.AuditLogs.ExportFormat format, CancellationToken ct)
     {
-        var file = await Mediator.Send(new ExportCatalogQuery(catalog), ct);
+        var file = await Mediator.Send(new ExportCatalogQuery(catalog, format), ct);
         return File(file.Content, file.ContentType, file.FileName);
     }
 

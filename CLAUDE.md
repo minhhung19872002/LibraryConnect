@@ -47,6 +47,10 @@ bản dựng nào chạy được vì thiếu một trình cắm Gradle. Cộng 
 |---|---|
 | `docs/08-so-loi.md` | Sổ lỗi bảy đợt: 37 lỗi hai đợt đầu, 5 lỗi đợt rà thứ hai (mục E), 9 lỗi đợt áp bản thiết kế (mục G), 7 lỗi đợt rà thứ ba (mục H), 8 lỗi đợt triển khai (mục I), **78 lỗi ba đợt rà theo đặc tả ngày 04/09/2026 (mục J và các mục con J.C, J.B, J.L, J.D, J.X, J.A, J.M, J.N)** |
 | `docs/09-nguon-du-lieu.md` | Khảo sát 16 nguồn dữ liệu thư mục, giấy phép từng nguồn, kết quả nạp |
+| `docs/10-ke-hoach-trien-khai.md` | Kế hoạch triển khai, chạy thử và chuyển đổi dữ liệu (Chương V mục III.1) |
+| `docs/11-ke-hoach-dao-tao.md` | Kế hoạch đào tạo 16 buổi cho 7 nhóm học viên (Chương V mục III.2) |
+| `docs/12-bao-hanh-ho-tro.md` | Bảo hành 12 tháng, mức sự cố và thời gian phản hồi, quyền quản lý dữ liệu (mục III.3, III.4) |
+| `docs/13-bieu-mau-ban-giao.md` | Danh mục 16 hồ sơ bàn giao và 8 biểu mẫu nghiệm thu (Chương V mục 5.5) |
 | `docs/00-quyet-dinh-ky-thuat.md` | Sổ quyết định — mọi chỗ tự chốt khi đặc tả không nói rõ |
 | `docs/01`–`docs/07` | Bảy tài liệu bàn giao theo mục 10 |
 

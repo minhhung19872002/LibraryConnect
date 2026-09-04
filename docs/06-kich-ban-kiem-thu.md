@@ -124,6 +124,7 @@ Ký hiệu bám theo **Mục 5 phần 2 của E-HSMT**.
 | DM.11 | Vòng xuất – nhập | Xuất một danh mục ra Excel rồi nhập lại chính tệp đó | Toàn bộ dòng được ghi nhận là cập nhật, không dòng nào lỗi, không tạo bản ghi mới | Integration — `CatalogTests` | | |
 | DM.12 | Gộp trùng | Tạo ba cách viết của cùng một tên tác giả, mở Gộp trùng | Ba giá trị vào cùng một nhóm; sau khi gộp chỉ còn một, mọi biểu ghi tham chiếu được chuyển sang giá trị giữ lại | Integration — `CatalogTests`; Unit — `DuplicateDetectionTests` | | |
 | DM.13 | Nhập cột tham chiếu bằng tên | Tệp ngành đào tạo: một dòng gõ mã khoa, một dòng gõ tên khoa không dấu, một dòng gõ khoa không có thật | Hai dòng đầu vào đúng khoa; dòng thứ ba báo lỗi ở cột "Khoa quản lý" và không được nhập | Integration — `CatalogTests` | | |
+| DM.14 | In danh mục ra giấy | Mở một danh mục bất kỳ → bấm **In** | Tải về tệp PDF có tiêu đề thư viện, tên danh mục, tổng số giá trị, bảng mã – tên – trạng thái và dòng người in; nút Xuất Excel vẫn cho tệp sửa được để nhập ngược lại | Integration — `CatalogTests` | | |
 
 ---
 
