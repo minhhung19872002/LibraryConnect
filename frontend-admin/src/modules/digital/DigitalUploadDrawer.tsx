@@ -16,8 +16,13 @@ import {
 import { InboxOutlined } from '@ant-design/icons';
 import { ApiRequestError } from '@/api/client';
 import { digitalApi } from './api';
+import { findSession, forgetSession, rememberSession } from './uploadSessions';
 import { accessLevelHints, accessLevelLabels, formatSize } from './labels';
-import type { DigitalAccessLevel, DigitalCollectionDto } from './types';
+import type {
+  DigitalAccessLevel,
+  DigitalCollectionDto,
+  DigitalUploadSessionDto,
+} from './types';
 
 interface Props {
   open: boolean;
@@ -34,6 +39,8 @@ interface FileProgress {
   name: string;
   percent: number;
   status: 'chờ' | 'đang tải' | 'xong' | 'lỗi';
+  /** Ghi chú thêm dưới thanh tiến trình, ví dụ "tiếp tục từ mảnh thứ 12". */
+  note?: string;
   message?: string;
 }
 
@@ -87,11 +94,41 @@ export function DigitalUploadDrawer({
       return;
     }
 
-    const session = await digitalApi.startUpload({
+    // Tiếp tục khi gián đoạn (V.1): phiên dở dang của đúng tệp này được nhớ trong bộ nhớ trang, nên
+    // đóng trình duyệt giữa chừng rồi chọn lại tệp là gửi tiếp từ mảnh còn thiếu, không làm lại từ đầu.
+    const saved = findSession(window.localStorage, file.name, file.size);
+    let session: DigitalUploadSessionDto | null = null;
+
+    if (saved) {
+      try {
+        session = await digitalApi.uploadSession(saved.sessionId);
+      } catch {
+        // Máy chủ đã dọn phiên ấy: quên đi và bắt đầu lại.
+        forgetSession(window.localStorage, file.name, file.size);
+      }
+    }
+
+    if (session) {
+      const done = session.totalChunks - session.missingChunks.length;
+      update(index, {
+        status: 'đang tải',
+        note: `Tiếp tục phiên dở dang: đã có ${done}/${session.totalChunks} mảnh.`,
+        percent: Math.round((done / session.totalChunks) * 95),
+      });
+    } else {
+      session = await digitalApi.startUpload({
+        fileName: file.name,
+        totalSize: file.size,
+        title: fields.title,
+        collectionId: fields.collectionId,
+      });
+    }
+
+    rememberSession(window.localStorage, {
+      sessionId: session.id,
       fileName: file.name,
-      totalSize: file.size,
-      title: fields.title,
-      collectionId: fields.collectionId,
+      fileSize: file.size,
+      startedAt: Date.now(),
     });
 
     let missing = session.missingChunks;
@@ -128,6 +165,7 @@ export function DigitalUploadDrawer({
       allowPrint: Boolean(values.allowPrint),
     });
 
+    forgetSession(window.localStorage, file.name, file.size);
     update(index, { status: 'xong', percent: 100 });
   };
 
@@ -281,6 +319,11 @@ export function DigitalUploadDrawer({
                 percent={row.percent}
                 status={row.status === 'lỗi' ? 'exception' : row.status === 'xong' ? 'success' : 'active'}
               />
+              {row.note && (
+                <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                  {row.note}
+                </Typography.Text>
+              )}
               {row.message && <Alert type="error" showIcon message={row.message} />}
             </div>
           ))}
