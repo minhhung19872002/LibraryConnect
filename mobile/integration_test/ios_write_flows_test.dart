@@ -347,6 +347,11 @@ void main() {
     await tester.tap(find.text('Xem Sách của tôi'));
     await _waitFor(tester, find.byKey(Key('renew-${loan['id']}')));
     await shot('ios-25-tu-sach-dang-muon');
+    // SnackBar "Mã … đã quét rồi." của màn hình tự mượn còn treo 4 giây sau khi chuyển màn: lượt
+    // 33830593977 đọc nhầm nó làm câu gia hạn. Đợi nó tắt, rồi chờ đúng câu gia hạn (máy chủ từ
+    // chối thì câu từ chối hiện lên và phép thử báo câu ấy).
+    await tester.pumpAndSettle(const Duration(seconds: 5));
+    expect(find.byType(SnackBar), findsNothing);
     await tester.tap(find.byKey(Key('renew-${loan['id']}')));
     await _waitFor(tester, find.byType(SnackBar));
     final renewMessage =
