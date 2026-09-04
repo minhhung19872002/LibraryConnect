@@ -1,4 +1,6 @@
 import type {
+  ReaderCardDto,
+  ReaderClearanceDto,
   LoanStatus,
   ReaderReportDimension,
   ReaderStatus,
@@ -8,6 +10,7 @@ import type {
 // Cách viết ngày giờ nằm ở lib/datetime để mọi màn hình ra cùng một dạng dd/MM/yyyy;
 // trước đây mỗi phân hệ tự viết một hàm nên có chỗ in 5/9/2029, chỗ in 05/09/2029.
 export { formatDate, formatDateTime } from '@/lib/datetime';
+import { formatDate } from '@/lib/datetime';
 
 
 /** Nhãn tiếng Việt của Phân hệ VI, đặt một chỗ để không màn hình nào lỡ hiện tiếng Anh. */
@@ -136,3 +139,123 @@ export const importFieldLabels: Record<string, string> = {
   cardExpireDate: 'Ngày hết hạn',
   note: 'Ghi chú',
 };
+
+/** Câu báo sau khi cấp lại thẻ: nói rõ số cũ thu hồi hay giữ, số mới là gì, hạn tới ngày nào. */
+export function reissueSummary(previousCardNumber: string, card: ReaderCardDto): string {
+  const expiry = formatDate(card.expireDate);
+
+  return card.cardNumber === previousCardNumber
+    ? `Đã cấp lại thẻ, giữ nguyên số ${card.cardNumber}; hạn thẻ đến ${expiry}.`
+    : `Đã cấp thẻ mới số ${card.cardNumber} (thẻ cũ ${previousCardNumber} thu hồi); hạn thẻ đến ${expiry}.`;
+}
+
+/**
+ * Nút "In giấy xác nhận trả sách" chỉ bấm được khi bạn đọc không còn nợ gì; còn nợ thì khóa nút và
+ * nói rõ vì sao, thay vì in ra một tờ giấy ghi "còn nợ".
+ */
+export function clearancePrintState(
+  clearance: ReaderClearanceDto | undefined,
+): { disabled: boolean; reason: string | null } {
+  if (!clearance) {
+    return { disabled: true, reason: 'Đang kiểm tra công nợ…' };
+  }
+
+  if (clearance.cleared) {
+    return { disabled: false, reason: null };
+  }
+
+  const reasons = clearance.blockers.length > 0
+    ? clearance.blockers.join(' ')
+    : 'Bạn đọc còn tài liệu chưa trả hoặc còn nợ phí.';
+
+  return { disabled: true, reason: `Chưa in được: ${reasons}` };
+}
+
+/**
+ * Thân yêu cầu in thẻ. Xem trước gửi `preview: true` để máy chủ không tính thêm một lần in — số lần
+ * in là căn cứ khi bạn đọc xin cấp lại thẻ, nên không được đội lên vì cán bộ mở ra nhìn.
+ */
+export function cardPrintRequest(
+  selection: Record<string, unknown>,
+  values: { templateId?: string | null; multiplePerPage?: boolean },
+  preview: boolean,
+): Record<string, unknown> {
+  return {
+    selection,
+    templateId: values.templateId ?? undefined,
+    multiplePerPage: values.multiplePerPage ?? true,
+    preview,
+  };
+}
+
+export type ReaderSyncItem = Record<string, string | null>;
+
+/**
+ * Đọc dữ liệu dán từ hệ thống đào tạo: nhận một mảng JSON, hoặc một đối tượng có `items`, mỗi phần
+ * tử là túi khóa–giá trị. Trả về lỗi tiếng Việt nói rõ chỗ sai thay vì ném ngoại lệ JSON.
+ */
+export function parseSyncItems(text: string): { items: ReaderSyncItem[]; error: string | null } {
+  const trimmed = text.trim();
+
+  if (!trimmed) {
+    return { items: [], error: 'Chưa dán dữ liệu nào.' };
+  }
+
+  let parsed: unknown;
+
+  try {
+    parsed = JSON.parse(trimmed);
+  } catch {
+    return { items: [], error: 'Dữ liệu không phải JSON hợp lệ.' };
+  }
+
+  const list = Array.isArray(parsed)
+    ? parsed
+    : parsed && typeof parsed === 'object' && Array.isArray((parsed as { items?: unknown }).items)
+      ? ((parsed as { items: unknown[] }).items)
+      : null;
+
+  if (!list) {
+    return { items: [], error: 'Cần một mảng JSON các bản ghi sinh viên, hoặc đối tượng có trường "items".' };
+  }
+
+  const items: ReaderSyncItem[] = [];
+
+  for (let index = 0; index < list.length; index += 1) {
+    const entry = list[index];
+
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+      return { items: [], error: `Bản ghi thứ ${index + 1} không phải đối tượng khóa–giá trị.` };
+    }
+
+    const item: ReaderSyncItem = {};
+
+    Object.entries(entry as Record<string, unknown>).forEach(([key, value]) => {
+      item[key] = value === null || value === undefined ? null : String(value);
+    });
+
+    items.push(item);
+  }
+
+  if (items.length === 0) {
+    return { items: [], error: 'Mảng dữ liệu rỗng.' };
+  }
+
+  return { items, error: null };
+}
+
+/** Câu tóm tắt kết quả đồng bộ, phân biệt rõ lần thử với lần ghi thật. */
+export function syncSummary(result: {
+  dryRun: boolean;
+  totalItems: number;
+  created: number;
+  updated: number;
+  skipped: number;
+  errorItems: number;
+}): string {
+  const body = `${result.totalItems} bản ghi: thêm ${result.created}, cập nhật ${result.updated}` +
+    (result.skipped > 0 ? `, bỏ qua ${result.skipped}` : '') +
+    (result.errorItems > 0 ? `, lỗi ${result.errorItems}` : '');
+
+  return result.dryRun ? `Thử (chưa ghi) — ${body}.` : `Đã đồng bộ — ${body}.`;
+}

@@ -289,6 +289,25 @@ export interface ReaderImportPreviewDto {
   headers: string[];
   errors: ReaderImportErrorDto[];
   sample: ReaderImportRowDto[];
+  /** Nguyên ô của các dòng lỗi, để sửa tại chỗ rồi gửi lại. */
+  errorRowCells: ReaderImportRawRowDto[];
+}
+
+/** Một dòng thô của tệp: số dòng và các ô theo tiêu đề cột. */
+export interface ReaderImportRawRowDto {
+  row: number;
+  cells: Record<string, string>;
+}
+
+export interface ReaderImportRowsResultDto {
+  dryRun: boolean;
+  totalRows: number;
+  created: number;
+  updated: number;
+  skipped: number;
+  errorRows: number;
+  errors: ReaderImportErrorDto[];
+  errorRowCells: ReaderImportRawRowDto[];
 }
 
 export interface ReaderImportBatchDto {

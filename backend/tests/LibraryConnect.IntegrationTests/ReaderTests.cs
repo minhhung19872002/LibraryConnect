@@ -772,6 +772,121 @@ public class ReaderTests
     }
 
     [Fact]
+    public async Task Cac_dong_loi_sua_tai_cho_duoc_kiem_lai_roi_nhap_ma_khong_can_sua_tep()
+    {
+        var client = await ClientAsync();
+        var goodCode = $"SV{Unique()}";
+        var badCode = $"SV{Unique()}";
+
+        var sheet = ExcelFixtures.BuildReaderSheet(new[]
+        {
+            new[] { "", goodCode, "Người Hợp Lệ", "Nam", "05/09/2005", "", "", "", "", "Sinh viên" },
+            new[] { "", badCode, "", "Nữ", "ngày nào đó", "", "", "", "", "Sinh viên" }
+        });
+
+        var preview = await ReadAsync<ReaderImportPreviewDto>(
+            await client.PostAsync("/api/readers/import/validate", ExcelUpload(sheet)));
+
+        preview.ErrorRows.Should().Be(1);
+
+        // Bước kiểm tra phải trả về nguyên ô của dòng lỗi, để lưới sửa tại chỗ có gì mà sửa.
+        var broken = preview.ErrorRowCells.Should().ContainSingle().Subject;
+        broken.Row.Should().Be(3);
+        broken.Cells["Mã sinh viên"].Should().Be(badCode);
+        broken.Cells["Ngày sinh"].Should().Be("ngày nào đó");
+
+        var fixedCells = new Dictionary<string, string>(broken.Cells)
+        {
+            ["Họ và tên"] = "Người Đã Sửa",
+            ["Ngày sinh"] = "01/01/2005"
+        };
+
+        // Kiểm tra lại (không ghi) rồi mới nhập thật.
+        var recheck = await ReadAsync<ReaderImportRowsResultDto>(await client.PostAsJsonAsync(
+            "/api/readers/import/rows", new
+            {
+                dryRun = true,
+                fileName = "ban-doc.xlsx",
+                rows = new[] { new { row = 3, cells = fixedCells } }
+            }));
+
+        recheck.DryRun.Should().BeTrue();
+        recheck.ErrorRows.Should().Be(0);
+
+        var readersBefore = await ReadAsync<PagedResult<ReaderDto>>(
+            await client.GetAsync($"/api/readers?keyword={badCode}"));
+        readersBefore.TotalCount.Should().Be(0, "thử không ghi thì không được tạo hồ sơ");
+
+        var imported = await ReadAsync<ReaderImportRowsResultDto>(await client.PostAsJsonAsync(
+            "/api/readers/import/rows", new
+            {
+                dryRun = false,
+                fileName = "ban-doc.xlsx",
+                rows = new[] { new { row = 3, cells = fixedCells } }
+            }));
+
+        imported.Created.Should().Be(1);
+        imported.ErrorRows.Should().Be(0);
+
+        var readers = await ReadAsync<PagedResult<ReaderDto>>(
+            await client.GetAsync($"/api/readers?keyword={badCode}"));
+
+        readers.Items.Should().ContainSingle().Which.FullName.Should().Be("Người Đã Sửa");
+
+        // Đợt nhập tại chỗ cũng vào sổ các đợt nhập, để cán bộ thấy được ai đã nhập gì.
+        var batches = await ReadAsync<PagedResult<ReaderImportBatchDto>>(
+            await client.GetAsync("/api/readers/import/batches?pageSize=5"));
+
+        batches.Items.Should().Contain(batch => batch.SuccessRows == 1 && batch.FileName.Contains("ban-doc.xlsx"));
+    }
+
+    [Fact]
+    public async Task Nhap_dong_da_sua_van_bao_loi_neu_sua_chua_het()
+    {
+        var client = await ClientAsync();
+
+        var result = await ReadAsync<ReaderImportRowsResultDto>(await client.PostAsJsonAsync(
+            "/api/readers/import/rows", new
+            {
+                dryRun = true,
+                rows = new[]
+                {
+                    new
+                    {
+                        row = 7,
+                        cells = new Dictionary<string, string>
+                        {
+                            ["Mã sinh viên"] = $"SV{Unique()}",
+                            ["Họ và tên"] = "Vẫn Sai Email",
+                            ["Email"] = "khong-phai-email",
+                            ["Loại bạn đọc"] = "Sinh viên"
+                        }
+                    }
+                }
+            }));
+
+        result.ErrorRows.Should().Be(1);
+        result.Errors.Should().ContainSingle().Which.Row.Should().Be(7, "số dòng phải giữ nguyên như trong tệp");
+        result.ErrorRowCells.Should().ContainSingle().Which.Cells["Email"].Should().Be("khong-phai-email");
+    }
+
+    [Fact]
+    public async Task Giay_xac_nhan_tra_sach_in_duoc_tu_ho_so_ban_doc_bang_quyen_xem_ban_doc()
+    {
+        var client = await ClientAsync();
+        var typeId = await ReaderTypeAsync(client);
+        var id = await NewReaderAsync(client, "Bạn đọc xin giấy xác nhận", typeId);
+
+        var response = await client.GetAsync($"/api/readers/{id}/clearance/print");
+
+        response.IsSuccessStatusCode.Should().BeTrue(await response.Content.ReadAsStringAsync());
+        response.Content.Headers.ContentType!.MediaType.Should().Be("application/pdf");
+
+        var pdf = await response.Content.ReadAsByteArrayAsync();
+        System.Text.Encoding.ASCII.GetString(pdf, 0, 5).Should().Be("%PDF-");
+    }
+
+    [Fact]
     public async Task Importing_creates_the_readers_and_registers_the_missing_catalogue_values()
     {
         var client = await ClientAsync();

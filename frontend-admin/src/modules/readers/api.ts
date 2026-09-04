@@ -16,6 +16,8 @@ import type {
   ReaderImportBatchDto,
   ReaderImportOptions,
   ReaderImportPreviewDto,
+  ReaderImportRawRowDto,
+  ReaderImportRowsResultDto,
   ReaderLoanDto,
   ReaderReportDimension,
   ReaderReportFilter,
@@ -74,6 +76,9 @@ export const readersApi = {
     api.post<BulkResultDto>('/readers/graduate', payload),
 
   clearance: (id: string) => api.get<ReaderClearanceDto>(`/readers/${id}/clearance`),
+
+  /** Giấy xác nhận trả sách (VII.4) — mẫu biểu CLEARANCE in qua lối của phân hệ bạn đọc. */
+  printClearance: (id: string) => api.download(`/readers/${id}/clearance/print`),
 
   resetPassword: (id: string, newPassword?: string) =>
     api.post<string>(`/readers/${id}/reset-password`, { newPassword }),
@@ -141,6 +146,14 @@ export const readersApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
+
+  /** Kiểm tra lại (dryRun) hoặc nhập thật các dòng đã sửa ngay trên bảng lỗi. */
+  importRows: (payload: {
+    rows: ReaderImportRawRowDto[];
+    options: ReaderImportOptions;
+    dryRun: boolean;
+    fileName?: string;
+  }) => api.post<ReaderImportRowsResultDto>('/readers/import/rows', payload),
 
   importBatches: (params: Record<string, unknown>) =>
     api.get<PagedResult<ReaderImportBatchDto>>('/readers/import/batches', { params }),

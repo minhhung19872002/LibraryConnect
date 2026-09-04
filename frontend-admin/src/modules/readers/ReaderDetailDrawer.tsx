@@ -14,14 +14,18 @@ import {
   Modal,
   Popconfirm,
   Select,
+  Radio,
   Space,
   Table,
   Tabs,
   Tag,
+  Tooltip,
   Typography,
 } from 'antd';
 import {
   CameraOutlined,
+  EyeOutlined,
+  FileDoneOutlined,
   IdcardOutlined,
   KeyOutlined,
   PrinterOutlined,
@@ -38,6 +42,8 @@ import { ReaderPhotoCapture } from './ReaderPhotoCapture';
 import { useReaderPhoto } from './useReaderPhoto';
 import { MAU } from '@/lib/palette';
 import {
+  cardPrintRequest,
+  clearancePrintState,
   describeExpiry,
   formatDate,
   formatDateTime,
@@ -47,8 +53,10 @@ import {
   money,
   readerStatusColors,
   readerStatusLabels,
+  reissueSummary,
 } from './labels';
 import type {
+  ReaderCardDto,
   ReaderDigitalAccessDto,
   ReaderFineDto,
   ReaderLoanDto,
@@ -82,6 +90,9 @@ export function ReaderDetailDrawer({
   const [photoStamp, setPhotoStamp] = useState(() => Date.now());
   const [violationOpen, setViolationOpen] = useState(false);
   const [violationForm] = Form.useForm();
+  const [reissueOpen, setReissueOpen] = useState(false);
+  const [reissueForm] = Form.useForm();
+  const reissueMode = Form.useWatch<'new' | 'keep' | undefined>('mode', reissueForm);
 
   const violationTypes = useCatalogOptions('violation-types', Boolean(readerId));
 
@@ -140,15 +151,51 @@ export function ReaderDetailDrawer({
   };
 
   const printCard = useMutation({
-    mutationFn: () =>
-      readersApi.printCards({
-        selection: { readerIds: [readerId] },
-        multiplePerPage: false,
-      }),
-    onSuccess: ({ blob, fileName }) => {
+    mutationFn: (preview: boolean) =>
+      readersApi.printCards(
+        cardPrintRequest({ readerIds: [readerId] }, { multiplePerPage: false }, preview),
+      ),
+    onSuccess: ({ blob, fileName }, preview) => {
       saveBlob(blob, fileName);
+
+      if (preview) {
+        message.info('Bản xem trước — không tính vào số lần in.');
+        return;
+      }
+
       void queryClient.invalidateQueries({ queryKey: ['reader', readerId] });
       message.success('Đã xuất tệp in thẻ.');
+    },
+    onError: (error: Error) => message.error(error.message),
+  });
+
+  const printClearance = useMutation({
+    mutationFn: () => readersApi.printClearance(readerId as string),
+    onSuccess: ({ blob, fileName }) => {
+      saveBlob(blob, fileName);
+      message.success('Đã xuất giấy xác nhận trả sách.');
+    },
+    onError: (error: Error) => message.error(error.message),
+  });
+
+  const reissueCard = useMutation({
+    mutationFn: (values: {
+      mode: 'new' | 'keep';
+      reason: string;
+      newCardNumber?: string;
+      validMonths?: number;
+    }) =>
+      readersApi.reissueCard(readerId as string, {
+        reason: values.reason,
+        keepCardNumber: values.mode === 'keep',
+        newCardNumber: values.mode === 'new' ? values.newCardNumber || undefined : undefined,
+        validMonths: values.validMonths,
+      }),
+    onSuccess: (card: ReaderCardDto) => {
+      message.success(reissueSummary(reader.data?.cardNumber ?? '', card));
+      setReissueOpen(false);
+      reissueForm.resetFields();
+      refreshAll();
     },
     onError: (error: Error) => message.error(error.message),
   });
@@ -197,6 +244,7 @@ export function ReaderDetailDrawer({
 
   const detail = reader.data;
   const photo = useReaderPhoto(detail?.id, Boolean(detail?.photoUrl), photoStamp);
+  const clearancePrint = clearancePrintState(clearance.data);
 
   const loanColumns: ColumnsType<ReaderLoanDto> = [
     { title: 'Mã vạch', dataIndex: 'barcode', width: 130 },
@@ -322,16 +370,40 @@ export function ReaderDetailDrawer({
       loading={reader.isLoading}
       extra={
         detail && (
-          <Space>
+          <Space wrap>
             <Can permission={PERMISSIONS.reader.printCard}>
+              <Tooltip title="Mở bản PDF để kiểm tra, không tính vào số lần in">
+                <Button
+                  icon={<EyeOutlined />}
+                  loading={printCard.isPending}
+                  onClick={() => printCard.mutate(true)}
+                >
+                  Xem trước thẻ
+                </Button>
+              </Tooltip>
               <Button
                 icon={<PrinterOutlined />}
                 loading={printCard.isPending}
-                onClick={() => printCard.mutate()}
+                onClick={() => printCard.mutate(false)}
               >
                 In thẻ
               </Button>
             </Can>
+            <Can permission={PERMISSIONS.reader.extendCard}>
+              <Button icon={<IdcardOutlined />} onClick={() => setReissueOpen(true)}>
+                Cấp lại thẻ
+              </Button>
+            </Can>
+            <Tooltip title={clearancePrint.reason ?? 'Giấy xác nhận không còn nợ tài liệu và tiền phạt'}>
+              <Button
+                icon={<FileDoneOutlined />}
+                disabled={clearancePrint.disabled}
+                loading={printClearance.isPending}
+                onClick={() => printClearance.mutate()}
+              >
+                In giấy xác nhận
+              </Button>
+            </Tooltip>
             <Can permission={PERMISSIONS.reader.resetPassword}>
               <Button icon={<KeyOutlined />} onClick={() => resetPassword.mutate()}>
                 Đặt lại mật khẩu
@@ -622,6 +694,64 @@ export function ReaderDetailDrawer({
           }}
         />
       )}
+
+      <Modal
+        open={reissueOpen}
+        title={detail ? `Cấp lại thẻ cho ${detail.fullName}` : 'Cấp lại thẻ'}
+        okText="Cấp lại thẻ"
+        cancelText="Hủy"
+        confirmLoading={reissueCard.isPending}
+        onCancel={() => setReissueOpen(false)}
+        onOk={() => {
+          reissueForm
+            .validateFields()
+            .then((values) => reissueCard.mutate(values))
+            .catch(() => undefined);
+        }}
+      >
+        <Form form={reissueForm} layout="vertical" initialValues={{ mode: 'new' }}>
+          <Alert
+            type="info"
+            showIcon
+            style={{ marginBottom: 12 }}
+            message={
+              detail
+                ? `Thẻ hiện hành số ${detail.cardNumber} sẽ chuyển sang "đã thu hồi" và vẫn nằm trong ` +
+                  'tab Thẻ đã cấp, vì sổ mượn trả cũ ghi theo số thẻ ấy.'
+                : ''
+            }
+          />
+          <Form.Item name="mode" label="Cách cấp lại">
+            <Radio.Group>
+              <Radio value="new">Thẻ mất — cấp số thẻ mới</Radio>
+              <Radio value="keep">Thẻ hỏng — giữ nguyên số thẻ</Radio>
+            </Radio.Group>
+          </Form.Item>
+          <Form.Item
+            name="reason"
+            label="Lý do cấp lại"
+            rules={[{ required: true, message: 'Phải ghi lý do cấp lại thẻ.' }]}
+          >
+            <Input.TextArea rows={2} placeholder="Ví dụ: bạn đọc báo mất thẻ ngày 04/09" />
+          </Form.Item>
+          {reissueMode !== 'keep' && (
+            <Form.Item
+              name="newCardNumber"
+              label="Số thẻ mới"
+              extra="Bỏ trống thì hệ thống tự sinh theo quy tắc trong Tham số hệ thống."
+            >
+              <Input placeholder="Tự sinh" />
+            </Form.Item>
+          )}
+          <Form.Item
+            name="validMonths"
+            label="Hạn thẻ (tháng)"
+            extra="Bỏ trống thì lấy theo loại bạn đọc; hạn cũ còn dài hơn thì giữ hạn cũ."
+          >
+            <InputNumber<number> min={1} max={120} style={{ width: '100%' }} />
+          </Form.Item>
+        </Form>
+      </Modal>
 
       <Modal
         open={violationOpen}
