@@ -4,8 +4,10 @@ import {
   App,
   Button,
   Card,
+  Checkbox,
   Descriptions,
   Empty,
+  Input,
   Space,
   Spin,
   Table,
@@ -20,13 +22,16 @@ import { Can } from '@/components/PermissionGate';
 import { PERMISSIONS } from '@/api/permissions';
 import { errorMessage } from '@/api/formErrors';
 import { formatRecordAsText } from '@/modules/marc/marcRecord';
+import { formatDate, formatDateTime } from '@/lib/datetime';
 import { catalogingApi, parseMarc } from './api';
 import { ItemsPanel } from './ItemsPanel';
 import { CoverPanel } from './CoverPanel';
 import { PrintCardsModal } from './PrintCardsModal';
 import {
+  BIB_LOAN_STATUS_LABELS,
   BIB_SOURCE_LABELS,
   RECORD_STATUS_LABELS,
+  type BibLoan,
   type BibVersion,
   type MarcDiffLine,
 } from './types';
@@ -183,14 +188,144 @@ export function BibDetailPage() {
             children: <ItemsPanel bibId={record.id} />,
           },
           {
+            key: 'loans',
+            label: `Lịch sử lưu thông (${record.loanCount})`,
+            children: <LoansPanel bibId={record.id} />,
+          },
+          {
             key: 'history',
-            label: `Lịch sử (${record.versionCount})`,
+            label: `Lịch sử sửa đổi (${record.versionCount})`,
             children: <VersionsPanel bibId={record.id} />,
           },
         ]}
       />
 
       <PrintCardsModal open={printOpen} bibIds={[record.id]} onClose={() => setPrintOpen(false)} />
+    </Space>
+  );
+}
+
+/**
+ * Lịch sử lưu thông của mọi bản thuộc biểu ghi (II.3, tab thứ tư): ai mượn bản nào, khi nào, đã
+ * trả chưa — đủ để trả lời "cuốn này có ai đang giữ không" mà không phải sang phân hệ Lưu thông.
+ */
+function LoansPanel({ bibId }: { bibId: string }) {
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [keyword, setKeyword] = useState('');
+  const [openOnly, setOpenOnly] = useState(false);
+
+  // Phân trang phía máy chủ: một giáo trình sống nhiều năm có hàng nghìn lượt mượn, tải hết về
+  // trình duyệt rồi mới cắt trang là đúng kiểu sai mà mục 6.3 cấm.
+  const loans = useQuery({
+    queryKey: ['bib-loans', bibId, page, pageSize, keyword, openOnly],
+    queryFn: () =>
+      catalogingApi.loans(bibId, {
+        page,
+        pageSize,
+        keyword: keyword.trim() || undefined,
+        openOnly: openOnly || undefined,
+      }),
+    placeholderData: (previous) => previous,
+  });
+
+  const rows = loans.data?.items ?? [];
+  const empty = !loans.isLoading && rows.length === 0 && !keyword && !openOnly;
+
+  return (
+    <Space direction="vertical" size={12} style={{ width: '100%' }}>
+      <Space wrap>
+        <Input.Search
+          allowClear
+          placeholder="Mã phiếu, mã vạch, tên hoặc số thẻ bạn đọc"
+          style={{ width: 320 }}
+          onSearch={(value) => {
+            setKeyword(value);
+            setPage(1);
+          }}
+        />
+        <Checkbox
+          checked={openOnly}
+          onChange={(event) => {
+            setOpenOnly(event.target.checked);
+            setPage(1);
+          }}
+        >
+          Chỉ phiếu chưa trả
+        </Checkbox>
+      </Space>
+
+      {empty ? (
+        <Empty description="Chưa có bản nào của biểu ghi này được mượn" />
+      ) : (
+        <Table<BibLoan>
+          rowKey="id"
+          size="small"
+          loading={loans.isLoading}
+          dataSource={rows}
+          pagination={{
+            current: page,
+            pageSize,
+            total: loans.data?.totalCount ?? 0,
+            showSizeChanger: true,
+            showTotal: (total) => `${total} lượt mượn`,
+            onChange: (nextPage, nextSize) => {
+              setPage(nextPage);
+              setPageSize(nextSize);
+            },
+          }}
+          columns={[
+            {
+              title: 'Phiếu',
+              dataIndex: 'code',
+              width: 140,
+              render: (value: string) => <span style={MONOSPACE}>{value}</span>,
+            },
+            {
+              title: 'Bản',
+              dataIndex: 'barcode',
+              width: 140,
+              render: (value?: string | null) => <span style={MONOSPACE}>{value ?? '—'}</span>,
+            },
+            {
+              title: 'Bạn đọc',
+              width: 220,
+              render: (_, row) => (
+                <Space direction="vertical" size={0}>
+                  <Typography.Text>{row.readerName}</Typography.Text>
+                  <Typography.Text type="secondary" style={{ ...MONOSPACE, fontSize: 12 }}>
+                    {row.readerCardNumber}
+                  </Typography.Text>
+                </Space>
+              ),
+            },
+            {
+              title: 'Ngày mượn',
+              dataIndex: 'loanDate',
+              width: 150,
+              render: (value: string) => formatDateTime(value),
+            },
+            { title: 'Hạn trả', dataIndex: 'dueDate', width: 120, render: (value: string) => formatDate(value) },
+            {
+              title: 'Ngày trả',
+              dataIndex: 'returnDate',
+              width: 150,
+              render: (value?: string | null) => (value ? formatDateTime(value) : '—'),
+            },
+            { title: 'Gia hạn', dataIndex: 'renewedCount', width: 90, align: 'right' },
+            {
+              title: 'Trạng thái',
+              dataIndex: 'status',
+              width: 120,
+              render: (value: BibLoan['status']) => (
+                <Tag color={value === 'Returned' ? 'default' : value === 'Active' ? 'blue' : 'red'}>
+                  {BIB_LOAN_STATUS_LABELS[value] ?? value}
+                </Tag>
+              ),
+            },
+          ]}
+        />
+      )}
     </Space>
   );
 }

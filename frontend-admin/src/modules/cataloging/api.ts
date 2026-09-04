@@ -20,6 +20,7 @@ import type {
 import type {
   BibDetail,
   BibListItem,
+  BibLoan,
   BibVersion,
   CoverLookupOutcome,
   CreateItemsResult,
@@ -110,6 +111,10 @@ export const catalogingApi = {
     api.post<SaveBibResult>(`/cataloging/bibs/${id}/versions/${versionId}/restore`),
 
   items: (id: string) => api.get<Item[]>(`/cataloging/bibs/${id}/items`),
+
+  /** Lịch sử lưu thông của mọi bản thuộc biểu ghi (II.3). */
+  loans: (id: string, params: { page: number; pageSize: number; keyword?: string; openOnly?: boolean }) =>
+    api.get<PagedResult<BibLoan>>(`/cataloging/bibs/${id}/loans`, { params }),
 
   createItems: (id: string, payload: CreateItemsPayload) =>
     api.post<CreateItemsResult>(`/cataloging/bibs/${id}/items`, payload),

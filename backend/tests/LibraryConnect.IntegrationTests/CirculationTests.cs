@@ -1455,6 +1455,47 @@ public class CirculationTests
         fines.Fines.Should().ContainSingle();
     }
 
+    [Fact]
+    public async Task Lich_su_luu_thong_cua_bieu_ghi_liet_ke_moi_luot_muon_cua_moi_ban()
+    {
+        // II.3 tab thứ tư: chi tiết biểu ghi phải trả lời "cuốn này ai đã mượn, ai đang giữ".
+        // Trước 04/09/2026 tab ấy chỉ có lịch sử sửa đổi, không có endpoint nào cho lịch sử mượn.
+        var staff = await ClientAsync();
+        var readerId = await NewReaderAsync(staff, "Bạn đọc xem lịch sử biểu ghi");
+        var barcodes = await NewCirculatableItemsAsync(staff, "Sách xem lịch sử lưu thông", quantity: 2);
+
+        var bib = await ReadAsync<PagedResult<StockItemDto>>(await staff.PostAsJsonAsync(
+            "/api/stock/items/search",
+            new { page = 1, pageSize = 5, filter = new { keyword = barcodes[0] } }));
+        var bibId = bib.Items.Single(item => item.Barcode == barcodes[0]).BibId;
+
+        // Bản thứ nhất mượn rồi trả; bản thứ hai còn đang mượn.
+        (await staff.PostAsJsonAsync("/api/circulation/desk/checkout",
+            new { readerId, barcodes = new[] { barcodes[0] } })).EnsureSuccessStatusCode();
+        (await staff.PostAsJsonAsync("/api/circulation/desk/return",
+            new { barcodes = new[] { barcodes[0] } })).EnsureSuccessStatusCode();
+        (await staff.PostAsJsonAsync("/api/circulation/desk/checkout",
+            new { readerId, barcodes = new[] { barcodes[1] } })).EnsureSuccessStatusCode();
+
+        var all = await ReadAsync<PagedResult<Application.Features.Cataloging.BibLoanDto>>(
+            await staff.GetAsync($"/api/cataloging/bibs/{bibId}/loans?page=1&pageSize=20"));
+
+        all.TotalCount.Should().Be(2, "cả hai bản của biểu ghi đều đã được mượn");
+        all.Items.Select(loan => loan.Barcode).Should().BeEquivalentTo(barcodes);
+        all.Items.Should().OnlyContain(loan => loan.ReaderId == readerId);
+        all.Items.Count(loan => loan.ReturnDate != null).Should().Be(1);
+
+        var open = await ReadAsync<PagedResult<Application.Features.Cataloging.BibLoanDto>>(
+            await staff.GetAsync($"/api/cataloging/bibs/{bibId}/loans?page=1&pageSize=20&openOnly=true"));
+
+        open.Items.Should().ContainSingle().Which.Barcode.Should().Be(barcodes[1]);
+
+        var byBarcode = await ReadAsync<PagedResult<Application.Features.Cataloging.BibLoanDto>>(
+            await staff.GetAsync($"/api/cataloging/bibs/{bibId}/loans?page=1&pageSize=20&keyword={barcodes[0]}"));
+
+        byBarcode.Items.Should().ContainSingle().Which.Barcode.Should().Be(barcodes[0]);
+    }
+
     // -----------------------------------------------------------------------------------------
     // Phân quyền (điểm kiểm thử 2.3)
     // -----------------------------------------------------------------------------------------

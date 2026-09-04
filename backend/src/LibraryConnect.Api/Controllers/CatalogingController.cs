@@ -66,6 +66,22 @@ public class CatalogingController : ApiControllerBase
         return Ok(Success(result, $"Đã lưu biểu ghi {result.ControlNumber}."));
     }
 
+    /// <summary>
+    /// Lịch sử lưu thông của mọi bản thuộc biểu ghi (II.3, tab thứ tư): ai mượn, khi nào, trả lúc nào.
+    /// Cán bộ biên mục xem được bằng quyền xem biểu ghi — đây là một tab của chính màn hình chi tiết
+    /// biểu ghi, không phải màn hình lưu thông; cán bộ lưu thông cũng vào được bằng quyền của mình.
+    /// </summary>
+    [HttpGet("bibs/{id:guid}/loans")]
+    [RequirePermission(false, PermissionCodes.CatalogBibView, PermissionCodes.CirculationLoanView)]
+    [ProducesResponseType(typeof(ApiResponse<PagedResult<BibLoanDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ApiResponse<PagedResult<BibLoanDto>>>> GetBibLoans(
+        Guid id, [FromQuery] BibLoanListRequest request, CancellationToken ct)
+    {
+        var result = await Mediator.Send(new GetBibLoansQuery(id, request), ct);
+        return Ok(Success(result));
+    }
+
     /// <summary>Cập nhật biểu ghi. Phiên bản trước được lưu lại trước khi ghi đè.</summary>
     [HttpPut("bibs/{id:guid}")]
     [RequirePermission(PermissionCodes.CatalogBibUpdate)]

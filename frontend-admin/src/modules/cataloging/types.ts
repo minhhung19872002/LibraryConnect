@@ -193,6 +193,29 @@ export interface MarcFieldDefault {
   fieldName?: string | null;
 }
 
+/** Một lượt mượn của một bản thuộc biểu ghi — tab "Lịch sử lưu thông" (II.3). */
+export interface BibLoan {
+  id: string;
+  code: string;
+  barcode?: string | null;
+  readerName: string;
+  readerCardNumber: string;
+  loanDate: string;
+  dueDate: string;
+  returnDate?: string | null;
+  renewedCount: number;
+  status: 'Active' | 'Returned' | 'Overdue' | 'Lost' | 'Damaged';
+  loanType: 'InHouse' | 'TakeHome' | 'SelfCheckout';
+}
+
+export const BIB_LOAN_STATUS_LABELS: Record<BibLoan['status'], string> = {
+  Active: 'Đang mượn',
+  Returned: 'Đã trả',
+  Overdue: 'Quá hạn',
+  Lost: 'Mất',
+  Damaged: 'Hỏng',
+};
+
 export interface MarcTemplate {
   id: string;
   code: string;
