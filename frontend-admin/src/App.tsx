@@ -60,6 +60,7 @@ import { CourseDocumentsPage } from '@/modules/courses/CourseDocumentsPage';
 import { CourseReportsPage } from '@/modules/courses/CourseReportsPage';
 import { ReportCentrePage } from '@/modules/reports/ReportCentrePage';
 import { SerialReportsPage } from '@/modules/serials/SerialReportsPage';
+import { SerialBatchPage } from '@/modules/serials/SerialBatchPage';
 import { CustomIndexPage } from '@/modules/cataloging/CustomIndexPage';
 import { CatalogQueuePage } from '@/modules/cataloging/CatalogQueuePage';
 import { CardTemplatePage } from '@/modules/cataloging/CardTemplatePage';
@@ -223,6 +224,14 @@ function AppRoutes() {
           element={
             <RequirePermissionRoute permission={PERMISSIONS.serial.view}>
               <SerialsPage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/an-pham-dinh-ky/bo-sung-tong-the"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.serial.view}>
+              <SerialBatchPage />
             </RequirePermissionRoute>
           }
         />

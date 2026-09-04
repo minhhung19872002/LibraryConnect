@@ -321,6 +321,75 @@ public class SerialTests
     }
 
     [Fact]
+    public async Task Batch_receiving_lists_due_issues_of_every_title_and_reconciles_the_missing_ones()
+    {
+        var client = await ClientAsync();
+        var warehouseId = await WarehouseAsync(client);
+
+        // Hai đầu báo khác kỳ hạn, cùng có số đến hạn từ đầu năm — màn hình bổ sung tổng thể phải
+        // nhìn thấy cả hai mà không phải mở từng đầu báo.
+        var monthly = await NewSerialAsync(
+            client, "Tạp chí Tổng Thể Tháng", SerialFrequency.Monthly, new { dayOfMonth = 1 }, warehouseId);
+        var quarterly = await NewSerialAsync(
+            client, "Tạp chí Tổng Thể Quý", SerialFrequency.Quarterly, new { dayOfMonth = 1 }, warehouseId);
+
+        await ReadAsync<GenerateIssuesResultDto>(await client.PostAsJsonAsync(
+            "/api/serials/issues/generate",
+            new { serialIds = new[] { monthly, quarterly }, from = "2026-01-01", to = "2026-03-31" }));
+
+        var due = await ReadAsync<PagedResult<SerialIssueDto>>(
+            await client.GetAsync("/api/serials/issues?dueOnly=true&pageSize=500"));
+
+        due.Items.Should().Contain(issue => issue.SerialId == monthly);
+        due.Items.Should().Contain(issue => issue.SerialId == quarterly);
+
+        var monthlyIssues = due.Items.Where(issue => issue.SerialId == monthly)
+            .OrderBy(issue => issue.ExpectedDate).ToList();
+        var quarterlyIssue = due.Items.First(issue => issue.SerialId == quarterly);
+
+        // Nhận hàng loạt: mỗi dòng một số lượng và một ngày nhận riêng, trải trên hai đầu báo.
+        var received = await ReadAsync<ReceiveIssuesResultDto>(await client.PostAsJsonAsync(
+            "/api/serials/issues/receive", new
+            {
+                issues = new object[]
+                {
+                    new { issueId = monthlyIssues[0].Id, quantity = 2, receivedDate = "2026-01-05", note = (string?)null },
+                    new { issueId = quarterlyIssue.Id, quantity = 1, receivedDate = "2026-01-09", note = (string?)null }
+                },
+                createItems = true
+            }));
+
+        received.Received.Should().Be(2);
+        received.CreatedItems.Should().Be(3);
+
+        // Số tháng 2 ghi thiếu, số tháng 3 vẫn dự kiến nhưng đã quá hạn: cả hai phải nằm trong danh
+        // sách đối chiếu, còn số đã nhận thì không.
+        await ReadAsync<int>(await client.PostAsJsonAsync(
+            "/api/serials/issues/mark-missing", new { issueIds = new[] { monthlyIssues[1].Id } }));
+
+        var unresolved = await ReadAsync<PagedResult<SerialIssueDto>>(
+            await client.GetAsync("/api/serials/issues?unresolvedOnly=true&pageSize=500"));
+
+        unresolved.Items.Should().Contain(issue => issue.Id == monthlyIssues[1].Id && issue.Status == SerialIssueStatus.Missing);
+        unresolved.Items.Should().Contain(issue => issue.Id == monthlyIssues[2].Id && issue.IsOverdue);
+        unresolved.Items.Should().NotContain(issue => issue.Id == monthlyIssues[0].Id);
+        unresolved.Items.Should().NotContain(issue => issue.Id == quarterlyIssue.Id);
+
+        // Một phiếu khiếu nại cho mỗi số, dù các số thuộc đầu báo khác nhau.
+        var claims = await ReadAsync<CreateClaimsResultDto>(await client.PostAsJsonAsync(
+            "/api/serials/claims",
+            new { issueIds = new[] { monthlyIssues[1].Id, monthlyIssues[2].Id } }));
+
+        claims.Created.Should().Be(2);
+
+        var afterClaim = await ReadAsync<PagedResult<SerialIssueDto>>(
+            await client.GetAsync("/api/serials/issues?unresolvedOnly=true&pageSize=500"));
+
+        // Đang khiếu nại vẫn là "chưa về": danh sách đối chiếu giữ chúng lại để theo dõi phản hồi.
+        afterClaim.Items.Should().Contain(issue => issue.Id == monthlyIssues[1].Id && issue.HasOpenClaim);
+    }
+
+    [Fact]
     public async Task The_issue_grid_groups_by_year_and_counts_each_state()
     {
         var client = await ClientAsync();

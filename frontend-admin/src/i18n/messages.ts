@@ -87,6 +87,7 @@ export const messages = {
     formTemplates: 'Mẫu biểu in',
     acquisitionReports: 'Báo cáo bổ sung',
     serialTitles: 'Báo, tạp chí',
+    serialBatch: 'Bổ sung tổng thể',
     serialReports: 'Báo cáo ấn phẩm định kỳ',
     customIndexes: 'Danh mục tự tạo',
     catalogQueue: 'Hàng đợi biên mục',

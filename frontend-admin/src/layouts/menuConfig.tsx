@@ -278,6 +278,13 @@ export const menuTree: MenuNode[] = [
         permissions: [PERMISSIONS.serial.view],
       },
       {
+        key: 'serial-batch',
+        label: messages.menu.serialBatch,
+        icon: <AppstoreOutlined />,
+        path: '/an-pham-dinh-ky/bo-sung-tong-the',
+        permissions: [PERMISSIONS.serial.view],
+      },
+      {
         key: 'serial-reports',
         label: messages.menu.serialReports,
         icon: <BarChartOutlined />,
