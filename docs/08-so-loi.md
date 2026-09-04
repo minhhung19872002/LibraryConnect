@@ -312,19 +312,6 @@ Cùng đợt còn thêm lớp compose thứ ba `docker-compose.behind-proxy.yml`
 cổng 80/443 (mục 5.1b của `docs/04`), vì `nginx.prod.conf` giả định LibraryConnect là ứng dụng duy
 nhất trên máy.
 
-## J. Đợt rà hoàn thiện 04/09/2026 — phân hệ I và II
-
-Đi lại đặc tả Phân hệ I (Quản trị) và II (Biên mục) từng dòng, đối chiếu với thứ đang có trên màn
-hình và trong mã. Lỗi thật ghi ở bảng này; chức năng còn thiếu so với đặc tả thì làm thẳng và ghi ở
-`docs/06`/`docs/07`.
-
-| Mã | Mức | Lỗi | Nguyên nhân | Sửa |
-|---|---|---|---|---|
-| J1 | Nặng | Nhập biểu ghi từ Excel chọn **"Gộp" mà lại ghi đè**: biểu ghi có tóm tắt 520$a viết tay, nhập bảng tính chỉ có nhan đề + ISBN với lựa chọn Gộp thì tóm tắt biến mất | `BibExcelImportRunner` không có nhánh `Merge`; mọi lựa chọn không phải Bỏ qua/Tạo mới đều rơi vào nhánh nạp biểu ghi cũ rồi ghi đè bằng biểu ghi dựng từ dòng Excel. Bộ nhập ISO 2709 có `MergeInto` riêng nên làm đúng — hai bộ nhập, hai cách hiểu một chữ trên màn hình. | Tách `MergeInto` thành `MarcMerge` dùng chung, bộ Excel gọi nó khi `OnDuplicate = Merge`. Phép thử tích hợp `ExcelImportTests.Chon_gop_thi_truong_bieu_ghi_cu_dang_co_van_con_nguyen` đỏ trước (Abstract = null), xanh sau. |
-| J2 | Vừa | Ở màn hình Danh mục tự tạo (II.9), bấm vào **số biểu ghi** của một giá trị thì ra trang danh sách biểu ghi **đầy đủ, không lọc gì** — đúng thứ đặc tả gọi là "dùng làm bộ lọc trong tra cứu" thì không có | `CustomIndexPage` dẫn sang `/bien-muc?customIndexValueId=…` từ phase 5, nhưng `BibListPage` chưa bao giờ đọc chuỗi truy vấn; máy chủ đã lọc được theo `customIndexValueId` từ đầu. Hai đầu làm xong, không ai nối. | `bibListFilters.ts` dựng bộ lọc từ địa chỉ (mã định danh phải là GUID, năm phải là số), trang hiện thẻ "Đang lọc theo liên kết: Danh mục tự tạo: Hà Nội" có nút bỏ; màn hình danh mục gửi kèm nhãn. Phép thử `bibListFilters.test.ts`: 5 phép cho bộ dựng, 2 phép quét trang đỏ trước khi sửa. |
-
----
-
 ## J. Đợt rà hoàn thiện (04/09/2026) — đối chiếu từng gạch đầu dòng của đặc tả vào mã
 
 Sau khi iOS xong, rà lại **toàn bộ** đặc tả mục 5 (11 phân hệ), mục 6 (phi chức năng), mục 7–8 và
@@ -355,6 +342,17 @@ khoản quản trị không bị giới hạn. Muốn tin một dòng "Có" thì
 của người bị giới hạn — và đợt này thêm đúng những phép thử ấy.
 
 ---
+
+### J.C — Phân hệ I và II (quản trị hệ thống, biên mục)
+
+Đi lại đặc tả Phân hệ I (Quản trị) và II (Biên mục) từng dòng, đối chiếu với thứ đang có trên màn
+hình và trong mã. Lỗi thật ghi ở bảng này; chức năng còn thiếu so với đặc tả thì làm thẳng và ghi ở
+`docs/06`/`docs/07`.
+
+| Mã | Mức | Lỗi | Nguyên nhân | Sửa |
+|---|---|---|---|---|
+| JC1 | Nặng | Nhập biểu ghi từ Excel chọn **"Gộp" mà lại ghi đè**: biểu ghi có tóm tắt 520$a viết tay, nhập bảng tính chỉ có nhan đề + ISBN với lựa chọn Gộp thì tóm tắt biến mất | `BibExcelImportRunner` không có nhánh `Merge`; mọi lựa chọn không phải Bỏ qua/Tạo mới đều rơi vào nhánh nạp biểu ghi cũ rồi ghi đè bằng biểu ghi dựng từ dòng Excel. Bộ nhập ISO 2709 có `MergeInto` riêng nên làm đúng — hai bộ nhập, hai cách hiểu một chữ trên màn hình. | Tách `MergeInto` thành `MarcMerge` dùng chung, bộ Excel gọi nó khi `OnDuplicate = Merge`. Phép thử tích hợp `ExcelImportTests.Chon_gop_thi_truong_bieu_ghi_cu_dang_co_van_con_nguyen` đỏ trước (Abstract = null), xanh sau. |
+| JC2 | Vừa | Ở màn hình Danh mục tự tạo (II.9), bấm vào **số biểu ghi** của một giá trị thì ra trang danh sách biểu ghi **đầy đủ, không lọc gì** — đúng thứ đặc tả gọi là "dùng làm bộ lọc trong tra cứu" thì không có | `CustomIndexPage` dẫn sang `/bien-muc?customIndexValueId=…` từ phase 5, nhưng `BibListPage` chưa bao giờ đọc chuỗi truy vấn; máy chủ đã lọc được theo `customIndexValueId` từ đầu. Hai đầu làm xong, không ai nối. | `bibListFilters.ts` dựng bộ lọc từ địa chỉ (mã định danh phải là GUID, năm phải là số), trang hiện thẻ "Đang lọc theo liên kết: Danh mục tự tạo: Hà Nội" có nút bỏ; màn hình danh mục gửi kèm nhãn. Phép thử `bibListFilters.test.ts`: 5 phép cho bộ dựng, 2 phép quét trang đỏ trước khi sửa. |
 
 ### J.B — Phân hệ III và IV (bổ sung, ấn phẩm định kỳ)
 
@@ -404,6 +402,29 @@ xuống API. Lỗi ghi ở đây là chỗ **bảng đáp ứng ghi "Có" mà ng
 | JL4 | Nhẹ | In thẻ từ danh sách bạn đọc và từ hồ sơ không có nút xem trước, dù máy chủ đã nhận `preview` và có phép thử "xem trước không tăng số lần in" | Chỉ trình thiết kế mẫu thẻ gửi `preview: true`; hai chỗ in thật quên | Nút "Xem trước (không tính lần in)" ở cả hai chỗ, thân yêu cầu dựng qua `cardPrintRequest` có phép thử |
 
 ---
+
+### J.D — Phân hệ V, VIII và IX (tài liệu số, nội dung, tra cứu)
+
+| Mã | Mức | Lỗi | Nguyên nhân | Sửa |
+|---|---|---|---|---|
+| JD1 | Nghiêm trọng | **"Xuất toàn bộ dữ liệu hệ thống" (mục 4 E-HSMT) không tồn tại**: mã quyền `EXCHANGE.DATA.FULL_EXPORT` và trạng thái `FullSystemExport` đã khai từ phase 10 nhưng không có endpoint, không có handler, không có nút | Hạng mục này chỉ được nhắc một dòng trong đặc tả và không thuộc màn hình nào, nên trôi qua mọi đợt rà trước | Tác vụ nền (không chạy trong lượt HTTP) đóng gói ZIP: biểu ghi MARC dạng ISO 2709 và MARCXML, toàn bộ tệp tài liệu số, metadata Excel + Dublin Core, bảng bạn đọc / ĐKCB / giao dịch dạng CSV; có tiến độ, khoá chống chạy trùng và ghi nhật ký xuất dữ liệu |
+| JD2 | Vừa | **Gói xuất tài liệu số thiếu MARCXML** dù chú thích ngay trên lớp ghi là "Excel, MARCXML và Dublin Core" | Chú thích viết trước, mã viết sau và chỉ làm hai trong ba | Thêm `metadata/marcxml.xml`; sửa lại chú thích cho khớp mã |
+| JD3 | Vừa | **Nhập ZIP bỏ qua tệp Excel metadata**: mọi tài liệu nhập vào lấy nhan đề = tên tệp | Vòng lặp chỉ duyệt tệp tài liệu, bỏ mọi thứ khác | Đọc `metadata.xlsx` trong gói (tên tệp, nhan đề, mô tả, mức truy cập, mã biểu ghi) và áp vào từng tài liệu; có tệp mẫu tải về |
+| JD4 | Vừa | **Thời lượng đọc tài liệu số luôn rỗng**: cột `DurationSeconds` được đọc ra ở ba chỗ mà không nơi nào ghi | Nhật ký chỉ ghi lúc mở trang, không có gì đóng phiên đọc | Trình đọc gửi tổng số giây định kỳ và một lần cuối khi rời trang; máy chủ giữ số lớn nhất |
+| JD5 | Vừa | **Cây menu không kéo thả được và không nhập được icon** dù endpoint sắp xếp `PUT /content/menus/order` đã có và hàm gọi đã khai trong `api.ts` | Cây chỉ đặt `treeData`, không bật `draggable`; biểu mẫu thiếu ô icon | Bật kéo thả nối vào endpoint sẵn có, thêm ô icon và cho trang tra cứu hiện icon |
+| JD6 | Nhẹ | **Trình soạn thảo nội dung chỉ chèn được ảnh**, không chèn được tệp PDF/Word/Excel như đặc tả VIII.1; chú thích còn ghi nhận SVG trong khi mã không nhận | `DetectImageType` chỉ nhận bốn định dạng ảnh | Mở rộng thành `DetectFileType` nhận thêm PDF/DOCX/XLSX bằng chữ ký nhị phân; nới quyền tải tệp cho cán bộ tin tức; sửa chú thích |
+| JD7 | Vừa | **Trang tra cứu không có thẻ meta phía máy chủ**: `index.html` mang tiêu đề tĩnh cho mọi trang, máy thu thập lấy sitemap ra rồi vẫn nhận trang trống | SPA dựng bằng Vite, không có SSR và không có `react-helmet` | Nginx rẽ ba đường dẫn có nội dung riêng sang API khi User-Agent là máy thu thập; API chèn `<title>`, `description`, Open Graph vào chính `index.html` của trang tra cứu. Người thật không đi qua chặng ấy |
+| JD8 | Nhẹ | **Không có nút chia sẻ** ở trang chi tiết tài liệu (đặc tả IX.2) | Bỏ sót | Nút *Chia sẻ*: Web Share API khi có, không thì chép liên kết |
+| JD9 | Nhẹ | **Album ảnh chỉ có ở giao diện quản trị**: endpoint công khai `/api/public/galleries` là mã chết, trang tra cứu không có route nào | Làm phía quản trị rồi dừng | Route `/thu-vien-anh` trên trang tra cứu, mục menu và album mẫu trong dữ liệu seed |
+| JD10 | Nhẹ | **Trang chủ thiếu khối "Thông báo"** mà đặc tả IX.1 liệt kê; chỗ ấy là khối "Thống kê" không có trong đặc tả | Đọc thiếu một gạch đầu dòng | Thêm khối thông báo lấy từ chuyên mục tương ứng, và không lặp lại các mục ấy ở khối tin tức |
+
+### J.X — Ba việc còn lại của đợt, làm ở nhánh chính
+
+| Mã | Mức | Lỗi | Nguyên nhân | Sửa |
+|---|---|---|---|---|
+| JX1 | Vừa | **Chi tiết biểu ghi thiếu tab lịch sử lưu thông** (đặc tả II.3 nói bốn tab): tab thứ tư chỉ có lịch sử sửa đổi, và không có endpoint nào trả lịch sử mượn của biểu ghi | Bảng đáp ứng ghi "Bốn tab chi tiết" và không ai đối chiếu nội dung từng tab với đặc tả | `GET /cataloging/bibs/{id}/loans` phân trang phía máy chủ, lọc phiếu chưa trả, tìm theo mã phiếu / mã vạch / tên hoặc số thẻ bạn đọc. Lọc theo `BibId` chép sẵn trên phiếu chứ không đi vòng qua ĐKCB — biên mục lại một bản in không được kéo lịch sử cũ sang biểu ghi mới |
+| JX2 | Vừa | **Không có quét virus nào** dù mục 6.4 ghi "quét virus (ClamAV tùy chọn)" | "Tùy chọn" bị đọc thành "không cần làm" | `IVirusScanner` đặt ở cổng vào duy nhất của mọi tệp tải lên (cả tải một lần lẫn tải theo mảnh đều đi qua đó); `ClamAvScanner` nói thẳng giao thức INSTREAM của clamd, không thêm thư viện. Tắt thì không mở socket nào; **bật mà không nối được clamd thì từ chối tệp** |
+| JX3 | Nhẹ | **Dừng êm chỉ có mặc định 5 giây của .NET**: `docker compose stop` cắt ngang lượt nhập biểu ghi, phiên Z39.50 hay lượt tải tài liệu số đang chạy | Không ai đặt `ShutdownTimeout`; máy chủ Z39.50 không đóng ổ nghe khi dừng | Hạn dừng 30 giây (cấu hình được), compose cho container 45 giây; `Z3950ServerHost.StopAsync` đóng ổ nghe để trả cổng ngay cho lần khởi động sau |
 
 
 ## Đ. Những chỗ đã thử phá nhưng hệ thống chịu được
@@ -511,7 +532,7 @@ dạng quét mã nguồn chặn cả lớp lỗi quay lại thay vì chỉ chặ
 | Thiếu chức năng | 1 | 0 | 1 (H3, ghi ở "Làm tiếp") |
 | Nguy cơ | 1 | 0 | 1 (H9, ghi ở "Làm tiếp") |
 
-Cộng cả ba đợt, đợt áp thiết kế và đợt triển khai: **59 lỗi, đã sửa 57**, còn hai mục là thiếu chức năng và nguy cơ
+Cộng cả ba đợt, đợt áp thiết kế, đợt triển khai và đợt rà hoàn thiện 04/09/2026: **98 lỗi, đã sửa 96**, còn hai mục là thiếu chức năng và nguy cơ
 đã ghi rõ chỗ. Mỗi lỗi đã sửa của đợt này đều có phép thử chạy đỏ trước khi sửa và xanh sau khi sửa,
 kể cả H7: phép thử giả tiêu đề đỏ trước khi sửa `CurrentUser.Ip`.
 
