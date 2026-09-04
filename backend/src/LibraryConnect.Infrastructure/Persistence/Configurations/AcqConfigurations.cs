@@ -132,6 +132,22 @@ public class HandoverRecordConfiguration : IEntityTypeConfiguration<HandoverReco
     }
 }
 
+public class HandoverLineConfiguration : IEntityTypeConfiguration<HandoverLine>
+{
+    public void Configure(EntityTypeBuilder<HandoverLine> builder)
+    {
+        builder.Property(x => x.Title).HasMaxLength(2000).IsRequired();
+        builder.Property(x => x.Author).HasMaxLength(1000);
+        builder.Property(x => x.Isbn).HasMaxLength(50);
+        builder.Property(x => x.Condition).HasMaxLength(300);
+        builder.Property(x => x.Note).HasMaxLength(1000);
+        builder.Property(x => x.UnitPrice).HasPrecision(18, 2);
+
+        builder.HasOne(x => x.Handover).WithMany(record => record.Lines)
+            .HasForeignKey(x => x.HandoverId).OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
 public class ItemConfiguration : IEntityTypeConfiguration<Item>
 {
     public void Configure(EntityTypeBuilder<Item> builder)
@@ -236,6 +252,21 @@ public class InventoryPeriodConfiguration : IEntityTypeConfiguration<InventoryPe
             .OnDelete(DeleteBehavior.Restrict);
         builder.HasIndex(x => x.Code).IsUnique().HasFilter("deleted_at IS NULL")
             .HasDatabaseName("ux_inventory_periods_code");
+    }
+}
+
+public class InventoryPeriodStaffConfiguration : IEntityTypeConfiguration<InventoryPeriodStaff>
+{
+    public void Configure(EntityTypeBuilder<InventoryPeriodStaff> builder)
+    {
+        builder.HasOne(x => x.Period).WithMany(period => period.Staff)
+            .HasForeignKey(x => x.PeriodId).OnDelete(DeleteBehavior.Cascade);
+
+        // Một người chỉ đứng tên một lần trong cùng một kỳ — bấm phân công hai lần không được sinh
+        // hai dòng, và luật ấy phải nằm ở cơ sở dữ liệu chứ không ở tầng nghiệp vụ (bài học 1).
+        builder.HasIndex(x => new { x.PeriodId, x.UserId }).IsUnique()
+            .HasFilter("deleted_at IS NULL")
+            .HasDatabaseName("ux_inventory_period_staff");
     }
 }
 

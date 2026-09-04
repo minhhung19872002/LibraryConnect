@@ -40,6 +40,9 @@ public class SerialIssueConfiguration : IEntityTypeConfiguration<SerialIssue>
         builder.Property(x => x.Volume).HasMaxLength(50);
         builder.Property(x => x.Caption).HasMaxLength(300);
         builder.Property(x => x.Barcode).HasMaxLength(100);
+        // Phải khai lại đúng độ dài của migration 20260904140000, nếu không lượt sinh migration sau
+        // sẽ thấy mô hình lệch bảng và tự thêm một lệnh đổi kiểu cột không ai muốn.
+        builder.Property(x => x.Condition).HasMaxLength(200);
 
         builder.HasOne(x => x.Serial).WithMany(s => s.Issues).HasForeignKey(x => x.SerialId)
             .OnDelete(DeleteBehavior.Cascade);

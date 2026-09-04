@@ -109,4 +109,28 @@ public class HandoverRecord : BaseEntity
     /// <summary>Scanned signed copy stored in MinIO.</summary>
     public string? FileUrl { get; set; }
     public string? Note { get; set; }
+
+    public ICollection<HandoverLine> Lines { get; set; } = new List<HandoverLine>();
+}
+
+/// <summary>
+/// Một dòng tài liệu trên biên bản bàn giao (III.1: "danh sách tài liệu, số lượng, tình trạng").
+///
+/// Dòng được chép sang biên bản chứ không tra ngược về đơn đặt mỗi lần in: biên bản là văn bản đã
+/// ký, sửa đơn đặt về sau không được làm đổi tờ giấy hai bên đang giữ. Cũng nhờ vậy mà biên bản
+/// không gắn đơn đặt nào — tài liệu biếu tặng, nộp lưu chiểu — vẫn có bảng chi tiết.
+/// </summary>
+public class HandoverLine : BaseEntity
+{
+    public Guid HandoverId { get; set; }
+    public HandoverRecord? Handover { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string? Author { get; set; }
+    public string? Isbn { get; set; }
+    public int Quantity { get; set; } = 1;
+    public decimal UnitPrice { get; set; }
+    /// <summary>Tình trạng vật lý lúc bàn giao: nguyên vẹn, rách bìa, thiếu trang…</summary>
+    public string? Condition { get; set; }
+    public string? Note { get; set; }
+    public int SortOrder { get; set; }
 }

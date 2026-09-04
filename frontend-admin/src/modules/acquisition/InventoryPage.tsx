@@ -37,7 +37,7 @@ import type { InputRef } from 'antd';
 import { PageHeader } from '@/components/PageHeader';
 import { Can } from '@/components/PermissionGate';
 import { PERMISSIONS } from '@/api/permissions';
-import { ApiRequestError } from '@/api/client';
+import { ApiRequestError, api } from '@/api/client';
 import { saveBlob } from '@/modules/marc/api';
 import { useCatalogOptions, toOptions } from '@/modules/cataloging/useCatalogOptions';
 import { formsApi, inventoryApi, locationsApi } from './api';
@@ -269,6 +269,13 @@ function CreatePeriodModal({
   });
   const documentTypes = useCatalogOptions('document-types');
 
+  // Danh sách cán bộ để phân công. Đường riêng cho các ô chọn người nhận việc, không đòi quyền quản
+  // trị người dùng — cán bộ bổ sung lập kỳ kiểm kê không vì thế mà xem được hồ sơ tài khoản.
+  const staff = useQuery({
+    queryKey: ['staff-options'],
+    queryFn: () => api.get<{ id: string; fullName: string; username: string }[]>('/staff/options'),
+  });
+
   const create = useMutation({
     mutationFn: (values: Record<string, unknown>) => inventoryApi.createPeriod(values),
     onSuccess: (id) => {
@@ -303,7 +310,7 @@ function CreatePeriodModal({
       <Form
         form={form}
         layout="vertical"
-        initialValues={{ scopeType: 'ALL', closeWarehouse: true }}
+        initialValues={{ scopeType: 'ALL', closeWarehouse: true, assignedUserIds: [] }}
         onFinish={(values) =>
           create.mutate({
             ...values,
@@ -383,8 +390,29 @@ function CreatePeriodModal({
             </Form.Item>
           </Col>
         </Row>
-        <Form.Item name="assignedStaff" label="Cán bộ kiểm kê">
-          <Input placeholder="Nguyễn Thị Hoa, Lê Văn Nam" />
+        <Form.Item
+          name="assignedUserIds"
+          label="Cán bộ kiểm kê"
+          extra="Người được chọn nhận thông báo và tra được kỳ kiểm kê của mình."
+        >
+          <Select
+            mode="multiple"
+            allowClear
+            showSearch
+            optionFilterProp="label"
+            placeholder="Chọn cán bộ được phân công"
+            options={(staff.data ?? []).map((user) => ({
+              value: user.id,
+              label: `${user.fullName} (${user.username})`,
+            }))}
+          />
+        </Form.Item>
+        <Form.Item
+          name="assignedStaff"
+          label="Người ngoài danh sách tài khoản"
+          extra="Cán bộ đơn vị khác đến hỗ trợ, chỉ ghi tên để in lên biên bản."
+        >
+          <Input placeholder="Nguyễn Thị Hoa (Phòng Hành chính)" />
         </Form.Item>
         <Form.Item name="closeWarehouse" label="Đóng kho ngay khi tạo kỳ">
           <Select
@@ -414,6 +442,14 @@ function PeriodDrawer({
 }) {
   const { message, modal } = App.useApp();
   const [barcode, setBarcode] = useState('');
+
+  // Phân công lại giữa kỳ: người ốm, người bận, kỳ kiểm kê chạy cả tuần.
+  const [assignees, setAssignees] = useState<string[]>([]);
+
+  const staff = useQuery({
+    queryKey: ['staff-options'],
+    queryFn: () => api.get<{ id: string; fullName: string; username: string }[]>('/staff/options'),
+  });
   const [log, setLog] = useState<InventoryScanResultDto[]>([]);
   const [resultFilter, setResultFilter] = useState<InventoryResultType | null>(null);
   const [resultPage, setResultPage] = useState({ page: 1, pageSize: 20 });
@@ -426,6 +462,14 @@ function PeriodDrawer({
     queryKey: ['inventory-period', id],
     queryFn: () => inventoryApi.period(id),
   });
+
+  // Ô chọn bắt đầu từ danh sách đang có của kỳ, chứ không từ rỗng: mở ra thấy trống rồi bấm Lưu là
+  // xoá sạch phân công mà không ai định làm thế.
+  useEffect(() => {
+    if (period.data) {
+      setAssignees(period.data.assignedUsers.map((user) => user.userId));
+    }
+  }, [period.data]);
 
   const summary = useQuery({
     queryKey: ['inventory-summary', id],
@@ -482,6 +526,15 @@ function PeriodDrawer({
       );
       setScanFile(null);
       reload();
+    },
+    onError: fail,
+  });
+
+  const assign = useMutation({
+    mutationFn: () => inventoryApi.assignStaff(id, assignees),
+    onSuccess: async () => {
+      message.success('Đã lưu phân công.');
+      await period.refetch();
     },
     onError: fail,
   });
@@ -645,6 +698,44 @@ function PeriodDrawer({
           </Row>
 
           <Progress percent={stats.progressPercent} status={running ? 'active' : 'success'} />
+
+          <Card variant="borderless" size="small" title="Cán bộ được phân công">
+            <Space direction="vertical" style={{ width: '100%' }} size={8}>
+              <Select
+                mode="multiple"
+                allowClear
+                showSearch
+                optionFilterProp="label"
+                disabled={!running}
+                placeholder="Chưa phân công ai"
+                style={{ width: '100%' }}
+                value={assignees}
+                onChange={setAssignees}
+                options={(staff.data ?? []).map((user) => ({
+                  value: user.id,
+                  label: `${user.fullName} (${user.username})`,
+                }))}
+              />
+
+              {running && (
+                <Button
+                  size="small"
+                  type="primary"
+                  ghost
+                  loading={assign.isPending}
+                  onClick={() => assign.mutate()}
+                >
+                  Lưu phân công
+                </Button>
+              )}
+
+              {data.assignedStaff && (
+                <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                  In lên biên bản: {data.assignedStaff}
+                </Typography.Text>
+              )}
+            </Space>
+          </Card>
 
           {running ? (
             <Card variant="borderless" size="small" title="Quét mã vạch">

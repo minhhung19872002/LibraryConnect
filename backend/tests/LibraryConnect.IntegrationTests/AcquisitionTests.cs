@@ -973,6 +973,76 @@ public class AcquisitionTests
     // -----------------------------------------------------------------------------------------
 
     [Fact]
+    public async Task Phan_cong_kiem_ke_theo_tai_khoan_va_bao_cho_can_bo()
+    {
+        // III.4 bước 2 nói kỳ kiểm kê có "phân công cán bộ". Trước 04/09/2026 chỗ ấy là một ô chữ gõ
+        // tay: cán bộ không hỏi được mình phải kiểm kho nào, hệ thống không báo được cho ai, và người
+        // đã nghỉ vẫn đứng tên trên kỳ đang chạy.
+        var admin = await ClientAsync();
+        var libraries = await ReadAsync<IReadOnlyList<LibraryDto>>(
+            await admin.GetAsync("/api/locations/libraries"));
+
+        var warehouseId = await ReadAsync<Guid>(await admin.PostAsJsonAsync("/api/locations/warehouses", new
+        {
+            code = "KHOPHANCONG",
+            name = "Kho phân công kiểm kê",
+            libraryId = libraries[0].Id,
+            type = WarehouseType.ClosedStack,
+            isActive = true
+        }));
+
+        var first = await GroupClientAsync(admin, "ACQUISITION", "k1");
+        var second = await GroupClientAsync(admin, "ACQUISITION", "k2");
+
+        // Danh sách cán bộ để chọn phải mở cho chính người đi phân công, không đòi quyền quản trị
+        // người dùng — người phân việc không vì thế mà được xem hồ sơ tài khoản của ai.
+        var options = await ReadAsync<IReadOnlyList<Application.Features.Admin.Users.StaffOptionDto>>(
+            await first.GetAsync("/api/staff/options"));
+
+        options.Should().NotBeEmpty();
+
+        var me = await ReadAsync<Application.Features.Auth.AuthUserDto>(await first.GetAsync("/api/auth/me"));
+        var mate = await ReadAsync<Application.Features.Auth.AuthUserDto>(await second.GetAsync("/api/auth/me"));
+
+        (await second.PostAsync("/api/notifications/read-all", null)).EnsureSuccessStatusCode();
+
+        var periodId = await ReadAsync<Guid>(await admin.PostAsJsonAsync("/api/inventory/periods", new
+        {
+            name = "Kiểm kê có phân công",
+            warehouseId,
+            scopeType = "ALL",
+            assignedUserIds = new[] { me.Id },
+            closeWarehouse = true
+        }));
+
+        var period = await ReadAsync<InventoryPeriodDto>(
+            await admin.GetAsync($"/api/inventory/periods/{periodId}"));
+
+        period.AssignedUsers.Should().ContainSingle(user => user.UserId == me.Id);
+        // Tên vẫn được chép sang ô chữ để in lên biên bản kiểm kê.
+        period.AssignedStaff.Should().Contain(me.FullName);
+
+        // Người ốm giữa kỳ: phân công lại phải đổi được, và người mới nhận thông báo.
+        var count = await ReadAsync<int>(await admin.PutAsJsonAsync(
+            $"/api/inventory/periods/{periodId}/staff", new { userIds = new[] { mate.Id } }));
+
+        count.Should().Be(1);
+
+        var after = await ReadAsync<InventoryPeriodDto>(
+            await admin.GetAsync($"/api/inventory/periods/{periodId}"));
+
+        after.AssignedUsers.Should().ContainSingle(user => user.UserId == mate.Id);
+
+        var inbox = await ReadAsync<StaffNotificationPage>(
+            await second.GetAsync("/api/notifications?unreadOnly=true"));
+
+        inbox.Items.Items.Should().Contain(row => row.Title.Contains("Kho phân công kiểm kê"));
+
+        // Dọn lại kho đang đóng để các kịch bản khác không vấp phải.
+        await admin.PostAsJsonAsync($"/api/inventory/periods/{periodId}/close", new { });
+    }
+
+    [Fact]
     public async Task Stocktake_runs_from_closing_the_stack_to_a_loss_decision()
     {
         var client = await ClientAsync();
@@ -1194,6 +1264,109 @@ public class AcquisitionTests
 
         var orderPdf = await client.GetAsync($"/api/acquisition/forms/print/ORDER/{order.Code}");
         orderPdf.IsSuccessStatusCode.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Bien_ban_ban_giao_co_bang_chi_tiet_va_cot_tinh_trang()
+    {
+        // III.1: "Tạo biên bản từ đơn đặt: bên giao, bên nhận, **danh sách tài liệu, số lượng,
+        // tình trạng**". Trước 04/09/2026 biên bản chỉ có ba con số tổng; bảng chi tiết trên bản in
+        // được tra ngược từ đơn đặt lúc in, nên biên bản không gắn đơn đặt in ra tờ giấy trắng, và
+        // không chỗ nào ghi được tình trạng từng dòng.
+        var client = await ClientAsync();
+
+        // a) Biên bản không gắn đơn đặt — sách biếu tặng — vẫn phải có bảng chi tiết.
+        var giftId = await ReadAsync<Guid>(await client.PostAsJsonAsync("/api/acquisition/handovers", new
+        {
+            partyA = "Nhà xuất bản Giáo dục",
+            partyB = "Thư viện Trường",
+            content = "Bàn giao sách biếu tặng",
+            lines = new[]
+            {
+                new
+                {
+                    title = "Từ điển Việt - Anh",
+                    author = (string?)"Nguyễn Văn Tặng",
+                    quantity = 4,
+                    unitPrice = 150000m,
+                    condition = "Nguyên vẹn"
+                },
+                new
+                {
+                    title = "Atlas địa lý Việt Nam",
+                    author = (string?)null,
+                    quantity = 1,
+                    unitPrice = 90000m,
+                    condition = "Rách bìa, còn đủ trang"
+                }
+            }
+        }));
+
+        var gift = await ReadAsync<HandoverDto>(await client.GetAsync($"/api/acquisition/handovers/{giftId}"));
+
+        gift.Lines.Should().HaveCount(2);
+        gift.Lines[1].Condition.Should().Be("Rách bìa, còn đủ trang");
+
+        // Dòng tổng đọc từ chính bảng chi tiết: hai con số trên cùng tờ giấy không được lệch nhau.
+        gift.TotalItems.Should().Be(5);
+        gift.TotalAmount.Should().Be(690000m);
+
+        var giftPdf = await client.GetAsync($"/api/acquisition/forms/print/HANDOVER/{gift.Code}");
+        giftPdf.IsSuccessStatusCode.Should().BeTrue();
+
+        // b) Biên bản lập từ đơn đặt: bảng chi tiết chép sẵn từ đơn, cán bộ chỉ ghi thêm tình trạng.
+        var supplierId = await SupplierAsync(client, "CHITIET");
+
+        var orderId = await ReadAsync<Guid>(await client.PostAsJsonAsync("/api/acquisition/orders", new
+        {
+            supplierId,
+            items = new[]
+            {
+                new { title = "Giáo trình Kinh tế vĩ mô", quantity = 5, unitPrice = 120000m },
+                new { title = "Giáo trình Kinh tế vi mô", quantity = 5, unitPrice = 120000m }
+            }
+        }));
+
+        var handoverId = await ReadAsync<Guid>(await client.PostAsJsonAsync("/api/acquisition/handovers", new
+        {
+            orderId,
+            partyA = "Công ty Sách CHITIET",
+            partyB = "Thư viện Trường"
+        }));
+
+        var handover = await ReadAsync<HandoverDto>(
+            await client.GetAsync($"/api/acquisition/handovers/{handoverId}"));
+
+        handover.Lines.Should().HaveCount(2, "bảng chi tiết phải được chép sang từ đơn đặt");
+        handover.Lines.Sum(line => line.Quantity).Should().Be(handover.TotalItems);
+
+        // Sửa lại tình trạng một dòng rồi lưu: bảng chi tiết là của biên bản, không phải của đơn đặt.
+        var edited = handover.Lines
+            .Select(line => new
+            {
+                line.Title,
+                line.Author,
+                line.Isbn,
+                line.Quantity,
+                line.UnitPrice,
+                condition = line.Title.Contains("vĩ mô") ? "Ướt góc 3 bản" : "Nguyên vẹn",
+                line.Note
+            })
+            .ToArray();
+
+        (await client.PutAsJsonAsync($"/api/acquisition/handovers/{handoverId}", new
+        {
+            orderId,
+            partyA = handover.PartyA,
+            partyB = handover.PartyB,
+            lines = edited
+        })).EnsureSuccessStatusCode();
+
+        var again = await ReadAsync<HandoverDto>(
+            await client.GetAsync($"/api/acquisition/handovers/{handoverId}"));
+
+        again.Lines.Should().HaveCount(2, "lưu lại không được nhân đôi bảng chi tiết");
+        again.Lines.Should().Contain(line => line.Condition == "Ướt góc 3 bản");
     }
 
     // -----------------------------------------------------------------------------------------

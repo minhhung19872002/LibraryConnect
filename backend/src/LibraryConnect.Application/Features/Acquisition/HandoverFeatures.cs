@@ -29,6 +29,23 @@ public class HandoverDto
     /// <summary>Đã đính kèm bản scan có chữ ký hay chưa.</summary>
     public bool HasScan { get; set; }
     public string? Note { get; set; }
+    /// <summary>Danh sách tài liệu bàn giao. Rỗng với biên bản lập trước 04/09/2026.</summary>
+    public List<HandoverLineDto> Lines { get; set; } = new();
+}
+
+/// <summary>Một dòng tài liệu trên biên bản: đủ để in ra bảng chi tiết mà không tra lại đơn đặt.</summary>
+public class HandoverLineDto
+{
+    public Guid Id { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string? Author { get; set; }
+    public string? Isbn { get; set; }
+    public int Quantity { get; set; }
+    public decimal UnitPrice { get; set; }
+    public decimal Amount { get; set; }
+    /// <summary>Tình trạng vật lý lúc bàn giao (III.1).</summary>
+    public string? Condition { get; set; }
+    public string? Note { get; set; }
 }
 
 public class HandoverListRequest : PagedRequest
@@ -102,8 +119,9 @@ public class GetHandoverQueryHandler : IRequestHandler<GetHandoverQuery, Handove
 
     public GetHandoverQueryHandler(IApplicationDbContext db) => _db = db;
 
-    public async Task<HandoverDto> Handle(GetHandoverQuery query, CancellationToken ct) =>
-        await _db.HandoverRecords
+    public async Task<HandoverDto> Handle(GetHandoverQuery query, CancellationToken ct)
+    {
+        var record = await _db.HandoverRecords
             .AsNoTracking()
             .Where(record => record.Id == query.Id)
             .Select(record => new HandoverDto
@@ -123,7 +141,36 @@ public class GetHandoverQueryHandler : IRequestHandler<GetHandoverQuery, Handove
                 Note = record.Note
             })
             .FirstOrDefaultAsync(ct)
-        ?? throw new NotFoundException("biên bản bàn giao", query.Id);
+            ?? throw new NotFoundException("biên bản bàn giao", query.Id);
+
+        record.Lines = await HandoverLines.OfAsync(_db, query.Id, ct);
+        return record;
+    }
+}
+
+/// <summary>Đọc bảng chi tiết của một biên bản, dùng chung cho màn hình và cho bản in.</summary>
+public static class HandoverLines
+{
+    public static async Task<List<HandoverLineDto>> OfAsync(
+        IApplicationDbContext db, Guid handoverId, CancellationToken ct) =>
+        await db.HandoverLines
+            .AsNoTracking()
+            .Where(line => line.HandoverId == handoverId)
+            .OrderBy(line => line.SortOrder)
+            .ThenBy(line => line.Id)
+            .Select(line => new HandoverLineDto
+            {
+                Id = line.Id,
+                Title = line.Title,
+                Author = line.Author,
+                Isbn = line.Isbn,
+                Quantity = line.Quantity,
+                UnitPrice = line.UnitPrice,
+                Amount = line.Quantity * line.UnitPrice,
+                Condition = line.Condition,
+                Note = line.Note
+            })
+            .ToListAsync(ct);
 }
 
 /// <summary>Lập hoặc sửa biên bản bàn giao. Tạo từ đơn đặt thì số lượng và giá trị tự tính.</summary>
@@ -136,9 +183,26 @@ public class SaveHandoverCommand : IRequest<Guid>
     public string PartyB { get; set; } = string.Empty;
     public string? Content { get; set; }
     public string? Note { get; set; }
-    /// <summary>Chỉ dùng khi không gắn với đơn đặt nào.</summary>
+    /// <summary>Chỉ dùng khi không có dòng chi tiết nào và cũng không gắn đơn đặt.</summary>
     public int? TotalItems { get; set; }
     public decimal? TotalAmount { get; set; }
+
+    /// <summary>
+    /// Danh sách tài liệu bàn giao. Bỏ trống mà có đơn đặt thì hệ thống chép từ đơn sang, để cán bộ
+    /// sửa lại tình trạng từng dòng sau; bỏ trống mà không có đơn thì biên bản chỉ có dòng tổng.
+    /// </summary>
+    public List<HandoverLineInput>? Lines { get; set; }
+}
+
+public class HandoverLineInput
+{
+    public string Title { get; set; } = string.Empty;
+    public string? Author { get; set; }
+    public string? Isbn { get; set; }
+    public int Quantity { get; set; } = 1;
+    public decimal UnitPrice { get; set; }
+    public string? Condition { get; set; }
+    public string? Note { get; set; }
 }
 
 public class SaveHandoverCommandValidator : AbstractValidator<SaveHandoverCommand>
@@ -152,8 +216,24 @@ public class SaveHandoverCommandValidator : AbstractValidator<SaveHandoverComman
             .NotEmpty().WithMessage("Chưa nhập bên nhận.").MaximumLength(500);
 
         RuleFor(command => command)
-            .Must(command => command.OrderId is not null || command.TotalItems is not null)
-            .WithMessage("Biên bản không gắn đơn đặt thì phải nhập tổng số bản bàn giao.");
+            .Must(command => command.OrderId is not null
+                             || command.TotalItems is not null
+                             || command.Lines is { Count: > 0 })
+            .WithMessage("Biên bản không gắn đơn đặt thì phải có danh sách tài liệu hoặc tổng số bản bàn giao.");
+
+        RuleForEach(command => command.Lines).ChildRules(line =>
+        {
+            line.RuleFor(row => row.Title)
+                .NotEmpty().WithMessage("Dòng tài liệu phải có nhan đề.").MaximumLength(2000);
+
+            line.RuleFor(row => row.Quantity)
+                .GreaterThan(0).WithMessage("Số lượng bàn giao phải lớn hơn 0.");
+
+            line.RuleFor(row => row.UnitPrice)
+                .GreaterThanOrEqualTo(0).WithMessage("Đơn giá không âm.");
+
+            line.RuleFor(row => row.Condition).MaximumLength(300);
+        });
     }
 }
 
@@ -184,6 +264,25 @@ public class SaveHandoverCommandHandler : IRequestHandler<SaveHandoverCommand, G
         handover.Content = command.Content?.Trim();
         handover.Note = command.Note?.Trim();
 
+        // Dòng chi tiết được thay trọn gói mỗi lần lưu: sửa biên bản là sửa cả bảng, và ghép từng
+        // dòng theo mã sẽ đòi máy khách giữ mã dòng mà nó không cần biết.
+        var existing = command.Id is null
+            ? new List<HandoverLine>()
+            : await _db.HandoverLines.Where(line => line.HandoverId == handover.Id).ToListAsync(ct);
+
+        var lines = command.Lines?
+            .Select(line => new HandoverLineInput
+            {
+                Title = line.Title.Trim(),
+                Author = line.Author?.Trim(),
+                Isbn = line.Isbn?.Trim(),
+                Quantity = line.Quantity,
+                UnitPrice = line.UnitPrice,
+                Condition = line.Condition?.Trim(),
+                Note = line.Note?.Trim()
+            })
+            .ToList();
+
         if (command.OrderId is not null)
         {
             var order = await _db.PurchaseOrders
@@ -206,8 +305,32 @@ public class SaveHandoverCommandHandler : IRequestHandler<SaveHandoverCommand, G
             handover.TotalAmount = anyReceived
                 ? order.Items.Sum(line => line.ReceivedQuantity * line.UnitPrice)
                 : order.Items.Sum(line => line.Quantity * line.UnitPrice);
+
+            // Không gửi bảng chi tiết thì chép từ đơn đặt — đúng bộ dòng mà dòng tổng ở trên vừa
+            // tính, để bảng và tổng không mâu thuẫn nhau trên cùng một tờ giấy.
+            lines ??= (anyReceived ? order.Items.Where(line => line.ReceivedQuantity > 0) : order.Items)
+                .OrderBy(line => line.CreatedAt)
+                .ThenBy(line => line.Id)
+                .Select(line => new HandoverLineInput
+                {
+                    Title = line.Title,
+                    Author = line.Author,
+                    Isbn = line.Isbn,
+                    Quantity = anyReceived ? line.ReceivedQuantity : line.Quantity,
+                    UnitPrice = line.UnitPrice,
+                    Note = line.Note
+                })
+                .ToList();
         }
-        else
+
+        if (lines is { Count: > 0 })
+        {
+            // Có bảng chi tiết thì dòng tổng đọc từ chính bảng ấy, chứ không nhận số gõ tay: hai con
+            // số trên cùng tờ giấy mà lệch nhau là biên bản không ký được.
+            handover.TotalItems = lines.Sum(line => line.Quantity);
+            handover.TotalAmount = lines.Sum(line => line.Quantity * line.UnitPrice);
+        }
+        else if (command.OrderId is null)
         {
             handover.TotalItems = command.TotalItems ?? 0;
             handover.TotalAmount = command.TotalAmount ?? 0;
@@ -216,6 +339,34 @@ public class SaveHandoverCommandHandler : IRequestHandler<SaveHandoverCommand, G
         if (command.Id is null)
         {
             _db.HandoverRecords.Add(handover);
+        }
+
+        if (existing.Count > 0)
+        {
+            _db.HandoverLines.RemoveRange(existing);
+        }
+
+        if (lines is not null)
+        {
+            var order = 0;
+
+            foreach (var line in lines)
+            {
+                // Liên kết mới thì thêm thẳng vào tập hợp, không thêm qua navigation của thực thể
+                // đang Unchanged — xem bài học 20 trong CLAUDE.md.
+                _db.HandoverLines.Add(new HandoverLine
+                {
+                    HandoverId = handover.Id,
+                    Title = line.Title,
+                    Author = line.Author,
+                    Isbn = line.Isbn,
+                    Quantity = line.Quantity,
+                    UnitPrice = line.UnitPrice,
+                    Condition = line.Condition,
+                    Note = line.Note,
+                    SortOrder = order++
+                });
+            }
         }
 
         await _db.SaveChangesAsync(ct);

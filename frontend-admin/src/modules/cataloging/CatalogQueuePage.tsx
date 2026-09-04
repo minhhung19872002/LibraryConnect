@@ -35,7 +35,6 @@ import { Can } from '@/components/PermissionGate';
 import { PERMISSIONS } from '@/api/permissions';
 import { errorMessage } from '@/api/formErrors';
 import { api } from '@/api/client';
-import type { PagedResult } from '@/types/api';
 import { queueApi } from './api';
 import {
   QUEUE_STATUS_LABELS,
@@ -408,12 +407,11 @@ function AssignModal({
   const [deadline, setDeadline] = useState<dayjs.Dayjs | null>(null);
   const [note, setNote] = useState('');
 
+  // Địa chỉ này là /api/staff/options chứ không phải /api/users: đường cũ không tồn tại nên ô chọn
+  // luôn rỗng, và đường quản trị người dùng thì cán bộ biên mục không có quyền gọi.
   const staff = useQuery({
     queryKey: ['staff-options'],
-    queryFn: () =>
-      api.get<PagedResult<{ id: string; fullName: string; username: string }>>('/users', {
-        params: { pageSize: 200, isActive: true },
-      }),
+    queryFn: () => api.get<{ id: string; fullName: string; username: string }[]>('/staff/options'),
     enabled: open,
   });
 
@@ -452,7 +450,7 @@ function AssignModal({
           <Select
             value={assignedTo}
             onChange={setAssignedTo}
-            options={(staff.data?.items ?? []).map((user) => ({
+            options={(staff.data ?? []).map((user) => ({
               value: user.id,
               label: `${user.fullName} (${user.username})`,
             }))}

@@ -3,6 +3,7 @@ using System;
 using LibraryConnect.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace LibraryConnect.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(LibraryConnectDbContext))]
-    partial class LibraryConnectDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260904150000_BangGiaoChiTiet")]
+    partial class BangGiaoChiTiet
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -505,56 +508,6 @@ namespace LibraryConnect.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_inventory_periods_warehouse_id");
 
                     b.ToTable("inventory_periods", "acq");
-                });
-
-            modelBuilder.Entity("LibraryConnect.Domain.Entities.Acq.InventoryPeriodStaff", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("created_by");
-
-                    b.Property<DateTimeOffset?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("deleted_at");
-
-                    b.Property<Guid?>("DeletedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("deleted_by");
-
-                    b.Property<Guid>("PeriodId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("period_id");
-
-                    b.Property<DateTimeOffset?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
-
-                    b.Property<Guid?>("UpdatedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("updated_by");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id")
-                        .HasName("pk_inventory_period_staffs");
-
-                    b.HasIndex("PeriodId", "UserId")
-                        .IsUnique()
-                        .HasDatabaseName("ux_inventory_period_staff")
-                        .HasFilter("deleted_at IS NULL");
-
-                    b.ToTable("inventory_period_staffs", "acq");
                 });
 
             modelBuilder.Entity("LibraryConnect.Domain.Entities.Acq.InventoryResult", b =>
@@ -10554,17 +10507,6 @@ namespace LibraryConnect.Infrastructure.Persistence.Migrations
                     b.Navigation("Warehouse");
                 });
 
-            modelBuilder.Entity("LibraryConnect.Domain.Entities.Acq.InventoryPeriodStaff", b =>
-                {
-                    b.HasOne("LibraryConnect.Domain.Entities.Acq.InventoryPeriod", "Period")
-                        .WithMany("Staff")
-                        .HasForeignKey("PeriodId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Period");
-                });
-
             modelBuilder.Entity("LibraryConnect.Domain.Entities.Acq.InventoryResult", b =>
                 {
                     b.HasOne("LibraryConnect.Domain.Entities.Acq.Item", "Item")
@@ -11575,8 +11517,6 @@ namespace LibraryConnect.Infrastructure.Persistence.Migrations
                     b.Navigation("Results");
 
                     b.Navigation("Scans");
-
-                    b.Navigation("Staff");
                 });
 
             modelBuilder.Entity("LibraryConnect.Domain.Entities.Acq.Library", b =>

@@ -139,6 +139,31 @@ public class FormDataBuilder : IFormDataBuilder
         data.Fields["totalAmount"] = Money(handover.TotalAmount);
         data.Fields["note"] = handover.Note ?? string.Empty;
 
+        // Bảng chi tiết đọc từ chính biên bản: đó là bộ dòng hai bên đã ký, và nó có cả cột tình
+        // trạng mà đơn đặt không có. Biên bản lập trước 04/09/2026 chưa có dòng nào nên vẫn lấy từ
+        // đơn đặt như cũ — in lại một biên bản cũ không được ra tờ giấy trắng.
+        var saved = await HandoverLines.OfAsync(_db, handover.Id, ct);
+
+        if (saved.Count > 0)
+        {
+            foreach (var line in saved)
+            {
+                data.Rows.Add(new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["title"] = line.Title,
+                    ["author"] = line.Author ?? string.Empty,
+                    ["isbn"] = line.Isbn ?? string.Empty,
+                    ["quantity"] = Number(line.Quantity),
+                    ["unitPrice"] = Money(line.UnitPrice),
+                    ["amount"] = Money(line.Amount),
+                    ["condition"] = line.Condition ?? string.Empty,
+                    ["note"] = line.Note ?? string.Empty
+                });
+            }
+
+            return;
+        }
+
         if (handover.OrderId is null)
         {
             return;

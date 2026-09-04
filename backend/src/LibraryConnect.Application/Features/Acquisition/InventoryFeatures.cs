@@ -62,7 +62,10 @@ public class InventoryPeriodDto
     public DateOnly StartDate { get; set; }
     public DateOnly? EndDate { get; set; }
     public InventoryPeriodStatus Status { get; set; }
+    /// <summary>Tên cán bộ viết liền một dòng, dùng cho bản in.</summary>
     public string? AssignedStaff { get; set; }
+    /// <summary>Cán bộ được phân công, theo tài khoản. Rỗng với kỳ lập trước 04/09/2026.</summary>
+    public List<AssignedStaffDto> AssignedUsers { get; set; } = new();
     public int ExpectedCount { get; set; }
     public int ScannedCount { get; set; }
     public DateTimeOffset? ClosedAt { get; set; }
@@ -70,6 +73,8 @@ public class InventoryPeriodDto
     /// <summary>Kho có đang bị đóng để kiểm kê hay không.</summary>
     public bool WarehouseClosed { get; set; }
 }
+
+public record AssignedStaffDto(Guid UserId, string FullName);
 
 public class InventoryPeriodListRequest : PagedRequest
 {
@@ -170,6 +175,18 @@ public class GetInventoryPeriodQueryHandler : IRequestHandler<GetInventoryPeriod
                 .FirstOrDefaultAsync(ct);
         }
 
+        // Nối tên cán bộ ở một câu hỏi riêng chứ không nhét vào phép chiếu dùng chung: danh sách kỳ
+        // kiểm kê hiện chuỗi tên đã chép sẵn, chỉ màn hình chi tiết mới cần từng tài khoản.
+        period.AssignedUsers = await _db.InventoryPeriodStaff
+            .AsNoTracking()
+            .Where(row => row.PeriodId == query.Id)
+            .Join(_db.Users, row => row.UserId, user => user.Id, (row, user) => user)
+            // Sắp xếp trên cột thật rồi mới dựng bản ghi: sắp trên thuộc tính của một kiểu vừa dựng
+            // ra thì bộ dịch LINQ không đưa xuống SQL được.
+            .OrderBy(user => user.FullName)
+            .Select(user => new AssignedStaffDto(user.Id, user.FullName))
+            .ToListAsync(ct);
+
         return period;
     }
 }
@@ -187,6 +204,9 @@ public class CreateInventoryPeriodCommand : IRequest<Guid>
     public Guid? ScopeDocumentTypeId { get; set; }
     public DateOnly? StartDate { get; set; }
     public DateOnly? EndDate { get; set; }
+    /// <summary>Tài khoản cán bộ được phân công. Tên của họ được chép sang ô in ra biên bản.</summary>
+    public List<Guid> AssignedUserIds { get; set; } = new();
+    /// <summary>Chỉ dùng khi phân công người ngoài danh sách tài khoản (cán bộ đơn vị khác đến hỗ trợ).</summary>
     public string? AssignedStaff { get; set; }
     public string? Note { get; set; }
     /// <summary>Đóng kho ngay khi tạo kỳ. Bỏ qua thì phải đóng tay trước khi quét.</summary>
@@ -222,13 +242,18 @@ public class CreateInventoryPeriodCommandHandler : IRequestHandler<CreateInvento
     private readonly IApplicationDbContext _db;
     private readonly ICodeGenerator _codes;
     private readonly IDateTimeProvider _clock;
+    private readonly IStaffNotifier _notifier;
 
     public CreateInventoryPeriodCommandHandler(
-        IApplicationDbContext db, ICodeGenerator codes, IDateTimeProvider clock)
+        IApplicationDbContext db,
+        ICodeGenerator codes,
+        IDateTimeProvider clock,
+        IStaffNotifier notifier)
     {
         _db = db;
         _codes = codes;
         _clock = clock;
+        _notifier = notifier;
     }
 
     public async Task<Guid> Handle(CreateInventoryPeriodCommand command, CancellationToken ct)
@@ -299,9 +324,16 @@ public class CreateInventoryPeriodCommandHandler : IRequestHandler<CreateInvento
             warehouse.IsClosedForInventory = true;
         }
 
+        var assigned = await InventoryStaff.ReplaceAsync(_db, period, command.AssignedUserIds, ct);
+
         await _db.SaveChangesAsync(ct);
+
+        await InventoryStaff.NotifyAsync(_notifier, period, warehouse.Name, assigned, ct);
+
         return period.Id;
     }
+
+    internal IQueryable<Item> ExpectedItemsOf(InventoryPeriod period) => ExpectedItems(period);
 
     private IQueryable<Item> ExpectedItems(InventoryPeriod period)
     {
@@ -601,6 +633,157 @@ internal static class InventoryScanner
 }
 
 /// <summary>Chốt kỳ kiểm kê và mở lại kho (III.4 bước 4).</summary>
+/// <summary>
+/// Phân công cán bộ cho kỳ kiểm kê (III.4 bước 2). Tách riêng vì người ốm, người bận, kỳ kiểm kê
+/// chạy cả tuần — danh sách phải sửa được giữa chừng chứ không chỉ lúc lập kỳ.
+/// </summary>
+public class AssignInventoryStaffCommand : IRequest<int>
+{
+    public Guid PeriodId { get; set; }
+    public List<Guid> UserIds { get; set; } = new();
+    /// <summary>Người ngoài danh sách tài khoản, ghi thêm để in lên biên bản.</summary>
+    public string? OtherStaff { get; set; }
+}
+
+public class AssignInventoryStaffCommandHandler : IRequestHandler<AssignInventoryStaffCommand, int>
+{
+    private readonly IApplicationDbContext _db;
+    private readonly IStaffNotifier _notifier;
+
+    public AssignInventoryStaffCommandHandler(IApplicationDbContext db, IStaffNotifier notifier)
+    {
+        _db = db;
+        _notifier = notifier;
+    }
+
+    public async Task<int> Handle(AssignInventoryStaffCommand command, CancellationToken ct)
+    {
+        var period = await _db.InventoryPeriods
+            .Include(entity => entity.Staff)
+            .FirstOrDefaultAsync(entity => entity.Id == command.PeriodId, ct)
+            ?? throw new NotFoundException("kỳ kiểm kê", command.PeriodId);
+
+        if (period.Status == InventoryPeriodStatus.Closed)
+        {
+            throw new ConflictException($"Kỳ kiểm kê {period.Code} đã chốt, không đổi được phân công.");
+        }
+
+        var already = period.Staff.Select(row => row.UserId).ToHashSet();
+        var assigned = await InventoryStaff.ReplaceAsync(_db, period, command.UserIds, ct, command.OtherStaff);
+
+        await _db.SaveChangesAsync(ct);
+
+        var warehouseName = await _db.Warehouses
+            .Where(warehouse => warehouse.Id == period.WarehouseId)
+            .Select(warehouse => warehouse.Name)
+            .FirstOrDefaultAsync(ct) ?? string.Empty;
+
+        // Chỉ báo cho người **mới** được thêm vào: phân công lại vì một người rút ra không phải lý do
+        // để cả nhóm nhận lại một thông báo họ đã đọc từ đầu tuần.
+        await InventoryStaff.NotifyAsync(
+            _notifier, period, warehouseName,
+            assigned.Where(row => !already.Contains(row.UserId)).ToList(), ct);
+
+        return assigned.Count;
+    }
+}
+
+/// <summary>Phần dùng chung của việc phân công cán bộ kiểm kê.</summary>
+internal static class InventoryStaff
+{
+    /// <summary>
+    /// Thay trọn danh sách cán bộ của kỳ, trả về danh sách sau khi thay. Tên của họ được chép vào
+    /// <c>AssignedStaff</c> để bản in không phải nối bảng.
+    /// </summary>
+    public static async Task<List<AssignedStaffDto>> ReplaceAsync(
+        IApplicationDbContext db,
+        InventoryPeriod period,
+        IReadOnlyCollection<Guid> userIds,
+        CancellationToken ct,
+        string? otherStaff = null)
+    {
+        var wanted = userIds.Distinct().ToList();
+
+        var users = wanted.Count == 0
+            ? new List<AssignedStaffDto>()
+            : await db.Users
+                .AsNoTracking()
+                .Where(user => wanted.Contains(user.Id))
+                .Select(user => new AssignedStaffDto(user.Id, user.FullName))
+                .ToListAsync(ct);
+
+        if (users.Count != wanted.Count)
+        {
+            throw new NotFoundException("Có tài khoản cán bộ không còn tồn tại trong danh sách phân công.");
+        }
+
+        var existing = await db.InventoryPeriodStaff
+            .Where(row => row.PeriodId == period.Id)
+            .ToListAsync(ct);
+
+        foreach (var row in existing.Where(row => !wanted.Contains(row.UserId)))
+        {
+            db.InventoryPeriodStaff.Remove(row);
+        }
+
+        var kept = existing.Select(row => row.UserId).ToHashSet();
+
+        foreach (var userId in wanted.Where(id => !kept.Contains(id)))
+        {
+            // Liên kết mới thì thêm thẳng vào tập hợp chứ không qua navigation của thực thể đang
+            // Unchanged — bài học 20 trong CLAUDE.md.
+            db.InventoryPeriodStaff.Add(new InventoryPeriodStaff
+            {
+                Id = Guid.NewGuid(),
+                PeriodId = period.Id,
+                UserId = userId
+            });
+        }
+
+        var names = users.Select(user => user.FullName).ToList();
+
+        if (!string.IsNullOrWhiteSpace(otherStaff))
+        {
+            names.Add(otherStaff.Trim());
+        }
+
+        if (names.Count > 0)
+        {
+            period.AssignedStaff = string.Join(", ", names);
+        }
+        else if (otherStaff is not null)
+        {
+            // Gửi lên chuỗi rỗng là cố ý xoá, khác hẳn với không gửi trường ấy.
+            period.AssignedStaff = null;
+        }
+
+        return users;
+    }
+
+    public static async Task NotifyAsync(
+        IStaffNotifier notifier,
+        InventoryPeriod period,
+        string warehouseName,
+        IReadOnlyCollection<AssignedStaffDto> assigned,
+        CancellationToken ct)
+    {
+        if (assigned.Count == 0)
+        {
+            return;
+        }
+
+        var deadline = period.EndDate is { } end ? $" Hạn kiểm kê: {end:dd/MM/yyyy}." : string.Empty;
+
+        await notifier.NotifyUsersAsync(
+            assigned.Select(row => row.UserId),
+            StaffNotificationTypes.System,
+            $"Bạn được phân công kiểm kê {warehouseName}",
+            $"Kỳ {period.Code} — {period.Name}, {period.ExpectedCount} ĐKCB cần đối chiếu.{deadline}",
+            "/inventory",
+            ct);
+    }
+}
+
 public class CloseInventoryPeriodCommand : IRequest<InventorySummaryDto>
 {
     public Guid Id { get; set; }

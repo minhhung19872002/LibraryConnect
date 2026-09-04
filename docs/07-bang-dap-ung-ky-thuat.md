@@ -167,6 +167,7 @@ Cập nhật lần cuối: 02/09/2026, sau đợt hoàn thiện (bảo mật, b�
 | III.1 | In đơn đặt hàng theo mẫu | **Có** | Qua trình kết xuất biểu mẫu chung, mẫu `DH-DATHANG` |
 | III.1 | Theo dõi giao hàng, nhận từng phần, cảnh báo quá hạn | **Có** | Trạng thái đơn là hệ quả của số thực nhận; cảnh báo quá hạn theo tham số `ACQ.ORDER_OVERDUE_DAYS` |
 | III.1 | Biên bản bàn giao, in PDF, đính kèm bản scan | **Có** | Số liệu lấy từ số thực nhận của đơn; bản scan lưu ở kho đối tượng, không nằm dưới thư mục web |
+| III.1 | Biên bản có danh sách tài liệu, số lượng, tình trạng | **Có** | Bổ sung 04/09/2026: bảng chi tiết là của chính biên bản, chép sang lúc lập nên sửa đơn đặt về sau không làm đổi tờ giấy đã ký. Cột tình trạng nhập trên màn hình và in ra biên bản. Biên bản không gắn đơn đặt (biếu tặng, nộp lưu chiểu) cũng có bảng chi tiết |
 | III.1 | Báo cáo duyệt mua | **Có** | Theo trạng thái, đơn vị đề nghị, theo tháng; tỷ lệ duyệt và tổng kinh phí duyệt; biểu đồ tròn/cột cho từng lát cắt; xuất Excel và PDF (`kind=PurchaseApproval`) |
 | III.1 | Quản lý nhà cung cấp và lịch sử giao dịch | **Có** | CRUD ở màn hình danh mục, kèm ô đánh giá 1–5 sao; lịch sử giao dịch, tỷ lệ giao đủ, số đơn chưa giao đủ và số sao đã chấm ở màn hình báo cáo |
 | III.2 | Biên mục sơ lược tuân thủ MARC 21 | **Có** | Mười trường, lưu thành biểu ghi MARC 21 mức biên mục 3, tự đẩy vào hàng đợi biên mục chi tiết. Nhập nhanh liên tục ở menu Bổ sung › Biên mục sơ lược: lưu xong giữ nguyên kho, dạng tài liệu, nhà xuất bản, xóa phần của cuốn vừa nhập, trả tiêu điểm về ô nhan đề, đếm "đã nhập N" kèm mã vạch đã sinh |
@@ -181,6 +182,7 @@ Cập nhật lần cuối: 02/09/2026, sau đợt hoàn thiện (bảo mật, b�
 | III.4 | Đóng kho khi bắt đầu kiểm kê | **Có** | Kho đóng thì ngưng nhận chuyển kho; trạng thái từng kho hiện ngay trên màn hình kiểm kê |
 | III.4 | Kho đóng thì ngưng cho mượn/trả tại kho đó, cảnh báo trên màn hình lưu thông | **Có** | Bổ sung 04/09/2026: quầy từ chối ghi mượn bản thuộc kho đang đóng (cả khi gọi thẳng API, HTTP 409); ghi trả vẫn nhận nhưng báo giữ ở quầy; banner trên Quầy lưu thông liệt kê kho đang đóng. Kịch bản LT.30–LT.31 |
 | III.4 | Tạo kỳ kiểm kê, snapshot danh sách kỳ vọng | **Có** | Phạm vi toàn kho / theo khoảng ĐKCB / theo dạng tài liệu; danh sách chốt ngay lúc tạo kỳ |
+| III.4 | Phân công cán bộ cho kỳ kiểm kê | **Có** | Bổ sung 04/09/2026: phân công theo tài khoản, người được phân công nhận thông báo và tra được kỳ của mình. Sửa được giữa kỳ. Vẫn ghi thêm được tên người ngoài danh sách tài khoản để in lên biên bản |
 | III.4 | Quét barcode liên tục, phản hồi khớp / thừa / sai kho | **Có** | Ô quét giữ tiêu điểm sau mỗi lần quét; nhật ký quét hiện ngay bên dưới |
 | III.4 | Nhập tệp quét từ máy đọc rời | **Có** | Mỗi dòng một mã, hoặc CSV lấy cột đầu |
 | III.4 | Tiến độ realtime | **Có** | Đếm số bản kỳ vọng đã quét; mã lạ không đẩy tiến độ vượt tổng; kỳ đang chạy tự nạp lại tiến độ mỗi 5 giây để thấy cả lượt quét từ máy rời và điện thoại |

@@ -464,6 +464,20 @@ export interface PurchaseOrderDetailDto extends PurchaseOrderDto {
   handovers: HandoverSummaryDto[];
 }
 
+/** Một dòng tài liệu trên biên bản bàn giao (III.1). */
+export interface HandoverLineDto {
+  id: string;
+  title: string;
+  author?: string | null;
+  isbn?: string | null;
+  quantity: number;
+  unitPrice: number;
+  amount: number;
+  /** Tình trạng vật lý lúc bàn giao. */
+  condition?: string | null;
+  note?: string | null;
+}
+
 export interface HandoverDto {
   id: string;
   code: string;
@@ -478,6 +492,7 @@ export interface HandoverDto {
   totalAmount: number;
   hasScan: boolean;
   note?: string | null;
+  lines: HandoverLineDto[];
 }
 
 export interface QuickCatalogResultDto {
@@ -514,6 +529,8 @@ export interface InventoryPeriodDto {
   endDate?: string | null;
   status: InventoryPeriodStatus;
   assignedStaff?: string | null;
+  /** Cán bộ được phân công theo tài khoản (III.4). Rỗng với kỳ lập trước 04/09/2026. */
+  assignedUsers: { userId: string; fullName: string }[];
   expectedCount: number;
   scannedCount: number;
   closedAt?: string | null;

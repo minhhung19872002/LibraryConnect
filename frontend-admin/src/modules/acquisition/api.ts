@@ -248,6 +248,10 @@ export const inventoryApi = {
   createPeriod: (payload: Record<string, unknown>) =>
     api.post<string>('/inventory/periods', payload),
 
+  /** Phân công lại cán bộ cho kỳ đang chạy (III.4). */
+  assignStaff: (id: string, userIds: string[]) =>
+    api.put<number>(`/inventory/periods/${id}/staff`, { userIds }),
+
   scan: (id: string, barcode: string, device = 'Web') =>
     api.post<InventoryScanResultDto>(`/inventory/periods/${id}/scan`, { barcode, device }),
 

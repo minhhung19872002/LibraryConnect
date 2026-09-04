@@ -87,6 +87,7 @@ public interface IApplicationDbContext
     DbSet<PurchaseOrder> PurchaseOrders { get; }
     DbSet<PurchaseOrderItem> PurchaseOrderItems { get; }
     DbSet<HandoverRecord> HandoverRecords { get; }
+    DbSet<HandoverLine> HandoverLines { get; }
     DbSet<Item> Items { get; }
     DbSet<ItemMovement> ItemMovements { get; }
     DbSet<ItemDisposal> ItemDisposals { get; }
@@ -94,6 +95,7 @@ public interface IApplicationDbContext
     DbSet<LabelTemplate> LabelTemplates { get; }
     DbSet<FormTemplate> FormTemplates { get; }
     DbSet<InventoryPeriod> InventoryPeriods { get; }
+    DbSet<InventoryPeriodStaff> InventoryPeriodStaff { get; }
     DbSet<InventoryScan> InventoryScans { get; }
     DbSet<InventoryResult> InventoryResults { get; }
 

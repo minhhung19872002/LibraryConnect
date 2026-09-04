@@ -122,6 +122,7 @@ public class LibraryConnectDbContext : DbContext, IApplicationDbContext
     public DbSet<PurchaseOrder> PurchaseOrders => Set<PurchaseOrder>();
     public DbSet<PurchaseOrderItem> PurchaseOrderItems => Set<PurchaseOrderItem>();
     public DbSet<HandoverRecord> HandoverRecords => Set<HandoverRecord>();
+    public DbSet<HandoverLine> HandoverLines => Set<HandoverLine>();
     public DbSet<Item> Items => Set<Item>();
     public DbSet<ItemMovement> ItemMovements => Set<ItemMovement>();
     public DbSet<ItemDisposal> ItemDisposals => Set<ItemDisposal>();
@@ -129,6 +130,7 @@ public class LibraryConnectDbContext : DbContext, IApplicationDbContext
     public DbSet<LabelTemplate> LabelTemplates => Set<LabelTemplate>();
     public DbSet<FormTemplate> FormTemplates => Set<FormTemplate>();
     public DbSet<InventoryPeriod> InventoryPeriods => Set<InventoryPeriod>();
+    public DbSet<InventoryPeriodStaff> InventoryPeriodStaff => Set<InventoryPeriodStaff>();
     public DbSet<InventoryScan> InventoryScans => Set<InventoryScan>();
     public DbSet<InventoryResult> InventoryResults => Set<InventoryResult>();
 

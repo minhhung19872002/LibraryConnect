@@ -7,6 +7,19 @@ namespace LibraryConnect.Domain.Entities.Acq;
 /// Kỳ kiểm kê (III.4). Creating a period snapshots the copies expected in the warehouse; scanning
 /// then produces one result row per expected and per unexpected copy.
 /// </summary>
+/// <summary>
+/// Một cán bộ được phân công vào kỳ kiểm kê (III.4 bước 2: "phân công cán bộ").
+///
+/// Trước 04/09/2026 chỗ này là một ô chữ gõ tay, nên không ai hỏi được "tôi phải kiểm kho nào",
+/// không gửi được thông báo, và người nghỉ việc vẫn đứng tên trên kỳ đang chạy.
+/// </summary>
+public class InventoryPeriodStaff : BaseEntity
+{
+    public Guid PeriodId { get; set; }
+    public InventoryPeriod? Period { get; set; }
+    public Guid UserId { get; set; }
+}
+
 public class InventoryPeriod : BaseEntity
 {
     public string Code { get; set; } = string.Empty;
@@ -21,7 +34,14 @@ public class InventoryPeriod : BaseEntity
     public DateOnly StartDate { get; set; }
     public DateOnly? EndDate { get; set; }
     public InventoryPeriodStatus Status { get; set; } = InventoryPeriodStatus.Preparing;
+    /// <summary>
+    /// Tên cán bộ được phân công, viết sẵn thành một chuỗi để in lên biên bản kiểm kê.
+    ///
+    /// Danh sách thật nằm ở <see cref="Staff"/>; cột này là bản chép để bản in không phải nối bảng,
+    /// và để những kỳ kiểm kê lập trước 04/09/2026 (chỉ có chuỗi gõ tay) vẫn in ra đúng như cũ.
+    /// </summary>
     public string? AssignedStaff { get; set; }
+    public ICollection<InventoryPeriodStaff> Staff { get; set; } = new List<InventoryPeriodStaff>();
     public int ExpectedCount { get; set; }
     public int ScannedCount { get; set; }
     public Guid? ClosedBy { get; set; }

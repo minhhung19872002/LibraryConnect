@@ -187,7 +187,9 @@ public partial class DatabaseSeeder
                     new { header = "ISBN", key = "isbn", width = 1.5, align = "left", sum = false },
                     new { header = "Số lượng", key = "quantity", width = 1.0, align = "right", sum = true },
                     new { header = "Đơn giá", key = "unitPrice", width = 1.2, align = "right", sum = false },
-                    new { header = "Thành tiền", key = "amount", width = 1.4, align = "right", sum = true }
+                    new { header = "Thành tiền", key = "amount", width = 1.4, align = "right", sum = true },
+                    // III.1 đòi biên bản ghi cả tình trạng từng dòng, không chỉ số lượng.
+                    new { header = "Tình trạng", key = "condition", width = 1.6, align = "left", sum = false }
                 },
                 showTotals = true,
                 closingLines = new[]

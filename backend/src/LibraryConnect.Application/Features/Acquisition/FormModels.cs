@@ -221,6 +221,7 @@ public static class FormFieldCatalog
             new FormFieldOption("quantity", "Số lượng", IsRow: true),
             new FormFieldOption("unitPrice", "Đơn giá", IsRow: true),
             new FormFieldOption("amount", "Thành tiền", IsRow: true),
+            new FormFieldOption("condition", "Tình trạng", IsRow: true),
             new FormFieldOption("note", "Ghi chú dòng", IsRow: true)
         },
         [FormTypes.PurchaseOrder] = new[]

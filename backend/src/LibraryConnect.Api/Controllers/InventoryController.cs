@@ -58,6 +58,19 @@ public class InventoryController : ApiControllerBase
         return Ok(Success(id, "Đã tạo kỳ kiểm kê và chốt danh sách ấn phẩm kỳ vọng."));
     }
 
+    /// <summary>Phân công lại cán bộ cho kỳ kiểm kê đang chạy.</summary>
+    [HttpPut("periods/{id:guid}/staff")]
+    [RequirePermission(PermissionCodes.AcqInventoryCreate)]
+    [ProducesResponseType(typeof(ApiResponse<int>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<ApiResponse<int>>> AssignStaff(
+        Guid id, [FromBody] AssignInventoryStaffCommand command, CancellationToken ct)
+    {
+        command.PeriodId = id;
+        var count = await Mediator.Send(command, ct);
+        return Ok(Success(count, $"Đã phân công {count} cán bộ cho kỳ kiểm kê."));
+    }
+
     /// <summary>Ghi nhận một lần quét mã vạch, phản hồi ngay khớp / thừa / sai kho.</summary>
     [HttpPost("periods/{id:guid}/scan")]
     [RequirePermission(PermissionCodes.AcqInventoryScan)]

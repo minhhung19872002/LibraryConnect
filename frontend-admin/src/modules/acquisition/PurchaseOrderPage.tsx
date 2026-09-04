@@ -859,6 +859,42 @@ function HandoverModal({
   const [createdId, setCreatedId] = useState<string | null>(null);
   const [scan, setScan] = useState<File | null>(null);
 
+  // Bảng chi tiết được chép sang biên bản lúc lập. Cán bộ mở ra ghi tình trạng từng dòng — cái mà
+  // đơn đặt không có, vì tình trạng chỉ biết được lúc mở thùng sách ra xem.
+  const detail = useQuery({
+    queryKey: ['handover', createdId],
+    queryFn: () => purchaseApi.handover(createdId!),
+    enabled: createdId !== null,
+  });
+
+  const [conditions, setConditions] = useState<Record<string, string>>({});
+
+  const saveLines = useMutation({
+    mutationFn: () =>
+      purchaseApi.saveHandover(createdId, {
+        orderId,
+        partyA: detail.data!.partyA,
+        partyB: detail.data!.partyB,
+        content: detail.data!.content,
+        note: detail.data!.note,
+        lines: (detail.data?.lines ?? []).map((line) => ({
+          title: line.title,
+          author: line.author,
+          isbn: line.isbn,
+          quantity: line.quantity,
+          unitPrice: line.unitPrice,
+          condition: conditions[line.id] ?? line.condition,
+          note: line.note,
+        })),
+      }),
+    onSuccess: () => {
+      message.success('Đã lưu tình trạng từng dòng.');
+      void detail.refetch();
+    },
+    onError: (error) =>
+      message.error(error instanceof ApiRequestError ? error.message : 'Không lưu được tình trạng.'),
+  });
+
   const save = useMutation({
     mutationFn: (values: Record<string, unknown>) =>
       purchaseApi.saveHandover(null, { ...values, orderId }),
@@ -925,8 +961,48 @@ function HandoverModal({
       {createdId && (
         <>
           <Typography.Paragraph type="secondary">
-            Biên bản đã lập. Có thể đính kèm bản scan sau khi hai bên ký.
+            Biên bản đã lập. Ghi tình trạng từng tài liệu rồi in ra ký; bản scan đính kèm sau.
           </Typography.Paragraph>
+
+          <Table
+            rowKey="id"
+            size="small"
+            pagination={false}
+            loading={detail.isLoading}
+            dataSource={detail.data?.lines ?? []}
+            style={{ marginBottom: 12 }}
+            columns={[
+              { title: 'Nhan đề', dataIndex: 'title', width: 240, ellipsis: true },
+              { title: 'Số lượng', dataIndex: 'quantity', width: 90, align: 'right' },
+              {
+                title: 'Tình trạng',
+                dataIndex: 'condition',
+                width: 220,
+                render: (value: string | null, row) => (
+                  <Input
+                    size="small"
+                    placeholder="Nguyên vẹn"
+                    value={conditions[row.id] ?? value ?? ''}
+                    onChange={(event) =>
+                      setConditions((current) => ({ ...current, [row.id]: event.target.value }))
+                    }
+                  />
+                ),
+              },
+            ]}
+          />
+
+          <Button
+            size="small"
+            type="primary"
+            ghost
+            loading={saveLines.isPending}
+            disabled={(detail.data?.lines?.length ?? 0) === 0}
+            onClick={() => saveLines.mutate()}
+            style={{ marginBottom: 12 }}
+          >
+            Lưu tình trạng
+          </Button>
           <Upload
             accept=".pdf,.png,.jpg,.jpeg,.tif"
             maxCount={1}
