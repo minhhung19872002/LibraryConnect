@@ -237,6 +237,7 @@
   "dueOn": "Due {date}",
   "@dueOn": {"placeholders": {"date": {"type": "String"}}},
   "renewAction": "Renew",
+  "renewalPending": "Renewal requested. The due date changes once the library approves.",
   "renewedTo": "Renewed, new due date {date}.",
   "@renewedTo": {"placeholders": {"date": {"type": "String"}}},
   "renewCount": "Renewed {count}/{max}",

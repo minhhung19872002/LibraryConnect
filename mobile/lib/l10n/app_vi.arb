@@ -237,6 +237,7 @@
   "dueOn": "Hạn trả {date}",
   "@dueOn": {"placeholders": {"date": {"type": "String"}}},
   "renewAction": "Gia hạn",
+  "renewalPending": "Đã gửi yêu cầu gia hạn. Hạn trả đổi sau khi thư viện duyệt.",
   "renewedTo": "Đã gia hạn, hạn trả mới {date}.",
   "@renewedTo": {"placeholders": {"date": {"type": "String"}}},
   "renewCount": "Đã gia hạn {count}/{max}",

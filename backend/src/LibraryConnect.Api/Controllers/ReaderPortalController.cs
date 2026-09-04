@@ -96,7 +96,10 @@ public class ReaderPortalController : ApiControllerBase
     public async Task<ActionResult<ApiResponse<LoanRowDto>>> Renew(Guid id, CancellationToken ct)
     {
         var result = await Mediator.Send(new RenewMyLoanCommand(id), ct);
-        return Ok(Success(result, $"Đã gia hạn tới ngày {result.DueDate:dd/MM/yyyy}."));
+
+        return Ok(Success(result, result.RenewalPending
+            ? "Đã gửi yêu cầu gia hạn tới thư viện. Hạn trả chỉ đổi sau khi cán bộ duyệt."
+            : $"Đã gia hạn tới ngày {result.DueDate:dd/MM/yyyy}."));
     }
 
     /// <summary>Mượn tự phục vụ: quét mã vạch tài liệu và mã điểm mượn tại kho.</summary>

@@ -95,6 +95,11 @@ public class LoanRowDto
     public int OverdueDays { get; set; }
     /// <summary>Tiền phạt dự kiến nếu trả hôm nay, dùng cho báo cáo quá hạn.</summary>
     public decimal EstimatedFine { get; set; }
+    /// <summary>
+    /// Yêu cầu gia hạn đã gửi và đang chờ cán bộ duyệt (chính sách bật <c>RequireRenewalApproval</c>).
+    /// Hạn trả trong dòng này vẫn là hạn cũ — nó chỉ đổi sau khi được duyệt.
+    /// </summary>
+    public bool RenewalPending { get; set; }
     public string? Note { get; set; }
 }
 

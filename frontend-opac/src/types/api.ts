@@ -411,6 +411,8 @@ export interface LoanRow {
   fineOutstanding: number;
   overdueDays: number;
   estimatedFine: number;
+  /** Yêu cầu gia hạn đã gửi, đang chờ cán bộ duyệt; hạn trả vẫn là hạn cũ. */
+  renewalPending?: boolean;
   note?: string;
 }
 

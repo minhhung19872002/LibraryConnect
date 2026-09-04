@@ -704,6 +704,10 @@ class L10nVi extends L10n {
   String get renewAction => 'Gia hạn';
 
   @override
+  String get renewalPending =>
+      'Đã gửi yêu cầu gia hạn. Hạn trả đổi sau khi thư viện duyệt.';
+
+  @override
   String renewedTo(String date) {
     return 'Đã gia hạn, hạn trả mới $date.';
   }

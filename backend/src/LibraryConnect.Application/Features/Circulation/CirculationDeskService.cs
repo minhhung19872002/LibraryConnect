@@ -819,14 +819,24 @@ public class CirculationDeskService : ICirculationDeskService
         };
 
         // Thư viện có thể bắt duyệt gia hạn từ xa; ở quầy thì cán bộ đã là người duyệt.
+        //
+        // Gửi yêu cầu là một việc **thành công**, nên trả về dòng phiếu (hạn trả giữ nguyên) kèm cờ
+        // RenewalPending, không ném ConflictException. Trước 04/09/2026 chỗ này ném lỗi nên máy chủ
+        // trả 409 và trang tra cứu hiện thông báo đỏ cho một thao tác đã chạy đúng.
         if (policy.RequireRenewalApproval && channel != LoanChannel.Desk)
         {
             renewal.Status = AccessRequestStatus.Pending;
             _db.LoanRenewals.Add(renewal);
             await _db.SaveChangesAsync(ct);
 
-            throw new ConflictException(
-                "Đã gửi yêu cầu gia hạn tới thư viện. Hạn trả chỉ đổi sau khi cán bộ duyệt.");
+            var pending = await LoanQuery.Base(_db)
+                .Where(entity => entity.Id == loan.Id)
+                .Select(LoanQuery.Projection)
+                .FirstAsync(ct);
+
+            Enrich(pending, policy, calendar, today);
+            pending.RenewalPending = true;
+            return pending;
         }
 
         renewal.Status = AccessRequestStatus.Approved;

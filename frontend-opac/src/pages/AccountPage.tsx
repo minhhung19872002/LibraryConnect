@@ -71,7 +71,13 @@ export function AccountPage() {
   const renew = useMutation({
     mutationFn: (id: string) => readerApi.renewLoan(id),
     onSuccess: (loan) => {
-      message.success(`Đã gia hạn tới ngày ${date(loan.dueDate)}.`);
+      // Thư viện bật "gia hạn phải duyệt" thì đây là lượt **gửi yêu cầu**: hạn trả chưa đổi, nên
+      // báo đúng việc vừa xảy ra thay vì hứa một ngày mới.
+      message.success(
+        loan.renewalPending
+          ? 'Đã gửi yêu cầu gia hạn. Hạn trả đổi sau khi thư viện duyệt.'
+          : `Đã gia hạn tới ngày ${date(loan.dueDate)}.`,
+      );
       void queryClient.invalidateQueries({ queryKey: ['loans'] });
     },
     onError: (error: Error) => message.error(error.message),

@@ -706,6 +706,10 @@ class L10nEn extends L10n {
   String get renewAction => 'Renew';
 
   @override
+  String get renewalPending =>
+      'Renewal requested. The due date changes once the library approves.';
+
+  @override
   String renewedTo(String date) {
     return 'Renewed, new due date $date.';
   }

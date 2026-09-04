@@ -943,7 +943,8 @@ as double,
 /// @nodoc
 mixin _$LoanRow {
 
- String get id; String get code; String get itemId; String? get barcode; String? get title; String? get callNumber; String? get warehouseName; DateTime? get loanDate; String get dueDate; DateTime? get returnDate; int get renewedCount; int get maxRenewals; String get status; String get loanType; String get channel; double get fineAmount; double get fineOutstanding; int get overdueDays; double get estimatedFine; String? get note;
+ String get id; String get code; String get itemId; String? get barcode; String? get title; String? get callNumber; String? get warehouseName; DateTime? get loanDate; String get dueDate; DateTime? get returnDate; int get renewedCount; int get maxRenewals; String get status; String get loanType; String get channel; double get fineAmount; double get fineOutstanding; int get overdueDays; double get estimatedFine;/// Yêu cầu gia hạn đã gửi, đang chờ cán bộ duyệt; hạn trả vẫn là hạn cũ.
+ bool get renewalPending; String? get note;
 /// Create a copy of LoanRow
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -957,20 +958,20 @@ $LoanRowCopyWith<LoanRow> get copyWith => _$LoanRowCopyWithImpl<LoanRow>(this as
 @override
 bool operator ==(Object other) {
   final _this = this as LoanRow;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is LoanRow&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.code, _this.code) || other.code == _this.code)&&(identical(other.itemId, _this.itemId) || other.itemId == _this.itemId)&&(identical(other.barcode, _this.barcode) || other.barcode == _this.barcode)&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.callNumber, _this.callNumber) || other.callNumber == _this.callNumber)&&(identical(other.warehouseName, _this.warehouseName) || other.warehouseName == _this.warehouseName)&&(identical(other.loanDate, _this.loanDate) || other.loanDate == _this.loanDate)&&(identical(other.dueDate, _this.dueDate) || other.dueDate == _this.dueDate)&&(identical(other.returnDate, _this.returnDate) || other.returnDate == _this.returnDate)&&(identical(other.renewedCount, _this.renewedCount) || other.renewedCount == _this.renewedCount)&&(identical(other.maxRenewals, _this.maxRenewals) || other.maxRenewals == _this.maxRenewals)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.loanType, _this.loanType) || other.loanType == _this.loanType)&&(identical(other.channel, _this.channel) || other.channel == _this.channel)&&(identical(other.fineAmount, _this.fineAmount) || other.fineAmount == _this.fineAmount)&&(identical(other.fineOutstanding, _this.fineOutstanding) || other.fineOutstanding == _this.fineOutstanding)&&(identical(other.overdueDays, _this.overdueDays) || other.overdueDays == _this.overdueDays)&&(identical(other.estimatedFine, _this.estimatedFine) || other.estimatedFine == _this.estimatedFine)&&(identical(other.note, _this.note) || other.note == _this.note));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LoanRow&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.code, _this.code) || other.code == _this.code)&&(identical(other.itemId, _this.itemId) || other.itemId == _this.itemId)&&(identical(other.barcode, _this.barcode) || other.barcode == _this.barcode)&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.callNumber, _this.callNumber) || other.callNumber == _this.callNumber)&&(identical(other.warehouseName, _this.warehouseName) || other.warehouseName == _this.warehouseName)&&(identical(other.loanDate, _this.loanDate) || other.loanDate == _this.loanDate)&&(identical(other.dueDate, _this.dueDate) || other.dueDate == _this.dueDate)&&(identical(other.returnDate, _this.returnDate) || other.returnDate == _this.returnDate)&&(identical(other.renewedCount, _this.renewedCount) || other.renewedCount == _this.renewedCount)&&(identical(other.maxRenewals, _this.maxRenewals) || other.maxRenewals == _this.maxRenewals)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.loanType, _this.loanType) || other.loanType == _this.loanType)&&(identical(other.channel, _this.channel) || other.channel == _this.channel)&&(identical(other.fineAmount, _this.fineAmount) || other.fineAmount == _this.fineAmount)&&(identical(other.fineOutstanding, _this.fineOutstanding) || other.fineOutstanding == _this.fineOutstanding)&&(identical(other.overdueDays, _this.overdueDays) || other.overdueDays == _this.overdueDays)&&(identical(other.estimatedFine, _this.estimatedFine) || other.estimatedFine == _this.estimatedFine)&&(identical(other.renewalPending, _this.renewalPending) || other.renewalPending == _this.renewalPending)&&(identical(other.note, _this.note) || other.note == _this.note));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as LoanRow;
-  return Object.hashAll([runtimeType,_this.id,_this.code,_this.itemId,_this.barcode,_this.title,_this.callNumber,_this.warehouseName,_this.loanDate,_this.dueDate,_this.returnDate,_this.renewedCount,_this.maxRenewals,_this.status,_this.loanType,_this.channel,_this.fineAmount,_this.fineOutstanding,_this.overdueDays,_this.estimatedFine,_this.note]);
+  return Object.hashAll([runtimeType,_this.id,_this.code,_this.itemId,_this.barcode,_this.title,_this.callNumber,_this.warehouseName,_this.loanDate,_this.dueDate,_this.returnDate,_this.renewedCount,_this.maxRenewals,_this.status,_this.loanType,_this.channel,_this.fineAmount,_this.fineOutstanding,_this.overdueDays,_this.estimatedFine,_this.renewalPending,_this.note]);
 }
 
 @override
 String toString() {
   final _this = this as LoanRow;
-  return 'LoanRow(id: ${_this.id}, code: ${_this.code}, itemId: ${_this.itemId}, barcode: ${_this.barcode}, title: ${_this.title}, callNumber: ${_this.callNumber}, warehouseName: ${_this.warehouseName}, loanDate: ${_this.loanDate}, dueDate: ${_this.dueDate}, returnDate: ${_this.returnDate}, renewedCount: ${_this.renewedCount}, maxRenewals: ${_this.maxRenewals}, status: ${_this.status}, loanType: ${_this.loanType}, channel: ${_this.channel}, fineAmount: ${_this.fineAmount}, fineOutstanding: ${_this.fineOutstanding}, overdueDays: ${_this.overdueDays}, estimatedFine: ${_this.estimatedFine}, note: ${_this.note})';
+  return 'LoanRow(id: ${_this.id}, code: ${_this.code}, itemId: ${_this.itemId}, barcode: ${_this.barcode}, title: ${_this.title}, callNumber: ${_this.callNumber}, warehouseName: ${_this.warehouseName}, loanDate: ${_this.loanDate}, dueDate: ${_this.dueDate}, returnDate: ${_this.returnDate}, renewedCount: ${_this.renewedCount}, maxRenewals: ${_this.maxRenewals}, status: ${_this.status}, loanType: ${_this.loanType}, channel: ${_this.channel}, fineAmount: ${_this.fineAmount}, fineOutstanding: ${_this.fineOutstanding}, overdueDays: ${_this.overdueDays}, estimatedFine: ${_this.estimatedFine}, renewalPending: ${_this.renewalPending}, note: ${_this.note})';
 }
 
 
@@ -981,7 +982,7 @@ abstract mixin class $LoanRowCopyWith<$Res>  {
   factory $LoanRowCopyWith(LoanRow value, $Res Function(LoanRow) _then) = _$LoanRowCopyWithImpl;
 @useResult
 $Res call({
- String id, String code, String itemId, String? barcode, String? title, String? callNumber, String? warehouseName, DateTime? loanDate, String dueDate, DateTime? returnDate, int renewedCount, int maxRenewals, String status, String loanType, String channel, double fineAmount, double fineOutstanding, int overdueDays, double estimatedFine, String? note
+ String id, String code, String itemId, String? barcode, String? title, String? callNumber, String? warehouseName, DateTime? loanDate, String dueDate, DateTime? returnDate, int renewedCount, int maxRenewals, String status, String loanType, String channel, double fineAmount, double fineOutstanding, int overdueDays, double estimatedFine, bool renewalPending, String? note
 });
 
 
@@ -998,7 +999,7 @@ class _$LoanRowCopyWithImpl<$Res>
 
 /// Create a copy of LoanRow
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? code = null,Object? itemId = null,Object? barcode = freezed,Object? title = freezed,Object? callNumber = freezed,Object? warehouseName = freezed,Object? loanDate = freezed,Object? dueDate = null,Object? returnDate = freezed,Object? renewedCount = null,Object? maxRenewals = null,Object? status = null,Object? loanType = null,Object? channel = null,Object? fineAmount = null,Object? fineOutstanding = null,Object? overdueDays = null,Object? estimatedFine = null,Object? note = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? code = null,Object? itemId = null,Object? barcode = freezed,Object? title = freezed,Object? callNumber = freezed,Object? warehouseName = freezed,Object? loanDate = freezed,Object? dueDate = null,Object? returnDate = freezed,Object? renewedCount = null,Object? maxRenewals = null,Object? status = null,Object? loanType = null,Object? channel = null,Object? fineAmount = null,Object? fineOutstanding = null,Object? overdueDays = null,Object? estimatedFine = null,Object? renewalPending = null,Object? note = freezed,}) {
   return _then(LoanRow(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,code: null == code ? _self.code : code // ignore: cast_nullable_to_non_nullable
@@ -1019,7 +1020,8 @@ as String,fineAmount: null == fineAmount ? _self.fineAmount : fineAmount // igno
 as double,fineOutstanding: null == fineOutstanding ? _self.fineOutstanding : fineOutstanding // ignore: cast_nullable_to_non_nullable
 as double,overdueDays: null == overdueDays ? _self.overdueDays : overdueDays // ignore: cast_nullable_to_non_nullable
 as int,estimatedFine: null == estimatedFine ? _self.estimatedFine : estimatedFine // ignore: cast_nullable_to_non_nullable
-as double,note: freezed == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
+as double,renewalPending: null == renewalPending ? _self.renewalPending : renewalPending // ignore: cast_nullable_to_non_nullable
+as bool,note: freezed == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
@@ -1105,10 +1107,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String code,  String itemId,  String? barcode,  String? title,  String? callNumber,  String? warehouseName,  DateTime? loanDate,  String dueDate,  DateTime? returnDate,  int renewedCount,  int maxRenewals,  String status,  String loanType,  String channel,  double fineAmount,  double fineOutstanding,  int overdueDays,  double estimatedFine,  String? note)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String code,  String itemId,  String? barcode,  String? title,  String? callNumber,  String? warehouseName,  DateTime? loanDate,  String dueDate,  DateTime? returnDate,  int renewedCount,  int maxRenewals,  String status,  String loanType,  String channel,  double fineAmount,  double fineOutstanding,  int overdueDays,  double estimatedFine,  bool renewalPending,  String? note)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _LoanRow() when $default != null:
-return $default(_that.id,_that.code,_that.itemId,_that.barcode,_that.title,_that.callNumber,_that.warehouseName,_that.loanDate,_that.dueDate,_that.returnDate,_that.renewedCount,_that.maxRenewals,_that.status,_that.loanType,_that.channel,_that.fineAmount,_that.fineOutstanding,_that.overdueDays,_that.estimatedFine,_that.note);case _:
+return $default(_that.id,_that.code,_that.itemId,_that.barcode,_that.title,_that.callNumber,_that.warehouseName,_that.loanDate,_that.dueDate,_that.returnDate,_that.renewedCount,_that.maxRenewals,_that.status,_that.loanType,_that.channel,_that.fineAmount,_that.fineOutstanding,_that.overdueDays,_that.estimatedFine,_that.renewalPending,_that.note);case _:
   return orElse();
 
 }
@@ -1126,10 +1128,10 @@ return $default(_that.id,_that.code,_that.itemId,_that.barcode,_that.title,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String code,  String itemId,  String? barcode,  String? title,  String? callNumber,  String? warehouseName,  DateTime? loanDate,  String dueDate,  DateTime? returnDate,  int renewedCount,  int maxRenewals,  String status,  String loanType,  String channel,  double fineAmount,  double fineOutstanding,  int overdueDays,  double estimatedFine,  String? note)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String code,  String itemId,  String? barcode,  String? title,  String? callNumber,  String? warehouseName,  DateTime? loanDate,  String dueDate,  DateTime? returnDate,  int renewedCount,  int maxRenewals,  String status,  String loanType,  String channel,  double fineAmount,  double fineOutstanding,  int overdueDays,  double estimatedFine,  bool renewalPending,  String? note)  $default,) {final _that = this;
 switch (_that) {
 case _LoanRow():
-return $default(_that.id,_that.code,_that.itemId,_that.barcode,_that.title,_that.callNumber,_that.warehouseName,_that.loanDate,_that.dueDate,_that.returnDate,_that.renewedCount,_that.maxRenewals,_that.status,_that.loanType,_that.channel,_that.fineAmount,_that.fineOutstanding,_that.overdueDays,_that.estimatedFine,_that.note);case _:
+return $default(_that.id,_that.code,_that.itemId,_that.barcode,_that.title,_that.callNumber,_that.warehouseName,_that.loanDate,_that.dueDate,_that.returnDate,_that.renewedCount,_that.maxRenewals,_that.status,_that.loanType,_that.channel,_that.fineAmount,_that.fineOutstanding,_that.overdueDays,_that.estimatedFine,_that.renewalPending,_that.note);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1146,10 +1148,10 @@ return $default(_that.id,_that.code,_that.itemId,_that.barcode,_that.title,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String code,  String itemId,  String? barcode,  String? title,  String? callNumber,  String? warehouseName,  DateTime? loanDate,  String dueDate,  DateTime? returnDate,  int renewedCount,  int maxRenewals,  String status,  String loanType,  String channel,  double fineAmount,  double fineOutstanding,  int overdueDays,  double estimatedFine,  String? note)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String code,  String itemId,  String? barcode,  String? title,  String? callNumber,  String? warehouseName,  DateTime? loanDate,  String dueDate,  DateTime? returnDate,  int renewedCount,  int maxRenewals,  String status,  String loanType,  String channel,  double fineAmount,  double fineOutstanding,  int overdueDays,  double estimatedFine,  bool renewalPending,  String? note)?  $default,) {final _that = this;
 switch (_that) {
 case _LoanRow() when $default != null:
-return $default(_that.id,_that.code,_that.itemId,_that.barcode,_that.title,_that.callNumber,_that.warehouseName,_that.loanDate,_that.dueDate,_that.returnDate,_that.renewedCount,_that.maxRenewals,_that.status,_that.loanType,_that.channel,_that.fineAmount,_that.fineOutstanding,_that.overdueDays,_that.estimatedFine,_that.note);case _:
+return $default(_that.id,_that.code,_that.itemId,_that.barcode,_that.title,_that.callNumber,_that.warehouseName,_that.loanDate,_that.dueDate,_that.returnDate,_that.renewedCount,_that.maxRenewals,_that.status,_that.loanType,_that.channel,_that.fineAmount,_that.fineOutstanding,_that.overdueDays,_that.estimatedFine,_that.renewalPending,_that.note);case _:
   return null;
 
 }
@@ -1161,7 +1163,7 @@ return $default(_that.id,_that.code,_that.itemId,_that.barcode,_that.title,_that
 @JsonSerializable()
 
 class _LoanRow extends LoanRow {
-  const _LoanRow({required this.id, this.code = '', this.itemId = '', this.barcode, this.title, this.callNumber, this.warehouseName, this.loanDate, required this.dueDate, this.returnDate, this.renewedCount = 0, this.maxRenewals = 0, this.status = 'Active', this.loanType = '', this.channel = '', this.fineAmount = 0, this.fineOutstanding = 0, this.overdueDays = 0, this.estimatedFine = 0, this.note}): super._();
+  const _LoanRow({required this.id, this.code = '', this.itemId = '', this.barcode, this.title, this.callNumber, this.warehouseName, this.loanDate, required this.dueDate, this.returnDate, this.renewedCount = 0, this.maxRenewals = 0, this.status = 'Active', this.loanType = '', this.channel = '', this.fineAmount = 0, this.fineOutstanding = 0, this.overdueDays = 0, this.estimatedFine = 0, this.renewalPending = false, this.note}): super._();
   factory _LoanRow.fromJson(Map<String, dynamic> json) => _$LoanRowFromJson(json);
 
 @override final  String id;
@@ -1183,6 +1185,8 @@ class _LoanRow extends LoanRow {
 @override@JsonKey() final  double fineOutstanding;
 @override@JsonKey() final  int overdueDays;
 @override@JsonKey() final  double estimatedFine;
+/// Yêu cầu gia hạn đã gửi, đang chờ cán bộ duyệt; hạn trả vẫn là hạn cũ.
+@override@JsonKey() final  bool renewalPending;
 @override final  String? note;
 
 /// Create a copy of LoanRow
@@ -1198,18 +1202,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _LoanRow&&(identical(other.id, id) || other.id == id)&&(identical(other.code, code) || other.code == code)&&(identical(other.itemId, itemId) || other.itemId == itemId)&&(identical(other.barcode, barcode) || other.barcode == barcode)&&(identical(other.title, title) || other.title == title)&&(identical(other.callNumber, callNumber) || other.callNumber == callNumber)&&(identical(other.warehouseName, warehouseName) || other.warehouseName == warehouseName)&&(identical(other.loanDate, loanDate) || other.loanDate == loanDate)&&(identical(other.dueDate, dueDate) || other.dueDate == dueDate)&&(identical(other.returnDate, returnDate) || other.returnDate == returnDate)&&(identical(other.renewedCount, renewedCount) || other.renewedCount == renewedCount)&&(identical(other.maxRenewals, maxRenewals) || other.maxRenewals == maxRenewals)&&(identical(other.status, status) || other.status == status)&&(identical(other.loanType, loanType) || other.loanType == loanType)&&(identical(other.channel, channel) || other.channel == channel)&&(identical(other.fineAmount, fineAmount) || other.fineAmount == fineAmount)&&(identical(other.fineOutstanding, fineOutstanding) || other.fineOutstanding == fineOutstanding)&&(identical(other.overdueDays, overdueDays) || other.overdueDays == overdueDays)&&(identical(other.estimatedFine, estimatedFine) || other.estimatedFine == estimatedFine)&&(identical(other.note, note) || other.note == note));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _LoanRow&&(identical(other.id, id) || other.id == id)&&(identical(other.code, code) || other.code == code)&&(identical(other.itemId, itemId) || other.itemId == itemId)&&(identical(other.barcode, barcode) || other.barcode == barcode)&&(identical(other.title, title) || other.title == title)&&(identical(other.callNumber, callNumber) || other.callNumber == callNumber)&&(identical(other.warehouseName, warehouseName) || other.warehouseName == warehouseName)&&(identical(other.loanDate, loanDate) || other.loanDate == loanDate)&&(identical(other.dueDate, dueDate) || other.dueDate == dueDate)&&(identical(other.returnDate, returnDate) || other.returnDate == returnDate)&&(identical(other.renewedCount, renewedCount) || other.renewedCount == renewedCount)&&(identical(other.maxRenewals, maxRenewals) || other.maxRenewals == maxRenewals)&&(identical(other.status, status) || other.status == status)&&(identical(other.loanType, loanType) || other.loanType == loanType)&&(identical(other.channel, channel) || other.channel == channel)&&(identical(other.fineAmount, fineAmount) || other.fineAmount == fineAmount)&&(identical(other.fineOutstanding, fineOutstanding) || other.fineOutstanding == fineOutstanding)&&(identical(other.overdueDays, overdueDays) || other.overdueDays == overdueDays)&&(identical(other.estimatedFine, estimatedFine) || other.estimatedFine == estimatedFine)&&(identical(other.renewalPending, renewalPending) || other.renewalPending == renewalPending)&&(identical(other.note, note) || other.note == note));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hashAll([runtimeType,id,code,itemId,barcode,title,callNumber,warehouseName,loanDate,dueDate,returnDate,renewedCount,maxRenewals,status,loanType,channel,fineAmount,fineOutstanding,overdueDays,estimatedFine,note]);
+    return Object.hashAll([runtimeType,id,code,itemId,barcode,title,callNumber,warehouseName,loanDate,dueDate,returnDate,renewedCount,maxRenewals,status,loanType,channel,fineAmount,fineOutstanding,overdueDays,estimatedFine,renewalPending,note]);
 }
 
 @override
 String toString() {
-    return 'LoanRow(id: $id, code: $code, itemId: $itemId, barcode: $barcode, title: $title, callNumber: $callNumber, warehouseName: $warehouseName, loanDate: $loanDate, dueDate: $dueDate, returnDate: $returnDate, renewedCount: $renewedCount, maxRenewals: $maxRenewals, status: $status, loanType: $loanType, channel: $channel, fineAmount: $fineAmount, fineOutstanding: $fineOutstanding, overdueDays: $overdueDays, estimatedFine: $estimatedFine, note: $note)';
+    return 'LoanRow(id: $id, code: $code, itemId: $itemId, barcode: $barcode, title: $title, callNumber: $callNumber, warehouseName: $warehouseName, loanDate: $loanDate, dueDate: $dueDate, returnDate: $returnDate, renewedCount: $renewedCount, maxRenewals: $maxRenewals, status: $status, loanType: $loanType, channel: $channel, fineAmount: $fineAmount, fineOutstanding: $fineOutstanding, overdueDays: $overdueDays, estimatedFine: $estimatedFine, renewalPending: $renewalPending, note: $note)';
 }
 
 
@@ -1220,7 +1224,7 @@ abstract mixin class _$LoanRowCopyWith<$Res> implements $LoanRowCopyWith<$Res> {
   factory _$LoanRowCopyWith(_LoanRow value, $Res Function(_LoanRow) _then) = __$LoanRowCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String code, String itemId, String? barcode, String? title, String? callNumber, String? warehouseName, DateTime? loanDate, String dueDate, DateTime? returnDate, int renewedCount, int maxRenewals, String status, String loanType, String channel, double fineAmount, double fineOutstanding, int overdueDays, double estimatedFine, String? note
+ String id, String code, String itemId, String? barcode, String? title, String? callNumber, String? warehouseName, DateTime? loanDate, String dueDate, DateTime? returnDate, int renewedCount, int maxRenewals, String status, String loanType, String channel, double fineAmount, double fineOutstanding, int overdueDays, double estimatedFine, bool renewalPending, String? note
 });
 
 
@@ -1237,7 +1241,7 @@ class __$LoanRowCopyWithImpl<$Res>
 
 /// Create a copy of LoanRow
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? code = null,Object? itemId = null,Object? barcode = freezed,Object? title = freezed,Object? callNumber = freezed,Object? warehouseName = freezed,Object? loanDate = freezed,Object? dueDate = null,Object? returnDate = freezed,Object? renewedCount = null,Object? maxRenewals = null,Object? status = null,Object? loanType = null,Object? channel = null,Object? fineAmount = null,Object? fineOutstanding = null,Object? overdueDays = null,Object? estimatedFine = null,Object? note = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? code = null,Object? itemId = null,Object? barcode = freezed,Object? title = freezed,Object? callNumber = freezed,Object? warehouseName = freezed,Object? loanDate = freezed,Object? dueDate = null,Object? returnDate = freezed,Object? renewedCount = null,Object? maxRenewals = null,Object? status = null,Object? loanType = null,Object? channel = null,Object? fineAmount = null,Object? fineOutstanding = null,Object? overdueDays = null,Object? estimatedFine = null,Object? renewalPending = null,Object? note = freezed,}) {
   return _then(_LoanRow(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,code: null == code ? _self.code : code // ignore: cast_nullable_to_non_nullable
@@ -1258,7 +1262,8 @@ as String,fineAmount: null == fineAmount ? _self.fineAmount : fineAmount // igno
 as double,fineOutstanding: null == fineOutstanding ? _self.fineOutstanding : fineOutstanding // ignore: cast_nullable_to_non_nullable
 as double,overdueDays: null == overdueDays ? _self.overdueDays : overdueDays // ignore: cast_nullable_to_non_nullable
 as int,estimatedFine: null == estimatedFine ? _self.estimatedFine : estimatedFine // ignore: cast_nullable_to_non_nullable
-as double,note: freezed == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
+as double,renewalPending: null == renewalPending ? _self.renewalPending : renewalPending // ignore: cast_nullable_to_non_nullable
+as bool,note: freezed == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }

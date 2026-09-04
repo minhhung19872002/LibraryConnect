@@ -1355,9 +1355,9 @@ public class CirculationTests
 
     /// <summary>Tạo bạn đọc có mật khẩu và trả về client đã đăng nhập bằng tài khoản bạn đọc.</summary>
     private async Task<(HttpClient Client, Guid ReaderId, string CardNumber)> ReaderClientAsync(
-        HttpClient staff, string fullName)
+        HttpClient staff, string fullName, string? readerTypeCode = null)
     {
-        var readerId = await NewReaderAsync(staff, fullName);
+        var readerId = await NewReaderAsync(staff, fullName, readerTypeCode);
         var reader = await ReadAsync<ReaderDetailDto>(await staff.GetAsync($"/api/readers/{readerId}"));
 
         var password = await ReadAsync<string>(await staff.PostAsJsonAsync(
@@ -1508,6 +1508,69 @@ public class CirculationTests
 
         fines.TotalOutstanding.Should().Be(12000);
         fines.Fines.Should().ContainSingle();
+    }
+
+    [Fact]
+    public async Task Gui_yeu_cau_gia_han_cho_duyet_la_thanh_cong_chu_khong_phai_loi()
+    {
+        // IX.3: thư viện bật "gia hạn phải duyệt" thì bạn đọc bấm Gia hạn trên trang tra cứu là
+        // **gửi yêu cầu** — một việc thành công. Trước 04/09/2026 đường ấy ném ConflictException nên
+        // máy chủ trả 409 và trang tra cứu hiện thông báo lỗi đỏ cho một thao tác đã chạy đúng.
+        var staff = await ClientAsync();
+
+        var types = await ReadAsync<PagedResult<CatalogItemDto>>(
+            await staff.GetAsync("/api/catalogs/reader-types/items?pageSize=50"));
+        var readerTypeCode = "NCS";
+        var readerTypeId = types.Items.First(item => item.Code == readerTypeCode).Id;
+
+        var policyId = await ReadAsync<Guid>(await staff.PostAsJsonAsync("/api/circulation/policies", new
+        {
+            name = $"Duyệt gia hạn {Unique()}",
+            readerTypeId,
+            // Ô nào ưu tiên cao hơn thì thắng, và số lớn là cao — phải vượt mọi ô đã khai.
+            priority = 1000,
+            maxItems = 5,
+            // Gia hạn dài hơn kỳ mượn, để hạn mới chắc chắn xa hơn hạn cũ (máy chủ từ chối lượt
+            // gia hạn không kéo dài được hạn).
+            loanDays = 7,
+            maxRenewals = 3,
+            renewalDays = 21,
+            allowLoan = true,
+            allowRenew = true,
+            requireRenewalApproval = true,
+            isActive = true
+        }));
+
+        try
+        {
+            var (reader, readerId, _) = await ReaderClientAsync(staff, "Bạn đọc gia hạn chờ duyệt", readerTypeCode);
+            var barcodes = await NewCirculatableItemsAsync(staff, "Sách gia hạn chờ duyệt");
+
+            (await staff.PostAsJsonAsync("/api/circulation/desk/checkout",
+                new { readerId, barcodes })).EnsureSuccessStatusCode();
+
+            var current = await ReadAsync<PagedResult<LoanRowDto>>(
+                await reader.GetAsync("/api/reader/loans/current?page=1&pageSize=10"));
+            var loan = current.Items.Single(row => row.Barcode == barcodes[0]);
+
+            var response = await reader.PostAsync($"/api/reader/loans/{loan.Id}/renew", null);
+
+            response.StatusCode.Should().Be(HttpStatusCode.OK,
+                "gửi yêu cầu duyệt là việc thành công, không phải xung đột; máy chủ trả: "
+                + await response.Content.ReadAsStringAsync());
+
+            var payload = await response.Content.ReadFromJsonAsync<ApiResponse<LoanRowDto>>(
+                LibraryConnectFactory.JsonOptions);
+
+            payload!.Message.Should().Contain("gửi yêu cầu");
+            payload.Data!.RenewalPending.Should().BeTrue();
+            payload.Data.DueDate.Should().Be(loan.DueDate, "hạn trả chỉ đổi sau khi cán bộ duyệt");
+            payload.Data.RenewedCount.Should().Be(loan.RenewedCount);
+        }
+        finally
+        {
+            await staff.DeleteAsync($"/api/circulation/policies/{policyId}");
+        }
     }
 
     [Fact]

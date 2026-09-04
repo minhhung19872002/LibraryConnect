@@ -1369,6 +1369,12 @@ abstract class L10n {
   /// **'Gia hạn'**
   String get renewAction;
 
+  /// No description provided for @renewalPending.
+  ///
+  /// In vi, this message translates to:
+  /// **'Đã gửi yêu cầu gia hạn. Hạn trả đổi sau khi thư viện duyệt.'**
+  String get renewalPending;
+
   /// No description provided for @renewedTo.
   ///
   /// In vi, this message translates to:

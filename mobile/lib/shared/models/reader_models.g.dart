@@ -136,6 +136,7 @@ _LoanRow _$LoanRowFromJson(Map<String, dynamic> json) => _LoanRow(
   fineOutstanding: (json['fineOutstanding'] as num?)?.toDouble() ?? 0,
   overdueDays: (json['overdueDays'] as num?)?.toInt() ?? 0,
   estimatedFine: (json['estimatedFine'] as num?)?.toDouble() ?? 0,
+  renewalPending: json['renewalPending'] as bool? ?? false,
   note: json['note'] as String?,
 );
 
@@ -159,6 +160,7 @@ Map<String, dynamic> _$LoanRowToJson(_LoanRow instance) => <String, dynamic>{
   'fineOutstanding': instance.fineOutstanding,
   'overdueDays': instance.overdueDays,
   'estimatedFine': instance.estimatedFine,
+  'renewalPending': instance.renewalPending,
   'note': instance.note,
 };
 

@@ -153,7 +153,9 @@ class _CurrentLoansTabState extends ConsumerState<_CurrentLoansTab> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            l10n.renewedTo(due == null ? renewed.dueDate : _date.format(due)),
+            renewed.renewalPending
+                ? l10n.renewalPending
+                : l10n.renewedTo(due == null ? renewed.dueDate : _date.format(due)),
           ),
         ),
       );
