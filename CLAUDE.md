@@ -32,13 +32,13 @@ liệu trình diễn lớn, rà soát lần hai, và làm sạch bảng đáp �
 sổ lỗi) và **đợt rà thứ ba** (mục H) đi vào sáu chỗ hai đợt trước chưa tới — trình soạn MARC bằng
 chuột, ba trình thiết kế mẫu, kiểm kê, đóng tập, trình đọc có chữ chìm, sao lưu – phục hồi — và tìm
 ra hai lỗi nghiêm trọng đã sống từ phase 5: sửa biểu ghi đã có thì không lưu được, và địa chỉ IP người
-dùng vừa giả được vừa bị nhốt chung một ngăn giới hạn tốc độ. Cộng tất cả: **105 lỗi, đã sửa 103**; hai mục còn lại (thiếu chức
+dùng vừa giả được vừa bị nhốt chung một ngăn giới hạn tốc độ. Cộng tất cả: **106 lỗi, đã sửa 104**; hai mục còn lại (thiếu chức
 năng H3, nguy cơ H9) ghi rõ ở "Làm tiếp gì sau đây" của sổ lỗi. Trang tra cứu đã áp lại theo dự án
 Claude Design "LibraryConnect layout design".
 
 | Tài liệu | Nội dung |
 |---|---|
-| `docs/08-so-loi.md` | Sổ lỗi sáu đợt: 37 lỗi hai đợt đầu, 5 lỗi đợt rà thứ hai (mục E), 9 lỗi đợt áp bản thiết kế (mục G), 7 lỗi đợt rà thứ ba (mục H), 8 lỗi đợt triển khai (mục I), **46 lỗi đợt rà hoàn thiện 04/09/2026 (mục J, chia theo phân hệ: J, J.C, J.B, J.L, J.D, J.X)** |
+| `docs/08-so-loi.md` | Sổ lỗi sáu đợt: 37 lỗi hai đợt đầu, 5 lỗi đợt rà thứ hai (mục E), 9 lỗi đợt áp bản thiết kế (mục G), 7 lỗi đợt rà thứ ba (mục H), 8 lỗi đợt triển khai (mục I), **47 lỗi đợt rà hoàn thiện 04/09/2026 (mục J, chia theo phân hệ: J, J.C, J.B, J.L, J.D, J.X)** |
 | `docs/09-nguon-du-lieu.md` | Khảo sát 16 nguồn dữ liệu thư mục, giấy phép từng nguồn, kết quả nạp |
 | `docs/00-quyet-dinh-ky-thuat.md` | Sổ quyết định — mọi chỗ tự chốt khi đặc tả không nói rõ |
 | `docs/01`–`docs/07` | Bảy tài liệu bàn giao theo mục 10 |

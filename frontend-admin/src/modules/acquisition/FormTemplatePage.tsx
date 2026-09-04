@@ -25,6 +25,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { Can } from '@/components/PermissionGate';
 import { PERMISSIONS } from '@/api/permissions';
 import { ApiRequestError } from '@/api/client';
+import { moveItem } from '@/lib/reorder';
 import { formsApi } from './api';
 import type {
   FormColumnDto,
@@ -236,6 +237,36 @@ function FormTemplateDrawer({
       ),
     }));
 
+  // Kéo thả sắp xếp (III.6 — "kéo thả trường"): trước đây thêm trường xong là thứ tự cố định, muốn
+  // đổi phải xoá rồi thêm lại. Dùng kéo thả gốc của trình duyệt, không thêm thư viện.
+  const [dragging, setDragging] = useState<{ list: 'fields' | 'columns'; index: number } | null>(null);
+
+  const moveField = (from: number, to: number) =>
+    setLayout((current) => ({ ...current, fields: moveItem(current.fields, from, to) }));
+
+  const moveColumn = (from: number, to: number) =>
+    setLayout((current) => ({ ...current, columns: moveItem(current.columns, from, to) }));
+
+  /** Thuộc tính kéo thả cho một dòng bảng; `list` để không kéo nhầm giữa hai bảng. */
+  const dragRow = (list: 'fields' | 'columns', index: number, move: (from: number, to: number) => void) => ({
+    draggable: true,
+    onDragStart: () => setDragging({ list, index }),
+    onDragEnd: () => setDragging(null),
+    onDragOver: (event: React.DragEvent<HTMLElement>) => {
+      if (dragging?.list === list) {
+        event.preventDefault();
+      }
+    },
+    onDrop: (event: React.DragEvent<HTMLElement>) => {
+      event.preventDefault();
+      if (dragging?.list === list && dragging.index !== index) {
+        move(dragging.index, index);
+      }
+      setDragging(null);
+    },
+    style: { cursor: 'grab' },
+  });
+
   const updateColumn = (index: number, patch: Partial<FormColumnDto>) =>
     setLayout((current) => ({
       ...current,
@@ -442,6 +473,7 @@ function FormTemplateDrawer({
           rowKey={(_, index) => String(index)}
           size="small"
           pagination={false}
+          onRow={(_, index) => dragRow('fields', index ?? 0, moveField)}
           dataSource={layout.fields}
           columns={[
             {
@@ -531,6 +563,7 @@ function FormTemplateDrawer({
           rowKey={(_, index) => String(index)}
           size="small"
           pagination={false}
+          onRow={(_, index) => dragRow('columns', index ?? 0, moveColumn)}
           dataSource={layout.columns}
           columns={[
             {
