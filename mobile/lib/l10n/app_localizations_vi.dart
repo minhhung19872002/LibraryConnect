@@ -1284,6 +1284,13 @@ class L10nVi extends L10n {
   }
 
   @override
+  String get warehouseLabel => 'Kho';
+
+  @override
+  String get advancedFiltersHint =>
+      'Danh mục lấy từ bộ đếm của máy chủ; để \"Tất cả\" là không lọc.';
+
+  @override
   String get outline => 'Mục lục';
 
   @override

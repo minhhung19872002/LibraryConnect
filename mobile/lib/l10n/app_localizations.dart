@@ -2377,6 +2377,18 @@ abstract class L10n {
   /// **'Trang {page} trên {total} của tài liệu'**
   String a11yReaderPage(int page, int total);
 
+  /// No description provided for @warehouseLabel.
+  ///
+  /// In vi, this message translates to:
+  /// **'Kho'**
+  String get warehouseLabel;
+
+  /// No description provided for @advancedFiltersHint.
+  ///
+  /// In vi, this message translates to:
+  /// **'Danh mục lấy từ bộ đếm của máy chủ; để \"Tất cả\" là không lọc.'**
+  String get advancedFiltersHint;
+
   /// No description provided for @outline.
   ///
   /// In vi, this message translates to:

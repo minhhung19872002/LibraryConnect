@@ -1290,6 +1290,13 @@ class L10nEn extends L10n {
   }
 
   @override
+  String get warehouseLabel => 'Warehouse';
+
+  @override
+  String get advancedFiltersHint =>
+      'Lists come from the server facet counts; \"All\" means no filter.';
+
+  @override
   String get outline => 'Table of contents';
 
   @override

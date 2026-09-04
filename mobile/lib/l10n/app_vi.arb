@@ -436,6 +436,8 @@
   "a11yOpenDetail": "Mở chi tiết tài liệu",
   "a11yReaderPage": "Trang {page} trên {total} của tài liệu",
   "@a11yReaderPage": {"placeholders": {"page": {"type": "int"}, "total": {"type": "int"}}},
+  "warehouseLabel": "Kho",
+  "advancedFiltersHint": "Danh mục lấy từ bộ đếm của máy chủ; để \"Tất cả\" là không lọc.",
   "outline": "Mục lục",
   "outlineEmpty": "Tài liệu này không có mục lục.",
   "outlineOffline": "Mục lục lưu kèm gói ngoại tuyến."

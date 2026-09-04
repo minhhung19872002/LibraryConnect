@@ -436,6 +436,8 @@
   "a11yOpenDetail": "Open document details",
   "a11yReaderPage": "Page {page} of {total} of the document",
   "@a11yReaderPage": {"placeholders": {"page": {"type": "int"}, "total": {"type": "int"}}},
+  "warehouseLabel": "Warehouse",
+  "advancedFiltersHint": "Lists come from the server facet counts; \"All\" means no filter.",
   "outline": "Table of contents",
   "outlineEmpty": "This document has no table of contents.",
   "outlineOffline": "Table of contents saved with the offline package."
