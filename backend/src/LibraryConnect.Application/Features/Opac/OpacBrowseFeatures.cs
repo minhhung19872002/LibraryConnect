@@ -49,8 +49,8 @@ public class OpacBrowseQueryHandler
             OpacBrowseKind.Subject => await SubjectsAsync(query, ct),
             OpacBrowseKind.Author => await AuthorsAsync(query, ct),
             OpacBrowseKind.Classification => await ClassificationsAsync(query, ct),
-            OpacBrowseKind.Collection => await CollectionsAsync(ct),
-            OpacBrowseKind.Major => await MajorsAsync(ct),
+            OpacBrowseKind.Collection => await CollectionsAsync(query, ct),
+            OpacBrowseKind.Major => await MajorsAsync(query, ct),
             _ => await CoursesAsync(query, ct)
         };
     }
@@ -83,7 +83,7 @@ public class OpacBrowseQueryHandler
             row.Name,
             counts.GetValueOrDefault(row.Id),
             row.ParentId,
-            row.HasChildren)));
+            row.HasChildren)), query.Letter);
     }
 
     private async Task<IReadOnlyList<OpacBrowseEntryDto>> AuthorsAsync(
@@ -123,7 +123,7 @@ public class OpacBrowseQueryHandler
             .ToListAsync(ct);
 
         return Filter(rows.Select(row => new OpacBrowseEntryDto(
-            row.Id, row.Code, row.Name, counts.GetValueOrDefault(row.Id), null, false)));
+            row.Id, row.Code, row.Name, counts.GetValueOrDefault(row.Id), null, false)), query.Letter);
     }
 
     /// <summary>
@@ -170,7 +170,7 @@ public class OpacBrowseQueryHandler
                 node.Name,
                 totals.GetValueOrDefault(node.Id),
                 node.ParentId,
-                children.ContainsKey(node.Id))));
+                children.ContainsKey(node.Id))), query.Letter);
 
         int Rollup(Guid id)
         {
@@ -191,7 +191,8 @@ public class OpacBrowseQueryHandler
         }
     }
 
-    private async Task<IReadOnlyList<OpacBrowseEntryDto>> CollectionsAsync(CancellationToken ct)
+    private async Task<IReadOnlyList<OpacBrowseEntryDto>> CollectionsAsync(
+        OpacBrowseQuery query, CancellationToken ct)
     {
         var counts = await CountByAsync(
             _db.BibCollections.AsNoTracking()
@@ -207,10 +208,11 @@ public class OpacBrowseQueryHandler
             .ToListAsync(ct);
 
         return Filter(rows.Select(row => new OpacBrowseEntryDto(
-            row.Id, row.Code, row.Name, counts.GetValueOrDefault(row.Id), null, false)));
+            row.Id, row.Code, row.Name, counts.GetValueOrDefault(row.Id), null, false)), query.Letter);
     }
 
-    private async Task<IReadOnlyList<OpacBrowseEntryDto>> MajorsAsync(CancellationToken ct)
+    private async Task<IReadOnlyList<OpacBrowseEntryDto>> MajorsAsync(
+        OpacBrowseQuery query, CancellationToken ct)
     {
         var rows = await _db.Majors.AsNoTracking()
             .Where(major => major.IsActive)
@@ -226,11 +228,20 @@ public class OpacBrowseQueryHandler
             .ToListAsync(ct);
 
         // Với ngành thì con số có nghĩa là "bao nhiêu môn học", vì bạn đọc bấm vào ngành để xuống
-        // danh sách môn chứ không xuống thẳng danh sách sách.
-        return rows
+        // danh sách môn chứ không xuống thẳng danh sách sách. Ngành chưa có môn nào vẫn hiện (để
+        // biết mà khai môn), nên không dùng bộ lọc chung; chỉ lọc theo chữ cái.
+        var entries = rows
             .Select(row => new OpacBrowseEntryDto(
-                row.Id, row.Code, row.Name, row.CourseCount, null, row.CourseCount > 0))
-            .ToList();
+                row.Id, row.Code, row.Name, row.CourseCount, null, row.CourseCount > 0));
+
+        if (!string.IsNullOrWhiteSpace(query.Letter))
+        {
+            var prefix = OpacQueryBuilder.Normalise(query.Letter);
+            entries = entries.Where(entry =>
+                OpacQueryBuilder.Normalise(entry.Name).StartsWith(prefix, StringComparison.Ordinal));
+        }
+
+        return entries.ToList();
     }
 
     private async Task<IReadOnlyList<OpacBrowseEntryDto>> CoursesAsync(
@@ -258,9 +269,19 @@ public class OpacBrowseQueryHandler
             })
             .ToListAsync(ct);
 
-        return rows
-            .Select(row => new OpacBrowseEntryDto(row.Id, row.Code, row.Name, row.BibCount, null, false))
-            .ToList();
+        // Môn học không bỏ mục rỗng (môn chưa gắn tài liệu vẫn phải thấy để biết mà bổ sung), nhưng
+        // vẫn theo chữ cái khi bạn đọc đang duyệt A–Z.
+        var entries = rows
+            .Select(row => new OpacBrowseEntryDto(row.Id, row.Code, row.Name, row.BibCount, null, false));
+
+        if (!string.IsNullOrWhiteSpace(query.Letter))
+        {
+            var prefix = OpacQueryBuilder.Normalise(query.Letter);
+            entries = entries.Where(entry =>
+                OpacQueryBuilder.Normalise(entry.Name).StartsWith(prefix, StringComparison.Ordinal));
+        }
+
+        return entries.ToList();
     }
 
     /// <summary>
@@ -278,8 +299,25 @@ public class OpacBrowseQueryHandler
             .Select(group => new { Id = group.Key, Count = group.Count() })
             .ToDictionaryAsync(row => row.Id, row => row.Count, ct);
 
-    private static IReadOnlyList<OpacBrowseEntryDto> Filter(IEnumerable<OpacBrowseEntryDto> entries) =>
-        entries.Where(entry => entry.BibCount > 0 || entry.HasChildren).ToList();
+    /// <summary>
+    /// Bỏ những mục rỗng (không có tài liệu và không có nhánh con), rồi lọc theo chữ cái đầu nếu
+    /// người dùng đang duyệt A–Z. So trên tên đã bỏ dấu để "Đ" nằm cùng chỗ với "D" — người Việt tra
+    /// bảng chữ cái theo cách ấy.
+    /// </summary>
+    private static IReadOnlyList<OpacBrowseEntryDto> Filter(
+        IEnumerable<OpacBrowseEntryDto> entries, string? letter = null)
+    {
+        var visible = entries.Where(entry => entry.BibCount > 0 || entry.HasChildren);
+
+        if (!string.IsNullOrWhiteSpace(letter))
+        {
+            var prefix = OpacQueryBuilder.Normalise(letter);
+            visible = visible.Where(entry =>
+                OpacQueryBuilder.Normalise(entry.Name).StartsWith(prefix, StringComparison.Ordinal));
+        }
+
+        return visible.ToList();
+    }
 }
 
 /// <summary>Tài liệu của một môn học, chia theo mức độ liên quan (X.3 nhìn từ phía bạn đọc).</summary>

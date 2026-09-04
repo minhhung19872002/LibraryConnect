@@ -106,16 +106,19 @@ export const opacApi = {
     ),
 
   // ---- Duyệt danh mục ----
-  browseSubjects: (parentId?: string) =>
-    api.get<BrowseEntry[]>('/browse/subjects', { params: parentId ? { parentId } : {} }),
+  // Mọi nhánh duyệt đều nhận `letter` để lọc theo chữ cái đầu (IX.2 — "dạng cây và A-Z").
+  browseSubjects: (parentId?: string, letter?: string) =>
+    api.get<BrowseEntry[]>('/browse/subjects', { params: { ...(parentId ? { parentId } : {}), ...(letter ? { letter } : {}) } }),
   browseAuthors: (letter?: string) =>
     api.get<BrowseEntry[]>('/browse/authors', { params: letter ? { letter } : {} }),
-  browseClassifications: (parentId?: string) =>
-    api.get<BrowseEntry[]>('/browse/classifications', { params: parentId ? { parentId } : {} }),
-  browseCollections: () => api.get<BrowseEntry[]>('/browse/collections'),
-  browseMajors: () => api.get<BrowseEntry[]>('/browse/majors'),
-  browseCourses: (majorId?: string) =>
-    api.get<BrowseEntry[]>('/browse/courses', { params: majorId ? { majorId } : {} }),
+  browseClassifications: (parentId?: string, letter?: string) =>
+    api.get<BrowseEntry[]>('/browse/classifications', { params: { ...(parentId ? { parentId } : {}), ...(letter ? { letter } : {}) } }),
+  browseCollections: (letter?: string) =>
+    api.get<BrowseEntry[]>('/browse/collections', { params: letter ? { letter } : {} }),
+  browseMajors: (letter?: string) =>
+    api.get<BrowseEntry[]>('/browse/majors', { params: letter ? { letter } : {} }),
+  browseCourses: (majorId?: string, letter?: string) =>
+    api.get<BrowseEntry[]>('/browse/courses', { params: { ...(majorId ? { majorId } : {}), ...(letter ? { letter } : {}) } }),
   courseDocuments: (majorId: string, courseId: string, page = 1) =>
     api.get<PagedResult<CourseDocument>>(
       `/browse/majors/${majorId}/courses/${courseId}/documents`,

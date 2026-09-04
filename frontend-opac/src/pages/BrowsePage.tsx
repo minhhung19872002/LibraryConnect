@@ -45,13 +45,13 @@ export function BrowsePage() {
         case 'tac-gia':
           return opacApi.browseAuthors(letter);
         case 'phan-loai':
-          return opacApi.browseClassifications(parentId);
+          return opacApi.browseClassifications(parentId, letter);
         case 'bo-suu-tap':
-          return opacApi.browseCollections();
+          return opacApi.browseCollections(letter);
         case 'nganh':
-          return opacApi.browseMajors();
+          return opacApi.browseMajors(letter);
         default:
-          return opacApi.browseSubjects(parentId);
+          return opacApi.browseSubjects(parentId, letter);
       }
     },
   });
@@ -105,7 +105,9 @@ export function BrowsePage() {
           />
         ) : null}
 
-        {kind === 'tac-gia' ? (
+        {/* Dải chữ cái cho mọi nhánh, không riêng tác giả: danh sách chủ đề hay môn học cũng dài
+            và người dùng thư viện quen tra theo chữ đầu (IX.2). */}
+        {ALPHABET.length > 0 ? (
           <Space size={[4, 4]} wrap style={{ marginBottom: 16 }}>
             <Button size="small" type={letter ? 'default' : 'primary'} onClick={() => setLetter(undefined)}>
               Tất cả

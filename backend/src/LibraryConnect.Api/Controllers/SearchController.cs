@@ -135,10 +135,10 @@ public class SearchController : ApiControllerBase
     [HttpGet("browse/subjects")]
     [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<OpacBrowseEntryDto>>), StatusCodes.Status200OK)]
     public Task<ActionResult<ApiResponse<IReadOnlyList<OpacBrowseEntryDto>>>> BrowseSubjects(
-        [FromQuery] Guid? parentId, CancellationToken ct) =>
-        BrowseAsync(OpacBrowseKind.Subject, parentId, null, ct);
+        [FromQuery] Guid? parentId, [FromQuery] string? letter, CancellationToken ct) =>
+        BrowseAsync(OpacBrowseKind.Subject, parentId, letter, ct);
 
-    /// <summary>Duyệt theo tác giả, lọc được theo chữ cái đầu.</summary>
+    /// <summary>Duyệt theo tác giả, lọc được theo chữ cái đầu (mọi nhánh duyệt đều nhận tham số này).</summary>
     [HttpGet("browse/authors")]
     [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<OpacBrowseEntryDto>>), StatusCodes.Status200OK)]
     public Task<ActionResult<ApiResponse<IReadOnlyList<OpacBrowseEntryDto>>>> BrowseAuthors(
@@ -149,29 +149,29 @@ public class SearchController : ApiControllerBase
     [HttpGet("browse/classifications")]
     [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<OpacBrowseEntryDto>>), StatusCodes.Status200OK)]
     public Task<ActionResult<ApiResponse<IReadOnlyList<OpacBrowseEntryDto>>>> BrowseClassifications(
-        [FromQuery] Guid? parentId, CancellationToken ct) =>
-        BrowseAsync(OpacBrowseKind.Classification, parentId, null, ct);
+        [FromQuery] Guid? parentId, [FromQuery] string? letter, CancellationToken ct) =>
+        BrowseAsync(OpacBrowseKind.Classification, parentId, letter, ct);
 
     /// <summary>Duyệt theo bộ sưu tập.</summary>
     [HttpGet("browse/collections")]
     [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<OpacBrowseEntryDto>>), StatusCodes.Status200OK)]
     public Task<ActionResult<ApiResponse<IReadOnlyList<OpacBrowseEntryDto>>>> BrowseCollections(
-        CancellationToken ct) =>
-        BrowseAsync(OpacBrowseKind.Collection, null, null, ct);
+        [FromQuery] string? letter, CancellationToken ct) =>
+        BrowseAsync(OpacBrowseKind.Collection, null, letter, ct);
 
     /// <summary>Duyệt theo ngành đào tạo.</summary>
     [HttpGet("browse/majors")]
     [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<OpacBrowseEntryDto>>), StatusCodes.Status200OK)]
     public Task<ActionResult<ApiResponse<IReadOnlyList<OpacBrowseEntryDto>>>> BrowseMajors(
-        CancellationToken ct) =>
-        BrowseAsync(OpacBrowseKind.Major, null, null, ct);
+        [FromQuery] string? letter, CancellationToken ct) =>
+        BrowseAsync(OpacBrowseKind.Major, null, letter, ct);
 
     /// <summary>Duyệt theo môn học; truyền mã ngành để chỉ lấy môn của ngành đó.</summary>
     [HttpGet("browse/courses")]
     [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<OpacBrowseEntryDto>>), StatusCodes.Status200OK)]
     public Task<ActionResult<ApiResponse<IReadOnlyList<OpacBrowseEntryDto>>>> BrowseCourses(
-        [FromQuery] Guid? majorId, CancellationToken ct) =>
-        BrowseAsync(OpacBrowseKind.Course, majorId, null, ct);
+        [FromQuery] Guid? majorId, [FromQuery] string? letter, CancellationToken ct) =>
+        BrowseAsync(OpacBrowseKind.Course, majorId, letter, ct);
 
     /// <summary>Tài liệu của một môn học, chia theo giáo trình chính và tài liệu tham khảo.</summary>
     [HttpGet("browse/majors/{majorId:guid}/courses/{courseId:guid}/documents")]

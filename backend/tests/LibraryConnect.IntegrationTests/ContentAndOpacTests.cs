@@ -101,6 +101,45 @@ public class ContentAndOpacTests
     // -----------------------------------------------------------------------------------------
 
     [Fact]
+    public async Task Duyet_theo_chu_cai_ap_cho_moi_nhanh_khong_rieng_tac_gia()
+    {
+        // IX.2 nói duyệt "dạng cây và A-Z". Trước 04/09/2026 chỉ nhánh Tác giả xử lý tham số chữ cái;
+        // Chủ đề, Bộ sưu tập, Ngành và Môn học bỏ qua nó và trả về nguyên danh sách.
+        var client = _factory.CreateClient();
+
+        foreach (var kind in new[] { "subjects", "collections", "majors", "courses" })
+        {
+            var all = await ReadAsync<IReadOnlyList<OpacBrowseEntryDto>>(
+                await client.GetAsync($"/api/browse/{kind}"));
+
+            if (all.Count == 0)
+            {
+                continue;
+            }
+
+            // Chữ đầu của một mục có thật, so trên tên đã bỏ dấu.
+            var letter = RemoveDiacritics(all[0].Name)[..1];
+
+            var filtered = await ReadAsync<IReadOnlyList<OpacBrowseEntryDto>>(
+                await client.GetAsync($"/api/browse/{kind}?letter={letter}"));
+
+            filtered.Should().NotBeEmpty($"nhánh {kind} phải còn ít nhất mục vừa lấy chữ đầu");
+            filtered.Count.Should().BeLessThanOrEqualTo(all.Count);
+            filtered.Should().OnlyContain(
+                entry => RemoveDiacritics(entry.Name).StartsWith(letter, StringComparison.OrdinalIgnoreCase),
+                $"nhánh {kind} phải lọc theo chữ cái đầu");
+
+            // Một chữ chắc chắn không có mục nào bắt đầu bằng nó.
+            var none = await ReadAsync<IReadOnlyList<OpacBrowseEntryDto>>(
+                await client.GetAsync($"/api/browse/{kind}?letter=zzz"));
+            none.Should().BeEmpty($"nhánh {kind} không được bỏ qua tham số chữ cái");
+        }
+    }
+
+    private static string RemoveDiacritics(string value) =>
+        Application.Common.Text.VietnameseText.RemoveDiacritics(value).ToLowerInvariant();
+
+    [Fact]
     public async Task Cau_hinh_trang_thu_vien_gom_ca_tham_so_he_thong_lan_cau_hinh_rieng()
     {
         var staff = await StaffAsync();
