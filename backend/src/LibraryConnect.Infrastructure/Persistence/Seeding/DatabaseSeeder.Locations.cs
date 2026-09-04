@@ -21,10 +21,16 @@ public partial class DatabaseSeeder
             return;
         }
 
+        // Địa chỉ, điện thoại và giờ mở cửa nạp sẵn vì trang tra cứu hiện chúng cho bạn đọc: để
+        // trống thì buổi nghiệm thu nhìn thấy một khối "Các cơ sở" rỗng và kết luận là chưa làm
+        // (bài học 6). Thư viện đổi lại bằng màn hình Quản lý kho, không phải sửa mã.
         var headquarters = new Library
         {
             Code = "TRUSO",
             Name = "Thư viện Trụ sở chính",
+            Address = "Số 1, đường Đại học, Quận 1",
+            Phone = "02838222333",
+            OpeningHours = "Thứ 2 – Thứ 6: 7h30–20h00; Thứ 7: 8h00–16h00; Chủ nhật nghỉ",
             IsHeadquarters = true,
             SortOrder = 1,
             IsActive = true,
@@ -35,6 +41,9 @@ public partial class DatabaseSeeder
         {
             Code = "COSO2",
             Name = "Thư viện Cơ sở 2",
+            Address = "Khu đô thị Đại học, Huyện Nhà Bè",
+            Phone = "02838222444",
+            OpeningHours = "Thứ 2 – Thứ 6: 8h00–17h00; Thứ 7 và Chủ nhật nghỉ",
             IsHeadquarters = false,
             SortOrder = 2,
             IsActive = true,
