@@ -27,6 +27,7 @@ import { BibExcelImportPage } from '@/modules/cataloging/BibExcelImportPage';
 import { PurchaseRequestPage } from '@/modules/acquisition/PurchaseRequestPage';
 import { PurchaseOrderPage } from '@/modules/acquisition/PurchaseOrderPage';
 import { StockItemsPage } from '@/modules/acquisition/StockItemsPage';
+import { QuickCatalogPage } from '@/modules/acquisition/QuickCatalogPage';
 import { WarehousePage } from '@/modules/acquisition/WarehousePage';
 import { InventoryPage } from '@/modules/acquisition/InventoryPage';
 import { LabelTemplatePage } from '@/modules/acquisition/LabelTemplatePage';
@@ -408,6 +409,14 @@ function AppRoutes() {
           element={
             <RequirePermissionRoute permission={PERMISSIONS.acquisition.itemView}>
               <StockItemsPage />
+            </RequirePermissionRoute>
+          }
+        />
+        <Route
+          path="/bo-sung/bien-muc-so-luoc"
+          element={
+            <RequirePermissionRoute permission={PERMISSIONS.acquisition.itemCreate}>
+              <QuickCatalogPage />
             </RequirePermissionRoute>
           }
         />

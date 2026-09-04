@@ -228,6 +228,13 @@ export const menuTree: MenuNode[] = [
         permissions: [PERMISSIONS.acquisition.itemView],
       },
       {
+        key: 'acq-quick-catalog',
+        label: messages.menu.quickCatalog,
+        icon: <ProfileOutlined />,
+        path: '/bo-sung/bien-muc-so-luoc',
+        permissions: [PERMISSIONS.acquisition.itemCreate],
+      },
+      {
         key: 'acq-warehouses',
         label: messages.menu.warehouses,
         icon: <BankOutlined />,

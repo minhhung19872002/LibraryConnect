@@ -81,6 +81,7 @@ export const messages = {
     purchaseRequests: 'Yêu cầu đặt mua',
     purchaseOrders: 'Đơn đặt',
     stockItems: 'Ấn phẩm trong kho',
+    quickCatalog: 'Biên mục sơ lược',
     warehouses: 'Quản lý kho',
     labelTemplates: 'Mẫu tem và nhãn',
     inventory: 'Kiểm kê kho',
