@@ -49,6 +49,7 @@ Ký hiệu bám theo **Mục 5 phần 2 của E-HSMT**.
 | 2.3.14 | Xuất nhật ký | Lọc theo khoảng thời gian rồi bấm Xuất Excel và Xuất PDF | Tải được tệp, nội dung khớp bộ lọc, tiếng Việt hiển thị đúng dấu, PDF in kèm tiêu chí lọc | | | |
 | 2.3.15 | Chính sách mật khẩu | Đổi mật khẩu thành `abc` | Bị từ chối, thông báo "Mật khẩu phải có tối thiểu 8 ký tự." hiển thị ngay dưới ô nhập | Unit — `PasswordPolicyTests` | | |
 | 2.3.16 | Khóa tài khoản sau N lần sai | Nhập sai mật khẩu đủ số lần cấu hình | Tài khoản bị khóa, thông báo nêu rõ thời điểm hết khóa | | | |
+| 2.3.17 | Ghi nhật ký lượt xem | Nhật ký hệ thống → Cài đặt ghi nhận → tắt rồi bật lại ô "Xem" của Bạn đọc → mở một hồ sơ bạn đọc → tra nhật ký với hành động Xem | Có một dòng cho đúng hồ sơ vừa mở; tắt ô ấy rồi mở lại thì không sinh thêm dòng nào. Đối tượng chưa hỗ trợ ghi lượt xem có ô bị khoá kèm lời giải thích |
 
 ---
 
@@ -67,7 +68,9 @@ Ký hiệu bám theo **Mục 5 phần 2 của E-HSMT**.
 | 2.6.9 | Sao lưu chạy nền, không chiếm lượt HTTP | Bấm **Sao lưu ngay** rồi đóng ngay hộp thoại; bấm **Sao lưu ngay** lần thứ hai khi lượt đầu chưa xong | Lượt đầu trả về tức thì với trạng thái *Đã xếp hàng*, bảng tự cập nhật sang *Đang chạy* rồi *Thành công* mà không cần bấm tải lại; lượt thứ hai bị từ chối 409 kèm câu chỉ chỗ xem tiến độ. Lượt treo quá 6 giờ (máy chủ bị khởi động lại giữa chừng) tự chuyển sang *Thất bại* thay vì khoá mọi lần sau | Đúng như mong đợi (`BackupTests`, ba phép thử đỏ trước khi sửa) | Đạt |
 | 2.6.10 | Cảnh báo khi hết dung lượng | Xem thẻ *Dung lượng bản sao lưu* trên màn hình Sao lưu | Hiển thị dung lượng đã dùng và còn trống; thanh tiến trình chuyển đỏ khi vượt 90% | | | |
 | 2.6.11 | Phục hồi chạy nền, theo dõi tại chỗ | Bấm *Phục hồi* trên một bản sao lưu → qua hai bước cảnh báo → nhập mật khẩu → *Phục hồi ngay* | Hộp thoại chuyển sang màn hình theo dõi, không đóng được khi đang chạy; thanh tiến độ chạy; xong thì báo hoàn tất kèm lời nhắc đăng nhập lại, hỏng thì báo cơ sở dữ liệu giữ nguyên như trước. Lượt thứ hai khi lượt đầu chưa xong bị từ chối 409 | Đúng như mong đợi (`BackupTests` — bốn phép thử phục hồi, không phép thử nào để `pg_restore` thật chạy vì nó sẽ ghi đè cơ sở dữ liệu của cả bộ kiểm thử) | Đạt |
-| 2.6.12 | Bản sao lưu không mang theo hàng đợi việc | Đọc dòng lệnh gửi cho `pg_dump` và `pg_restore` | Cả hai đều có `--exclude-schema=hangfire`. Nếu không, phục hồi bản hôm qua sẽ làm sống lại hàng đợi hôm qua và chạy lại những việc đã chạy rồi; và lượt phục hồi không thể tự chạy trong Hangfire vì nó xoá đúng bảng đang ghi nhận chính nó | Đúng như mong đợi (`BackupArgumentTests`, đỏ trước khi sửa) | Đạt |
+| 2.6.12 | Đổi lịch sao lưu có hiệu lực ngay | Tham số → Cấu hình sao lưu → đổi giờ chạy → mở màn hình Sao lưu | Dòng "Lịch" đổi theo, và không có cảnh báo "máy chủ đang chạy theo lịch cũ"; tắt sao lưu tự động thì việc định kỳ biến mất |
+| 2.6.13 | Phục hồi kèm tệp tài liệu số | Sao lưu kèm tệp → xóa một tệp trong kho đối tượng → phục hồi từ chính bản ấy | Thông báo ghi rõ số tệp đã tải lại; mở tài liệu số trên trang tra cứu thì đọc được, không còn lỗi thiếu tệp |
+| 2.6.14 | Bản sao lưu không mang theo hàng đợi việc | Đọc dòng lệnh gửi cho `pg_dump` và `pg_restore` | Cả hai đều có `--exclude-schema=hangfire`. Nếu không, phục hồi bản hôm qua sẽ làm sống lại hàng đợi hôm qua và chạy lại những việc đã chạy rồi; và lượt phục hồi không thể tự chạy trong Hangfire vì nó xoá đúng bảng đang ghi nhận chính nó | Đúng như mong đợi (`BackupArgumentTests`, đỏ trước khi sửa) | Đạt |
 
 ---
 

@@ -463,6 +463,31 @@ xuống API. Lỗi ghi ở đây là chỗ **bảng đáp ứng ghi "Có" mà ng
 | JM9 | Nhẹ | **Không có lối duyệt theo môn học**, dù IX.2 liệt kê "Ngành / Môn học" và máy chủ đã mở `/browse/courses?letter=`; **danh sách tài liệu của một môn dừng ở 20 dòng** không có cách xem tiếp | Nhánh môn học chỉ đến được qua ngành, và bảng tài liệu gọi trang 1 rồi không vẽ thanh phân trang | Thêm nhánh `/duyet/mon-hoc` có dải chữ cái như mọi nhánh khác, dẫn sang trang kết quả lọc theo môn (bộ lọc `courseId` đã có ở máy chủ, chỉ thiếu chỗ đọc ra từ địa chỉ). Danh sách tài liệu của môn có phân trang |
 | JM10 | Nhẹ | **Sơ đồ trang bỏ sót sáu trang duyệt công khai** (bộ sưu tập, ngành, môn học, luận văn, ấn phẩm định kỳ, tài liệu số, thư viện ảnh) | Danh sách trang tĩnh viết tay từ phase 12 và không cập nhật khi thêm route mới | Bổ sung đủ; `ContentAndOpacTests.So_do_trang_liet_ke_tai_lieu_da_xuat_ban` nay đòi từng đường dẫn một, đỏ trước khi sửa |
 
+### J.N — Phân hệ I, II, IV, V (đợt rà 04/09/2026, đợt ba)
+
+| Mã | Mức | Lỗi | Nguyên nhân | Sửa |
+|---|---|---|---|---|
+| JN1 | Nặng | **Biểu ghi bài trích sinh ra không tra cứu được từ trang tra cứu**, đúng thứ duy nhất mà IV.2 nêu là lý do của chức năng ("để tra cứu được từ OPAC"). Màn hình còn báo ngược: "đã sinh N biểu ghi; bạn đọc tra được từ OPAC" | Biểu ghi bài trích được tạo ở trạng thái Nháp, trong khi mọi đường tạo biểu ghi khác mặc định Đã xuất bản, và trang tra cứu chỉ đọc biểu ghi đã xuất bản | Xuất bản ngay khi sinh: cán bộ đã gõ xong mục lục bài trích rồi mới bấm sinh, không còn bước biên mục nào dở dang để chờ. `SerialTests` nay tra thẳng qua `/api/search` bằng máy khách ẩn danh — đỏ trước, xanh sau |
+| JN2 | Nặng | **Gộp trùng danh mục không sửa biểu ghi**, dù II.9 nói "cập nhật toàn bộ biểu ghi liên quan": danh mục và bộ lọc sạch, nhưng cột Tác giả trên danh sách, dạng ISBD, phích mục lục và tệp xuất ISO 2709 vẫn in tên cũ | Lượt gộp chỉ `ExecuteUpdate` trên ba bảng liên kết. `marc_data` — bản gốc của biểu ghi — và cột phẳng rút từ nó không ai đụng tới. Đúng bài học 16, tự mình vi phạm lại | Gộp xong thì thay tên ngay trong MARC của từng biểu ghi liên quan (100$a, 700$a, 245$c cho tác giả; 650$a; 653$a), lưu qua bộ ghi biểu ghi để cột phẳng theo và có một phiên bản trong lịch sử. Danh sách biểu ghi phải lấy **trước** lượt đổi liên kết, và phải nạp kèm bốn tập liên kết — thiếu thì bộ ghi tưởng biểu ghi chưa có liên kết nào và thêm lại, lượt lưu đổ vì trùng khoá |
+| JN3 | Nặng | **Ô "Xem" trong cài đặt nhật ký là công tắc chết**: I.4 nêu đích danh Create/Update/Delete/**Read**, cột được lưu, nhánh xét cũng có, nhưng không chỗ nào trong sản phẩm phát ra hành động Read | Ba hành động ghi được bộ chặn của Entity Framework bắt tự động; đọc thì không chạm tới `SaveChanges` nên không có gì bắt được | Thuộc tính `AuditRead` gắn vào endpoint chi tiết của Bạn đọc, Người dùng, Biểu ghi và Tài liệu số; không gắn vào danh sách, vì mở một trang danh sách bạn đọc không phải là xem hồ sơ của trăm người. Đối tượng chưa có chỗ ghi thì ô bị khoá kèm lời giải thích, thay vì một công tắc không nối vào đâu. Kèm theo: bộ đệm cài đặt nhật ký được xoá sau khi nạp dữ liệu — lượt đọc đầu tiên của bản cài mới có thể rơi vào lúc bảng còn rỗng và chạy theo mặc định suốt năm phút |
+| JN4 | Vừa | **Đổi lịch sao lưu trên giao diện không có tác dụng tới lần khởi động lại**, mà màn hình vẫn hiện giờ mới nên không ai biết | Việc định kỳ chỉ được đăng ký một lần trong `StartAsync` của bộ đăng ký; lượt lưu tham số không đụng tới Hangfire | Lưu tham số `BACKUP.*` xong thì đăng ký lại ngay, dùng chung đúng đường với lượt khởi động. Màn hình sao lưu hiện thêm **lịch bộ chạy nền đang giữ**, và chỉ nói ra khi nó lệch với lịch đã khai. `BackupTests.Doi_lich_sao_luu_tren_giao_dien_thi_viec_dinh_ky_doi_theo_ngay` đỏ trước (vẫn là lịch cũ), xanh sau |
+| JN5 | Vừa | **Phục hồi chỉ phục hồi cơ sở dữ liệu**: tệp tài liệu số nằm ở kho đối tượng, phục hồi xong thì biểu ghi nói "có toàn văn" mà bạn đọc bấm vào chỉ nhận lỗi | Chiều sao lưu đã chép tệp ra thư mục cạnh tệp dump, nhưng chiều về thì hướng dẫn bảo tự chạy `mc mirror` bằng tay — một bước thủ công nằm trong quy trình khẩn cấp là một bước bị quên | `IObjectStorageMirror.RestoreAsync` tải các tệp ấy trở lại đúng bucket, chạy ngay sau `pg_restore`, và báo số tệp đã tải. Lỗi ở bước này không lật ngược lượt phục hồi cơ sở dữ liệu nhưng được ghi rõ ở mức lỗi. Chỉ nhận đúng hai bucket của sản phẩm, thư mục lạ trong bản sao lưu không thành bucket mới |
+| JN6 | Vừa | **Danh mục tự tạo không hiện thành bộ lọc trên trang tra cứu** dù II.9 nói vậy và màn hình khai báo có hẳn ô "Hiện làm bộ lọc trên tra cứu" | Cờ `ShowAsFacet` được lưu nhưng không nơi nào đọc: bộ đếm facet trả về bảy nhóm viết cứng | Nhóm lọc dựng từ danh mục tự tạo đang bật cờ, đếm trên đúng tập kết quả đang xem như mọi nhóm khác; trang tra cứu nhận diện bằng tiền tố `custom:` nên thư viện khai bao nhiêu danh mục cũng chạy. Bộ lọc `customIndexValueId` đi qua cả tra cứu cơ bản lẫn nâng cao. `CustomIndexTests.Danh_muc_tu_tao_hien_thanh_bo_loc_tren_trang_tra_cuu` kiểm cả nhóm lọc lẫn kết quả sau khi bấm |
+| JN7 | Vừa | **Kỳ nghỉ của ấn phẩm định kỳ chỉ khai được theo tháng** (IV.4 nói "các kỳ nghỉ không xuất bản"): nhật báo nghỉ Chủ nhật thì sinh số cả năm ra 365 số và lưới theo dõi hiện 52 số "thiếu" không có thật, cán bộ đi khiếu nại nhà cung cấp về những số chưa bao giờ in | `SkipMonths` là thứ duy nhất trong cấu hình kỳ hạn | Thêm nghỉ theo **thứ trong tuần** và theo **khoảng ngày** (lặp hằng năm hoặc riêng một năm, đủ cho kỳ nghỉ Tết). Hai hàm sinh theo tháng nay xét ngày phát hành thật thay vì xét tháng của mốc lặp, nên một kỳ nghỉ nằm trong tháng không kéo cả tháng đi theo. Ba phép thử đơn vị mới |
+| JN8 | Nhẹ | **Thống kê năng suất biên mục không lọc được theo thời gian** — luôn cộng dồn cả lịch sử, không so được hai kỳ | Endpoint nhận `from`/`to` từ đầu, giao diện gọi không tham số và không có bộ chọn ngày | Bộ chọn khoảng ngày kèm ba mốc sẵn (tháng này, ba tháng gần đây, năm nay) |
+| JN9 | Nhẹ | **Màn hình tải tài liệu số lên không gắn được biểu ghi thư mục**: tải xong phải mở sửa từng tài liệu để gắn | Máy chủ nhận `bibId` ở cả ba lối tải lên, chỉ biểu mẫu bỏ trống trường ấy | Thêm ô chọn biểu ghi vào biểu mẫu tải lên, truyền qua cả ba lối |
+| JN10 | Nhẹ | **Báo cáo ấn phẩm định kỳ chỉ có bảng và tệp**, thiếu dạng đồ họa mà mọi phân hệ khác đều có (yêu cầu 6.8) | Trang báo cáo viết sau, không dùng lại thành phần biểu đồ sẵn có | Dùng lại đúng thành phần biểu đồ của phân hệ Bổ sung: cùng cách đổi cột/tròn, cùng dải màu |
+| JN11 | Nhẹ | **Quy tắc sinh mã thiếu hậu tố** dù I.3 liệt kê "prefix/suffix/độ dài/reset theo năm" | Bộ sinh mã đọc khoá `_SUFFIX` từ đầu, nhưng không có dòng tham số nào nên màn hình không hiện ô nhập | Nạp tám tham số hậu tố (mã vạch, ĐKCB, số thẻ, đơn đặt, yêu cầu mua, biên bản bàn giao, phiếu chuyển kho, quyết định thanh lý), mặc định rỗng nên mã cũ không đổi |
+| JN12 | Nhẹ | **Màn hình sao lưu không nói tệp nằm ở đâu** và thư mục đích không cấu hình được từ giao diện | Chỉ có trong biến môi trường | Màn hình hiện thư mục, **chỉ đọc**. Không cho sửa là cố ý: đó là đường dẫn bên trong container và nó phải trỏ vào ổ đĩa gắn ngoài; cho gõ tay là mở đường ghi bản sao lưu vào thư mục biến mất ở lần dựng lại sau |
+
+**Ba chỗ lệch đặc tả nhưng giữ nguyên, ghi ra để khỏi phải kiểm lại:**
+
+1. **Bản xem thử N trang đầu (V.1)** không được sinh thành một tệp riêng; số trang xem thử được áp lúc phục vụ từng trang. Bạn đọc vẫn chỉ xem được đúng N trang, mà không phải lưu thêm một bản sao của mọi tài liệu.
+2. **Xoá biểu ghi (II.3)** bị chặn khi còn **bất kỳ** ĐKCB nào, chặt hơn câu "chặn nếu còn ĐKCB đang lưu thông". Nới ra thì xoá được biểu ghi trong khi vẫn còn sách trên giá — mất chỗ dựa của chính những bản ấy.
+3. **Tải bản sao lưu về** chỉ tải tệp dump, không đóng gói kèm thư mục tệp tài liệu số. Phục hồi tại chỗ đã tự tải lại tệp (JN5); gói cả kho đối tượng vào một lượt tải HTTP là hàng chục gigabyte đi qua một kết nối trình duyệt.
+
+**Còn thiếu, chưa làm:** II.5 nói "Import bộ định nghĩa MARC21 chuẩn". Bộ 220 trường được nạp lúc cài đặt và bổ sung tag còn thiếu ở mỗi lần khởi động, nhưng không có nút "khôi phục bộ chuẩn" hay nhập một bộ định nghĩa từ tệp trên giao diện.
+
 
 ## Đ. Những chỗ đã thử phá nhưng hệ thống chịu được
 
@@ -569,9 +594,18 @@ dạng quét mã nguồn chặn cả lớp lỗi quay lại thay vì chỉ chặ
 | Thiếu chức năng | 1 | 0 | 1 (H3, ghi ở "Làm tiếp") |
 | Nguy cơ | 1 | 0 | 1 (H9, ghi ở "Làm tiếp") |
 
-Cộng cả ba đợt, đợt áp thiết kế, đợt triển khai và đợt rà hoàn thiện 04/09/2026: **124 lỗi, đã sửa 122**, còn hai mục là thiếu chức năng và nguy cơ
-đã ghi rõ chỗ. Mỗi lỗi đã sửa của đợt này đều có phép thử chạy đỏ trước khi sửa và xanh sau khi sửa,
-kể cả H7: phép thử giả tiêu đề đỏ trước khi sửa `CurrentUser.Ip`.
+Cộng cả ba đợt, đợt áp thiết kế, đợt triển khai và ba đợt rà hoàn thiện ngày 04/09/2026:
+**136 lỗi, đã sửa 134**. Hai mục còn lại là H3 và H9, đã làm xong ngày 03/09/2026 và ghi ở cột cuối
+của chính hai dòng ấy — con số 134 giữ nguyên cách đếm cũ để đối chiếu được với các bản trước.
+Mỗi lỗi đã sửa đều có phép thử chạy đỏ trước khi sửa và xanh sau khi sửa, kể cả H7: phép thử giả
+tiêu đề đỏ trước khi sửa `CurrentUser.Ip`.
+
+Ba đợt rà ngày 04/09/2026 đi theo một cách làm: đọc **từng gạch đầu dòng** của đặc tả rồi tìm bằng
+chứng trong mã, thay vì đọc mã rồi hỏi nó có đúng không. Cách ấy bắt được đúng loại lỗi mà bộ kiểm
+thử không bao giờ chạm tới — công tắc được lưu mà không ai đọc (JN3, JN6), cờ cấu hình chỉ có tác
+dụng sau khi khởi động lại (JN4), và chức năng làm xong một nửa mà màn hình báo là đã xong (JN1).
+Ba lần liền, chỗ hỏng nằm ở khoảng giữa hai lớp: máy chủ nhận trường mà giao diện không gửi, hoặc
+giao diện gửi mà máy chủ không đọc.
 
 ### Làm tiếp gì sau đây
 
@@ -579,9 +613,12 @@ kể cả H7: phép thử giả tiêu đề đỏ trước khi sửa `CurrentUse
 2. **I8 đã làm xong** cùng ngày. Còn một hệ quả chưa dọn: những bản sao lưu tạo **trước** thay đổi
    này vẫn mang schema `hangfire` bên trong. Phía phục hồi đã loại nó ra nên không hại gì, nhưng
    các tệp ấy lớn hơn mức cần thiết.
-3. **Đợt sau là ứng dụng di động** (Phase 15) theo `PROMPT-MOBILE-LIBRARYCONNECT.md`. Nhóm
+3. **Còn thiếu một chức năng nhỏ của II.5**: nhập bộ định nghĩa MARC 21 từ tệp, hoặc nút "khôi
+   phục bộ chuẩn". Bộ 220 trường vẫn được nạp lúc cài đặt và bổ sung tag còn thiếu ở mỗi lần khởi
+   động, nên thư viện không thiếu định nghĩa nào; chỉ là sửa hỏng rồi thì phải sửa lại bằng tay.
+4. **Đợt sau là ứng dụng di động** (Phase 15) theo `PROMPT-MOBILE-LIBRARYCONNECT.md`. Nhóm
    `/api/reader/*` đã kiểm lại trong đợt này qua lối bạn đọc thật (đọc tài liệu số có chữ chìm).
-4. Bài học giữ lại từ ba đợt: **lỗi ghi là "đã sửa" chưa chắc đã sửa hết** (B12 dưới D8, H5 dưới lần
+5. Bài học giữ lại từ ba đợt: **lỗi ghi là "đã sửa" chưa chắc đã sửa hết** (B12 dưới D8, H5 dưới lần
    sửa bỏ dấu), và **phép thử tự viết chỉ chạm tới bối cảnh người viết nghĩ ra** — H4 sống từ phase 5
    vì phép thử sửa biểu ghi chưa bao giờ thêm một điểm truy cập; H5 sống qua một lần sửa vì phép thử
    dùng kho trống. Dựng đúng bối cảnh của kho thật (220 tác giả cùng họ) mới bắt được.

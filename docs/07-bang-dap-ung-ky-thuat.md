@@ -49,14 +49,15 @@ Cập nhật lần cuối: 02/09/2026, sau đợt hoàn thiện (bảo mật, b�
 | I.3.a | Chỉnh sửa tham số theo nhóm, mỗi tham số render đúng loại điều khiển theo kiểu dữ liệu | **Có** | Quản trị hệ thống → Tham số hệ thống | Kịch bản I.3.1 |
 | I.3.b | Đủ các nhóm tham số bắt buộc | **Có** | 10 nhóm: Thông tin thư viện, Quy tắc sinh mã, Email SMTP, Sao lưu, Lưu thông, OPAC, Ứng dụng di động, Biên mục, Giới hạn tải lên, Chính sách mật khẩu | Kịch bản 2.1.7 |
 | I.3.c | Lịch sử thay đổi tham số (ai đổi, từ giá trị nào sang giá trị nào) | **Có** | Tham số hệ thống → Lịch sử thay đổi | Kịch bản I.3.5 |
-| I.4.a | Cài đặt chế độ ghi nhận theo từng đối tượng: bật/tắt Create/Update/Delete/Read, đặt thời gian lưu | **Có** | Nhật ký hệ thống → Cài đặt ghi nhận | Kịch bản 2.3.12, 2.3.13 |
+| I.4.a | Cài đặt chế độ ghi nhận theo từng đối tượng: bật/tắt Create/Update/Delete/Read, đặt thời gian lưu | **Có** | Nhật ký hệ thống → Cài đặt ghi nhận. Ba hành động ghi bắt tự động ở tầng dữ liệu; lượt **xem** ghi ở các màn hình chi tiết Bạn đọc, Người dùng, Biểu ghi và Tài liệu số (bổ sung 04/09/2026), không ghi ở màn hình danh sách. Đối tượng chưa có chỗ ghi lượt xem hiện ô khoá kèm lời giải thích | Kịch bản 2.3.12, 2.3.13, 2.3.14 |
 | I.4.b | Tra cứu nhật ký theo thời gian, người dùng, hành động, đối tượng, kết quả, IP | **Có** | Nhật ký hệ thống → Tra cứu | Kịch bản 2.3.7 → 2.3.9 |
 | I.4.c | Xem chi tiết diff giá trị cũ/mới dạng JSON | **Có** | Nhật ký → Chi tiết | Kịch bản 2.3.10 |
 | I.4.d | Xuất nhật ký ra Excel / PDF | **Có** | Nhật ký → Xuất Excel / Xuất PDF | Kịch bản 2.3.14 |
 | I.4.e | Ghi log tự động qua interceptor, không viết thủ công ở từng chức năng | **Có** | EF Core `SaveChangesInterceptor`; ghi trong cùng transaction với thay đổi nghiệp vụ | `docs/02-tai-lieu-quan-tri.md` mục 3.1 |
 | I.5.a | Sao lưu thủ công, chọn Full / Data-only | **Có** | Sao lưu cơ sở dữ liệu → Sao lưu ngay. Lượt sao lưu **xếp vào hàng đợi Hangfire**, trả về ngay và không phụ thuộc giới hạn thời gian của proxy; màn hình tự cập nhật trạng thái từ bảng `backup_jobs` | Kịch bản 2.6.1, 2.6.9 |
-| I.5.b | Sao lưu tự động theo lịch cron, số bản giữ lại, gửi email khi lỗi | **Có** | Tham số → Cấu hình sao lưu; tác vụ nền Hangfire | Kịch bản 2.6.7, 2.6.8 |
+| I.5.b | Sao lưu tự động theo lịch cron, số bản giữ lại, gửi email khi lỗi | **Có** | Tham số → Cấu hình sao lưu; tác vụ nền Hangfire. Đổi lịch có hiệu lực ngay, không đợi khởi động lại, và màn hình sao lưu hiện cả lịch bộ chạy nền đang giữ lẫn thư mục chứa tệp (bổ sung 04/09/2026) | Kịch bản 2.6.7, 2.6.8, 2.6.12 |
 | I.5.c | Danh sách bản sao lưu: tên, dung lượng, thời gian, trạng thái; tải về, xóa, phục hồi | **Có** | Sao lưu cơ sở dữ liệu | Kịch bản 2.6.2 |
+| I.5.c1 | Phục hồi kèm tệp tài liệu số | **Có** | Bổ sung 04/09/2026: bản sao lưu có kèm tệp thì lượt phục hồi tải chúng trở lại kho đối tượng ngay sau `pg_restore` và báo số tệp; trước đó phải chạy `mc mirror` bằng tay | Kịch bản 2.6.13 |
 | I.5.d | Phục hồi có cảnh báo 2 bước, yêu cầu nhập lại mật khẩu, ghi log | **Có** | Sao lưu → Phục hồi. Lượt phục hồi **chạy ở tiến trình nền**, hộp thoại theo dõi tiến độ tại chỗ và không đóng được khi đang chạy; tiến độ đọc từ bộ nhớ đệm vì chính cơ sở dữ liệu đang bị ghi đè | Kịch bản 2.6.3, 2.6.4, 2.6.6, 2.6.11 |
 | I.5.e | Gọi `pg_dump` / `pg_restore` thật qua process | **Có** | `PostgresBackupService`; PostgreSQL client đóng gói sẵn trong ảnh API | `docs/03-sao-luu-phuc-hoi.md` mục 1 |
 | I.5.f | Sao lưu kèm tệp MinIO | **Có** | Tùy chọn *Sao lưu kèm tệp tài liệu số* — chép mọi object của bucket tài liệu và ảnh về `<bản sao lưu>-files/<bucket>/…` (`ObjectStorageMirror`, từ 04/09/2026; trước đó chỉ ghi README — sổ lỗi J4) | Kịch bản 2.6.1; `BackupTests.Sao_luu_kem_tep_tai_lieu_so…` |
@@ -72,10 +73,10 @@ Cập nhật lần cuối: 02/09/2026, sau đợt hoàn thiện (bảo mật, b�
 | DM.3 | Danh mục phân cấp (đề mục, phân loại, bộ sưu tập) | **Có** | Chọn cấp trên bằng cây; chặn chuyển một giá trị vào bên dưới cấp con của chính nó | Kịch bản DM.6, DM.7 |
 | DM.4 | Import danh mục từ Excel | **Có** | Tệp mẫu có sheet hướng dẫn; bước kiểm tra trước không ghi dữ liệu; dòng trùng mã sẽ cập nhật thay vì tạo mới | Kịch bản DM.8 → DM.10 |
 | DM.5 | Export danh mục ra Excel | **Có** | Tệp xuất dùng đúng tiêu đề cột của tệp mẫu nên sửa xong nhập lại được | Kịch bản DM.11 |
-| DM.6 | Gộp trùng, cập nhật toàn bộ biểu ghi liên quan | **Có** | Tìm trùng theo tên đã bỏ dấu; hiển thị số bản ghi đang dùng của từng giá trị; gộp chuyển hết tham chiếu rồi mới xóa | Kịch bản DM.12 |
+| DM.6 | Gộp trùng, cập nhật toàn bộ biểu ghi liên quan | **Có** | Tìm trùng theo tên đã bỏ dấu; hiển thị số bản ghi đang dùng của từng giá trị; gộp chuyển hết tham chiếu rồi mới xóa. Từ 04/09/2026 gộp còn **sửa chính biểu ghi MARC** và cột phẳng rút từ nó, nên tên cũ không còn ở danh sách, dạng ISBD, phích mục lục hay tệp xuất ISO 2709; mỗi biểu ghi bị sửa có một phiên bản trong lịch sử | Kịch bản DM.12, DM.14 |
 | DM.7 | Chặn xóa giá trị đang được sử dụng | **Có** | Thông báo nêu rõ số bản ghi đang dùng, hoặc số giá trị con còn lại | Kịch bản DM.5 |
 | DM.8 | Nạp sẵn danh mục chuẩn quốc tế | **Có** | 21 ngôn ngữ (ISO 639-2), 24 mã nước (MARC), 14 dạng tài liệu, 8 vật mang tin, bảng tóm tắt DDC (10 lớp + 89 phân lớp), 6 loại bạn đọc, 2 thư viện, 4 kho | Kịch bản 2.1.11 |
-| DM.9 | Danh mục tự tạo từ trường MARC 21 | **Có** | Khai báo danh mục bằng tag và trường con nguồn (ví dụ 260$a cho nơi xuất bản); quét toàn bộ biểu ghi bằng chính PostgreSQL để rút giá trị duy nhất, gộp các cách viết trùng (kết quả gộp sống sót qua lần quét sau), rồi dùng làm bộ lọc tra cứu | Kịch bản DM.13 → DM.17 |
+| DM.9 | Danh mục tự tạo từ trường MARC 21 | **Có** | Khai báo danh mục bằng tag và trường con nguồn (ví dụ 260$a cho nơi xuất bản); quét toàn bộ biểu ghi bằng chính PostgreSQL để rút giá trị duy nhất, gộp các cách viết trùng (kết quả gộp sống sót qua lần quét sau). Danh mục bật cờ "hiện làm bộ lọc" xuất hiện thành một nhóm lọc trên trang tra cứu kèm số đếm, bấm vào thì kết quả thu hẹp thật (bổ sung 04/09/2026) | Kịch bản DM.13 → DM.17 |
 
 ---
 
@@ -203,14 +204,14 @@ Cập nhật lần cuối: 02/09/2026, sau đợt hoàn thiện (bảo mật, b�
 | IV.1 | Tìm báo, tạp chí theo tên, ISSN, NXB, kỳ hạn, ngôn ngữ, kho, trạng thái đặt | **Có** | Tìm theo tên bỏ dấu vẫn ra; cột tình trạng nhận số ngay trên danh sách |
 | IV.1 | Xem nhanh tình trạng nhận số dạng lưới theo năm, tô màu | **Có** | Lưới các số theo năm, tô theo trạng thái: dự kiến, đã nhận, thiếu, đang khiếu nại, đã đóng tập |
 | IV.2 | Nhập mục lục bài trích: nhan đề, tác giả, trang từ–đến, tóm tắt, từ khóa | **Có** | Bảng nhập trực tiếp trên bàn làm việc của từng số |
-| IV.2 | Sinh biểu ghi MARC riêng cho bài trích, liên kết ấn phẩm mẹ qua trường 773 | **Có** | Leader vị trí 07 = 'a', trường 773 mang $t tên tạp chí, $g định vị số và trang, $x ISSN; bài tra được trên OPAC bằng chính tên bài |
+| IV.2 | Sinh biểu ghi MARC riêng cho bài trích, liên kết ấn phẩm mẹ qua trường 773 | **Có** | Leader vị trí 07 = 'a', trường 773 mang $t tên tạp chí, $g định vị số và trang, $x ISSN. Biểu ghi được xuất bản ngay nên bạn đọc tra được bằng chính tên bài — trước 04/09/2026 nó ở trạng thái Nháp và trang tra cứu không thấy |
 | IV.2 | Import mục lục từ Excel | **Có** | Tệp mẫu có sheet hướng dẫn; dòng lỗi báo theo đúng số dòng trong tệp |
 | IV.3 | Sinh số: chọn nhiều đầu báo, chọn khoảng thời gian | **Có** | Mỗi đầu báo sinh theo kỳ hạn của chính nó; số đã có được bỏ qua nên chạy lại không nhân đôi |
 | IV.3 | Ghi nhận: bảng các số đến hạn, tick nhận hàng loạt | **Có** | Màn hình Ấn phẩm định kỳ › Bổ sung tổng thể liệt kê số đến hạn của mọi đầu báo trong một bảng; tick nhận hàng loạt, số lượng và ngày nhận nhập riêng từng dòng; kho để trống thì mỗi số vào kho của đầu báo nó |
 | IV.3 | Kiểm tra: đối chiếu dự kiến với đã nhận, liệt kê số thiếu | **Có** | Tab "Đối chiếu số thiếu" (bộ lọc `unresolvedOnly`: quá hạn, đã ghi thiếu, đang khiếu nại) gom theo đầu báo với số cũ nhất chưa về; đánh dấu thiếu hàng loạt |
 | IV.3 | Tạo phiếu khiếu nại gửi nhà cung cấp | **Có** | Lập cho nhiều số của nhiều đầu báo một lần, mỗi số một phiếu gửi tới nhà cung cấp của đầu báo ấy; sinh số phiếu tự động, nội dung soạn sẵn kèm tên số và ngày phát hành dự kiến; ghi nhận phản hồi, hủy khiếu nại thì số quay lại danh sách thiếu |
 | IV.4 | Phân kho: chọn kho, giá, ký hiệu xếp giá cho đầu báo | **Có** | Khai ngay trên form đầu báo; số nhận về lấy mặc định từ đây |
-| IV.4 | Định kỳ: dạng chu kỳ, số kỳ/năm, ngày phát hành, quy tắc đánh số, năm và số bắt đầu, kỳ nghỉ | **Có** | Mười kỳ hạn; ngày phát hành theo thứ trong tuần hoặc ngày trong tháng; ba cách đánh số; khai được các tháng không xuất bản |
+| IV.4 | Định kỳ: dạng chu kỳ, số kỳ/năm, ngày phát hành, quy tắc đánh số, năm và số bắt đầu, kỳ nghỉ | **Có** | Mười kỳ hạn; ngày phát hành theo thứ trong tuần hoặc ngày trong tháng; ba cách đánh số. Kỳ nghỉ khai được theo tháng, theo **thứ trong tuần** (nhật báo nghỉ Chủ nhật) và theo **khoảng ngày** lặp hằng năm hoặc riêng một năm, đủ cho kỳ nghỉ Tết (bổ sung 04/09/2026) |
 | IV.4 | Sinh số theo cấu hình, cho sửa tay từng số trước khi chốt | **Có** | Bước xem trước không ghi gì vào cơ sở dữ liệu; sửa được số, tập và ngày của từng dòng rồi mới chốt |
 | IV.4 | Ghi nhận từng số: ngày nhận, số lượng, sinh barcode, ghi vào kho | **Có** | Mỗi bản nhận về thành một ĐKCB thật có mã vạch, vào kho ở trạng thái cho mượn ngay |
 | IV.4 | Kiểm tra: lưới tình trạng, đánh dấu số thiếu, tạo khiếu nại | **Có** | Cùng bàn làm việc, không phải chuyển màn hình |
