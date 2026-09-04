@@ -219,6 +219,10 @@ export interface BackupStorage {
   backupCount: number;
   autoEnabled: boolean;
   scheduleCron?: string;
+  /** Lịch bộ chạy nền đang giữ; lệch với scheduleCron nghĩa là lượt đăng ký lại chưa chạy. */
+  scheduledCron?: string;
+  /** Thư mục chứa bản sao lưu, chỉ đọc. */
+  directory?: string;
   keepCount: number;
   lastSuccessAt?: string;
 }

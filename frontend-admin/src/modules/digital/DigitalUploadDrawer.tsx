@@ -17,6 +17,7 @@ import { InboxOutlined } from '@ant-design/icons';
 import { ApiRequestError } from '@/api/client';
 import { digitalApi } from './api';
 import { findSession, forgetSession, rememberSession } from './uploadSessions';
+import { BibSearchSelect } from '@/components/BibSearchSelect';
 import { accessLevelHints, accessLevelLabels, formatSize } from './labels';
 import type {
   DigitalAccessLevel,
@@ -81,6 +82,10 @@ export function DigitalUploadDrawer({
       title: files.length === 1 ? (values.title as string | undefined) : undefined,
       description: values.description as string | undefined,
       collectionId: values.collectionId as string | undefined,
+      // Gắn biểu ghi ngay lúc tải lên: máy chủ nhận trường này ở cả ba lối (tải một lần, mở phiên,
+      // hoàn tất phiên) từ lâu, chỉ màn hình bỏ trống. Tải xong mới mở từng tài liệu ra gắn là việc
+      // tay không cần thiết khi gói có vài chục tệp.
+      bibId: values.bibId as string | undefined,
       accessLevel: values.accessLevel as string | undefined,
       allowDownload: String(Boolean(values.allowDownload)),
       allowPrint: String(Boolean(values.allowPrint)),
@@ -121,6 +126,7 @@ export function DigitalUploadDrawer({
         totalSize: file.size,
         title: fields.title,
         collectionId: fields.collectionId,
+        bibId: fields.bibId,
       });
     }
 
@@ -160,6 +166,7 @@ export function DigitalUploadDrawer({
       title: fields.title,
       description: fields.description,
       collectionId: fields.collectionId,
+      bibId: fields.bibId,
       accessLevel: fields.accessLevel,
       allowDownload: Boolean(values.allowDownload),
       allowPrint: Boolean(values.allowPrint),
@@ -284,6 +291,14 @@ export function DigitalUploadDrawer({
 
         <Form.Item name="collectionId" label="Bộ sưu tập">
           <Select allowClear showSearch optionFilterProp="label" options={options} />
+        </Form.Item>
+
+        <Form.Item
+          name="bibId"
+          label="Gắn vào biểu ghi thư mục"
+          extra="Bỏ trống thì tài liệu số đứng riêng; gắn sau ở màn hình sửa cũng được."
+        >
+          <BibSearchSelect />
         </Form.Item>
 
         <Form.Item

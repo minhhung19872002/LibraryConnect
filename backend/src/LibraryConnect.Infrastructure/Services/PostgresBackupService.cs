@@ -117,6 +117,9 @@ public class PostgresBackupService : IBackupService
         filePath
     };
 
+    // Tên có tiền tố Backup vì `Directory` trần sẽ che khuất System.IO.Directory trong cả lớp này.
+    public string BackupDirectory => _options.Directory;
+
     public async Task<BackupResult> CreateAsync(BackupType type, bool includeObjectStorage, CancellationToken ct = default)
     {
         Directory.CreateDirectory(_options.Directory);

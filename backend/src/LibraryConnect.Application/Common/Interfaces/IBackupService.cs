@@ -35,4 +35,14 @@ public interface IBackupService
 
     /// <summary>Free space of the backup volume, shown on the backup screen.</summary>
     Task<(long TotalBytes, long FreeBytes)> GetStorageInfoAsync(CancellationToken ct = default);
+
+    /// <summary>
+    /// Thư mục chứa bản sao lưu, để màn hình nói ra chỗ tệp nằm.
+    ///
+    /// Chỉ đọc, không đổi được từ giao diện: đây là đường dẫn bên trong container và nó phải trỏ
+    /// vào ổ đĩa gắn ngoài. Cho sửa trên màn hình là mở đường ghi bản sao lưu vào một thư mục nằm
+    /// trong container, và cả kho sao lưu biến mất ở lần dựng lại tiếp theo. Đổi bằng biến môi
+    /// trường cùng lúc với việc gắn ổ đĩa — xem docs/03 và docs/04.
+    /// </summary>
+    string BackupDirectory { get; }
 }

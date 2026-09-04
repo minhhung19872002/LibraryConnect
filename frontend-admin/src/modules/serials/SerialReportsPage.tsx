@@ -26,6 +26,7 @@ import { money } from '@/modules/acquisition/labels';
 import { serialsApi } from './api';
 import { frequencyLabels } from './labels';
 import type { SerialReportFilter } from './types';
+import { StatChart } from '@/modules/acquisition/StatChart';
 import { MAU } from '@/lib/palette';
 
 /**
@@ -179,6 +180,24 @@ export function SerialReportsPage() {
           </Card>
         </Col>
       </Row>
+
+      {/*
+        Mọi báo cáo của sản phẩm có ba dạng đầu ra — bảng, đồ họa, tệp (yêu cầu 6.8 của E-HSMT).
+        Báo cáo ấn phẩm định kỳ trước 04/09/2026 chỉ có bảng và tệp, lệch với các phân hệ khác.
+        Dùng lại đúng thành phần biểu đồ của phân hệ Bổ sung: cùng cách đổi cột/tròn, cùng dải màu.
+      */}
+      <Card variant="borderless" title="Biểu đồ" style={{ marginBottom: 16 }}>
+        <StatChart
+          rows={rows.map((row) => ({
+            label: row.label,
+            itemCount: row.receivedIssues,
+            titleCount: row.titleCount,
+            value: row.value,
+            percent: row.percent,
+          }))}
+          unit="kỳ"
+        />
+      </Card>
 
       <Card variant="borderless" title={report.data?.title ?? 'Thống kê ấn phẩm định kỳ'}>
         <Table

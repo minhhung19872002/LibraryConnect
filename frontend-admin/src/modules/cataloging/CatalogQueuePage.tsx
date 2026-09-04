@@ -512,21 +512,47 @@ function AssignModal({
 
 /** Năng suất biên mục theo cán bộ (II.4). */
 function ProductivityCard() {
+  // Khoảng thời gian là thứ đầu tiên người phụ trách hỏi tới: "tháng này ai làm được bao nhiêu".
+  // Endpoint đã nhận from/to từ lâu, chỉ màn hình chưa bao giờ truyền — nên bảng luôn cộng dồn cả
+  // lịch sử và không so được hai kỳ với nhau.
+  const [range, setRange] = useState<[dayjs.Dayjs, dayjs.Dayjs] | null>(null);
+
   const productivity = useQuery({
-    queryKey: ['catalog-productivity'],
-    queryFn: () => queueApi.productivity(),
+    queryKey: ['catalog-productivity', range?.[0]?.format('YYYY-MM-DD'), range?.[1]?.format('YYYY-MM-DD')],
+    queryFn: () =>
+      queueApi.productivity(
+        range ? range[0].format('YYYY-MM-DD') : undefined,
+        range ? range[1].format('YYYY-MM-DD') : undefined,
+      ),
   });
 
-  if (!productivity.data || productivity.data.length === 0) {
-    return null;
-  }
-
   return (
-    <Card size="small" title="Năng suất biên mục">
+    <Card
+      size="small"
+      title="Năng suất biên mục"
+      extra={
+        <DatePicker.RangePicker
+          size="small"
+          format="DD/MM/YYYY"
+          value={range}
+          onChange={(value) =>
+            setRange(value && value[0] && value[1] ? [value[0], value[1]] : null)
+          }
+          presets={[
+            { label: 'Tháng này', value: [dayjs().startOf('month'), dayjs()] },
+            // dayjs không có 'quarter' nếu chưa nạp plugin; ba tháng gần nhất nói đúng điều cần biết.
+            { label: 'Ba tháng gần đây', value: [dayjs().subtract(3, 'month'), dayjs()] },
+            { label: 'Năm nay', value: [dayjs().startOf('year'), dayjs()] },
+          ]}
+        />
+      }
+    >
       <Table
         rowKey={(row) => row.userId ?? row.userName}
         size="small"
-        dataSource={productivity.data}
+        dataSource={productivity.data ?? []}
+        loading={productivity.isFetching}
+        locale={{ emptyText: 'Chưa có việc nào trong khoảng thời gian đã chọn.' }}
         pagination={false}
         columns={[
           { title: 'Cán bộ', dataIndex: 'userName' },

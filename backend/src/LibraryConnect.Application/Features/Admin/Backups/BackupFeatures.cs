@@ -43,6 +43,9 @@ public class BackupStorageDto
     /// nghĩa là lượt đăng ký lại chưa chạy, và màn hình phải nói ra chứ không im lặng.
     /// </summary>
     public string? ScheduledCron { get; set; }
+
+    /// <summary>Thư mục chứa bản sao lưu; chỉ đọc, đổi bằng biến môi trường lúc triển khai.</summary>
+    public string? Directory { get; set; }
     public int KeepCount { get; set; }
     public DateTimeOffset? LastSuccessAt { get; set; }
 }
@@ -166,6 +169,7 @@ public class GetBackupStorageQueryHandler : IRequestHandler<GetBackupStorageQuer
             AutoEnabled = await _parameters.GetAsync("BACKUP.AUTO_ENABLED", true, ct),
             ScheduleCron = await _parameters.GetAsync("BACKUP.SCHEDULE_CRON", "0 2 * * *", ct),
             ScheduledCron = _backupSchedule.CurrentCron(),
+            Directory = _backups.BackupDirectory,
             KeepCount = await _parameters.GetAsync("BACKUP.KEEP_COUNT", 30, ct)
         };
     }

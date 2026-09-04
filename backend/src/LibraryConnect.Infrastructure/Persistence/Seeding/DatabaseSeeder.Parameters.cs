@@ -88,6 +88,21 @@ public partial class DatabaseSeeder
         new("CODE.CLAIM_PREFIX", "CODE", "Quy tắc sinh mã", "Tiền tố mã khiếu nại", null, ParameterDataType.Text, "KN"),
         new("CODE.CLAIM_LENGTH", "CODE", "Quy tắc sinh mã", "Độ dài mã khiếu nại", null, ParameterDataType.Number, "5"),
 
+        // Hậu tố (I.3 nêu "prefix/suffix/độ dài/reset theo năm"). Bộ sinh mã đọc khoá `_SUFFIX` từ
+        // đầu, nhưng không có dòng tham số nào nên màn hình không hiện ô để nhập — thư viện muốn mã
+        // dạng "ĐKCB000123/TV" phải sửa cấu hình bằng tay. Mặc định rỗng: mã cũ không đổi.
+        new("CODE.BARCODE_SUFFIX", "CODE", "Quy tắc sinh mã", "Hậu tố mã vạch ĐKCB",
+            "Nối vào sau phần số, ví dụ \"/TV\". Bỏ trống là không có hậu tố.", ParameterDataType.Text, ""),
+        new("CODE.REGISTER_SUFFIX", "CODE", "Quy tắc sinh mã", "Hậu tố số đăng ký cá biệt", null, ParameterDataType.Text, ""),
+        new("CODE.CARD_SUFFIX", "CODE", "Quy tắc sinh mã", "Hậu tố số thẻ bạn đọc", null, ParameterDataType.Text, ""),
+        new("CODE.ORDER_SUFFIX", "CODE", "Quy tắc sinh mã", "Hậu tố mã đơn đặt",
+            "Nhiều đơn vị ghi mã đơn kèm phòng ban, ví dụ \"/TV-ĐHM\".", ParameterDataType.Text, ""),
+        new("CODE.REQUEST_SUFFIX", "CODE", "Quy tắc sinh mã", "Hậu tố mã yêu cầu mua", null, ParameterDataType.Text, ""),
+        new("CODE.HANDOVER_SUFFIX", "CODE", "Quy tắc sinh mã", "Hậu tố mã biên bản bàn giao", null, ParameterDataType.Text, ""),
+        new("CODE.TRANSFER_SUFFIX", "CODE", "Quy tắc sinh mã", "Hậu tố số phiếu chuyển kho", null, ParameterDataType.Text, ""),
+        new("CODE.DISPOSAL_SUFFIX", "CODE", "Quy tắc sinh mã", "Hậu tố số quyết định thanh lý",
+            "Ví dụ \"/QĐ-TV\" theo thể thức văn bản hành chính.", ParameterDataType.Text, ""),
+
         // ---- Bảo mật ----
         new(PasswordPolicyKeys.MinLength, "SECURITY", "Chính sách mật khẩu", "Độ dài mật khẩu tối thiểu", null, ParameterDataType.Number, "8"),
         new(PasswordPolicyKeys.RequireUppercase, "SECURITY", "Chính sách mật khẩu", "Bắt buộc có chữ hoa", null, ParameterDataType.Boolean, "false"),

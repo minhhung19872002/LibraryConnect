@@ -249,9 +249,30 @@ export function BackupsPage() {
               Lịch: {storage.data?.scheduleCron ?? '—'}
             </Typography.Text>
             <br />
+            {/*
+              Lịch bộ chạy nền đang giữ. Bình thường hai giá trị bằng nhau và dòng này im lặng; chỉ
+              khi lệch — máy chủ chưa nhận lịch mới — mới nói ra, vì đó đúng là lúc người quản trị
+              tưởng đã đổi giờ mà thật ra chưa.
+            */}
+            {storage.data?.scheduledCron && storage.data.scheduledCron !== storage.data.scheduleCron ? (
+              <>
+                <Typography.Text type="warning" className="lc-mono">
+                  Máy chủ đang chạy theo lịch cũ: {storage.data.scheduledCron}
+                </Typography.Text>
+                <br />
+              </>
+            ) : null}
             <Typography.Text type="secondary">
               Gần nhất: {formatDateTime(storage.data?.lastSuccessAt) ?? 'chưa có'}
             </Typography.Text>
+            {storage.data?.directory ? (
+              <>
+                <br />
+                <Typography.Text type="secondary" className="lc-mono">
+                  Thư mục: {storage.data.directory}
+                </Typography.Text>
+              </>
+            ) : null}
           </Card>
         </Col>
       </Row>
