@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../../core/api/api_client.dart';
+import '../../../core/network/delta_sync.dart';
 import '../../../shared/models/catalog_models.dart';
 
 part 'notifications_api.freezed.dart';
@@ -38,17 +39,27 @@ abstract class NotificationSetting with _$NotificationSetting {
       _$NotificationSettingFromJson(json);
 }
 
+/// Khoá bộ đệm + mốc delta của danh sách thông báo đầy đủ.
+const notificationsKey = 'notifications';
+
 class NotificationsApi {
   NotificationsApi(this._api);
 
   final ApiClient _api;
 
+  /// [updatedSince]: chỉ lấy thông báo tạo từ mốc ấy (máy chủ lọc theo `created_at`).
   Future<Paged<ReaderNotification>> list({
     int page = 1,
     bool unreadOnly = false,
+    DateTime? updatedSince,
   }) => _api.get(
     '/reader/notifications',
-    query: {'page': page, 'pageSize': 30, 'unreadOnly': unreadOnly},
+    query: {
+      'page': page,
+      'pageSize': 30,
+      'unreadOnly': unreadOnly,
+      'updatedSince': updatedSinceParam(updatedSince),
+    },
     decode: (json) => Paged.fromJson(
       json! as Map<String, dynamic>,
       ReaderNotification.fromJson,

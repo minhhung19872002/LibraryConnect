@@ -218,7 +218,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final params = await Navigator.of(context).push<AdvancedSearchParams>(
       MaterialPageRoute(
         fullscreenDialog: true,
-        builder: (_) => const _AdvancedSearchPage(),
+        builder: (_) => const AdvancedSearchPage(),
       ),
     );
     if (params == null) return;
@@ -784,20 +784,34 @@ class _ToggleRow extends StatelessWidget {
   );
 }
 
-/// Tra cứu nâng cao: nhiều điều kiện nối VÀ / HOẶC / KHÔNG, lọc năm, chỉ tài liệu số.
-class _AdvancedSearchPage extends StatefulWidget {
-  const _AdvancedSearchPage();
+/// Ba bộ lọc có danh mục trên trang nâng cao (đặc tả 4.1: "lọc năm, ngôn ngữ, dạng tài liệu,
+/// kho"): mã nhóm facet của máy chủ → khoá lọc `OpacFilter`.
+const advancedFacetFilters = <String, String>{
+  'language': 'languageId',
+  'documentType': 'documentTypeId',
+  'warehouse': 'warehouseId',
+};
+
+/// Tra cứu nâng cao: nhiều điều kiện nối VÀ / HOẶC / KHÔNG, lọc năm, ngôn ngữ, dạng tài liệu,
+/// kho, chỉ tài liệu số. Ba danh mục lấy từ `/api/search/facets` (không từ khoá) — cùng bộ đếm
+/// mà tấm lọc kết quả dùng, nên không có danh mục nào viết cứng trong ứng dụng.
+/// Trả về [AdvancedSearchParams] qua `Navigator.pop`.
+class AdvancedSearchPage extends ConsumerStatefulWidget {
+  const AdvancedSearchPage({super.key});
 
   @override
-  State<_AdvancedSearchPage> createState() => _AdvancedSearchPageState();
+  ConsumerState<AdvancedSearchPage> createState() => _AdvancedSearchPageState();
 }
 
-class _AdvancedSearchPageState extends State<_AdvancedSearchPage> {
+class _AdvancedSearchPageState extends ConsumerState<AdvancedSearchPage> {
   final _clauses = <_ClauseDraft>[_ClauseDraft(), _ClauseDraft()];
   final _yearFrom = TextEditingController();
   final _yearTo = TextEditingController();
   bool _onlyDigital = false;
   bool _onlyAvailable = false;
+
+  /// Giá trị đã chọn theo khoá lọc (`languageId` → mã ngôn ngữ…); vắng là "Tất cả".
+  final _picked = <String, String>{};
 
   @override
   void dispose() {
@@ -826,15 +840,57 @@ class _AdvancedSearchPageState extends State<_AdvancedSearchPage> {
         .set('publishYearTo', int.tryParse(_yearTo.text))
         .set('hasDigital', _onlyDigital)
         .set('availableOnly', _onlyAvailable);
+    for (final entry in _picked.entries) {
+      filter = filter.set(entry.key, entry.value);
+    }
 
     Navigator.of(
       context,
     ).pop(AdvancedSearchParams(clauses: clauses, filter: filter));
   }
 
+  /// Một ô chọn cho một nhóm facet; máy chủ không trả nhóm ấy thì ô vẫn hiện với mỗi "Tất cả".
+  Widget _facetDropdown(
+    L10n l10n,
+    String label,
+    String facetCode,
+    List<FacetGroup> groups,
+  ) {
+    final key = advancedFacetFilters[facetCode]!;
+    final values = groups
+        .where((g) => g.code == facetCode)
+        .expand((g) => g.values)
+        .toList();
+    return DropdownButtonFormField<String?>(
+      key: Key('adv-$facetCode'),
+      isExpanded: true,
+      initialValue: _picked[key],
+      decoration: InputDecoration(labelText: label),
+      items: [
+        DropdownMenuItem<String?>(value: null, child: Text(l10n.filterAll)),
+        for (final value in values)
+          DropdownMenuItem<String?>(
+            value: value.id ?? value.label,
+            child: Text(
+              '${value.label} (${value.count})',
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+      ],
+      onChanged: (value) => setState(() {
+        if (value == null) {
+          _picked.remove(key);
+        } else {
+          _picked[key] = value;
+        }
+      }),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = L10n.of(context);
+    final facets = ref.watch(facetsProvider(const SearchParams()));
     final connectorLabel = {
       Connector.and: l10n.connectorAnd,
       Connector.or: l10n.connectorOr,
@@ -934,6 +990,52 @@ class _AdvancedSearchPageState extends State<_AdvancedSearchPage> {
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 12),
+          // Ngôn ngữ / dạng tài liệu / kho: danh mục từ facet máy chủ. Đang tải thì hiện thanh
+          // mỏng; lỗi thì vẫn cho tra cứu với các điều kiện còn lại, kèm nút thử lại.
+          facets.when(
+            loading: () => const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: LinearProgressIndicator(minHeight: 2),
+            ),
+            error: (error, _) => Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    error is ApiException ? error.message : '$error',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
+                TextButton(
+                  onPressed: () =>
+                      ref.invalidate(facetsProvider(const SearchParams())),
+                  child: Text(l10n.retry),
+                ),
+              ],
+            ),
+            data: (groups) => Column(
+              children: [
+                _facetDropdown(l10n, l10n.language, 'language', groups),
+                const SizedBox(height: 12),
+                _facetDropdown(
+                  l10n,
+                  l10n.documentTypeLabel,
+                  'documentType',
+                  groups,
+                ),
+                const SizedBox(height: 12),
+                _facetDropdown(l10n, l10n.warehouseLabel, 'warehouse', groups),
+                const SizedBox(height: 4),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    l10n.advancedFiltersHint,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
+              ],
+            ),
           ),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,

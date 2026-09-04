@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../../core/api/api_exception.dart';
+import '../../../core/network/delta_sync.dart';
 import '../../../core/network/offline_cache.dart';
 import '../../../shared/models/catalog_models.dart';
 import '../../../shared/models/reader_models.dart';
@@ -30,9 +31,19 @@ class ReaderApi {
         Paged.fromJson(json! as Map<String, dynamic>, LoanRow.fromJson),
   );
 
-  Future<Paged<LoanRow>> loanHistory({int page = 1}) => _api.get(
+  /// Lịch sử gồm mọi phiếu (đang mượn lẫn đã trả), mới nhất trước. [updatedSince] chỉ lấy phiếu
+  /// đổi từ mốc ấy — kể cả phiếu vừa được trả, nên nó cũng là nguồn delta cho "đang mượn".
+  Future<Paged<LoanRow>> loanHistory({
+    int page = 1,
+    int pageSize = 20,
+    DateTime? updatedSince,
+  }) => _api.get(
     '/reader/loans/history',
-    query: {'page': page, 'pageSize': 20},
+    query: {
+      'page': page,
+      'pageSize': pageSize,
+      'updatedSince': updatedSinceParam(updatedSince),
+    },
     decode: (json) =>
         Paged.fromJson(json! as Map<String, dynamic>, LoanRow.fromJson),
   );
@@ -98,18 +109,60 @@ final profileProvider = FutureProvider.autoDispose<ReaderProfile>(
   (ref) => ref.watch(readerApiProvider).profile(),
 );
 
-/// Đang mượn: lấy từ máy chủ và lưu bản mới nhất; mất mạng thì trả bản lưu kèm giờ (đặc tả 5).
-/// Lỗi khác mạng (401, 403) đi tiếp như thường — không che bằng bản cũ.
+/// Khoá bộ đệm + mốc delta của hai danh sách phiếu mượn.
+const loansCurrentKey = 'loans.current';
+const loansHistoryKey = 'loans.history';
+
+/// Đang mượn xếp theo hạn trả gần nhất trước — đúng thứ tự máy chủ trả cho `/loans/current`.
+int compareByDue(LoanRow a, LoanRow b) => a.dueDate.compareTo(b.dueDate);
+
+/// Lịch sử xếp ngày mượn mới nhất trước — đúng thứ tự máy chủ trả cho `/loans/history`.
+int compareByLoanDateDesc(LoanRow a, LoanRow b) =>
+    (b.loanDate ?? DateTime(0)).compareTo(a.loanDate ?? DateTime(0));
+
+/// Nạp danh sách đang mượn theo lối delta (XI.3): lần đầu tải trọn `/loans/current`; các lần sau
+/// chỉ hỏi `/loans/history?updatedSince=<serverTime lần trước>` — phiếu mới mượn, vừa gia hạn,
+/// vừa trả, vừa quá hạn đều nằm trong đó — rồi gộp vào bản đệm và giữ lại phiếu còn mở.
+/// Tách hàm để thử được với API giả.
+Future<DeltaLoad<LoanRow>> loadCurrentLoans({
+  required ReaderApi api,
+  required OfflineCache cache,
+  required DeltaSync sync,
+  bool full = false,
+  DateTime Function()? now,
+}) => loadWithDelta<LoanRow>(
+  key: loansCurrentKey,
+  cache: cache,
+  sync: sync,
+  full: full,
+  now: now,
+  fetch: (since) => since == null
+      ? api.currentLoans()
+      : api.loanHistory(page: 1, pageSize: 50, updatedSince: since),
+  toJson: (LoanRow l) => l.toJson(),
+  fromJson: LoanRow.fromJson,
+  idOf: (l) => l.id,
+  keep: (l) => l.isOpen,
+  compare: compareByDue,
+);
+
+/// Đang mượn: lấy từ máy chủ (delta khi đã có bản đệm và mốc) và lưu bản mới nhất; mất mạng thì
+/// trả bản lưu kèm giờ (đặc tả 5). Lỗi khác mạng (401, 403) đi tiếp như thường — không che bằng
+/// bản cũ. Muốn tải trọn (kéo để làm mới) thì xoá mốc bằng `DeltaSync.clear` rồi invalidate.
 final currentLoansProvider =
     FutureProvider.autoDispose<CachedValue<Paged<LoanRow>>>((ref) async {
       final cache = ref.watch(offlineCacheProvider);
+      final sync = ref.watch(deltaSyncProvider);
       try {
-        final page = await ref.watch(readerApiProvider).currentLoans();
-        await cache.putPaged('loans.current', page, (LoanRow l) => l.toJson());
-        return CachedValue(page, DateTime.now());
+        final loaded = await loadCurrentLoans(
+          api: ref.watch(readerApiProvider),
+          cache: cache,
+          sync: sync,
+        );
+        return loaded.cached;
       } on ApiException catch (error) {
         if (!error.isNetwork && error.kind != ApiErrorKind.timeout) rethrow;
-        final cached = await cache.getPaged('loans.current', LoanRow.fromJson);
+        final cached = await cache.getPaged(loansCurrentKey, LoanRow.fromJson);
         if (cached == null) rethrow;
         return cached;
       }

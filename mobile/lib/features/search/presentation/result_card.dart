@@ -40,12 +40,17 @@ class CoverImage extends ConsumerWidget {
     required this.title,
     this.width = 60,
     this.height = 84,
+    this.semanticLabel,
   });
 
   final String bibId;
   final String title;
   final double width;
   final double height;
+
+  /// Trình đọc màn hình đọc gì ở ảnh bìa. Bỏ trống là bìa trang trí (trong danh sách nhan đề đã
+  /// đứng cạnh) và bị loại khỏi cây trợ năng — kể cả chữ cái đầu của ô thay thế.
+  final String? semanticLabel;
 
   static String url(String bibId, {required int pixelWidth}) =>
       Env.absolute('/api/public/covers/$bibId?w=$pixelWidth');
@@ -76,7 +81,7 @@ class CoverImage extends ConsumerWidget {
       coverBytesProvider(url(bibId, pixelWidth: pixelWidth)),
     );
 
-    return ClipRRect(
+    final image = ClipRRect(
       borderRadius: BorderRadius.circular(6),
       child: SizedBox(
         width: width,
@@ -90,6 +95,15 @@ class CoverImage extends ConsumerWidget {
         ),
       ),
     );
+
+    return semanticLabel == null
+        ? ExcludeSemantics(child: image)
+        : Semantics(
+            label: semanticLabel,
+            image: true,
+            excludeSemantics: true,
+            child: image,
+          );
   }
 }
 
@@ -137,62 +151,66 @@ class ResultCard extends StatelessWidget {
       if (item.publishYear case final year?) '$year',
     ].join(' · ');
 
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: onTap ?? () => context.push(Routes.bib(item.id)),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              CoverImage(bibId: item.id, title: item.title),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.subtitle == null || item.subtitle!.isEmpty
-                          ? item.title
-                          : '${item.title}: ${item.subtitle}',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.titleMedium,
-                    ),
-                    if (meta.isNotEmpty) ...[
-                      const SizedBox(height: 4),
+    // Một dòng kết quả là một nút đọc thành một câu: nhan đề, tác giả · NXB · năm, tình trạng —
+    // không phải bốn nút nhỏ rời nhau.
+    return MergeSemantics(
+      child: Card(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: onTap ?? () => context.push(Routes.bib(item.id)),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CoverImage(bibId: item.id, title: item.title),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Text(
-                        meta,
+                        item.subtitle == null || item.subtitle!.isEmpty
+                            ? item.title
+                            : '${item.title}: ${item.subtitle}',
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodySmall,
+                        style: theme.textTheme.titleMedium,
+                      ),
+                      if (meta.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          meta,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      ],
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        children: [
+                          AvailabilityPill(
+                            itemCount: item.itemCount,
+                            availableItemCount: item.availableItemCount,
+                          ),
+                          if (item.digitalDocumentCount > 0)
+                            StatusPill(
+                              l10n.digitalCount(item.digitalDocumentCount),
+                              tone: PillTone.neutral,
+                            ),
+                          if (item.documentTypeName case final type?
+                              when type.isNotEmpty)
+                            StatusPill(type, tone: PillTone.neutral),
+                        ],
                       ),
                     ],
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 4,
-                      children: [
-                        AvailabilityPill(
-                          itemCount: item.itemCount,
-                          availableItemCount: item.availableItemCount,
-                        ),
-                        if (item.digitalDocumentCount > 0)
-                          StatusPill(
-                            l10n.digitalCount(item.digitalDocumentCount),
-                            tone: PillTone.neutral,
-                          ),
-                        if (item.documentTypeName case final type?
-                            when type.isNotEmpty)
-                          StatusPill(type, tone: PillTone.neutral),
-                      ],
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

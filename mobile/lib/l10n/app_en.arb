@@ -423,5 +423,22 @@
   "studentCode": "Student ID",
   "majorLabel": "Major",
   "courseYearLabel": "Cohort",
-  "serverLabel": "Server"
+  "serverLabel": "Server",
+  "a11yLibraryLogo": "Library logo",
+  "a11yCardBarcode": "Library card barcode, card number {number}",
+  "@a11yCardBarcode": {"placeholders": {"number": {"type": "String"}}},
+  "a11yCardQr": "Library card QR code, card number {number}",
+  "@a11yCardQr": {"placeholders": {"number": {"type": "String"}}},
+  "a11yCover": "Cover image: {title}",
+  "@a11yCover": {"placeholders": {"title": {"type": "String"}}},
+  "a11yScannerView": "Scanner viewfinder. Point the camera at a barcode or QR code.",
+  "a11yCheckoutScannerView": "Book barcode viewfinder. Point the camera at the barcode on the spine.",
+  "a11yOpenDetail": "Open document details",
+  "a11yReaderPage": "Page {page} of {total} of the document",
+  "@a11yReaderPage": {"placeholders": {"page": {"type": "int"}, "total": {"type": "int"}}},
+  "warehouseLabel": "Warehouse",
+  "advancedFiltersHint": "Lists come from the server facet counts; \"All\" means no filter.",
+  "outline": "Table of contents",
+  "outlineEmpty": "This document has no table of contents.",
+  "outlineOffline": "Table of contents saved with the offline package."
 }

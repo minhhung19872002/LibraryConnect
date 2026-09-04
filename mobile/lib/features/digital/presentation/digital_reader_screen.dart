@@ -22,6 +22,11 @@ abstract class PageSource {
   String get title;
   String? get note;
   Future<Uint8List> render(int page);
+
+  /// Mục lục (bookmark) của tài liệu; rỗng khi tệp không có. Trực tuyến hỏi máy chủ, ngoại tuyến
+  /// đọc bản lưu kèm gói.
+  Future<List<DigitalOutlineEntry>> outline();
+
   Future<void> dispose() async {}
 }
 
@@ -56,6 +61,12 @@ class OnlinePageSource extends PageSource {
   @override
   Future<Uint8List> render(int page) async =>
       _cache[page] ??= await _api.page(session.documentId, page);
+
+  List<DigitalOutlineEntry>? _outline;
+
+  @override
+  Future<List<DigitalOutlineEntry>> outline() async =>
+      _outline ??= await _api.outline(session.documentId);
 }
 
 class OfflinePageSource extends PageSource {
@@ -108,6 +119,9 @@ class OfflinePageSource extends PageSource {
       await pdfPage.close();
     }
   }
+
+  @override
+  Future<List<DigitalOutlineEntry>> outline() async => entry.outline;
 
   @override
   Future<void> dispose() => _document.close();
@@ -260,6 +274,23 @@ class _DigitalReaderScreenState extends ConsumerState<DigitalReaderScreen> {
     if (picked != null) _goTo(picked);
   }
 
+  /// Mục lục: danh sách chương thụt lề theo cấp, chạm là nhảy tới trang. Tệp không có bookmark thì
+  /// nói thẳng "không có mục lục" — ứng dụng không tự đoán chương từ lớp chữ.
+  Future<void> _showOutline() async {
+    final source = _source;
+    if (source == null) return;
+    final picked = await showModalBottomSheet<int>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => _OutlineSheet(
+        source: source,
+        offline: widget.offlinePackageId != null,
+      ),
+    );
+    if (picked != null) _goTo(picked);
+  }
+
   Future<void> _goToDialog() async {
     final l10n = L10n.of(context);
     final controller = TextEditingController();
@@ -331,6 +362,12 @@ class _DigitalReaderScreenState extends ConsumerState<DigitalReaderScreen> {
       appBar: AppBar(
         title: Text(source.title, maxLines: 1, overflow: TextOverflow.fade),
         actions: [
+          IconButton(
+            key: const Key('outline-button'),
+            tooltip: l10n.outline,
+            icon: const Icon(Icons.toc),
+            onPressed: _showOutline,
+          ),
           if (source.canFind)
             IconButton(
               tooltip: l10n.findInText,
@@ -389,11 +426,15 @@ class _DigitalReaderScreenState extends ConsumerState<DigitalReaderScreen> {
             padding: const EdgeInsets.symmetric(vertical: 6),
             child: SafeArea(
               top: false,
-              child: Text(
-                l10n.pageOf(_page, source.pageCount),
-                key: const Key('page-indicator'),
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: LcColors.cream),
+              // liveRegion: lật trang là nghe "Trang n/N" mà không phải dò xuống đáy.
+              child: Semantics(
+                liveRegion: true,
+                child: Text(
+                  l10n.pageOf(_page, source.pageCount),
+                  key: const Key('page-indicator'),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: LcColors.cream),
+                ),
               ),
             ),
           ),
@@ -477,10 +518,125 @@ class _PageViewState extends State<_PageView>
               key: Key('page-${widget.page}'),
               fit: BoxFit.contain,
               gaplessPlayback: true,
+              // Ảnh trang không có lớp chữ cho trình đọc màn hình; ít nhất nó biết đang ở
+              // trang mấy. Nội dung chữ tìm được qua "Tìm trong văn bản".
+              semanticLabel: l10n.a11yReaderPage(
+                widget.page,
+                widget.source.pageCount,
+              ),
             ),
           ),
         );
       },
+    );
+  }
+}
+
+/// Mục lục của tài liệu: nạp từ [PageSource.outline], hiện chương thụt lề theo cấp, chạm trả về
+/// số trang. Ba trạng thái rõ ràng: đang tải, có mục lục, không có (hoặc lỗi kèm câu máy chủ).
+class _OutlineSheet extends StatefulWidget {
+  const _OutlineSheet({required this.source, required this.offline});
+
+  final PageSource source;
+  final bool offline;
+
+  @override
+  State<_OutlineSheet> createState() => _OutlineSheetState();
+}
+
+class _OutlineSheetState extends State<_OutlineSheet> {
+  late final Future<List<DigitalOutlineEntry>> _entries = widget.source
+      .outline();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = L10n.of(context);
+    final theme = Theme.of(context);
+    return DraggableScrollableSheet(
+      expand: false,
+      initialChildSize: 0.6,
+      maxChildSize: 0.95,
+      builder: (context, scroll) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
+            child: Semantics(
+              header: true,
+              child: Text(l10n.outline, style: theme.textTheme.titleLarge),
+            ),
+          ),
+          if (widget.offline)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
+              child: Text(
+                l10n.outlineOffline,
+                style: theme.textTheme.bodySmall,
+              ),
+            ),
+          Expanded(
+            child: FutureBuilder<List<DigitalOutlineEntry>>(
+              future: _entries,
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  final error = snapshot.error;
+                  return Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Text(
+                      error is ApiException
+                          ? error.message
+                          : l10n.digitalOpenError,
+                      key: const Key('outline-error'),
+                    ),
+                  );
+                }
+                if (!snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                final entries = snapshot.data!;
+                if (entries.isEmpty) {
+                  return Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Text(
+                      l10n.outlineEmpty,
+                      key: const Key('outline-empty'),
+                    ),
+                  );
+                }
+                return ListView.builder(
+                  controller: scroll,
+                  itemCount: entries.length,
+                  itemBuilder: (context, index) {
+                    final entry = entries[index];
+                    final page = entry.page;
+                    return ListTile(
+                      key: Key('outline-$index'),
+                      dense: entry.level > 0,
+                      contentPadding: EdgeInsets.only(
+                        left: 20.0 + 16.0 * entry.level.clamp(0, 4),
+                        right: 20,
+                      ),
+                      title: Text(
+                        entry.title,
+                        style: entry.level == 0
+                            ? theme.textTheme.titleMedium
+                            : theme.textTheme.bodyMedium,
+                      ),
+                      trailing: page == null
+                          ? null
+                          : Text('$page', style: theme.textTheme.bodySmall),
+                      enabled: page != null,
+                      onTap: page == null
+                          ? null
+                          : () => Navigator.of(context).pop(page),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

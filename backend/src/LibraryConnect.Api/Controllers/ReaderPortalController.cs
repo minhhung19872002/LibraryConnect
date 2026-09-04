@@ -560,4 +560,22 @@ public class ReaderPortalController : ApiControllerBase
         public List<Guid>? BibIds { get; set; }
         public string? Note { get; set; }
     }
+
+    // ---- Đợt hoàn thiện 04/09/2026 (mobile) ----
+
+    /// <summary>
+    /// Mục lục (bookmark PDF) của một tài liệu số, làm phẳng theo thứ tự đọc: <c>level</c> để thụt lề,
+    /// <c>page</c> để nhảy trang. Quyền kiểm y như khi mở trang; mục trỏ quá phần được xem thử bị cắt.
+    /// Tệp không có bookmark thì trả danh sách rỗng — ứng dụng hiện "không có mục lục", không tự đoán.
+    /// </summary>
+    [HttpGet("digital/{id:guid}/outline")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<DigitalOutlineEntryDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<ApiResponse<IReadOnlyList<DigitalOutlineEntryDto>>>> DigitalOutline(
+        Guid id, CancellationToken ct)
+    {
+        var result = await Mediator.Send(new GetDigitalOutlineQuery(id), ct);
+        return Ok(Success(result));
+    }
 }

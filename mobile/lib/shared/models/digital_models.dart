@@ -201,3 +201,38 @@ abstract class OfflinePackageRow with _$OfflinePackageRow {
   factory OfflinePackageRow.fromJson(Map<String, dynamic> json) =>
       _$OfflinePackageRowFromJson(json);
 }
+
+/// Một mục trong mục lục tài liệu số (`/reader/digital/{id}/outline`): độ sâu để thụt lề, trang
+/// đích để nhảy (null là tiêu đề nhóm không trỏ trang). Lớp thường, không freezed, vì còn được
+/// ghi kèm gói ngoại tuyến bằng `toJson` và đọc lại khi không có mạng.
+class DigitalOutlineEntry {
+  const DigitalOutlineEntry({
+    required this.level,
+    required this.title,
+    this.page,
+  });
+
+  factory DigitalOutlineEntry.fromJson(Map<String, dynamic> json) =>
+      DigitalOutlineEntry(
+        level: (json['level'] as num?)?.toInt() ?? 0,
+        title: json['title'] as String? ?? '',
+        page: (json['page'] as num?)?.toInt(),
+      );
+
+  final int level;
+  final String title;
+  final int? page;
+
+  Map<String, dynamic> toJson() => {
+    'level': level,
+    'title': title,
+    'page': page,
+  };
+
+  static List<DigitalOutlineEntry> listFromJson(Object? json) => json is List
+      ? json
+            .whereType<Map<String, dynamic>>()
+            .map(DigitalOutlineEntry.fromJson)
+            .toList(growable: false)
+      : const [];
+}

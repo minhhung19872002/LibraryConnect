@@ -3,8 +3,12 @@ import 'dart:typed_data';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/api/api_client.dart';
+import '../../../core/network/delta_sync.dart';
 import '../../../shared/models/catalog_models.dart';
 import '../../../shared/models/digital_models.dart';
+
+/// Khoá bộ đệm + mốc delta của danh sách tài liệu số không lọc.
+const digitalListKey = 'digital.list';
 
 /// Tài liệu số của bạn đọc: danh sách, chi tiết + quyền, phiên đọc, ảnh trang có chữ chìm, tải về,
 /// tìm trong văn bản, yêu cầu truy cập, lịch sử, gói ngoại tuyến. Quyền do máy chủ quyết.
@@ -16,11 +20,14 @@ class DigitalApi {
   /// Danh sách thường (không từ khoá, không bộ sưu tập) đi qua `GET /api/reader/digital` — đúng
   /// dòng hợp đồng XI.4 mà ứng dụng khách phải gọi; có từ khoá / bộ sưu tập / toàn văn thì dùng
   /// `POST /reader/digital/search` vì bộ lọc ấy chỉ nhận qua thân yêu cầu.
+  ///
+  /// [updatedSince]: chỉ lấy tài liệu đổi từ mốc ấy (máy chủ lọc theo `updated_at`).
   Future<Paged<DigitalDocumentRow>> list({
     int page = 1,
     String? keyword,
     String? collectionId,
     bool fullText = false,
+    DateTime? updatedSince,
   }) {
     Paged<DigitalDocumentRow> decode(Object? json) => Paged.fromJson(
       json! as Map<String, dynamic>,
@@ -33,7 +40,11 @@ class DigitalApi {
     if (plain) {
       return _api.get(
         '/reader/digital',
-        query: {'page': page, 'pageSize': 20},
+        query: {
+          'page': page,
+          'pageSize': 20,
+          'updatedSince': ?updatedSinceParam(updatedSince),
+        },
         anonymous: true,
         decode: decode,
       );
@@ -44,6 +55,7 @@ class DigitalApi {
         'page': page,
         'pageSize': 20,
         'keyword': ?keyword,
+        'updatedSince': ?updatedSinceParam(updatedSince),
         'filter': {
           'collectionId': ?collectionId,
           if (fullText) 'fullText': true,
@@ -85,6 +97,14 @@ class DigitalApi {
     final response = await _api.bytes('/reader/digital/$id/download');
     return Uint8List.fromList(response.data ?? const []);
   }
+
+  /// Mục lục (bookmark PDF) do máy chủ đọc; tệp không có thì danh sách rỗng. Cùng quyền với
+  /// việc mở trang: không đọc được thì 403.
+  Future<List<DigitalOutlineEntry>> outline(String id) => _api.get(
+    '/reader/digital/$id/outline',
+    anonymous: true,
+    decode: DigitalOutlineEntry.listFromJson,
+  );
 
   Future<List<DigitalTextHit>> find(String id, String term) => _api.get(
     '/reader/digital/$id/find',

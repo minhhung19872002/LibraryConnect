@@ -423,5 +423,22 @@
   "studentCode": "Mã sinh viên",
   "majorLabel": "Ngành",
   "courseYearLabel": "Khóa",
-  "serverLabel": "Máy chủ"
+  "serverLabel": "Máy chủ",
+  "a11yLibraryLogo": "Biểu tượng thư viện",
+  "a11yCardBarcode": "Mã vạch thẻ thư viện, số thẻ {number}",
+  "@a11yCardBarcode": {"placeholders": {"number": {"type": "String"}}},
+  "a11yCardQr": "Mã QR thẻ thư viện, số thẻ {number}",
+  "@a11yCardQr": {"placeholders": {"number": {"type": "String"}}},
+  "a11yCover": "Ảnh bìa: {title}",
+  "@a11yCover": {"placeholders": {"title": {"type": "String"}}},
+  "a11yScannerView": "Khung quét mã. Hướng máy ảnh vào mã vạch hoặc mã QR.",
+  "a11yCheckoutScannerView": "Khung quét mã vạch sách. Hướng máy ảnh vào mã vạch trên gáy sách.",
+  "a11yOpenDetail": "Mở chi tiết tài liệu",
+  "a11yReaderPage": "Trang {page} trên {total} của tài liệu",
+  "@a11yReaderPage": {"placeholders": {"page": {"type": "int"}, "total": {"type": "int"}}},
+  "warehouseLabel": "Kho",
+  "advancedFiltersHint": "Danh mục lấy từ bộ đếm của máy chủ; để \"Tất cả\" là không lọc.",
+  "outline": "Mục lục",
+  "outlineEmpty": "Tài liệu này không có mục lục.",
+  "outlineOffline": "Mục lục lưu kèm gói ngoại tuyến."
 }

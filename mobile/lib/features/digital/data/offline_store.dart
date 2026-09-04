@@ -25,6 +25,7 @@ class OfflineEntry {
     required this.ivBase64,
     required this.expiresAt,
     required this.savedAt,
+    this.outline = const [],
   });
 
   factory OfflineEntry.fromJson(Map<String, dynamic> json) => OfflineEntry(
@@ -39,6 +40,7 @@ class OfflineEntry {
     ivBase64: json['ivBase64'] as String,
     expiresAt: DateTime.parse(json['expiresAt'] as String),
     savedAt: DateTime.parse(json['savedAt'] as String),
+    outline: DigitalOutlineEntry.listFromJson(json['outline']),
   );
 
   final String packageId;
@@ -52,6 +54,9 @@ class OfflineEntry {
   final String ivBase64;
   final DateTime expiresAt;
   final DateTime savedAt;
+
+  /// Mục lục lấy lúc tải gói, để ngoại tuyến vẫn nhảy chương được (máy chủ mới đọc được bookmark).
+  final List<DigitalOutlineEntry> outline;
 
   bool isExpired([DateTime? now]) => (now ?? DateTime.now()).isAfter(expiresAt);
 
@@ -67,6 +72,7 @@ class OfflineEntry {
     'ivBase64': ivBase64,
     'expiresAt': expiresAt.toUtc().toIso8601String(),
     'savedAt': savedAt.toUtc().toIso8601String(),
+    'outline': outline.map((e) => e.toJson()).toList(),
   };
 }
 
@@ -124,8 +130,13 @@ class OfflineStore {
       _secure.write(key, jsonEncode(entries.map((e) => e.toJson()).toList()));
 
   /// Lưu gói: giải mã thử để đối chiếu SHA-256 với `checksum` máy chủ (sai thì bỏ), rồi ghi tệp
-  /// **mã hoá** lên đĩa — bản rõ chỉ tồn tại trong bộ nhớ lúc đọc.
-  Future<OfflineEntry> save(OfflinePackage package, Uint8List encrypted) async {
+  /// **mã hoá** lên đĩa — bản rõ chỉ tồn tại trong bộ nhớ lúc đọc. [outline] là mục lục máy chủ
+  /// đọc được lúc tải, ghi kèm để ngoại tuyến vẫn nhảy chương.
+  Future<OfflineEntry> save(
+    OfflinePackage package,
+    Uint8List encrypted, {
+    List<DigitalOutlineEntry> outline = const [],
+  }) async {
     final plain = decryptPackage(
       encrypted,
       keyBase64: package.keyBase64,
@@ -151,6 +162,7 @@ class OfflineStore {
       ivBase64: package.ivBase64,
       expiresAt: package.expiresAt,
       savedAt: _now(),
+      outline: outline,
     );
     final entries = (await list())
         .where((e) => e.documentId != package.documentId)

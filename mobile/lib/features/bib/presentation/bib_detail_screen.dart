@@ -213,15 +213,19 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
                           title: bib.title,
                           width: 110,
                           height: 154,
+                          semanticLabel: l10n.a11yCover(bib.title),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                bib.title,
-                                style: theme.textTheme.titleLarge,
+                              Semantics(
+                                header: true,
+                                child: Text(
+                                  bib.title,
+                                  style: theme.textTheme.titleLarge,
+                                ),
                               ),
                               if (bib.subtitle case final s? when s.isNotEmpty)
                                 Text(s, style: theme.textTheme.bodyMedium),

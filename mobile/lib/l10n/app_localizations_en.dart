@@ -1254,4 +1254,55 @@ class L10nEn extends L10n {
 
   @override
   String get serverLabel => 'Server';
+
+  @override
+  String get a11yLibraryLogo => 'Library logo';
+
+  @override
+  String a11yCardBarcode(String number) {
+    return 'Library card barcode, card number $number';
+  }
+
+  @override
+  String a11yCardQr(String number) {
+    return 'Library card QR code, card number $number';
+  }
+
+  @override
+  String a11yCover(String title) {
+    return 'Cover image: $title';
+  }
+
+  @override
+  String get a11yScannerView =>
+      'Scanner viewfinder. Point the camera at a barcode or QR code.';
+
+  @override
+  String get a11yCheckoutScannerView =>
+      'Book barcode viewfinder. Point the camera at the barcode on the spine.';
+
+  @override
+  String get a11yOpenDetail => 'Open document details';
+
+  @override
+  String a11yReaderPage(int page, int total) {
+    return 'Page $page of $total of the document';
+  }
+
+  @override
+  String get warehouseLabel => 'Warehouse';
+
+  @override
+  String get advancedFiltersHint =>
+      'Lists come from the server facet counts; \"All\" means no filter.';
+
+  @override
+  String get outline => 'Table of contents';
+
+  @override
+  String get outlineEmpty => 'This document has no table of contents.';
+
+  @override
+  String get outlineOffline =>
+      'Table of contents saved with the offline package.';
 }

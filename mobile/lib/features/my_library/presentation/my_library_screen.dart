@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/api/api_exception.dart';
+import '../../../core/network/delta_sync.dart';
+import '../../../core/network/offline_cache.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../l10n/app_localizations.dart';
@@ -180,6 +182,8 @@ class _CurrentLoansTabState extends ConsumerState<_CurrentLoansTab> {
             ? _Empty(l10n.noLoans)
             : RefreshIndicator(
                 onRefresh: () async {
+                  // Kéo để làm mới là tải trọn: xoá mốc delta rồi nạp lại từ đầu.
+                  await ref.read(deltaSyncProvider).clear(loansCurrentKey);
                   ref.invalidate(currentLoansProvider);
                   await ref.read(currentLoansProvider.future);
                 },
@@ -333,7 +337,10 @@ class _HistoryTabState extends ConsumerState<_HistoryTab> {
     super.dispose();
   }
 
-  Future<void> _load({bool reset = false}) async {
+  /// Trang đầu nạp theo lối delta (XI.3): có bản đệm thì chỉ hỏi phiếu đổi từ `serverTime` lần
+  /// trước rồi gộp; [full] (kéo để làm mới) thì tải trọn. Các trang sau nối như thường, bỏ dòng
+  /// đã có vì phiếu mới đẩy phiếu cũ xuống trang kế.
+  Future<void> _load({bool reset = false, bool full = false}) async {
     if (_loading) return;
     if (!reset && !(_pages?.hasNext ?? false)) return;
     setState(() {
@@ -341,12 +348,29 @@ class _HistoryTabState extends ConsumerState<_HistoryTab> {
       _error = null;
       if (reset) _pages = null;
     });
+    final api = ref.read(readerApiProvider);
     try {
-      final next = await ref
-          .read(readerApiProvider)
-          .loanHistory(page: reset ? 1 : _pages!.page + 1);
-      if (!mounted) return;
-      setState(() => _pages = reset ? next : _pages!.append(next));
+      if (reset) {
+        final loaded = await loadWithDelta<LoanRow>(
+          key: loansHistoryKey,
+          cache: ref.read(offlineCacheProvider),
+          sync: ref.read(deltaSyncProvider),
+          full: full,
+          fetch: (since) => api.loanHistory(page: 1, updatedSince: since),
+          toJson: (l) => l.toJson(),
+          fromJson: LoanRow.fromJson,
+          idOf: (l) => l.id,
+          compare: compareByLoanDateDesc,
+        );
+        if (!mounted) return;
+        setState(() => _pages = loaded.page);
+      } else {
+        final next = await api.loanHistory(page: _pages!.page + 1);
+        if (!mounted) return;
+        setState(
+          () => _pages = appendDistinct(_pages!, next, idOf: (l) => l.id),
+        );
+      }
     } catch (error) {
       if (!mounted) return;
       setState(() => _error = error);
@@ -416,19 +440,22 @@ class _HistoryTabState extends ConsumerState<_HistoryTab> {
                       now: DateTime.now(),
                     );
                     if (shown.isEmpty) return _Empty(l10n.noHistory);
-                    return ListView.builder(
-                      controller: _scroll,
-                      padding: const EdgeInsets.all(12),
-                      itemCount: shown.length + (pages.hasNext ? 1 : 0),
-                      itemBuilder: (context, index) {
-                        if (index == shown.length) {
-                          return const Padding(
-                            padding: EdgeInsets.all(16),
-                            child: Center(child: CircularProgressIndicator()),
-                          );
-                        }
-                        return _LoanCard(loan: shown[index]);
-                      },
+                    return RefreshIndicator(
+                      onRefresh: () => _load(reset: true, full: true),
+                      child: ListView.builder(
+                        controller: _scroll,
+                        padding: const EdgeInsets.all(12),
+                        itemCount: shown.length + (pages.hasNext ? 1 : 0),
+                        itemBuilder: (context, index) {
+                          if (index == shown.length) {
+                            return const Padding(
+                              padding: EdgeInsets.all(16),
+                              child: Center(child: CircularProgressIndicator()),
+                            );
+                          }
+                          return _LoanCard(loan: shown[index]);
+                        },
+                      ),
                     );
                   },
                 ),

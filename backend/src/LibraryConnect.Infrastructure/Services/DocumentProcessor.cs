@@ -79,6 +79,53 @@ public class DocumentProcessor : IDocumentProcessor
         return Task.FromResult<IReadOnlyList<string>>(pages);
     }
 
+    public Task<IReadOnlyList<DocumentOutlineEntry>> ExtractOutlineAsync(
+        byte[] content, string mimeType, CancellationToken ct = default)
+    {
+        if (!CanRenderPages(mimeType))
+        {
+            return Task.FromResult<IReadOnlyList<DocumentOutlineEntry>>(Array.Empty<DocumentOutlineEntry>());
+        }
+
+        ct.ThrowIfCancellationRequested();
+
+        using var stream = new MemoryStream(content, writable: false);
+        using var pdf = PdfDocument.Open(stream);
+
+        if (!pdf.TryGetBookmarks(out var bookmarks))
+        {
+            return Task.FromResult<IReadOnlyList<DocumentOutlineEntry>>(Array.Empty<DocumentOutlineEntry>());
+        }
+
+        // Làm phẳng cây bookmark theo thứ tự đọc (cha rồi tới con), giữ độ sâu để ứng dụng thụt lề.
+        var entries = new List<DocumentOutlineEntry>();
+
+        void Walk(IEnumerable<UglyToad.PdfPig.Outline.BookmarkNode> nodes, int level)
+        {
+            foreach (var node in nodes)
+            {
+                ct.ThrowIfCancellationRequested();
+
+                var title = node.Title?.Trim();
+                if (string.IsNullOrEmpty(title))
+                {
+                    title = "…";
+                }
+
+                int? page = node is UglyToad.PdfPig.Outline.DocumentBookmarkNode inDocument
+                    ? inDocument.PageNumber
+                    : null;
+
+                entries.Add(new DocumentOutlineEntry(level, title, page));
+                Walk(node.Children, level + 1);
+            }
+        }
+
+        Walk(bookmarks.Roots, 0);
+
+        return Task.FromResult<IReadOnlyList<DocumentOutlineEntry>>(entries);
+    }
+
     public Task<DocumentInspection> InspectAsync(
         byte[] content, string mimeType, CancellationToken ct = default)
     {

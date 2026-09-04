@@ -20,42 +20,49 @@ import 'api_exception.dart';
 /// - Bóc phong bì `{ success, data, message, errors }` của máy chủ, ném [ApiException] với câu tiếng
 ///   Việt của máy chủ (hoặc câu của riêng lớp này khi máy chủ không trả lời được).
 class ApiClient {
-  ApiClient({required TokenStore tokens, Dio? dio, this.onSessionExpired})
-    : _tokens = tokens,
-      _dio =
-          dio ??
-          Dio(
-            BaseOptions(
-              baseUrl: Env.apiBaseUrl,
-              connectTimeout: const Duration(seconds: 15),
-              receiveTimeout: const Duration(seconds: 30),
-              headers: const {'Accept': 'application/json'},
-            ),
-          ) {
+  ApiClient({
+    required TokenStore tokens,
+    Dio? dio,
+    this.onSessionExpired,
+    String certificatePins = Env.certificatePins,
+  }) : _tokens = tokens,
+       _dio =
+           dio ??
+           Dio(
+             BaseOptions(
+               baseUrl: Env.apiBaseUrl,
+               connectTimeout: const Duration(seconds: 15),
+               receiveTimeout: const Duration(seconds: 30),
+               headers: const {'Accept': 'application/json'},
+             ),
+           ) {
     _dio.interceptors.add(
       QueuedInterceptorsWrapper(onRequest: _onRequest, onError: _onError),
     );
-    _applyCertificatePins();
+    _applyCertificatePins(certificatePins);
   }
 
   /// Ghim chứng chỉ TLS khi build có `LC_CERT_PINS`: chỉ chấp nhận chứng chỉ máy chủ có SHA-256
   /// (base64) nằm trong danh sách. Không đặt thì tin kho gốc hệ điều hành như thường.
-  void _applyCertificatePins() {
-    final pins = Env.certificatePins
-        .split(',')
-        .map((p) => p.trim())
-        .where((p) => p.isNotEmpty)
-        .toSet();
+  /// [certificatePins] nhận qua tham số (mặc định từ `--dart-define`) để phép thử ghim được một
+  /// chứng chỉ tự ký và xem ghim sai có bị chặn thật không.
+  void _applyCertificatePins(String certificatePins) {
+    final pins = parseCertificatePins(certificatePins);
     if (pins.isEmpty) return;
     final adapter = _dio.httpClientAdapter;
     if (adapter is IOHttpClientAdapter) {
-      adapter.validateCertificate = (cert, host, port) {
-        if (cert == null) return false;
-        final fingerprint = base64Encode(sha256.convert(cert.der).bytes);
-        return pins.contains(fingerprint);
-      };
+      adapter.validateCertificate = (cert, host, port) =>
+          cert != null && pins.contains(certificateFingerprint(cert));
     }
   }
+
+  /// Danh sách ghim từ chuỗi `LC_CERT_PINS` (cách nhau bằng dấu phẩy, bỏ khoảng trắng và mục rỗng).
+  static Set<String> parseCertificatePins(String value) =>
+      value.split(',').map((p) => p.trim()).where((p) => p.isNotEmpty).toSet();
+
+  /// SHA-256 (base64) của chứng chỉ DER — đúng giá trị đặt vào `LC_CERT_PINS`.
+  static String certificateFingerprint(X509Certificate cert) =>
+      base64Encode(sha256.convert(cert.der).bytes);
 
   final Dio _dio;
   final TokenStore _tokens;
