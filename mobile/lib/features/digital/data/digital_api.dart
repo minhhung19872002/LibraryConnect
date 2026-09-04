@@ -13,25 +13,46 @@ class DigitalApi {
 
   final ApiClient _api;
 
+  /// Danh sách thường (không từ khoá, không bộ sưu tập) đi qua `GET /api/reader/digital` — đúng
+  /// dòng hợp đồng XI.4 mà ứng dụng khách phải gọi; có từ khoá / bộ sưu tập / toàn văn thì dùng
+  /// `POST /reader/digital/search` vì bộ lọc ấy chỉ nhận qua thân yêu cầu.
   Future<Paged<DigitalDocumentRow>> list({
     int page = 1,
     String? keyword,
     String? collectionId,
     bool fullText = false,
-  }) => _api.post(
-    '/reader/digital/search',
-    body: {
-      'page': page,
-      'pageSize': 20,
-      'keyword': ?keyword,
-      'filter': {'collectionId': ?collectionId, if (fullText) 'fullText': true},
-    },
-    anonymous: true,
-    decode: (json) => Paged.fromJson(
+  }) {
+    Paged<DigitalDocumentRow> decode(Object? json) => Paged.fromJson(
       json! as Map<String, dynamic>,
       DigitalDocumentRow.fromJson,
-    ),
-  );
+    );
+    final plain =
+        (keyword == null || keyword.trim().isEmpty) &&
+        collectionId == null &&
+        !fullText;
+    if (plain) {
+      return _api.get(
+        '/reader/digital',
+        query: {'page': page, 'pageSize': 20},
+        anonymous: true,
+        decode: decode,
+      );
+    }
+    return _api.post(
+      '/reader/digital/search',
+      body: {
+        'page': page,
+        'pageSize': 20,
+        'keyword': ?keyword,
+        'filter': {
+          'collectionId': ?collectionId,
+          if (fullText) 'fullText': true,
+        },
+      },
+      anonymous: true,
+      decode: decode,
+    );
+  }
 
   Future<List<DigitalCollectionNode>> collections() => _api.get(
     '/reader/digital/collections',

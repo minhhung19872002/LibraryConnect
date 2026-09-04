@@ -455,9 +455,11 @@ class _LibraryCard extends StatelessWidget {
                   ),
                 if (address != null && address.isNotEmpty)
                   FilledButton.tonalIcon(
+                    // Mở chế độ dẫn đường tới thư viện (không phải trang tìm địa chỉ): ứng dụng bản
+                    // đồ tự lấy vị trí hiện tại làm điểm xuất phát.
                     onPressed: () => launchUrl(
                       Uri.parse(
-                        'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(address)}',
+                        'https://www.google.com/maps/dir/?api=1&destination=${Uri.encodeComponent(address)}&travelmode=driving',
                       ),
                       mode: LaunchMode.externalApplication,
                     ),
