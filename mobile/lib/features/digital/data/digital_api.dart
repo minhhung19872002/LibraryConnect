@@ -3,8 +3,12 @@ import 'dart:typed_data';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/api/api_client.dart';
+import '../../../core/network/delta_sync.dart';
 import '../../../shared/models/catalog_models.dart';
 import '../../../shared/models/digital_models.dart';
+
+/// Khoá bộ đệm + mốc delta của danh sách tài liệu số không lọc.
+const digitalListKey = 'digital.list';
 
 /// Tài liệu số của bạn đọc: danh sách, chi tiết + quyền, phiên đọc, ảnh trang có chữ chìm, tải về,
 /// tìm trong văn bản, yêu cầu truy cập, lịch sử, gói ngoại tuyến. Quyền do máy chủ quyết.
@@ -13,17 +17,20 @@ class DigitalApi {
 
   final ApiClient _api;
 
+  /// [updatedSince]: chỉ lấy tài liệu đổi từ mốc ấy (máy chủ lọc theo `updated_at`).
   Future<Paged<DigitalDocumentRow>> list({
     int page = 1,
     String? keyword,
     String? collectionId,
     bool fullText = false,
+    DateTime? updatedSince,
   }) => _api.post(
     '/reader/digital/search',
     body: {
       'page': page,
       'pageSize': 20,
       'keyword': ?keyword,
+      'updatedSince': ?updatedSinceParam(updatedSince),
       'filter': {'collectionId': ?collectionId, if (fullText) 'fullText': true},
     },
     anonymous: true,

@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/api/api_exception.dart';
+import '../../../core/network/delta_sync.dart';
+import '../../../core/network/offline_cache.dart';
 import '../../../core/push/push_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../l10n/app_localizations.dart';
@@ -89,7 +91,11 @@ class _ListTabState extends ConsumerState<_ListTab> {
     super.dispose();
   }
 
-  Future<void> _load({bool reset = false}) async {
+  /// Danh sách đầy đủ nạp theo lối delta (XI.3): trang đầu chỉ hỏi thông báo tạo từ `serverTime`
+  /// lần trước rồi gộp vào bản đệm; [full] (kéo để làm mới, đánh dấu đã đọc tất cả) tải trọn.
+  /// Lọc "chưa đọc" luôn hỏi thẳng máy chủ — trạng thái đã đọc đổi ở web không nằm trong delta
+  /// (máy chủ lọc theo `created_at`).
+  Future<void> _load({bool reset = false, bool full = false}) async {
     if (_loading) return;
     if (!reset && !(_pages?.hasNext ?? false)) return;
     setState(() {
@@ -97,12 +103,36 @@ class _ListTabState extends ConsumerState<_ListTab> {
       _error = null;
       if (reset) _pages = null;
     });
+    final api = ref.read(notificationsApiProvider);
     try {
-      final next = await ref
-          .read(notificationsApiProvider)
-          .list(page: reset ? 1 : _pages!.page + 1, unreadOnly: _unreadOnly);
-      if (!mounted) return;
-      setState(() => _pages = reset ? next : _pages!.append(next));
+      if (reset && !_unreadOnly) {
+        final loaded = await loadWithDelta<ReaderNotification>(
+          key: notificationsKey,
+          cache: ref.read(offlineCacheProvider),
+          sync: ref.read(deltaSyncProvider),
+          full: full,
+          fetch: (since) => api.list(page: 1, updatedSince: since),
+          toJson: (n) => n.toJson(),
+          fromJson: ReaderNotification.fromJson,
+          idOf: (n) => n.id,
+          compare: (a, b) => (b.createdAt ?? DateTime(0)).compareTo(
+            a.createdAt ?? DateTime(0),
+          ),
+        );
+        if (!mounted) return;
+        setState(() => _pages = loaded.page);
+      } else {
+        final next = await api.list(
+          page: reset ? 1 : _pages!.page + 1,
+          unreadOnly: _unreadOnly,
+        );
+        if (!mounted) return;
+        setState(
+          () => _pages = reset
+              ? next
+              : appendDistinct(_pages!, next, idOf: (n) => n.id),
+        );
+      }
     } catch (error) {
       if (!mounted) return;
       setState(() => _error = error);
@@ -129,8 +159,15 @@ class _ListTabState extends ConsumerState<_ListTab> {
             page: pages.page,
             pageSize: pages.pageSize,
             hasNext: pages.hasNext,
+            serverTime: pages.serverTime,
           );
         });
+        // Bản đệm cũng phải biết đã đọc: delta lần sau không mang lại dòng này (lọc theo ngày tạo).
+        if (!_unreadOnly && _pages != null) {
+          await ref
+              .read(offlineCacheProvider)
+              .putPaged(notificationsKey, _pages!, (n) => n.toJson());
+        }
       } on ApiException {
         // Đánh dấu thất bại thì vẫn mở được màn hình liên quan.
       }
@@ -144,7 +181,7 @@ class _ListTabState extends ConsumerState<_ListTab> {
     try {
       await ref.read(notificationsApiProvider).markAllRead();
       ref.invalidate(unreadCountProvider);
-      await _load(reset: true);
+      await _load(reset: true, full: true);
     } on ApiException catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -205,7 +242,7 @@ class _ListTabState extends ConsumerState<_ListTab> {
               : pages.items.isEmpty
               ? Center(child: Text(l10n.notificationsEmpty))
               : RefreshIndicator(
-                  onRefresh: () => _load(reset: true),
+                  onRefresh: () => _load(reset: true, full: true),
                   child: ListView.separated(
                     controller: _scroll,
                     itemCount: pages.items.length + (pages.hasNext ? 1 : 0),

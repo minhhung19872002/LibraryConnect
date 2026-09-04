@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/auth/auth_controller.dart';
+import '../../../core/network/delta_sync.dart';
+import '../../../core/network/offline_cache.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../l10n/app_localizations.dart';
@@ -125,7 +127,10 @@ class _LibraryTabState extends ConsumerState<_LibraryTab> {
     super.dispose();
   }
 
-  Future<void> _load({bool reset = false}) async {
+  /// Danh sách không lọc nạp theo lối delta (XI.3): trang đầu chỉ hỏi tài liệu đổi từ
+  /// `serverTime` lần trước rồi gộp vào bản đệm; [full] (kéo để làm mới) tải trọn. Có từ khoá hay
+  /// bộ sưu tập thì hỏi thẳng máy chủ như thường.
+  Future<void> _load({bool reset = false, bool full = false}) async {
     if (_loading) return;
     if (!reset && !(_pages?.hasNext ?? false)) return;
     setState(() {
@@ -133,17 +138,36 @@ class _LibraryTabState extends ConsumerState<_LibraryTab> {
       _error = null;
       if (reset) _pages = null;
     });
+    final api = ref.read(digitalApiProvider);
+    final unfiltered = _keyword.isEmpty && _collectionId == null && !_fullText;
     try {
-      final next = await ref
-          .read(digitalApiProvider)
-          .list(
-            page: reset ? 1 : _pages!.page + 1,
-            keyword: _keyword.isEmpty ? null : _keyword,
-            collectionId: _collectionId,
-            fullText: _fullText,
-          );
-      if (!mounted) return;
-      setState(() => _pages = reset ? next : _pages!.append(next));
+      if (reset && unfiltered) {
+        final loaded = await loadWithDelta<DigitalDocumentRow>(
+          key: digitalListKey,
+          cache: ref.read(offlineCacheProvider),
+          sync: ref.read(deltaSyncProvider),
+          full: full,
+          fetch: (since) => api.list(page: 1, updatedSince: since),
+          toJson: (d) => d.toJson(),
+          fromJson: DigitalDocumentRow.fromJson,
+          idOf: (d) => d.id,
+        );
+        if (!mounted) return;
+        setState(() => _pages = loaded.page);
+      } else {
+        final next = await api.list(
+          page: reset ? 1 : _pages!.page + 1,
+          keyword: _keyword.isEmpty ? null : _keyword,
+          collectionId: _collectionId,
+          fullText: _fullText,
+        );
+        if (!mounted) return;
+        setState(
+          () => _pages = reset
+              ? next
+              : appendDistinct(_pages!, next, idOf: (d) => d.id),
+        );
+      }
     } catch (error) {
       if (!mounted) return;
       setState(() => _error = error);
@@ -229,21 +253,26 @@ class _LibraryTabState extends ConsumerState<_LibraryTab> {
               ? const Center(child: CircularProgressIndicator())
               : pages.items.isEmpty
               ? Center(child: Text(l10n.noResults))
-              : ListView.builder(
-                  controller: _scroll,
-                  padding: const EdgeInsets.all(12),
-                  itemCount: pages.items.length + 1,
-                  itemBuilder: (context, index) {
-                    if (index == pages.items.length) {
-                      return pages.hasNext
-                          ? const Padding(
-                              padding: EdgeInsets.all(16),
-                              child: Center(child: CircularProgressIndicator()),
-                            )
-                          : const SizedBox(height: 16);
-                    }
-                    return DigitalTile(item: pages.items[index]);
-                  },
+              : RefreshIndicator(
+                  onRefresh: () => _load(reset: true, full: true),
+                  child: ListView.builder(
+                    controller: _scroll,
+                    padding: const EdgeInsets.all(12),
+                    itemCount: pages.items.length + 1,
+                    itemBuilder: (context, index) {
+                      if (index == pages.items.length) {
+                        return pages.hasNext
+                            ? const Padding(
+                                padding: EdgeInsets.all(16),
+                                child: Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                              )
+                            : const SizedBox(height: 16);
+                      }
+                      return DigitalTile(item: pages.items[index]);
+                    },
+                  ),
                 ),
         ),
       ],
