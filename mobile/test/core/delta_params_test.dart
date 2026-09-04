@@ -95,18 +95,28 @@ void main() {
     expect(query['unreadOnly'], false);
   });
 
-  test(
-    'tài liệu số: updatedSince nằm trong thân POST /digital/search',
-    () async {
-      final api = DigitalApi(client);
+  test('tài liệu số: updatedSince đi kèm ở cả hai đường gọi', () async {
+    final api = DigitalApi(client);
 
-      await api.list(updatedSince: since);
-      final body = adapter.requests.single.data as Map<String, dynamic>;
-      expect(body['updatedSince'], wire);
+    // Danh sách thường đi qua GET /reader/digital (đúng dòng hợp đồng XI.4), mốc delta nằm ở
+    // tham số truy vấn.
+    await api.list(updatedSince: since);
+    final plain = adapter.requests.single;
+    expect(plain.path, '/reader/digital');
+    expect(plain.queryParameters['updatedSince'], wire);
 
-      await api.list(keyword: 'co so');
-      final plain = adapter.requests.last.data as Map<String, dynamic>;
-      expect(plain.containsKey('updatedSince'), isFalse);
-    },
-  );
+    // Có từ khoá thì phải dùng POST /digital/search vì bộ lọc chỉ nhận qua thân yêu cầu; không
+    // truyền mốc thì thân không được mang khoá ấy.
+    await api.list(keyword: 'co so');
+    final filtered = adapter.requests.last;
+    expect(filtered.path, '/reader/digital/search');
+    expect(
+      (filtered.data as Map<String, dynamic>).containsKey('updatedSince'),
+      isFalse,
+    );
+
+    await api.list(keyword: 'co so', updatedSince: since);
+    final both = adapter.requests.last.data as Map<String, dynamic>;
+    expect(both['updatedSince'], wire);
+  });
 }

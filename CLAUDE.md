@@ -32,7 +32,7 @@ liệu trình diễn lớn, rà soát lần hai, và làm sạch bảng đáp �
 sổ lỗi) và **đợt rà thứ ba** (mục H) đi vào sáu chỗ hai đợt trước chưa tới — trình soạn MARC bằng
 chuột, ba trình thiết kế mẫu, kiểm kê, đóng tập, trình đọc có chữ chìm, sao lưu – phục hồi — và tìm
 ra hai lỗi nghiêm trọng đã sống từ phase 5: sửa biểu ghi đã có thì không lưu được, và địa chỉ IP người
-dùng vừa giả được vừa bị nhốt chung một ngăn giới hạn tốc độ. Cộng tất cả: **98 lỗi, đã sửa 96**; hai mục còn lại (thiếu chức
+dùng vừa giả được vừa bị nhốt chung một ngăn giới hạn tốc độ. Cộng tất cả: **99 lỗi, đã sửa 97**; hai mục còn lại (thiếu chức
 năng H3, nguy cơ H9) ghi rõ ở "Làm tiếp gì sau đây" của sổ lỗi. Trang tra cứu đã áp lại theo dự án
 Claude Design "LibraryConnect layout design".
 

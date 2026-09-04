@@ -83,11 +83,17 @@ public class InstallationTests
 
         var groups = response!.Data!.Items;
 
+        var seeded = new[] { "SYS_ADMIN", "CATALOGER", "ACQUISITION", "CIRCULATION", "LIBRARIAN" };
+
         groups.Should().HaveCountGreaterThanOrEqualTo(5, "đặc tả yêu cầu 5 nhóm người dùng mẫu");
         groups.Should().Contain(group => group.Code == "SYS_ADMIN" && group.PermissionCount >= 150);
-        groups.Select(group => group.Code).Should().Contain(
-            new[] { "SYS_ADMIN", "CATALOGER", "ACQUISITION", "CIRCULATION", "LIBRARIAN" });
-        groups.Should().OnlyContain(group => group.IsSystem, "các nhóm mẫu đều là nhóm hệ thống");
+        groups.Select(group => group.Code).Should().Contain(seeded);
+
+        // Chỉ soi năm nhóm mẫu, không soi mọi nhóm trong trang: các bài khác tạo nhóm thường để thử
+        // phân quyền, và bộ kiểm thử dùng chung một cơ sở dữ liệu — khẳng định "mọi nhóm đều là nhóm
+        // hệ thống" biến bài này thành bài phụ thuộc thứ tự, xanh khi chạy riêng và đỏ khi chạy cả bộ.
+        groups.Where(group => seeded.Contains(group.Code))
+            .Should().OnlyContain(group => group.IsSystem, "các nhóm mẫu đều là nhóm hệ thống");
     }
 
     [Fact]
