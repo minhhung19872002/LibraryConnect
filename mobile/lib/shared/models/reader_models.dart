@@ -101,6 +101,7 @@ abstract class LoanRow with _$LoanRow {
     @Default(0) double fineOutstanding,
     @Default(0) int overdueDays,
     @Default(0) double estimatedFine,
+
     /// Yêu cầu gia hạn đã gửi, đang chờ cán bộ duyệt; hạn trả vẫn là hạn cũ.
     @Default(false) bool renewalPending,
     String? note,

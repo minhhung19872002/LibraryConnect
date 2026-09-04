@@ -155,7 +155,9 @@ class _CurrentLoansTabState extends ConsumerState<_CurrentLoansTab> {
           content: Text(
             renewed.renewalPending
                 ? l10n.renewalPending
-                : l10n.renewedTo(due == null ? renewed.dueDate : _date.format(due)),
+                : l10n.renewedTo(
+                    due == null ? renewed.dueDate : _date.format(due),
+                  ),
           ),
         ),
       );
