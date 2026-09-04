@@ -35,6 +35,7 @@ import { PERMISSIONS } from '@/api/permissions';
 import { applyApiError, errorMessage } from '@/api/formErrors';
 import { marcApi } from '@/modules/marc/api';
 import { catalogingApi } from './api';
+import { FILTER_LABEL_PARAM } from './bibListFilters';
 import type { CustomIndex, CustomIndexValue } from './customIndexTypes';
 
 const MONOSPACE = { fontFamily: 'ui-monospace, Consolas, monospace' } as const;
@@ -307,7 +308,11 @@ export function CustomIndexPage() {
                         <Button
                           type="link"
                           size="small"
-                          onClick={() => navigate(`/bien-muc?customIndexValueId=${row.id}`)}
+                          onClick={() =>
+                            navigate(
+                              `/bien-muc?customIndexValueId=${row.id}&${FILTER_LABEL_PARAM}=${encodeURIComponent(row.name)}`,
+                            )
+                          }
                         >
                           {value}
                         </Button>

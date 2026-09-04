@@ -42,6 +42,8 @@ export interface BibListParams {
   subjectId?: string;
   classificationId?: string;
   collectionId?: string;
+  /** Giá trị của một danh mục tự tạo từ trường MARC (II.9). */
+  customIndexValueId?: string;
   status?: RecordStatus;
   publishYearFrom?: number;
   publishYearTo?: number;
