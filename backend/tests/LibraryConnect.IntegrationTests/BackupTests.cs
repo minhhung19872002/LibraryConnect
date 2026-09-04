@@ -85,6 +85,39 @@ public class BackupTests
         job.FinishedAt.Should().NotBeNull();
     }
 
+    [Fact]
+    public async Task Sao_luu_kem_tep_tai_lieu_so_phai_chep_tep_that_chu_khong_chi_ghi_README()
+    {
+        // I.5: "Kèm backup file MinIO". Trước 04/09/2026 hàm sao lưu tệp chỉ ghi một README ghi tên
+        // bucket và tổng dung lượng rồi trả 0 — giao diện vẫn có ô "Sao lưu kèm tệp tài liệu số".
+        // Máy chạy kiểm thử có thể không có pg_dump nên thử thẳng bộ sao chép, không đi qua job.
+        using var scope = _factory.Services.CreateScope();
+        var storage = scope.ServiceProvider.GetRequiredService<IFileStorage>();
+        var options = scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<LibraryConnect.Infrastructure.Configuration.MinioOptions>>().Value;
+        var mirror = scope.ServiceProvider.GetRequiredService<IObjectStorageMirror>();
+
+        var objectName = $"kiem-thu/sao-luu-{Guid.NewGuid():N}.txt";
+        var content = System.Text.Encoding.UTF8.GetBytes("Nội dung tệp tài liệu số để kiểm sao lưu");
+        await storage.EnsureBucketAsync(options.DocumentsBucket);
+        await storage.UploadAsync(options.DocumentsBucket, objectName, new MemoryStream(content), "text/plain");
+
+        var folder = Path.Combine(Path.GetTempPath(), "lc-mirror-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            var copied = await mirror.MirrorAsync(folder, CancellationToken.None);
+
+            copied.Should().BeGreaterThan(0, "phải có ít nhất tệp vừa tải lên được chép về");
+            var expected = Path.Combine(folder, options.DocumentsBucket, objectName.Replace('/', Path.DirectorySeparatorChar));
+            File.Exists(expected).Should().BeTrue("tệp phải nằm đúng đường dẫn <bucket>/<tên object>: " + expected);
+            (await File.ReadAllBytesAsync(expected)).Should().Equal(content);
+        }
+        finally
+        {
+            if (Directory.Exists(folder)) Directory.Delete(folder, true);
+            await storage.DeleteAsync(options.DocumentsBucket, objectName);
+        }
+    }
+
     /// <summary>Mật khẩu hiện hành của tài khoản quản trị — bộ dựng đã đổi mật khẩu tạm ở lượt đăng nhập đầu.</summary>
     private string AdminPasswordNow() =>
         _factory.CurrentPassword(LibraryConnectFactory.AdminUsername, LibraryConnectFactory.AdminPassword);

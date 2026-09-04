@@ -65,6 +65,8 @@ public interface IFileStorage
     Task<string> GetPresignedUrlAsync(string bucket, string objectName, TimeSpan expiry, CancellationToken ct = default);
     Task EnsureBucketAsync(string bucket, CancellationToken ct = default);
     Task<long> GetBucketSizeAsync(string bucket, CancellationToken ct = default);
+    /// <summary>Tên mọi object trong bucket (đệ quy) — rỗng nếu bucket chưa có.</summary>
+    Task<IReadOnlyList<string>> ListObjectsAsync(string bucket, CancellationToken ct = default);
 }
 
 public record EmailMessage(IReadOnlyList<string> To, string Subject, string HtmlBody, IReadOnlyList<EmailAttachment>? Attachments = null);

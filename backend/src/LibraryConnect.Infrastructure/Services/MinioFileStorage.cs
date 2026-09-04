@@ -104,6 +104,28 @@ public class MinioFileStorage : IFileStorage
             .WithObject(objectName)
             .WithExpiry((int)expiry.TotalSeconds));
 
+    public async Task<IReadOnlyList<string>> ListObjectsAsync(string bucket, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(bucket)
+            || !await Client.BucketExistsAsync(new BucketExistsArgs().WithBucket(bucket), ct))
+        {
+            return Array.Empty<string>();
+        }
+
+        var names = new List<string>();
+        var args = new ListObjectsArgs().WithBucket(bucket).WithRecursive(true);
+
+        await foreach (var item in Client.ListObjectsEnumAsync(args, ct))
+        {
+            if (!item.IsDir)
+            {
+                names.Add(item.Key);
+            }
+        }
+
+        return names;
+    }
+
     public async Task<long> GetBucketSizeAsync(string bucket, CancellationToken ct = default)
     {
         // Reporting the size of a store that was never configured is not an error worth failing a

@@ -37,7 +37,8 @@ public class RateLimitTests
 
         try
         {
-            await BiChanSauKhiVuotHanMucAsync();
+            await BiChanSauKhiVuotHanMucAsync(
+                "/api/auth/login", new { username = "khong-co-tai-khoan-nay", password = "sai-mat-khau" });
         }
         finally
         {
@@ -45,7 +46,25 @@ public class RateLimitTests
         }
     }
 
-    private static async Task BiChanSauKhiVuotHanMucAsync()
+    [Fact]
+    public async Task Cua_dang_nhap_ban_doc_cung_bi_chan_khi_do_mat_khau()
+    {
+        // Cửa bạn đọc mở ra Internet và số thẻ dễ đoán (TV2026000001, 2, 3…) — đợt rà 04/09/2026
+        // thấy nó không có [EnableRateLimiting] trong khi cửa cán bộ có.
+        var previous = Environment.GetEnvironmentVariable(LimitVariable);
+        Environment.SetEnvironmentVariable(LimitVariable, Limit.ToString());
+        try
+        {
+            await BiChanSauKhiVuotHanMucAsync(
+                "/api/reader/auth/login", new { cardNumber = "TV0000000000", password = "sai-mat-khau" });
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable(LimitVariable, previous);
+        }
+    }
+
+    private static async Task BiChanSauKhiVuotHanMucAsync(string url, object payload)
     {
         using var factory = new LowLimitFactory();
         var client = factory.CreateClient();
@@ -58,8 +77,7 @@ public class RateLimitTests
             // Gõ vào một tên đăng nhập không có thật: cần thử cơ chế chặn theo địa chỉ IP, mà gõ
             // sai vào tài khoản thật thì tài khoản ấy bị khóa tạm và các bài kiểm thử khác dùng
             // chung tài khoản đó sẽ hỏng theo.
-            var response = await client.PostAsJsonAsync(
-                "/api/auth/login", new { username = "khong-co-tai-khoan-nay", password = "sai-mat-khau" });
+            var response = await client.PostAsJsonAsync(url, payload);
 
             if (response.StatusCode == HttpStatusCode.TooManyRequests)
             {

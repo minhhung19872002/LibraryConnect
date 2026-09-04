@@ -213,8 +213,8 @@ public partial class DatabaseSeeder
 
         // ---- Liên thư viện (mục 3.3 và 3.4) ----
         new("ILL.Z3950_SERVER_ENABLED", "ILL", "Cấu hình liên thư viện", "Bật máy chủ Z39.50",
-            "Cho phép thư viện khác tra cứu vào kho của mình qua giao thức Z39.50.",
-            ParameterDataType.Boolean, "false"),
+            "Cho phép thư viện khác tra cứu vào kho của mình qua giao thức Z39.50 (docker-compose công bố cổng 210).",
+            ParameterDataType.Boolean, "true"),
         new("ILL.Z3950_SERVER_PORT", "ILL", "Cấu hình liên thư viện", "Cổng máy chủ Z39.50",
             "Chuẩn quy định cổng 210, nhưng cổng dưới 1024 cần quyền đặc biệt trên Linux nên có thể đổi.",
             ParameterDataType.Number, "2100"),

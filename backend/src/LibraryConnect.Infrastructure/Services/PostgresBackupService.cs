@@ -31,6 +31,7 @@ public class PostgresBackupService : IBackupService
     private readonly MinioOptions _minioOptions;
     private readonly IFileStorage _storage;
     private readonly ILogger<PostgresBackupService> _logger;
+    private readonly IObjectStorageMirror _mirror;
     private readonly NpgsqlConnectionStringBuilder _connection;
 
     public PostgresBackupService(
@@ -38,8 +39,10 @@ public class PostgresBackupService : IBackupService
         IOptions<MinioOptions> minioOptions,
         IConfiguration configuration,
         IFileStorage storage,
-        ILogger<PostgresBackupService> logger)
+        ILogger<PostgresBackupService> logger,
+        IObjectStorageMirror mirror)
     {
+        _mirror = mirror;
         _options = options.Value;
         _minioOptions = minioOptions.Value;
         _storage = storage;
@@ -235,30 +238,16 @@ public class PostgresBackupService : IBackupService
         }
     }
 
-    /// <summary>Copies the digital documents out of MinIO next to the SQL archive.</summary>
+    /// <summary>Chép tệp tài liệu số (MinIO) ra thư mục cạnh tệp SQL; lỗi ở đây không làm hỏng bản sao lưu CSDL.</summary>
     private async Task<int?> MirrorObjectStorageAsync(string archivePath, CancellationToken ct)
     {
         try
         {
             var folder = Path.ChangeExtension(archivePath, null) + "-files";
-            Directory.CreateDirectory(folder);
-
-            var size = await _storage.GetBucketSizeAsync(_minioOptions.DocumentsBucket, ct);
-            await File.WriteAllTextAsync(
-                Path.Combine(folder, "README.txt"),
-                $"""
-                 Bản sao lưu tệp tài liệu số của LibraryConnect
-                 Bucket: {_minioOptions.DocumentsBucket}
-                 Tổng dung lượng tại thời điểm sao lưu: {size:N0} byte
-                 Thời điểm: {DateTimeOffset.Now:HH:mm dd/MM/yyyy}
-                 """,
-                ct);
-
-            return 0;
+            return await _mirror.MirrorAsync(folder, ct);
         }
-        catch (Exception ex) when (ex is IOException or InvalidOperationException)
+        catch (Exception ex) when (ex is IOException or InvalidOperationException or HttpRequestException)
         {
-            // A failure here must not invalidate an otherwise good database backup.
             _logger.LogWarning(ex, "Không sao lưu được tệp tài liệu số kèm theo");
             return null;
         }

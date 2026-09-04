@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 using Hangfire;
 using HealthChecks.UI.Client;
+using LibraryConnect.Api.Health;
 using LibraryConnect.Api.Middleware;
 using LibraryConnect.Api.Security;
 using LibraryConnect.Api.Swagger;
@@ -371,6 +372,9 @@ static void AddHealthChecks(WebApplicationBuilder builder)
     {
         checks.AddRedis(redis, name: "redis", tags: new[] { "ready" });
     }
+
+    // Kho đối tượng (6.5): MinIO chết là ảnh bìa, tài liệu số và sao lưu đều hỏng.
+    checks.AddCheck<MinioHealthCheck>("minio", tags: new[] { "ready" });
 }
 
 // Applies migrations and seeds the baseline data at start-up, so `docker compose up -d` is all an

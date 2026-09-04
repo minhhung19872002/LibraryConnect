@@ -5,6 +5,7 @@ using LibraryConnect.Application.Features.Digital;
 using LibraryConnect.Application.Features.Opac;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace LibraryConnect.Api.Controllers;
 
@@ -22,6 +23,8 @@ public class ReaderPortalController : ApiControllerBase
     /// <summary>Đăng nhập bằng số thẻ và mật khẩu.</summary>
     [HttpPost("auth/login")]
     [AllowAnonymous]
+    // Cửa bạn đọc mở ra Internet và số thẻ dễ đoán: cùng hạn mức dò mật khẩu với cửa cán bộ (6.4).
+    [EnableRateLimiting("login")]
     [ProducesResponseType(typeof(ApiResponse<AuthResultDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<ApiResponse<AuthResultDto>>> Login(

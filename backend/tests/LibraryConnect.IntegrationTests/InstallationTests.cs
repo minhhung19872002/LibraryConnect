@@ -41,6 +41,9 @@ public class InstallationTests
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         body.Should().Contain("postgresql").And.Contain("Healthy");
+        // 6.5: sẵn sàng phải gồm cả kho đối tượng — MinIO chết thì ảnh bìa, tài liệu số, sao lưu đều
+        // hỏng mà trước 04/09/2026 /health/ready vẫn báo xanh.
+        body.Should().Contain("minio");
     }
 
     [Fact]

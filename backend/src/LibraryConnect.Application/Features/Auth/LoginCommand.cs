@@ -1,6 +1,7 @@
 using FluentValidation;
 using LibraryConnect.Application.Common.Exceptions;
 using LibraryConnect.Application.Common.Interfaces;
+using LibraryConnect.Application.Common.Security;
 using LibraryConnect.Domain.Entities.Sys;
 using LibraryConnect.Domain.Enums;
 using MediatR;
@@ -29,6 +30,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResultDto>
     private readonly IDateTimeProvider _clock;
     private readonly ISystemParameterService _parameters;
     private readonly IPermissionResolver _permissions;
+    private readonly IPasswordPolicyProvider _policyProvider;
 
     public LoginCommandHandler(
         IApplicationDbContext db,
@@ -37,8 +39,10 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResultDto>
         ICurrentUser currentUser,
         IDateTimeProvider clock,
         ISystemParameterService parameters,
-        IPermissionResolver permissions)
+        IPermissionResolver permissions,
+        IPasswordPolicyProvider policyProvider)
     {
+        _policyProvider = policyProvider;
         _db = db;
         _hasher = hasher;
         _tokens = tokens;
@@ -106,10 +110,29 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResultDto>
                 .SetProperty(u => u.LockedUntil, (DateTimeOffset?)null)
                 .SetProperty(u => u.LastLoginAt, _clock.Now), ct);
 
+        // I.2 "hạn đổi mật khẩu": quá SECURITY.PASSWORD_EXPIRY_DAYS ngày kể từ lần đổi gần nhất thì
+        // vẫn đăng nhập được nhưng phiên mang cờ buộc đổi — bộ trung gian PasswordChangeRequired chặn
+        // mọi việc khác cho tới khi đổi xong, đúng đường của mật khẩu tạm.
+        var mustChange = user.MustChangePassword;
+        var policy = await _policyProvider.GetAsync(ct);
+
+        if (!mustChange && policy.ExpiryDays > 0)
+        {
+            var changedAt = user.PasswordChangedAt ?? user.CreatedAt;
+
+            if (changedAt.AddDays(policy.ExpiryDays) < _clock.Now)
+            {
+                mustChange = true;
+                await _db.Users
+                    .Where(u => u.Id == user.Id)
+                    .ExecuteUpdateAsync(setters => setters.SetProperty(u => u.MustChangePassword, true), ct);
+            }
+        }
+
         var permissions = await _permissions.GetUserPermissionsAsync(user.Id, ct);
         var pair = _tokens.CreateTokens(
             user.Id, user.Username, user.FullName, isReader: false, permissions,
-            user.MustChangePassword);
+            mustChange);
 
         _db.RefreshTokens.Add(new RefreshToken
         {
@@ -169,7 +192,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResultDto>
             RefreshToken = pair.RefreshToken,
             AccessTokenExpiresAt = pair.AccessTokenExpiresAt,
             RefreshTokenExpiresAt = pair.RefreshTokenExpiresAt,
-            MustChangePassword = user.MustChangePassword,
+            MustChangePassword = mustChange,
             User = new AuthUserDto
             {
                 Id = user.Id,

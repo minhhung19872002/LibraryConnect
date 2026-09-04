@@ -52,6 +52,7 @@ public static class DependencyInjection
         services.AddHttpClient("fcm", client => client.Timeout = TimeSpan.FromSeconds(20));
         services.AddScoped<IBackgroundJobService, HangfireBackgroundJobService>();
         services.AddScoped<IBackupService, PostgresBackupService>();
+        services.AddScoped<IObjectStorageMirror, ObjectStorageMirror>();
         services.AddSingleton<IHtmlSanitizer, HtmlSanitizerService>();
         services.AddScoped<Application.Features.Cataloging.ICustomIndexHarvester, CustomIndexHarvester>();
         services.AddScoped<Application.Features.Cataloging.ICoverImageFinder, CoverImageFinder>();
