@@ -217,6 +217,14 @@ void main() {
     tester,
   ) async {
     app.main();
+    // Lỗi khung (tràn RenderFlex…) được bộ kiểm thử gom lại và in ở cuối bài, khi widget gây lỗi đã
+    // bị huỷ nên chuỗi "creator" chỉ còn DEFUNCT (lượt 33834562537: tràn 1,5 điểm ảnh mà không biết ở
+    // đâu). Ghi ngay lúc ném, khi cây widget còn sống, rồi vẫn chuyển cho bộ kiểm thử để bài đỏ.
+    final report = FlutterError.onError;
+    FlutterError.onError = (details) {
+      debugPrint('LC FlutterError: $details');
+      report?.call(details);
+    };
     await tester.pumpAndSettle(const Duration(seconds: 2));
     await _waitFor(tester, find.byKey(const Key('home-search')));
 
