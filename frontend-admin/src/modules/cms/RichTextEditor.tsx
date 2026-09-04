@@ -6,6 +6,7 @@ import {
   ItalicOutlined,
   LinkOutlined,
   OrderedListOutlined,
+  PaperClipOutlined,
   PictureOutlined,
   RedoOutlined,
   TableOutlined,
@@ -16,6 +17,7 @@ import {
 } from '@ant-design/icons';
 import { cmsApi } from './api';
 import { toEmbedUrl } from './embedUrl';
+import { escapeHtml } from './htmlText';
 import { MAU } from '@/lib/palette';
 
 /**
@@ -75,6 +77,22 @@ export function RichTextEditor({
       const media = await cmsApi.uploadMedia(file, folder);
       insertHtml(`<img src="${media.url}" alt="${file.name}" />`);
       message.success('Đã chèn ảnh vào bài.');
+    } catch (error) {
+      message.error((error as Error).message);
+    }
+
+    return false;
+  };
+
+  // Tệp đính kèm (PDF, Word, Excel) chèn thành liên kết mở ở thẻ mới — tên tệp là chữ của liên
+  // kết, để bạn đọc biết mình sắp mở gì. Tệp cũng lên kho đối tượng ngay lúc chọn, như ảnh.
+  const uploadFile = async (file: File) => {
+    try {
+      const media = await cmsApi.uploadMedia(file, 'file');
+      insertHtml(
+        `<a href="${media.url}" target="_blank" rel="noopener">${escapeHtml(file.name)}</a>&nbsp;`,
+      );
+      message.success('Đã chèn tệp vào bài.');
     } catch (error) {
       message.error((error as Error).message);
     }
@@ -156,6 +174,12 @@ export function RichTextEditor({
         <Upload accept="image/*" showUploadList={false} beforeUpload={upload}>
           <Tooltip title="Chèn ảnh">
             <Button size="small" icon={<PictureOutlined />} />
+          </Tooltip>
+        </Upload>
+
+        <Upload accept=".pdf,.docx,.xlsx" showUploadList={false} beforeUpload={uploadFile}>
+          <Tooltip title="Chèn tệp (PDF, Word, Excel)">
+            <Button size="small" icon={<PaperClipOutlined />} />
           </Tooltip>
         </Upload>
 

@@ -14,6 +14,7 @@ import type {
   DigitalStorageReportDto,
   DigitalUploadSessionDto,
   DigitalUsageReportDto,
+  FullSystemExportJobDto,
 } from './types';
 
 /** Phân hệ V — Tài liệu số. */
@@ -111,8 +112,18 @@ export const digitalApi = {
     });
   },
 
+  /** Tệp mẫu metadata.xlsx để bỏ vào gói ZIP trước khi nhập. */
+  importTemplate: () => api.download('/digital/import/template'),
+
   exportArchive: (payload: Record<string, unknown>) =>
     api.downloadPost('/digital/export', payload, 'tai-lieu-so.zip'),
+
+  // --- Xuất toàn bộ dữ liệu hệ thống (mục 4 E-HSMT) -----------------------
+  queueFullExport: () => api.post<FullSystemExportJobDto>('/digital/full-export'),
+
+  fullExports: () => api.get<FullSystemExportJobDto[]>('/digital/full-export'),
+
+  downloadFullExport: (id: string) => api.download(`/digital/full-export/${id}/download`),
 
   // --- Báo cáo ------------------------------------------------------------
   inventoryReport: (filter: DigitalReportFilter) =>

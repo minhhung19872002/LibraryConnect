@@ -6,6 +6,7 @@ import { FALLBACK_LIBRARY_NAME, useSiteMenus, useSiteSettings } from '@/hooks/us
 import { useAuthStore } from '@/stores/authStore';
 import { useCartStore } from '@/stores/cartStore';
 import { activeKey, toMenuItem } from '@/components/menuTree';
+import { menuIcon } from '@/components/menuIcons';
 import type { MenuItem } from '@/types/api';
 
 const { Header, Content, Footer } = Layout;
@@ -86,7 +87,7 @@ export function SiteLayout() {
                     menu={{
                       items: menu.children
                         .filter((child) => child.isActive)
-                        .map((child) => ({ key: child.id, label: child.name })),
+                        .map((child) => ({ key: child.id, label: child.name, icon: menuIcon(child.icon) })),
                       onClick: ({ key }) => {
                         const child = menu.children.find((entry) => entry.id === key);
                         if (child) open(child);
@@ -94,6 +95,7 @@ export function SiteLayout() {
                     }}
                   >
                     <span className={className} onClick={() => open(menu)}>
+                      {menuIcon(menu.icon)}
                       {menu.name}
                     </span>
                   </Dropdown>
@@ -102,6 +104,7 @@ export function SiteLayout() {
 
               return (
                 <span key={menu.id} className={className} onClick={() => open(menu)}>
+                  {menuIcon(menu.icon)}
                   {menu.name}
                 </span>
               );

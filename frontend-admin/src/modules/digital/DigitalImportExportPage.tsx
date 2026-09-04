@@ -6,6 +6,8 @@ import {
   Card,
   Checkbox,
   Col,
+  Popconfirm,
+  Progress,
   Row,
   Select,
   Space,
@@ -15,17 +17,47 @@ import {
   Typography,
   Upload,
 } from 'antd';
-import { DownloadOutlined, InboxOutlined, UploadOutlined } from '@ant-design/icons';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import {
+  DownloadOutlined,
+  FileExcelOutlined,
+  InboxOutlined,
+  UploadOutlined,
+} from '@ant-design/icons';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnsType } from 'antd/es/table';
 import { PageHeader } from '@/components/PageHeader';
 import { Can } from '@/components/PermissionGate';
 import { PERMISSIONS } from '@/api/permissions';
 import { ApiRequestError } from '@/api/client';
 import { digitalApi } from './api';
-import { accessLevelLabels } from './labels';
-import type { DigitalAccessLevel, DigitalCollectionDto, DigitalImportRowDto } from './types';
+import { accessLevelLabels, formatDateTime } from './labels';
+import {
+  describeExportCounts,
+  exportProgressPercent,
+  exportStatusColors,
+  exportStatusLabels,
+  formatPackageSize,
+  isExportOpen,
+} from './fullExportView';
+import type {
+  DigitalAccessLevel,
+  DigitalCollectionDto,
+  DigitalImportRowDto,
+  FullSystemExportJobDto,
+} from './types';
 import { MAU } from '@/lib/palette';
+
+/** Lưu tệp nhận về từ máy chủ xuống máy người dùng. */
+function saveBlob(blob: Blob, fileName: string) {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+
+  anchor.href = url;
+  anchor.download = fileName;
+  anchor.click();
+
+  URL.revokeObjectURL(url);
+}
 
 const accessOptions = (Object.keys(accessLevelLabels) as DigitalAccessLevel[]).map((value) => ({
   value,
@@ -90,19 +122,116 @@ export function DigitalImportExportPage() {
         includeFiles,
       }),
     onSuccess: ({ blob, fileName }) => {
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement('a');
-
-      anchor.href = url;
-      anchor.download = fileName;
-      anchor.click();
-
-      URL.revokeObjectURL(url);
+      saveBlob(blob, fileName);
       message.success('Đã tải gói xuống.');
     },
     onError: (error) =>
       message.error(error instanceof ApiRequestError ? error.message : 'Không xuất được.'),
   });
+
+  const downloadTemplate = useMutation({
+    mutationFn: () => digitalApi.importTemplate(),
+    onSuccess: ({ blob, fileName }) => saveBlob(blob, fileName || 'metadata.xlsx'),
+    onError: (error) =>
+      message.error(error instanceof ApiRequestError ? error.message : 'Không tải được tệp mẫu.'),
+  });
+
+  // --- Xuất toàn bộ dữ liệu hệ thống (mục 4 E-HSMT) ---------------------------------------
+  const queryClient = useQueryClient();
+
+  const fullExports = useQuery({
+    queryKey: ['digital-full-exports'],
+    queryFn: () => digitalApi.fullExports(),
+    // Còn lượt đang chạy thì hỏi lại tiến độ mỗi 3 giây; xong hết thì thôi.
+    refetchInterval: (query) =>
+      (query.state.data ?? []).some(isExportOpen) ? 3000 : false,
+  });
+
+  const queueFullExport = useMutation({
+    mutationFn: () => digitalApi.queueFullExport(),
+    onSuccess: () => {
+      message.success('Đã xếp lượt xuất toàn bộ dữ liệu vào hàng đợi. Theo dõi tiến độ ở bảng bên dưới.');
+      void queryClient.invalidateQueries({ queryKey: ['digital-full-exports'] });
+    },
+    onError: (error) =>
+      message.error(error instanceof ApiRequestError ? error.message : 'Không xếp được lượt xuất.'),
+  });
+
+  const downloadFullExport = useMutation({
+    mutationFn: (id: string) => digitalApi.downloadFullExport(id),
+    onSuccess: ({ blob, fileName }) => saveBlob(blob, fileName || 'libraryconnect-ban-giao.zip'),
+    onError: (error) =>
+      message.error(error instanceof ApiRequestError ? error.message : 'Không tải được gói.'),
+  });
+
+  const hasOpenExport = (fullExports.data ?? []).some(isExportOpen);
+
+  const exportColumns: ColumnsType<FullSystemExportJobDto> = [
+    {
+      title: 'Thời điểm',
+      dataIndex: 'createdAt',
+      width: 150,
+      render: (value: string) => formatDateTime(value),
+    },
+    { title: 'Người yêu cầu', dataIndex: 'createdByName', width: 160, ellipsis: true },
+    {
+      title: 'Trạng thái',
+      dataIndex: 'status',
+      width: 120,
+      render: (_: unknown, job) => (
+        <Tag color={exportStatusColors[job.status]}>{exportStatusLabels[job.status]}</Tag>
+      ),
+    },
+    {
+      title: 'Tiến độ',
+      key: 'progress',
+      width: 260,
+      render: (_: unknown, job) =>
+        job.status === 'Failed' ? (
+          <Typography.Text type="danger">{job.message ?? 'Thất bại'}</Typography.Text>
+        ) : (
+          <Space direction="vertical" size={0} style={{ width: '100%' }}>
+            <Progress
+              percent={exportProgressPercent(job)}
+              size="small"
+              status={isExportOpen(job) ? 'active' : undefined}
+            />
+            {isExportOpen(job) && job.currentStep && (
+              <Typography.Text type="secondary">{job.currentStep}</Typography.Text>
+            )}
+          </Space>
+        ),
+    },
+    {
+      title: 'Nội dung gói',
+      key: 'counts',
+      ellipsis: true,
+      render: (_: unknown, job) =>
+        job.status === 'Completed' ? describeExportCounts(job) : '—',
+    },
+    {
+      title: 'Dung lượng',
+      dataIndex: 'sizeBytes',
+      width: 110,
+      render: (value: number | null) => formatPackageSize(value),
+    },
+    {
+      title: 'Tải về',
+      key: 'download',
+      width: 110,
+      render: (_: unknown, job) =>
+        job.hasFile ? (
+          <Button
+            size="small"
+            icon={<DownloadOutlined />}
+            loading={downloadFullExport.isPending && downloadFullExport.variables === job.id}
+            onClick={() => downloadFullExport.mutate(job.id)}
+          >
+            Tải gói
+          </Button>
+        ) : null,
+    },
+  ];
 
   const columns: ColumnsType<DigitalImportRowDto> = [
     { title: 'Tệp', dataIndex: 'fileName', width: 340, ellipsis: true },
@@ -133,7 +262,26 @@ export function DigitalImportExportPage() {
                 type="info"
                 showIcon
                 message="Cách hệ thống khớp tệp với biểu ghi thư mục"
-                description="Đặt tên tệp theo số ĐKCB, số kiểm soát 001 hoặc ISBN thì tệp tự gắn vào biểu ghi tương ứng. Tệp không khớp vẫn được nhập và đứng riêng để gắn tay sau."
+                description={
+                  <Space direction="vertical" size={4}>
+                    <span>
+                      Đặt tên tệp theo số ĐKCB, số kiểm soát 001 hoặc ISBN thì tệp tự gắn vào biểu
+                      ghi tương ứng. Tệp không khớp vẫn được nhập và đứng riêng để gắn tay sau.
+                    </span>
+                    <span>
+                      Muốn khai nhan đề, mô tả, mức truy cập hay biểu ghi cho từng tệp thì bỏ thêm
+                      bảng <code>metadata.xlsx</code> vào gói — tải tệp mẫu để xem đúng cột.
+                    </span>
+                    <Button
+                      size="small"
+                      icon={<FileExcelOutlined />}
+                      loading={downloadTemplate.isPending}
+                      onClick={() => downloadTemplate.mutate()}
+                    >
+                      Tải tệp mẫu metadata.xlsx
+                    </Button>
+                  </Space>
+                }
               />
 
               <Upload.Dragger
@@ -269,6 +417,48 @@ export function DigitalImportExportPage() {
           </Card>
         </Col>
       </Row>
+
+      <Can permission={PERMISSIONS.exchange.fullExport}>
+        <Card size="small" title="Xuất toàn bộ dữ liệu hệ thống (bàn giao khi kết thúc hợp đồng)">
+          <Space direction="vertical" size={12} style={{ width: '100%' }}>
+            <Typography.Paragraph type="secondary" style={{ marginBottom: 0 }}>
+              Gói ZIP gồm toàn bộ biểu ghi MARC (<code>marc/</code>, ISO 2709 và MARCXML), toàn bộ tệp
+              tài liệu số (<code>digital/</code>) kèm metadata Excel, Dublin Core, MARCXML
+              (<code>metadata/</code>), và bạn đọc, ĐKCB, lượt mượn, phạt, đặt giữ dạng CSV
+              (<code>du-lieu/</code>). Việc chạy nền trên máy chủ, gói đặt trong thư mục sao lưu;
+              kho lớn có thể mất hàng chục phút — cứ để trang này mở hoặc quay lại sau.
+            </Typography.Paragraph>
+
+            <Popconfirm
+              title="Xuất toàn bộ dữ liệu hệ thống?"
+              description="Gói chứa cả hồ sơ bạn đọc và toàn văn tài liệu số. Việc này được ghi vào nhật ký hệ thống."
+              okText="Xuất"
+              cancelText="Hủy"
+              onConfirm={() => queueFullExport.mutate()}
+            >
+              <Button
+                type="primary"
+                icon={<DownloadOutlined />}
+                loading={queueFullExport.isPending}
+                disabled={hasOpenExport}
+              >
+                {hasOpenExport ? 'Đang có lượt xuất chạy…' : 'Xuất toàn bộ dữ liệu'}
+              </Button>
+            </Popconfirm>
+
+            <Table
+              rowKey="id"
+              size="small"
+              loading={fullExports.isLoading}
+              dataSource={fullExports.data ?? []}
+              columns={exportColumns}
+              scroll={{ x: 1100 }}
+              pagination={false}
+              locale={{ emptyText: 'Chưa có lượt xuất toàn bộ nào.' }}
+            />
+          </Space>
+        </Card>
+      </Can>
     </Space>
   );
 }

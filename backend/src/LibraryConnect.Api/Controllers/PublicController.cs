@@ -215,7 +215,7 @@ public class PublicController : ApiControllerBase
         return File(content, contentType);
     }
 
-    /// <summary>Ảnh dùng trong nội dung: logo, banner, ảnh tin, ảnh album.</summary>
+    /// <summary>Ảnh và tệp đính kèm dùng trong nội dung: logo, banner, ảnh tin, ảnh album, tệp PDF/Word/Excel.</summary>
     [HttpGet("media/{**objectName}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -223,9 +223,12 @@ public class PublicController : ApiControllerBase
     {
         var media = await Mediator.Send(new GetCmsMediaQuery(objectName), ct);
 
-        var (content, contentType) = HttpContext.RequestServices
-            .GetRequiredService<LibraryConnect.Application.Common.Interfaces.IImageResizer>()
-            .Resize(media.Content, media.ContentType, w, h);
+        // Tệp đính kèm không có gì để co; trình duyệt tự mở PDF, còn Word/Excel thì tải về.
+        var (content, contentType) = CmsMedia.IsImage(media.ContentType)
+            ? HttpContext.RequestServices
+                .GetRequiredService<LibraryConnect.Application.Common.Interfaces.IImageResizer>()
+                .Resize(media.Content, media.ContentType, w, h)
+            : (media.Content, media.ContentType);
 
         // Ảnh nội dung đổi thì đổi cả tên tệp (mỗi lần tải lên sinh mã ngẫu nhiên mới), nên trình
         // duyệt giữ bao lâu cũng được — không có chuyện xem phải ảnh cũ.

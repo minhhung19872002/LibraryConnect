@@ -367,7 +367,17 @@ public class DigitalController : ApiControllerBase
                 : $"Đã nhập {result.Success}/{result.Total} tệp."));
     }
 
-    /// <summary>Xuất gói tài liệu số kèm metadata Excel và Dublin Core.</summary>
+    /// <summary>Tệp mẫu <c>metadata.xlsx</c> bỏ vào gói ZIP để khai nhan đề, mức truy cập, biểu ghi cho từng tệp.</summary>
+    [HttpGet("import/template")]
+    [RequirePermission(PermissionCodes.DigitalImport)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> ImportTemplate(CancellationToken ct)
+    {
+        var file = await Mediator.Send(new GetDigitalImportTemplateQuery(), ct);
+        return File(file.Content, file.ContentType, file.FileName);
+    }
+
+    /// <summary>Xuất gói tài liệu số kèm metadata Excel, Dublin Core và MARCXML.</summary>
     [HttpPost("export")]
     [RequirePermission(PermissionCodes.DigitalExport)]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -376,6 +386,41 @@ public class DigitalController : ApiControllerBase
     {
         var file = await Mediator.Send(query, ct);
         return File(file.Content, file.ContentType, file.FileName);
+    }
+
+    // ---------------------------------------------------------------
+    // Xuất toàn bộ dữ liệu hệ thống (V.3, mục 4 E-HSMT)
+    // ---------------------------------------------------------------
+
+    /// <summary>Xếp một lượt xuất toàn bộ dữ liệu vào hàng đợi; gói ZIP dựng nền, xem tiến độ ở danh sách.</summary>
+    [HttpPost("full-export")]
+    [RequirePermission(PermissionCodes.ExchangeFullExport)]
+    [ProducesResponseType(typeof(ApiResponse<FullSystemExportJobDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<ApiResponse<FullSystemExportJobDto>>> QueueFullExport(CancellationToken ct)
+    {
+        var result = await Mediator.Send(new QueueFullSystemExportCommand(), ct);
+        return Ok(Success(result, "Đã xếp lượt xuất toàn bộ dữ liệu vào hàng đợi. Gói sẽ hiện ở bảng bên dưới khi xong."));
+    }
+
+    /// <summary>Các lượt xuất toàn bộ gần nhất kèm tiến độ và số lượng từng phần.</summary>
+    [HttpGet("full-export")]
+    [RequirePermission(PermissionCodes.ExchangeFullExport)]
+    [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<FullSystemExportJobDto>>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<IReadOnlyList<FullSystemExportJobDto>>>> FullExports(CancellationToken ct)
+    {
+        var result = await Mediator.Send(new GetFullSystemExportsQuery(), ct);
+        return Ok(Success(result));
+    }
+
+    /// <summary>Tải gói bàn giao ZIP của một lượt đã hoàn tất.</summary>
+    [HttpGet("full-export/{id:guid}/download")]
+    [RequirePermission(PermissionCodes.ExchangeFullExport)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> DownloadFullExport(Guid id, CancellationToken ct)
+    {
+        var (content, fileName) = await Mediator.Send(new DownloadFullSystemExportQuery(id), ct);
+        return File(content, "application/zip", fileName);
     }
 
     // ---------------------------------------------------------------
