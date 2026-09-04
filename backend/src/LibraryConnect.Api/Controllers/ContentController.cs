@@ -40,9 +40,18 @@ public class ContentController : ApiControllerBase
         return Ok(SuccessMessage("Đã lưu cấu hình trang thư viện."));
     }
 
-    /// <summary>Tải ảnh dùng cho nội dung: logo, banner, ảnh tin, ảnh album.</summary>
+    /// <summary>
+    /// Tải ảnh hoặc tệp đính kèm dùng cho nội dung: logo, banner, ảnh tin, ảnh album, tệp PDF/Word/Excel
+    /// chèn vào bài viết.
+    /// </summary>
+    /// <remarks>
+    /// Ai soạn được nội dung nào thì chèn được tệp vào nội dung ấy: người viết tin không có quyền
+    /// cấu hình trang thư viện nhưng vẫn phải chèn được ảnh vào bài của mình.
+    /// </remarks>
     [HttpPost("media")]
-    [RequirePermission(PermissionCodes.CmsSettingManage)]
+    [RequirePermission(false,
+        PermissionCodes.CmsSettingManage, PermissionCodes.CmsNewsManage, PermissionCodes.CmsPageManage,
+        PermissionCodes.CmsBannerManage, PermissionCodes.CmsGalleryManage)]
     [RequestSizeLimit(11 * 1024 * 1024)]
     [ProducesResponseType(typeof(ApiResponse<CmsMediaDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<ApiResponse<CmsMediaDto>>> UploadMedia(
@@ -50,7 +59,7 @@ public class ContentController : ApiControllerBase
     {
         if (file is null || file.Length == 0)
         {
-            return BadRequest(ApiResponse.Fail("Chưa chọn tệp ảnh."));
+            return BadRequest(ApiResponse.Fail("Chưa chọn tệp."));
         }
 
         using var buffer = new MemoryStream();
@@ -59,7 +68,7 @@ public class ContentController : ApiControllerBase
         var result = await Mediator.Send(
             new UploadCmsMediaCommand(folder ?? "page", file.FileName, buffer.ToArray()), ct);
 
-        return Ok(Success(result, "Đã tải ảnh lên."));
+        return Ok(Success(result, CmsMedia.IsImage(result.ContentType) ? "Đã tải ảnh lên." : "Đã tải tệp lên."));
     }
 
     // ---------------------------------------------------------------
