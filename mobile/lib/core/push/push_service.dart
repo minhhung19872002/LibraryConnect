@@ -11,6 +11,73 @@ import '../../features/notifications/data/notifications_api.dart';
 import '../api/api_exception.dart';
 import '../config/env.dart';
 
+/// Kênh thông báo dùng chung cho cả lượt chạy nền lẫn lượt đang mở ứng dụng.
+const _pushChannel = AndroidNotificationChannel(
+  'lc_default',
+  'Thông báo thư viện',
+  description: 'Hạn trả, sách đặt giữ, yêu cầu tài liệu số, tin mới',
+  importance: Importance.high,
+);
+
+/// Thông báo tới khi ứng dụng đang chạy nền hoặc đã đóng hẳn.
+///
+/// Firebase chạy hàm này trong **một isolate riêng**, không có gì chung với ứng dụng đang chạy: nên
+/// nó phải là hàm cấp cao nhất, phải tự khởi tạo Firebase lần nữa, và không đụng được vào provider
+/// nào cả. `@pragma('vm:entry-point')` giữ nó lại khi dựng bản phát hành — bản phát hành cắt bỏ mọi
+/// hàm không ai gọi, mà hàm này thì không chỗ nào trong mã Dart gọi tới.
+///
+/// Đây chính là tình huống thường gặp nhất của XI.2: nhắc sắp đến hạn trả và báo sách đặt giữ đã sẵn
+/// sàng gần như luôn tới lúc điện thoại đang nằm trong túi. Thông điệp chỉ có phần `data` (không có
+/// `notification`) thì hệ điều hành không tự hiện gì, phải tự hiện lấy.
+@pragma('vm:entry-point')
+Future<void> pushBackgroundHandler(RemoteMessage message) async {
+  if (message.notification != null) {
+    // Có phần `notification` thì hệ điều hành đã hiện rồi; hiện thêm là ra hai dòng trùng nhau.
+    return;
+  }
+
+  final title = message.data['title'] as String?;
+  final body = message.data['body'] as String?;
+  if (title == null && body == null) return;
+
+  try {
+    await Firebase.initializeApp();
+
+    final local = FlutterLocalNotificationsPlugin();
+    await local.initialize(
+      settings: const InitializationSettings(
+        android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+        iOS: DarwinInitializationSettings(),
+      ),
+    );
+    await local
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >()
+        ?.createNotificationChannel(_pushChannel);
+
+    await local.show(
+      id: message.hashCode,
+      title: title,
+      body: body,
+      notificationDetails: NotificationDetails(
+        android: AndroidNotificationDetails(
+          _pushChannel.id,
+          _pushChannel.name,
+          channelDescription: _pushChannel.description,
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: const DarwinNotificationDetails(),
+      ),
+      payload: message.data['link'] as String?,
+    );
+  } catch (_) {
+    // Lượt chạy nền hỏng thì im lặng: không có giao diện nào để báo lỗi, và ném ra ở đây làm hệ điều
+    // hành ghi nhận ứng dụng đổ.
+  }
+}
+
 /// Trạng thái thông báo đẩy trên máy này.
 enum PushStatus {
   /// Chưa thử hoặc đang khởi động.
@@ -33,12 +100,7 @@ enum PushStatus {
 /// Thiếu Firebase thì mọi bước rơi về [PushStatus.unavailable] lặng lẽ — đúng yêu cầu "ứng dụng chạy
 /// được không cần Firebase".
 class PushService extends Notifier<PushStatus> {
-  static const _channel = AndroidNotificationChannel(
-    'lc_default',
-    'Thông báo thư viện',
-    description: 'Hạn trả, sách đặt giữ, yêu cầu tài liệu số, tin mới',
-    importance: Importance.high,
-  );
+  static const _channel = _pushChannel;
 
   final _local = FlutterLocalNotificationsPlugin();
   String? _token;
@@ -92,6 +154,9 @@ class PushService extends Notifier<PushStatus> {
         _token = fresh;
         _register(fresh);
       });
+      // Đăng ký trước khi lắng nghe lượt đang mở: thông điệp tới lúc ứng dụng nằm trong túi mà
+      // không có ai nhận thì mất hẳn, không có lần thứ hai.
+      FirebaseMessaging.onBackgroundMessage(pushBackgroundHandler);
       FirebaseMessaging.onMessage.listen(_showForeground);
       FirebaseMessaging.onMessageOpenedApp.listen(_openFromMessage);
       final initial = await messaging.getInitialMessage();

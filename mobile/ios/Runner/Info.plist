@@ -55,5 +55,12 @@
 		<string>Kết nối tới máy chủ thư viện trong mạng nội bộ.</string>
 		<key>UIStatusBarHidden</key>
 		<false/>
+		<!-- Thông báo đẩy (XI.2): iOS chỉ đánh thức ứng dụng cho thông điệp chỉ có phần dữ liệu khi
+		     chế độ nền này được khai. Vẫn cần thêm quyền aps-environment lúc ký bản phát hành —
+		     xem mobile/README.md, mục thông báo đẩy. -->
+		<key>UIBackgroundModes</key>
+		<array>
+			<string>remote-notification</string>
+		</array>
 	</dict>
 </plist>

@@ -188,7 +188,7 @@ thời gian khóa khai trong Tham số hệ thống.
 
 ## 2. Bản đồ các nhóm endpoint
 
-Hệ thống có **485 endpoint** trên 378 đường dẫn, chia thành các nhóm sau (tên nhóm trùng với tên thẻ
+Hệ thống có **533 endpoint** trên 421 đường dẫn, chia thành các nhóm sau (tên nhóm trùng với tên thẻ
 trong Swagger).
 
 | Nhóm | Tiền tố | Dùng cho |
@@ -211,6 +211,8 @@ trong Swagger).
 | Liên thư viện | `/api/interlibrary/*` | Máy chủ Z39.50, thu hoạch OAI-PMH, nhập biểu ghi |
 | Tra cứu | `/api/search/*`, `/api/browse/*`, `/api/bib/*` | Dùng chung cho trang tra cứu và ứng dụng khách |
 | Công khai | `/api/public/*` | Tin tức, trang tĩnh, thông tin thư viện — không cần đăng nhập |
+| Thông báo cán bộ | `/api/notifications/*` | Chuông thông báo: việc chờ duyệt, việc được phân công |
+| Cán bộ | `/api/staff/options` | Danh sách cán bộ cho các ô chọn người nhận việc |
 | Bạn đọc — ứng dụng khách | `/api/reader/*` | Xem chương 4 |
 
 ---

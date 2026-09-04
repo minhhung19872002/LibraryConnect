@@ -74,7 +74,18 @@ mọi thứ khác vẫn hoạt động. Để bật:
 
 1. Tạo dự án Firebase, thêm ứng dụng Android `vn.bluestar.libraryconnect` và iOS cùng ID.
 2. Đặt `google-services.json` vào `android/app/` và `GoogleService-Info.plist` vào `ios/Runner/`.
+   Bản dựng Android tự nhận: `android/app/build.gradle.kts` áp dụng trình cắm `google-services` khi
+   thấy tệp ấy, và in ra một dòng nói bản dựng này có nhận thông báo đẩy hay không. Không có tệp thì
+   bản dựng vẫn ra bình thường — trình cắm ấy làm đổ cả lần dựng nếu áp dụng vô điều kiện.
 3. Phía máy chủ khai `LC_Fcm__ProjectId` và `LC_Fcm__ServiceAccountFile` (xem `.env.example`).
+4. **iOS còn một bước phải làm trên máy Mac**: mở `ios/Runner.xcworkspace` trong Xcode, bật khả năng
+   *Push Notifications* cho đích Runner (Xcode sinh ra `Runner.entitlements` với khoá
+   `aps-environment`), rồi ký bằng hồ sơ có bật thông báo đẩy. `Info.plist` đã khai sẵn chế độ nền
+   `remote-notification`, nhưng thiếu quyền `aps-environment` thì iOS không cấp token đẩy nào cả.
+
+Thông điệp tới lúc ứng dụng nằm trong túi được `pushBackgroundHandler` trong
+`lib/core/push/push_service.dart` nhận. Nó chạy trong một isolate riêng nên phải tự khởi tạo Firebase
+lần nữa và không đụng được vào provider nào — đừng đưa lời gọi mạng vào đó.
 
 ## 12 luồng đầu-cuối (PROMPT-MOBILE mục 6) ↔ tệp phép thử
 
