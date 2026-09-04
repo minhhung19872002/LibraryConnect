@@ -594,6 +594,19 @@ public class SerialTests
         record.GetSubfield("773", 't').Should().Be("Tạp chí Bài Trích");
         record.GetSubfield("773", 'g').Should().Contain("tr. 15-23");
 
+        // IV.2 nói bài trích sinh biểu ghi riêng "để tra cứu được từ OPAC" — đó là lý do duy nhất
+        // của chức năng này. Trước 04/09/2026 biểu ghi được tạo ở trạng thái Nháp, mà trang tra cứu
+        // chỉ đọc biểu ghi đã xuất bản, nên bạn đọc không thấy gì cả; màn hình lại báo ngược là
+        // "bạn đọc tra được từ OPAC".
+        var anonymous = _factory.CreateClient();
+
+        var found = await ReadAsync<PagedResult<Application.Features.Opac.OpacResultDto>>(
+            await anonymous.GetAsync(
+                "/api/search?keyword=" + Uri.EscapeDataString("Ứng dụng học máy trong thư viện số")));
+
+        found.Items.Should().Contain(row => row.Id == withRecord[0].BibId,
+            "bài trích phải tra cứu được từ trang tra cứu công khai");
+
         // Sinh lần hai không tạo biểu ghi trùng.
         var second = await client.PostAsJsonAsync(
             $"/api/serials/issues/{issueId}/articles/generate-records",

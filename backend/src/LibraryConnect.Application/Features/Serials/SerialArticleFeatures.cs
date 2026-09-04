@@ -214,7 +214,11 @@ public class GenerateArticleRecordsCommandHandler
             {
                 Id = Guid.NewGuid(),
                 Source = BibSource.Manual,
-                Status = RecordStatus.Draft,
+                // Xuất bản ngay, như mọi đường tạo biểu ghi khác. Để Nháp thì trang tra cứu không
+                // thấy — mà "để tra cứu được từ OPAC" chính là lý do duy nhất của chức năng này
+                // (IV.2). Cán bộ đã gõ mục lục bài trích rồi mới bấm sinh biểu ghi, nên không có
+                // bước biên mục nào còn dở dang để chờ.
+                Status = RecordStatus.Published,
                 LanguageId = issue.Serial?.LanguageId
             };
 

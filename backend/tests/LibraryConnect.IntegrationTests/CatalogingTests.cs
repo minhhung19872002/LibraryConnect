@@ -24,7 +24,8 @@ public class CatalogingTests
         _factory.CreateAuthenticatedClientAsync(LibraryConnectFactory.AdminUsername, LibraryConnectFactory.AdminPassword);
 
     /// <summary>Dựng một biểu ghi hoàn chỉnh từ khung mà máy chủ trả về.</summary>
-    private static async Task<string> BuildRecordAsync(HttpClient client, Guid documentTypeId, string title)
+    private static async Task<string> BuildRecordAsync(
+        HttpClient client, Guid documentTypeId, string title, string author = "Nguyễn Văn Ánh")
     {
         var blank = await client.GetFromJsonAsync<ApiResponse<NewBibRecordDto>>(
             $"/api/cataloging/bibs/new?documentTypeId={documentTypeId}", LibraryConnectFactory.JsonOptions);
@@ -34,8 +35,8 @@ public class CatalogingTests
 
         Set("245", 'a', $"{title} :");
         Set("245", 'b', "dùng cho sinh viên ngành Công nghệ thông tin /");
-        Set("245", 'c', "Nguyễn Văn Ánh");
-        Set("100", 'a', "Nguyễn Văn Ánh");
+        Set("245", 'c', author);
+        Set("100", 'a', author);
         Set("100", 'e', "chủ biên");
         Set("260", 'a', "Hà Nội :");
         Set("260", 'b', "Nhà xuất bản Đại học Quốc gia Hà Nội,");
@@ -266,6 +267,68 @@ public class CatalogingTests
         response.IsSuccessStatusCode.Should().BeTrue(
             "đặt tham số {0} trả về {1}: {2}",
             key, response.StatusCode, await response.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
+    public async Task Gop_trung_tac_gia_sua_ca_bieu_ghi_chu_khong_chi_bang_lien_ket()
+    {
+        // II.9 nói gộp trùng "cập nhật toàn bộ biểu ghi liên quan". Trước 04/09/2026 lượt gộp chỉ
+        // sửa bảng liên kết `bib_authors`: danh mục và bộ lọc sạch, nhưng cột Tác giả trên danh sách
+        // biểu ghi, dạng ISBD, phích mục lục và tệp xuất ISO 2709 vẫn in tên cũ. Đúng bài học 16
+        // trong CLAUDE.md — sửa `marc_data` mới là sửa xong, và cột phẳng phải theo.
+        var client = await ClientAsync();
+        var documentTypeId = await DocumentTypeIdAsync(client, "SACH");
+        var suffix = Guid.NewGuid().ToString("N")[..6];
+
+        // Hai tên phải khác nhau **sau khi bỏ dấu**: khoá chuẩn hoá của danh mục coi "Phạm Văn Gộp"
+        // và "Pham Van Gop" là một, nên lập cách viết thứ hai chỉ trả về đúng mục cũ và không còn gì
+        // để gộp. Ở đây gộp một tên viết tắt vào tên đầy đủ — đúng việc cán bộ làm hằng ngày.
+        var keep = $"Phạm Văn Gộp {suffix}";
+        var drop = $"P. V. Gộp {suffix}";
+
+        var response = await client.PostAsJsonAsync("/api/cataloging/bibs", new
+        {
+            marcJson = await BuildRecordAsync(client, documentTypeId, $"Sách kiểm gộp {suffix}", drop),
+            documentTypeId,
+            status = "Published"
+        }, LibraryConnectFactory.JsonOptions);
+
+        response.IsSuccessStatusCode.Should().BeTrue();
+
+        var saved = (await response.Content.ReadFromJsonAsync<ApiResponse<SaveBibResultDto>>(
+            LibraryConnectFactory.JsonOptions))!.Data!;
+
+        // Mục tác giả thứ hai để có cái mà gộp; lượt lưu trên đã tự lập mục cho tên viết không dấu.
+        var keepResponse = await client.PostAsJsonAsync("/api/catalogs/authors/items", new
+        {
+            name = keep,
+            sortOrder = 0,
+            isActive = true,
+            extras = new Dictionary<string, string> { ["fullName"] = keep }
+        });
+
+        var keepId = (await keepResponse.Content.ReadFromJsonAsync<ApiResponse<Guid>>(
+            LibraryConnectFactory.JsonOptions))!.Data;
+
+        var authors = await client.GetFromJsonAsync<ApiResponse<PagedResult<CatalogItemDto>>>(
+            $"/api/catalogs/authors/items?keyword={Uri.EscapeDataString(suffix)}&pageSize=20",
+            LibraryConnectFactory.JsonOptions);
+
+        var dropId = authors!.Data!.Items.Single(item => item.Name == drop).Id;
+
+        var mergeResponse = await client.PostAsJsonAsync("/api/catalogs/authors/merge",
+            new { targetId = keepId, sourceIds = new[] { dropId } });
+
+        mergeResponse.IsSuccessStatusCode.Should().BeTrue(
+            "gộp trả về {0}: {1} (giữ={2}, bỏ={3})",
+            mergeResponse.StatusCode, await mergeResponse.Content.ReadAsStringAsync(), keepId, dropId);
+
+        var detail = (await client.GetFromJsonAsync<ApiResponse<BibDetailDto>>(
+            $"/api/cataloging/bibs/{saved.Id}", LibraryConnectFactory.JsonOptions))!.Data!;
+
+        detail.MarcJson.Should().Contain(keep, "MARC là bản gốc, phải mang tên giữ lại");
+        detail.MarcJson.Should().NotContain(drop);
+        detail.AuthorMain.Should().Be(keep, "cột phẳng là thứ trang tra cứu đọc");
     }
 
     [Fact]

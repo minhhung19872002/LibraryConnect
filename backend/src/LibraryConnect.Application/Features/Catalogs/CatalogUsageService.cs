@@ -1,4 +1,5 @@
 using LibraryConnect.Application.Common.Interfaces;
+using LibraryConnect.Application.Features.Cataloging;
 using LibraryConnect.Domain.Entities.Cat;
 using LibraryConnect.Domain.Entities.Dig;
 using LibraryConnect.Domain.Entities.Web;
@@ -28,8 +29,13 @@ public interface ICatalogUsageService
 public class CatalogUsageService : ICatalogUsageService
 {
     private readonly IApplicationDbContext _db;
+    private readonly IBibRecordWriter _writer;
 
-    public CatalogUsageService(IApplicationDbContext db) => _db = db;
+    public CatalogUsageService(IApplicationDbContext db, IBibRecordWriter writer)
+    {
+        _db = db;
+        _writer = writer;
+    }
 
     public async Task<int> CountUsageAsync(CatalogDefinition definition, Guid id, CancellationToken ct = default)
     {
@@ -159,6 +165,14 @@ public class CatalogUsageService : ICatalogUsageService
 
     private async Task<int> ReassignAuthorAsync(IReadOnlyList<Guid> sourceIds, Guid targetId, CancellationToken ct)
     {
+        // Danh sách biểu ghi phải lấy **trước** khi đổi liên kết: sau lượt đổi thì không còn dòng
+        // nào mang mã cũ để tìm ra chúng nữa.
+        var affected = await _db.BibAuthors
+            .Where(link => sourceIds.Contains(link.AuthorId))
+            .Select(link => link.BibId)
+            .Distinct()
+            .ToListAsync(ct);
+
         // A record that already cites the target must not end up citing it twice, so those links are
         // removed rather than repointed.
         var redundant = await _db.BibAuthors
@@ -169,13 +183,24 @@ public class CatalogUsageService : ICatalogUsageService
         _db.BibAuthors.RemoveRange(redundant);
         await _db.SaveChangesAsync(ct);
 
-        return await _db.BibAuthors
+        var updated = await _db.BibAuthors
             .Where(link => sourceIds.Contains(link.AuthorId))
             .ExecuteUpdateAsync(setters => setters.SetProperty(link => link.AuthorId, targetId), ct);
+
+        await RewriteMarcAsync(sourceIds, targetId, affected,
+            new[] { ("100", 'a'), ("700", 'a'), ("245", 'c') }, ct);
+
+        return updated;
     }
 
     private async Task<int> ReassignSubjectAsync(IReadOnlyList<Guid> sourceIds, Guid targetId, CancellationToken ct)
     {
+        var affected = await _db.BibSubjects
+            .Where(link => sourceIds.Contains(link.SubjectId))
+            .Select(link => link.BibId)
+            .Distinct()
+            .ToListAsync(ct);
+
         var redundant = await _db.BibSubjects
             .Where(link => sourceIds.Contains(link.SubjectId))
             .Where(link => _db.BibSubjects.Any(other => other.BibId == link.BibId && other.SubjectId == targetId))
@@ -193,11 +218,19 @@ public class CatalogUsageService : ICatalogUsageService
             .Where(subject => subject.ParentId != null && sourceIds.Contains(subject.ParentId.Value))
             .ExecuteUpdateAsync(setters => setters.SetProperty(subject => subject.ParentId, targetId), ct);
 
+        await RewriteMarcAsync(sourceIds, targetId, affected, new[] { ("650", 'a') }, ct);
+
         return updated;
     }
 
     private async Task<int> ReassignKeywordAsync(IReadOnlyList<Guid> sourceIds, Guid targetId, CancellationToken ct)
     {
+        var affected = await _db.BibKeywords
+            .Where(link => sourceIds.Contains(link.KeywordId))
+            .Select(link => link.BibId)
+            .Distinct()
+            .ToListAsync(ct);
+
         var redundant = await _db.BibKeywords
             .Where(link => sourceIds.Contains(link.KeywordId))
             .Where(link => _db.BibKeywords.Any(other => other.BibId == link.BibId && other.KeywordId == targetId))
@@ -206,8 +239,127 @@ public class CatalogUsageService : ICatalogUsageService
         _db.BibKeywords.RemoveRange(redundant);
         await _db.SaveChangesAsync(ct);
 
-        return await _db.BibKeywords
+        var updated = await _db.BibKeywords
             .Where(link => sourceIds.Contains(link.KeywordId))
             .ExecuteUpdateAsync(setters => setters.SetProperty(link => link.KeywordId, targetId), ct);
+
+        await RewriteMarcAsync(sourceIds, targetId, affected, new[] { ("653", 'a') }, ct);
+
+        return updated;
+    }
+
+    /// <summary>
+    /// Thay tên cũ bằng tên giữ lại **ngay trong biểu ghi MARC** của từng biểu ghi liên quan.
+    ///
+    /// Sửa bảng liên kết thôi thì danh mục và bộ lọc sạch, nhưng `marc_data` — bản gốc của biểu ghi —
+    /// vẫn mang tên cũ, và cột phẳng rút từ nó cũng vậy. Trang tra cứu đọc cột phẳng, phích mục lục
+    /// và tệp xuất ISO 2709 đọc MARC, nên gộp xong mà không làm bước này thì tên cũ vẫn đi khắp nơi
+    /// (bài học 16 trong CLAUDE.md).
+    ///
+    /// Đi qua <see cref="IBibRecordWriter"/> chứ không viết thẳng vào cột: đó là chỗ duy nhất biết
+    /// cách rút cột phẳng ra từ MARC, và nó lưu luôn một phiên bản cũ — gộp hồ sơ thẩm quyền là một
+    /// thay đổi của biểu ghi, phải có vết.
+    /// </summary>
+    private async Task RewriteMarcAsync(
+        IReadOnlyList<Guid> sourceIds,
+        Guid targetId,
+        IReadOnlyList<Guid> bibIds,
+        IReadOnlyList<(string Tag, char Code)> places,
+        CancellationToken ct)
+    {
+        if (bibIds.Count == 0)
+        {
+            return;
+        }
+
+        var oldNames = await NamesAsync(sourceIds, ct);
+        var newName = (await NamesAsync(new[] { targetId }, ct)).FirstOrDefault();
+
+        if (string.IsNullOrWhiteSpace(newName) || oldNames.Count == 0)
+        {
+            return;
+        }
+
+        // Nạp kèm bốn tập liên kết: bộ ghi biểu ghi đọc chúng để biết liên kết nào đã có. Không nạp
+        // thì nó tưởng biểu ghi chưa có liên kết nào và thêm lại từ đầu — lượt lưu đổ vì trùng khoá.
+        var records = await _db.BibRecords
+            .Include(bib => bib.Authors)
+            .Include(bib => bib.Subjects)
+            .Include(bib => bib.Keywords)
+            .Include(bib => bib.Classifications)
+            .Where(bib => bibIds.Contains(bib.Id))
+            .ToListAsync(ct);
+
+        foreach (var bib in records)
+        {
+            if (string.IsNullOrWhiteSpace(bib.MarcData))
+            {
+                continue;
+            }
+
+            var marc = global::LibraryConnect.Marc.MarcJson.Deserialize(bib.MarcData);
+            var changed = false;
+
+            foreach (var field in marc.DataFields)
+            {
+                foreach (var (tag, code) in places)
+                {
+                    if (field.Tag != tag)
+                    {
+                        continue;
+                    }
+
+                    foreach (var subfield in field.Subfields.Where(item => item.Code == code))
+                    {
+                        // So sau khi bỏ dấu và bỏ hoa thường: chính những cách viết khác nhau ấy mới
+                        // là lý do phải gộp. Giữ nguyên phần đuôi câu (dấu chấm, gạch chéo của ISBD).
+                        var replaced = ReplaceName(subfield.Value, oldNames, newName);
+
+                        if (replaced != subfield.Value)
+                        {
+                            subfield.Value = replaced;
+                            changed = true;
+                        }
+                    }
+                }
+            }
+
+            if (!changed)
+            {
+                continue;
+            }
+
+            await _writer.ApplyAsync(bib, marc, isNew: false,
+                changeNote: $"Gộp trùng danh mục: đổi thành \"{newName}\"", ct);
+        }
+
+        await _db.SaveChangesAsync(ct);
+    }
+
+    private async Task<List<string>> NamesAsync(IReadOnlyList<Guid> ids, CancellationToken ct) =>
+        await _db.Authors.Where(row => ids.Contains(row.Id)).Select(row => row.Name)
+            .Concat(_db.Subjects.Where(row => ids.Contains(row.Id)).Select(row => row.Name))
+            .Concat(_db.Keywords.Where(row => ids.Contains(row.Id)).Select(row => row.Name))
+            .ToListAsync(ct);
+
+    /// <summary>Đổi tên cũ thành tên mới trong một ô, giữ nguyên dấu câu ISBD ở hai đầu.</summary>
+    private static string ReplaceName(string value, IReadOnlyList<string> oldNames, string newName)
+    {
+        foreach (var old in oldNames)
+        {
+            if (string.IsNullOrWhiteSpace(old))
+            {
+                continue;
+            }
+
+            var index = value.IndexOf(old, StringComparison.OrdinalIgnoreCase);
+
+            if (index >= 0)
+            {
+                return value.Remove(index, old.Length).Insert(index, newName);
+            }
+        }
+
+        return value;
     }
 }
