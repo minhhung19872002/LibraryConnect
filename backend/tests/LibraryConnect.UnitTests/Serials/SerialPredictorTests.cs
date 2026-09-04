@@ -149,6 +149,57 @@ public class SerialPredictorTests
     }
 
     [Fact]
+    public void Nhat_bao_nghi_chu_nhat_thi_khong_sinh_so_chu_nhat()
+    {
+        // IV.4 nói khai được "các kỳ nghỉ không xuất bản". Trước 04/09/2026 chỉ nghỉ được trọn
+        // tháng, mà phần lớn nhật báo Việt Nam nghỉ Chủ nhật: sinh số cả năm ra 365 số và lưới theo
+        // dõi hiện 52 số "thiếu" không có thật.
+        var issues = SerialIssuePredictor.Predict(
+            SerialFrequency.Daily,
+            new SerialPatternDto { SkipDaysOfWeek = new List<int> { 8 } },
+            Date(2026, 1, 1),
+            Date(2026, 1, 31));
+
+        // Tháng 1/2026 có bốn Chủ nhật (4, 11, 18, 25).
+        issues.Should().HaveCount(27);
+        issues.Should().NotContain(issue => issue.ExpectedDate.DayOfWeek == DayOfWeek.Sunday);
+    }
+
+    [Fact]
+    public void Khoang_nghi_Tet_khong_sinh_so_nao_trong_khoang_ay()
+    {
+        // Nghỉ Tết 28/01–05/02: không bỏ được bằng cách nghỉ trọn tháng, vì hai tháng ấy vẫn ra báo
+        // ở những ngày còn lại.
+        var issues = SerialIssuePredictor.Predict(
+            SerialFrequency.Daily,
+            new SerialPatternDto { SkipRanges = new List<string> { "28/01-05/02" } },
+            Date(2026, 1, 20),
+            Date(2026, 2, 10));
+
+        issues.Should().NotContain(issue =>
+            (issue.ExpectedDate.Month == 1 && issue.ExpectedDate.Day >= 28)
+            || (issue.ExpectedDate.Month == 2 && issue.ExpectedDate.Day <= 5));
+
+        // 20–27/01 là 8 số, 06–10/02 là 5 số.
+        issues.Should().HaveCount(13);
+    }
+
+    [Fact]
+    public void Khoang_nghi_ghi_kem_nam_chi_ap_cho_nam_do()
+    {
+        var pattern = new SerialPatternDto { SkipRanges = new List<string> { "01/05/2026-03/05/2026" } };
+
+        var year2026 = SerialIssuePredictor.Predict(
+            SerialFrequency.Daily, pattern, Date(2026, 5, 1), Date(2026, 5, 5));
+
+        var year2027 = SerialIssuePredictor.Predict(
+            SerialFrequency.Daily, pattern, Date(2027, 5, 1), Date(2027, 5, 5));
+
+        year2026.Should().HaveCount(2, "nghỉ 1–3/5/2026 thì chỉ còn ngày 4 và 5");
+        year2027.Should().HaveCount(5, "khoảng nghỉ khai kèm năm không áp cho năm khác");
+    }
+
+    [Fact]
     public void Numbering_restarts_each_year_by_default()
     {
         // Sinh nốt hai số cuối năm 2026 rồi sang năm mới: số đầu của dãy do cán bộ khai (11), còn

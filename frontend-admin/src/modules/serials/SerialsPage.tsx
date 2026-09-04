@@ -619,6 +619,22 @@ function SerialEditorDrawer({
           <Select mode="multiple" allowClear options={months} />
         </Form.Item>
 
+        <Form.Item
+          name={['pattern', 'skipDaysOfWeek']}
+          label="Các thứ không xuất bản"
+          extra="Phần lớn nhật báo không ra Chủ nhật; bỏ trống thì sinh đủ bảy ngày mỗi tuần."
+        >
+          <Select mode="multiple" allowClear options={daysOfWeek} />
+        </Form.Item>
+
+        <Form.Item
+          name={['pattern', 'skipRanges']}
+          label="Các khoảng ngày nghỉ"
+          extra='Gõ "28/01-05/02" cho kỳ nghỉ lặp hằng năm, hoặc "28/01/2026-05/02/2026" cho riêng một năm. Nhấn Enter sau mỗi khoảng.'
+        >
+          <Select mode="tags" allowClear tokenSeparators={[',', ';']} open={false} />
+        </Form.Item>
+
         <Form.Item name="note" label="Ghi chú">
           <Input.TextArea rows={2} />
         </Form.Item>
@@ -630,6 +646,17 @@ function SerialEditorDrawer({
     </Drawer>
   );
 }
+
+/** Thứ trong tuần theo cách gọi của người Việt: thứ Hai là 2, Chủ nhật là 8. */
+const daysOfWeek = [
+  { value: 2, label: 'Thứ Hai' },
+  { value: 3, label: 'Thứ Ba' },
+  { value: 4, label: 'Thứ Tư' },
+  { value: 5, label: 'Thứ Năm' },
+  { value: 6, label: 'Thứ Sáu' },
+  { value: 7, label: 'Thứ Bảy' },
+  { value: 8, label: 'Chủ nhật' },
+];
 
 /** IV.3 — Sinh số cho nhiều đầu báo cùng lúc. Dùng chung với màn hình Bổ sung tổng thể. */
 export function BatchGenerateModal({

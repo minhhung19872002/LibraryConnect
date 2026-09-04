@@ -29,6 +29,10 @@ export interface SerialPatternDto {
   startVolume: number;
   startYear?: number | null;
   skipMonths: number[];
+  /** Thứ không xuất bản: 2 = thứ Hai … 7 = thứ Bảy, 8 = Chủ nhật (IV.4). */
+  skipDaysOfWeek: number[];
+  /** Khoảng ngày nghỉ, "dd/MM-dd/MM" hoặc "dd/MM/yyyy-dd/MM/yyyy". */
+  skipRanges: string[];
 }
 
 export interface SerialDto {

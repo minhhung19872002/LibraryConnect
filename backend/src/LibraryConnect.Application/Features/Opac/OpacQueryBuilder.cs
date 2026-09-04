@@ -168,6 +168,9 @@ public static class OpacQueryBuilder
                 bib => bib.Subjects.Any(link => link.SubjectId == filter.SubjectId))
             .WhereIf(filter.CollectionId is not null,
                 bib => bib.Collections.Any(link => link.CollectionId == filter.CollectionId))
+            .WhereIf(filter.CustomIndexValueId is not null,
+                bib => bib.CustomIndexLinks.Any(
+                    link => link.CustomIndexValueId == filter.CustomIndexValueId))
             .WhereIf(filter.CourseId is not null,
                 bib => bib.Courses.Any(link => link.CourseId == filter.CourseId))
             .WhereIf(filter.HasDigital == true, bib => bib.DigitalDocumentCount > 0)

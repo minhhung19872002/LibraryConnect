@@ -56,6 +56,21 @@ public class SerialPatternDto
     /// <summary>Các tháng không xuất bản, ví dụ tạp chí nghỉ tháng 7 và 8.</summary>
     public List<int> SkipMonths { get; set; } = new();
 
+    /// <summary>
+    /// Các thứ trong tuần không xuất bản (2 = thứ Hai … 7 = thứ Bảy, 8 hoặc 0 = Chủ nhật).
+    ///
+    /// Phần lớn nhật báo Việt Nam không ra Chủ nhật. Thiếu mục này thì sinh số cho cả năm ra 365
+    /// số, và lưới theo dõi hiện 52 số "thiếu" không có thật — cán bộ đi khiếu nại nhà cung cấp về
+    /// những số chưa bao giờ được in.
+    /// </summary>
+    public List<int> SkipDaysOfWeek { get; set; } = new();
+
+    /// <summary>
+    /// Các khoảng ngày nghỉ, ví dụ nghỉ Tết từ 28/01 đến 05/02. Ghi dạng "dd/MM-dd/MM" (áp cho mọi
+    /// năm) hoặc "dd/MM/yyyy-dd/MM/yyyy" (chỉ một năm).
+    /// </summary>
+    public List<string> SkipRanges { get; set; } = new();
+
     public static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -192,10 +207,130 @@ public static class SerialIssuePredictor
         _ => 0
     };
 
+    /// <summary>
+    /// Một ngày có phải ngày nghỉ không: theo tháng, theo thứ, hoặc nằm trong một khoảng nghỉ.
+    ///
+    /// Ba kiểu này cộng dồn chứ không loại trừ nhau — báo tuần nghỉ tháng 7 mà cũng nghỉ Tết là
+    /// chuyện bình thường.
+    /// </summary>
+    private sealed class SkipRules
+    {
+        private readonly HashSet<int> _months;
+        private readonly HashSet<DayOfWeek> _days;
+        private readonly List<(int FromMonth, int FromDay, int ToMonth, int ToDay, int? Year)> _ranges;
+
+        public SkipRules(SerialPatternDto pattern)
+        {
+            _months = pattern.SkipMonths.Where(month => month is >= 1 and <= 12).ToHashSet();
+
+            _days = pattern.SkipDaysOfWeek
+                .Select(DayOf)
+                .Where(day => day is not null)
+                .Select(day => day!.Value)
+                .ToHashSet();
+
+            _ranges = pattern.SkipRanges
+                .Select(Parse)
+                .Where(range => range is not null)
+                .Select(range => range!.Value)
+                .ToList();
+        }
+
+        public bool Skip(DateOnly date)
+        {
+            if (_months.Contains(date.Month) || _days.Contains(date.DayOfWeek))
+            {
+                return true;
+            }
+
+            foreach (var (fromMonth, fromDay, toMonth, toDay, year) in _ranges)
+            {
+                if (year is not null && year != date.Year)
+                {
+                    continue;
+                }
+
+                var start = fromMonth * 100 + fromDay;
+                var end = toMonth * 100 + toDay;
+                var value = date.Month * 100 + date.Day;
+
+                // Khoảng vắt qua năm mới (ví dụ 28/12–03/01) thì hai đầu đảo chiều.
+                var inside = start <= end
+                    ? value >= start && value <= end
+                    : value >= start || value <= end;
+
+                if (inside)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>2 = thứ Hai … 7 = thứ Bảy; 8 hoặc 0 = Chủ nhật, đúng cách người Việt gọi thứ.</summary>
+        private static DayOfWeek? DayOf(int value) => value switch
+        {
+            2 => DayOfWeek.Monday,
+            3 => DayOfWeek.Tuesday,
+            4 => DayOfWeek.Wednesday,
+            5 => DayOfWeek.Thursday,
+            6 => DayOfWeek.Friday,
+            7 => DayOfWeek.Saturday,
+            8 or 0 => DayOfWeek.Sunday,
+            _ => null
+        };
+
+        private static (int, int, int, int, int?)? Parse(string? text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return null;
+            }
+
+            var parts = text.Split('-', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+
+            if (parts.Length != 2)
+            {
+                return null;
+            }
+
+            var start = Piece(parts[0]);
+            var end = Piece(parts[1]);
+
+            if (start is null || end is null)
+            {
+                return null;
+            }
+
+            // Năm chỉ cần khai một đầu là đủ để hiểu khoảng ấy dành riêng cho năm đó.
+            return (start.Value.Month, start.Value.Day, end.Value.Month, end.Value.Day,
+                start.Value.Year ?? end.Value.Year);
+        }
+
+        private static (int Day, int Month, int? Year)? Piece(string text)
+        {
+            var bits = text.Split('/', StringSplitOptions.TrimEntries);
+
+            if (bits.Length < 2
+                || !int.TryParse(bits[0], out var day)
+                || !int.TryParse(bits[1], out var month)
+                || day is < 1 or > 31
+                || month is < 1 or > 12)
+            {
+                return null;
+            }
+
+            int? year = bits.Length > 2 && int.TryParse(bits[2], out var parsed) ? parsed : null;
+
+            return (day, month, year);
+        }
+    }
+
     private static IEnumerable<DateOnly> Dates(
         SerialFrequency frequency, SerialPatternDto pattern, DateOnly from, DateOnly to)
     {
-        var skip = pattern.SkipMonths.Where(month => month is >= 1 and <= 12).ToHashSet();
+        var skip = new SkipRules(pattern);
 
         return frequency switch
         {
@@ -212,11 +347,11 @@ public static class SerialIssuePredictor
         };
     }
 
-    private static IEnumerable<DateOnly> Daily(DateOnly from, DateOnly to, IReadOnlySet<int> skip)
+    private static IEnumerable<DateOnly> Daily(DateOnly from, DateOnly to, SkipRules skip)
     {
         for (var date = from; date <= to; date = date.AddDays(1))
         {
-            if (!skip.Contains(date.Month))
+            if (!skip.Skip(date))
             {
                 yield return date;
             }
@@ -224,7 +359,7 @@ public static class SerialIssuePredictor
     }
 
     private static IEnumerable<DateOnly> Weekly(
-        SerialPatternDto pattern, DateOnly from, DateOnly to, IReadOnlySet<int> skip, int everyWeeks)
+        SerialPatternDto pattern, DateOnly from, DateOnly to, SkipRules skip, int everyWeeks)
     {
         // Ngày đầu tiên rơi đúng thứ đã khai; không khai thì lấy luôn thứ của ngày bắt đầu đặt mua.
         var start = from;
@@ -238,7 +373,7 @@ public static class SerialIssuePredictor
 
         for (var date = start; date <= to; date = date.AddDays(7 * everyWeeks))
         {
-            if (!skip.Contains(date.Month))
+            if (!skip.Skip(date))
             {
                 yield return date;
             }
@@ -246,7 +381,7 @@ public static class SerialIssuePredictor
     }
 
     private static IEnumerable<DateOnly> SemiMonthly(
-        SerialPatternDto pattern, DateOnly from, DateOnly to, IReadOnlySet<int> skip)
+        SerialPatternDto pattern, DateOnly from, DateOnly to, SkipRules skip)
     {
         var first = Clamp(pattern.DayOfMonth ?? 1);
         var second = Clamp(pattern.SecondDayOfMonth ?? 15);
@@ -262,16 +397,15 @@ public static class SerialIssuePredictor
 
         while (month <= last)
         {
-            if (!skip.Contains(month.Month))
+            foreach (var day in new[] { first, second })
             {
-                foreach (var day in new[] { first, second })
-                {
-                    var date = DayIn(month, day);
+                var date = DayIn(month, day);
 
-                    if (date >= from && date <= to)
-                    {
-                        yield return date;
-                    }
+                // Xét ngày phát hành thật chứ không xét mốc lặp: có thế mới bỏ đúng ngày rơi vào
+                // khoảng nghỉ hay vào thứ nghỉ, chứ không phải bỏ trọn cả tháng.
+                if (date >= from && date <= to && !skip.Skip(date))
+                {
+                    yield return date;
                 }
             }
 
@@ -280,7 +414,7 @@ public static class SerialIssuePredictor
     }
 
     private static IEnumerable<DateOnly> Monthly(
-        SerialPatternDto pattern, DateOnly from, DateOnly to, IReadOnlySet<int> skip, int everyMonths)
+        SerialPatternDto pattern, DateOnly from, DateOnly to, SkipRules skip, int everyMonths)
     {
         var day = Clamp(pattern.DayOfMonth ?? 1);
         var month = new DateOnly(from.Year, from.Month, 1);
@@ -288,11 +422,10 @@ public static class SerialIssuePredictor
 
         while (month <= last)
         {
-            if (!skip.Contains(month.Month))
             {
                 var date = DayIn(month, day);
 
-                if (date >= from && date <= to)
+                if (date >= from && date <= to && !skip.Skip(date))
                 {
                     yield return date;
                 }
@@ -307,7 +440,7 @@ public static class SerialIssuePredictor
     /// đặt mua để cán bộ có sẵn khung rồi sửa tay ngày của từng số.
     /// </summary>
     private static IEnumerable<DateOnly> Irregular(
-        SerialPatternDto pattern, DateOnly from, DateOnly to, IReadOnlySet<int> skip)
+        SerialPatternDto pattern, DateOnly from, DateOnly to, SkipRules skip)
     {
         var perYear = pattern.IssuesPerYear ?? 0;
 
@@ -329,7 +462,7 @@ public static class SerialIssuePredictor
                 yield break;
             }
 
-            if (!skip.Contains(date.Month))
+            if (!skip.Skip(date))
             {
                 yield return date;
             }

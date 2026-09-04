@@ -128,6 +128,8 @@ export interface SearchFilter {
   publisherId?: string;
   warehouseId?: string;
   courseId?: string;
+  /** Giá trị của một danh mục tự tạo (II.9), gửi khi bạn đọc bấm vào nhóm lọc ấy. */
+  customIndexValueId?: string;
   ddc?: string;
   hasDigital?: boolean;
   availableOnly?: boolean;

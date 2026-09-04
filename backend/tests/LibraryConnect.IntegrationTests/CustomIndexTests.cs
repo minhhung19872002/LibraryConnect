@@ -72,6 +72,47 @@ public class CustomIndexTests
     }
 
     [Fact]
+    public async Task Danh_muc_tu_tao_hien_thanh_bo_loc_tren_trang_tra_cuu()
+    {
+        // II.9: danh mục tự tạo "sau đó dùng làm bộ lọc trong tra cứu", và màn hình khai báo có hẳn
+        // ô "Hiện làm bộ lọc trên tra cứu". Trước 04/09/2026 cờ ấy chỉ được lưu: bảy nhóm lọc của
+        // trang tra cứu viết cứng trong mã, danh mục tự tạo không xuất hiện ở đâu cả.
+        var client = await ClientAsync();
+        var marker = Guid.NewGuid().ToString("N")[..6];
+
+        var place = $"Cần Thơ {marker}";
+
+        await CreateRecordAsync(client, $"Sách lọc {marker} A", $"{place} :");
+        await CreateRecordAsync(client, $"Sách lọc {marker} B", $"{place} :");
+        await CreateRecordAsync(client, $"Sách lọc {marker} C", $"Nha Trang {marker} :");
+
+        var indexId = await CreateIndexAsync(client, $"Nơi xuất bản {marker}", "260", "a");
+        var values = await HarvestAsync(client, indexId);
+
+        var value = values.Single(row => row.Name.StartsWith(place, StringComparison.Ordinal));
+
+        var anonymous = _factory.CreateClient();
+
+        var facets = await anonymous.GetFromJsonAsync<ApiResponse<List<Application.Features.Opac.OpacFacetGroupDto>>>(
+            $"/api/search/facets?keyword={Uri.EscapeDataString("Sách lọc " + marker)}",
+            LibraryConnectFactory.JsonOptions);
+
+        var group = facets!.Data!.Should()
+            .Contain(row => row.Name == $"Nơi xuất bản {marker}",
+                "danh mục tự tạo đã bật cờ phải thành một nhóm lọc trên trang tra cứu").Subject;
+
+        group.Values.Should().Contain(row => row.Id == value.Id.ToString() && row.Count == 2);
+
+        // Và bấm vào giá trị ấy thì kết quả thu hẹp thật, không chỉ hiện ra cho đẹp.
+        var filtered = await anonymous.GetFromJsonAsync<ApiResponse<PagedResult<Application.Features.Opac.OpacResultDto>>>(
+            $"/api/search?keyword={Uri.EscapeDataString("Sách lọc " + marker)}&filter.customIndexValueId={value.Id}",
+            LibraryConnectFactory.JsonOptions);
+
+        filtered!.Data!.TotalCount.Should().Be(2);
+        filtered.Data.Items.Should().OnlyContain(row => row.Title.Contains(marker));
+    }
+
+    [Fact]
     public async Task Harvesting_finds_the_distinct_values_and_counts_the_records_using_each()
     {
         var client = await ClientAsync();

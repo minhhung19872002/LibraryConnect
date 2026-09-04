@@ -29,6 +29,17 @@ const FACET_PARAM: Record<string, string> = {
 };
 
 /**
+ * Danh mục tự tạo (II.9) đến dưới dạng nhóm có mã "custom:<mã danh mục>" và đi cùng một tham số
+ * lọc duy nhất. Thư viện tự khai bao nhiêu danh mục cũng được, nên không thể liệt kê sẵn ở bảng
+ * trên; nhận diện bằng tiền tố.
+ */
+const CUSTOM_PREFIX = 'custom:';
+const CUSTOM_PARAM = 'customIndexValueId';
+
+const facetParam = (code: string) =>
+  code.startsWith(CUSTOM_PREFIX) ? CUSTOM_PARAM : FACET_PARAM[code];
+
+/**
  * IX.2 — Trang kết quả tra cứu.
  *
  * Toàn bộ trạng thái nằm trên địa chỉ: bấm bộ lọc là đổi địa chỉ, nên bạn đọc gửi đường dẫn cho
@@ -56,6 +67,7 @@ export function SearchPage() {
     if (params.get('collectionId')) filter.collectionId = params.get('collectionId')!;
     // Duyệt theo môn học dẫn sang đây; bộ lọc đã có ở máy chủ từ phân hệ X, chỉ thiếu chỗ đọc ra.
     if (params.get('courseId')) filter.courseId = params.get('courseId')!;
+    if (params.get('customIndexValueId')) filter.customIndexValueId = params.get('customIndexValueId')!;
     if (params.get('ddc')) filter.ddc = params.get('ddc')!;
     if (params.get('publishYear')) {
       const year = Number(params.get('publishYear'));
@@ -165,7 +177,7 @@ export function SearchPage() {
                 </div>
                 <div className="lc-facets__list">
                   {group.values.map((value) => {
-                    const param = FACET_PARAM[group.code];
+                    const param = facetParam(group.code);
                     const active = param ? params.get(param) === value.id : false;
 
                     return (
@@ -224,7 +236,9 @@ export function SearchPage() {
           </div>
 
           {keyword ||
-          [...params.keys()].some((key) => Object.values(FACET_PARAM).includes(key)) ? (
+          [...params.keys()].some(
+            (key) => Object.values(FACET_PARAM).includes(key) || key === CUSTOM_PARAM,
+          ) ? (
             <Space size={[8, 8]} wrap style={{ marginBottom: 12 }}>
               {keyword ? (
                 <Tag closable onClose={() => update({ keyword: null })}>
@@ -232,7 +246,9 @@ export function SearchPage() {
                 </Tag>
               ) : null}
               {[...params.entries()]
-                .filter(([key]) => Object.values(FACET_PARAM).includes(key))
+                .filter(
+                  ([key]) => Object.values(FACET_PARAM).includes(key) || key === CUSTOM_PARAM,
+                )
                 .map(([key, value]) => (
                   <Tag key={key} closable onClose={() => update({ [key]: null })}>
                     Bộ lọc đang áp dụng

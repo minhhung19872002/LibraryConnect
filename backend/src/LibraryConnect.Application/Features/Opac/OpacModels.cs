@@ -67,6 +67,13 @@ public class OpacFilter
     public Guid? WarehouseId { get; set; }
     public Guid? CourseId { get; set; }
 
+    /// <summary>
+    /// Giá trị của một danh mục tự tạo (II.9). Cán bộ khai danh mục từ một trường MARC bất kỳ —
+    /// "Nơi xuất bản" từ 260$a chẳng hạn — rồi bật "hiện làm bộ lọc trên tra cứu"; đây là chỗ trang
+    /// tra cứu gửi lựa chọn ấy lên.
+    /// </summary>
+    public Guid? CustomIndexValueId { get; set; }
+
     /// <summary>Ký hiệu phân loại: lọc theo tiền tố, ví dụ "005" lấy cả 005.1, 005.74.</summary>
     public string? Ddc { get; set; }
 

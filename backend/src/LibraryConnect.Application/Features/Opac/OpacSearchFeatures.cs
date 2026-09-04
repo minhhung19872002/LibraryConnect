@@ -329,7 +329,7 @@ public class OpacFacetsQueryHandler
         var digital = await records.CountAsync(bib => bib.DigitalDocumentCount > 0, ct);
         var available = await records.CountAsync(bib => bib.AvailableItemCount > 0, ct);
 
-        return new List<OpacFacetGroupDto>
+        var groups = new List<OpacFacetGroupDto>
         {
             new("documentType", "Dạng tài liệu", documentTypes),
             new("author", "Tác giả", authors),
@@ -343,6 +343,66 @@ public class OpacFacetsQueryHandler
                 new("digital", "Có tài liệu số", digital)
             })
         };
+
+        groups.AddRange(await CustomIndexGroupsAsync(records, ct));
+
+        return groups;
+    }
+
+    /// <summary>
+    /// Nhóm lọc dựng từ danh mục tự tạo (II.9).
+    ///
+    /// Cán bộ khai một danh mục từ trường MARC bất kỳ rồi bật "hiện làm bộ lọc trên tra cứu". Trước
+    /// 04/09/2026 cờ ấy được lưu nhưng không chỗ nào đọc: bảy nhóm lọc viết cứng trong mã, còn danh
+    /// mục tự tạo chỉ lọc được ở màn hình quản trị. Màn hình khai báo thì vẫn hứa ngược lại.
+    /// </summary>
+    private async Task<List<OpacFacetGroupDto>> CustomIndexGroupsAsync(
+        IQueryable<Domain.Entities.Bib.BibRecord> records, CancellationToken ct)
+    {
+        var indexes = await _db.CustomIndexes
+            .AsNoTracking()
+            .Where(index => index.IsActive && index.ShowAsFacet)
+            .OrderBy(index => index.SortOrder)
+            .ThenBy(index => index.Name)
+            .Select(index => new { index.Id, index.Code, index.Name })
+            .ToListAsync(ct);
+
+        var groups = new List<OpacFacetGroupDto>();
+
+        foreach (var index in indexes)
+        {
+            // Đếm trên đúng tập kết quả đang xem, như mọi nhóm khác — con số phải là "còn bao nhiêu
+            // tài liệu nếu bấm thêm cái này", không phải tổng của cả kho.
+            var counts = await _db.CustomIndexLinks
+                .AsNoTracking()
+                .Where(link => link.CustomIndexValue!.CustomIndexId == index.Id)
+                .Where(link => records.Any(bib => bib.Id == link.BibId))
+                .GroupBy(link => new { link.CustomIndexValueId, link.CustomIndexValue!.Name })
+                .Select(group => new
+                {
+                    group.Key.CustomIndexValueId,
+                    group.Key.Name,
+                    Count = group.Count()
+                })
+                .OrderByDescending(row => row.Count)
+                .Take(MaxValuesPerGroup)
+                .ToListAsync(ct);
+
+            if (counts.Count == 0)
+            {
+                continue;
+            }
+
+            groups.Add(new OpacFacetGroupDto(
+                $"custom:{index.Code}",
+                index.Name,
+                counts
+                    .Select(row => new OpacFacetValueDto(
+                        row.CustomIndexValueId.ToString(), row.Name, row.Count))
+                    .ToList()));
+        }
+
+        return groups;
     }
 
     /// <summary>Đếm số tài liệu cho mỗi mã, lấy các mã nhiều tài liệu nhất.</summary>
