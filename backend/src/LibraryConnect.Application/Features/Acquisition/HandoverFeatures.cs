@@ -438,7 +438,11 @@ public class AttachHandoverScanCommandHandler : IRequestHandler<AttachHandoverSc
                 "file", $"Tệp scan tối đa {HandoverFiles.MaxSizeBytes / 1024 / 1024} MB.");
         }
 
-        if (!HandoverFiles.AllowedTypes.TryGetValue(command.ContentType, out var extension))
+        // Kiểm bằng chữ ký byte, không tin dòng Content-Type của người gọi — xem chú thích ở
+        // ParameterFileFeatures.
+        var kieuThat = Cms.CmsMedia.DetectScanType(command.Content);
+
+        if (kieuThat is null || !HandoverFiles.AllowedTypes.TryGetValue(kieuThat, out var extension))
         {
             throw new Common.Exceptions.ValidationException(
                 "file", "Chỉ nhận tệp PDF hoặc ảnh PNG, JPG, TIFF.");

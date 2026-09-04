@@ -37,6 +37,10 @@ public static class CmsMedia
     private static readonly byte[] PdfSignature = { 0x25, 0x50, 0x44, 0x46 };
     private static readonly byte[] ZipSignature = { 0x50, 0x4B, 0x03, 0x04 };
 
+    // TIFF có hai thứ tự byte: "II*\0" (Intel) và "MM\0*" (Motorola).
+    private static readonly byte[] TiffLittleEndian = { 0x49, 0x49, 0x2A, 0x00 };
+    private static readonly byte[] TiffBigEndian = { 0x4D, 0x4D, 0x00, 0x2A };
+
     /// <summary>Kiểu MIME thật của tệp, hoặc null nếu không phải ảnh hệ thống chấp nhận.</summary>
     public static string? DetectImageType(byte[] content)
     {
@@ -112,6 +116,17 @@ public static class CmsMedia
     /// <summary>Kiểu MIME thật của tệp nội dung — ảnh hoặc tệp đính kèm — hoặc null nếu không nhận.</summary>
     public static string? DetectFileType(byte[] content) =>
         DetectImageType(content) ?? DetectDocumentType(content);
+
+    /// <summary>
+    /// Như <see cref="DetectFileType"/> nhưng nhận thêm TIFF — định dạng máy quét văn phòng hay
+    /// xuất ra. Tách riêng để phần nội dung trang thông tin không tự dưng nhận thêm một định dạng
+    /// trình duyệt không hiển thị được.
+    /// </summary>
+    public static string? DetectScanType(byte[] content) =>
+        DetectFileType(content)
+        ?? (StartsWith(content, 0, TiffLittleEndian) || StartsWith(content, 0, TiffBigEndian)
+            ? "image/tiff"
+            : null);
 
     public static bool IsImage(string contentType) =>
         contentType.StartsWith("image/", StringComparison.Ordinal);

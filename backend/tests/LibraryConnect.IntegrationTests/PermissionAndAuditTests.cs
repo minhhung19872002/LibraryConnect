@@ -317,6 +317,52 @@ public class PermissionAndAuditTests
     }
 
     [Fact]
+    public async Task Moi_luot_xuat_du_lieu_deu_de_lai_mot_dong_nhat_ky()
+    {
+        // Mục 6.2 đòi ghi nhật ký cả "xuất dữ liệu". Trước 05/09/2026 mỗi handler phải tự gọi, và
+        // bảy đường xuất quên gọi — trong đó có đường xuất biểu ghi ra ISO 2709, tức là đường mang
+        // cả mục lục ra khỏi hệ thống mà nhật ký không có dòng nào.
+        var admin = await AdminClientAsync();
+
+        var marc = System.Text.Json.JsonSerializer.Serialize(new
+        {
+            leader = "00000nam a2200000 a 4500",
+            controlFields = new[] { new { tag = "008", value = "240115s2023    vm a     b    000 0 vie d" } },
+            dataFields = new[]
+            {
+                new
+                {
+                    tag = "245", ind1 = "1", ind2 = "0",
+                    subfields = new[] { new { code = "a", value = "Sách kiểm nhật ký xuất" } },
+                },
+            },
+        });
+
+        var export = await admin.PostAsJsonAsync("/api/marc/export", new
+        {
+            records = new[] { marc },
+            format = "iso2709",
+            fileName = "kiem-nhat-ky-xuat"
+        });
+
+        export.IsSuccessStatusCode.Should().BeTrue(await export.Content.ReadAsStringAsync());
+
+        // Đường thứ hai đi qua bộ ghi dùng chung chứ không phải lời gọi riêng của handler.
+        var stock = await admin.PostAsJsonAsync("/api/stock/items/export", new { filter = new { } });
+
+        stock.IsSuccessStatusCode.Should().BeTrue(await stock.Content.ReadAsStringAsync());
+
+        var logs = await admin.GetFromJsonAsync<ApiResponse<PagedResult<AuditLogListItemDto>>>(
+            "/api/admin/audit-logs?action=Export&pageSize=50", LibraryConnectFactory.JsonOptions);
+
+        logs!.Data!.Items.Should().Contain(item => item.Entity == "BibRecord",
+            "xuất biểu ghi phải để lại vết: đây là đường mang cả mục lục ra khỏi hệ thống");
+
+        logs.Data.Items.Should().Contain(item => item.Entity.Contains("ExportStockItems"),
+            "đường xuất chưa tự ghi nhật ký thì bộ ghi dùng chung phải ghi thay");
+    }
+
+    [Fact]
     public async Task Creating_a_group_writes_an_audit_entry_with_the_diff()
     {
         var admin = await AdminClientAsync();

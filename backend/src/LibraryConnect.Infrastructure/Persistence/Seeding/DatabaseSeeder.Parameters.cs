@@ -261,6 +261,11 @@ public partial class DatabaseSeeder
         new("SMTP.FROM_ADDRESS", "SMTP", "Cấu hình email", "Địa chỉ gửi", null, ParameterDataType.Text, ""),
         new("SMTP.FROM_NAME", "SMTP", "Cấu hình email", "Tên người gửi", null, ParameterDataType.Text, "Thư viện"),
 
+        new("OPAC.THESIS_DOCUMENT_TYPES", "OPAC", "Cấu hình trang tra cứu",
+            "Mã dạng tài liệu tính là luận văn – luận án",
+            "Ngăn cách bằng dấu phẩy. Trang \"Luận văn – Luận án\" của bạn đọc lấy đúng những dạng này.",
+            ParameterDataType.Text, "LUANVAN,LUANAN,THESIS,DISSERTATION"),
+
         // ---- Sao lưu ----
         new("BACKUP.AUTO_ENABLED", "BACKUP", "Cấu hình sao lưu", "Bật sao lưu tự động", null, ParameterDataType.Boolean, "true"),
         new("BACKUP.SCHEDULE_CRON", "BACKUP", "Cấu hình sao lưu", "Lịch sao lưu (cron)",

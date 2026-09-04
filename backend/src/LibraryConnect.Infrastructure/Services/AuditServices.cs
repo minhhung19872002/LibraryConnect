@@ -34,11 +34,19 @@ public class AuditService : IAuditService
         _clock = clock;
     }
 
+    /// <summary>Dịch vụ này theo phạm vi lượt gọi, nên cờ này cũng chỉ sống trong đúng lượt ấy.</summary>
+    public bool ExportLogged { get; private set; }
+
     public async Task LogAsync(
         AuditAction action, string entity, string? entityId, string? display = null,
         object? oldValue = null, object? newValue = null, bool result = true, string? message = null,
         CancellationToken ct = default)
     {
+        if (action == AuditAction.Export)
+        {
+            ExportLogged = true;
+        }
+
         _db.AuditLogs.Add(new AuditLog
         {
             UserId = _currentUser.UserId,

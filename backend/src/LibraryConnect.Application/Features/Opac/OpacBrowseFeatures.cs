@@ -388,19 +388,41 @@ public record OpacThesesQuery(OpacSearchRequest Request) : IRequest<PagedResult<
 public class OpacThesesQueryHandler
     : IRequestHandler<OpacThesesQuery, PagedResult<OpacResultDto>>
 {
-    private static readonly string[] ThesisCodes = { "LUANVAN", "LUANAN", "THESIS", "DISSERTATION" };
+    /// <summary>
+    /// Mã dạng tài liệu được coi là luận văn / luận án, khai trong tham số hệ thống.
+    ///
+    /// Trước 05/09/2026 bốn mã này viết cứng trong mã nguồn. Dạng tài liệu là **danh mục nghiệp vụ**
+    /// — cán bộ thêm và sửa mã từ màn hình Danh mục — nên thư viện nào đặt mã là "LV" hay "LATS" thì
+    /// trang Luận văn của bạn đọc rỗng vĩnh viễn, và không có chỗ nào trên giao diện sửa được. Mục 1
+    /// gạch 9: không hardcode danh mục nghiệp vụ.
+    /// </summary>
+    public const string ThesisTypesParameter = "OPAC.THESIS_DOCUMENT_TYPES";
+
+    private const string DefaultThesisCodes = "LUANVAN,LUANAN,THESIS,DISSERTATION";
 
     private readonly IApplicationDbContext _db;
+    private readonly ISystemParameterService _parameters;
 
-    public OpacThesesQueryHandler(IApplicationDbContext db) => _db = db;
+    public OpacThesesQueryHandler(IApplicationDbContext db, ISystemParameterService parameters)
+    {
+        _db = db;
+        _parameters = parameters;
+    }
 
     public async Task<PagedResult<OpacResultDto>> Handle(
         OpacThesesQuery query, CancellationToken ct)
     {
         var request = query.Request;
 
+        var configured = await _parameters.GetAsync(ThesisTypesParameter, DefaultThesisCodes, ct);
+
+        var codes = (string.IsNullOrWhiteSpace(configured) ? DefaultThesisCodes : configured)
+            .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+            .Select(code => code.ToUpperInvariant())
+            .ToList();
+
         var typeIds = await _db.DocumentTypes.AsNoTracking()
-            .Where(type => ThesisCodes.Contains(type.Code))
+            .Where(type => codes.Contains(type.Code.ToUpper()))
             .Select(type => type.Id)
             .ToListAsync(ct);
 

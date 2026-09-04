@@ -156,7 +156,11 @@ public record ExportMarcRecordsCommand(IReadOnlyList<string> MarcJson, string Fo
 
 public class ExportMarcRecordsCommandHandler : IRequestHandler<ExportMarcRecordsCommand, MarcExportFileDto>
 {
-    public Task<MarcExportFileDto> Handle(ExportMarcRecordsCommand request, CancellationToken ct)
+    private readonly Common.Interfaces.IAuditService _audit;
+
+    public ExportMarcRecordsCommandHandler(Common.Interfaces.IAuditService audit) => _audit = audit;
+
+    public async Task<MarcExportFileDto> Handle(ExportMarcRecordsCommand request, CancellationToken ct)
     {
         if (request.MarcJson.Count == 0)
         {
@@ -178,9 +182,11 @@ public class ExportMarcRecordsCommandHandler : IRequestHandler<ExportMarcRecords
             ? $"bieu-ghi-marc-{DateTime.Now:yyyyMMdd-HHmmss}"
             : request.FileName.Trim();
 
+        MarcExportFileDto file;
+
         try
         {
-            return Task.FromResult(request.Format?.ToLowerInvariant() switch
+            file = request.Format?.ToLowerInvariant() switch
             {
                 "marcxml" or "xml" => new MarcExportFileDto
                 {
@@ -189,11 +195,23 @@ public class ExportMarcRecordsCommandHandler : IRequestHandler<ExportMarcRecords
                     ContentType = "application/xml"
                 },
                 _ => MarcExportBuilder.Iso2709(records, stem)
-            });
+            };
         }
         catch (MarcException exception)
         {
             throw new Common.Exceptions.ValidationException("MarcJson", exception.Message);
         }
+
+        // Mục 6.2 đòi ghi nhật ký cả **xuất dữ liệu**. Đây là đường mang toàn bộ mục lục ra khỏi hệ
+        // thống, nên nó là đường cần vết nhất trong mọi đường xuất; ghi sau khi dựng xong tệp để
+        // lượt xuất hỏng không để lại một dòng nói là đã xuất.
+        await _audit.LogAsync(
+            Domain.Enums.AuditAction.Export,
+            "BibRecord",
+            null,
+            message: $"Xuất {records.Count} biểu ghi ra {file.FileName}",
+            ct: ct);
+
+        return file;
     }
 }

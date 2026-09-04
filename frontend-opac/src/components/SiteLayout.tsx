@@ -7,6 +7,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useCartStore } from '@/stores/cartStore';
 import { activeKey, toMenuItem } from '@/components/menuTree';
 import { menuIcon } from '@/components/menuIcons';
+import { clickable } from '@/components/clickable';
 import type { MenuItem } from '@/types/api';
 
 const { Header, Content, Footer } = Layout;
@@ -94,7 +95,8 @@ export function SiteLayout() {
                       },
                     }}
                   >
-                    <span className={className} onClick={() => open(menu)}>
+                    {/* Menu chính là thứ bạn đọc chạm tới đầu tiên: phải Tab tới và Enter mở được. */}
+                    <span className={className} {...clickable(() => open(menu), menu.name)}>
                       {menuIcon(menu.icon)}
                       {menu.name}
                     </span>
@@ -103,7 +105,7 @@ export function SiteLayout() {
               }
 
               return (
-                <span key={menu.id} className={className} onClick={() => open(menu)}>
+                <span key={menu.id} className={className} {...clickable(() => open(menu), menu.name)}>
                   {menuIcon(menu.icon)}
                   {menu.name}
                 </span>

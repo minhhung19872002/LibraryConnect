@@ -75,7 +75,12 @@ public class DataScopeTests
             new { quantity = 1, warehouseId, price = 100000, unlockImmediately = true }))).Barcodes.Single();
 
     /// <summary>Cán bộ bổ sung, gán đúng các kho truyền vào (rỗng = không giới hạn).</summary>
-    private async Task<HttpClient> StaffAsync(HttpClient admin, params Guid[] warehouseIds)
+    private Task<HttpClient> StaffAsync(HttpClient admin, params Guid[] warehouseIds) =>
+        StaffAsync(admin, warehouseIds, Array.Empty<Guid>());
+
+    /// <summary>Như trên nhưng gán được cả phạm vi dạng tài liệu — chiều thứ ba của mục 1 gạch 7.</summary>
+    private async Task<HttpClient> StaffAsync(
+        HttpClient admin, IReadOnlyList<Guid> warehouseIds, IReadOnlyList<Guid> documentTypeIds)
     {
         var groups = await ReadAsync<PagedResult<UserGroupListItemDto>>(
             await admin.GetAsync("/api/admin/user-groups?pageSize=50"));
@@ -90,7 +95,10 @@ public class DataScopeTests
                 fullName = "Cán bộ kiểm phạm vi",
                 isActive = true,
                 groupIds = new[] { group.Id },
-                dataScopes = warehouseIds.Select(id => new { scopeType = "Warehouse", scopeId = id }).ToArray(),
+                dataScopes = warehouseIds
+                    .Select(id => new { scopeType = "Warehouse", scopeId = id })
+                    .Concat(documentTypeIds.Select(id => new { scopeType = "DocumentType", scopeId = id }))
+                    .ToArray(),
             },
         }));
 
@@ -134,6 +142,67 @@ public class DataScopeTests
         (await SearchAsync(admin, bib)).Select(item => item.Barcode).Should().Contain(new[] { barcodeA, barcodeB });
         var unrestricted = await StaffAsync(admin);
         (await SearchAsync(unrestricted, bib)).Select(item => item.Barcode).Should().Contain(new[] { barcodeA, barcodeB });
+    }
+
+    [Fact]
+    public async Task Gan_pham_vi_dang_tai_lieu_thi_chi_thay_bieu_ghi_dung_dang_ay()
+    {
+        // Mục 1 gạch 7 liệt kê ba chiều phạm vi dữ liệu: kho, thư viện và **loại tài liệu**. Bộ lọc
+        // toàn cục trên biểu ghi đọc chiều thứ ba từ lâu, nhưng màn hình người dùng không có ô chọn
+        // nào nên trên thực tế nó chưa bao giờ bật được — phép thử này canh cả hai đầu.
+        var admin = await AdminAsync();
+
+        var types = await ReadAsync<PagedResult<Application.Features.Catalogs.CatalogItemDto>>(
+            await admin.GetAsync("/api/catalogs/document-types/items?pageSize=50"));
+
+        var sach = types.Items.First(item => item.Code == "SACH");
+        var khac = types.Items.First(item => item.Code != "SACH");
+
+        var bibSach = await BibOfTypeAsync(admin, sach.Id);
+        var bibKhac = await BibOfTypeAsync(admin, khac.Id);
+
+        var scoped = await StaffAsync(admin, Array.Empty<Guid>(), new[] { sach.Id });
+
+        var visible = await ReadAsync<PagedResult<Application.Features.Cataloging.BibListItemDto>>(
+            await scoped.GetAsync("/api/cataloging/bibs?pageSize=200"));
+
+        visible.Items.Select(row => row.Id).Should().Contain(bibSach);
+        visible.Items.Select(row => row.Id).Should().NotContain(bibKhac,
+            "biểu ghi thuộc dạng ngoài phạm vi không được lộ ra");
+
+        // Gọi thẳng bằng mã: cũng không tìm thấy, chứ không phải 200.
+        (await scoped.GetAsync($"/api/cataloging/bibs/{bibKhac}")).StatusCode
+            .Should().Be(HttpStatusCode.NotFound);
+
+        // Không gán phạm vi thì thấy cả hai — không được giới hạn nhầm.
+        var unrestricted = await StaffAsync(admin);
+
+        var all = await ReadAsync<PagedResult<Application.Features.Cataloging.BibListItemDto>>(
+            await unrestricted.GetAsync("/api/cataloging/bibs?pageSize=200"));
+
+        all.Items.Select(row => row.Id).Should().Contain(new[] { bibSach, bibKhac });
+    }
+
+    /// <summary>Một biểu ghi đã xuất bản, gán đúng dạng tài liệu cho trước.</summary>
+    private static async Task<Guid> BibOfTypeAsync(HttpClient admin, Guid documentTypeId)
+    {
+        var marc = System.Text.Json.JsonSerializer.Serialize(new
+        {
+            leader = "00000nam a2200000 a 4500",
+            controlFields = new[] { new { tag = "008", value = "240115s2023    vm a     b    000 0 vie d" } },
+            dataFields = new[]
+            {
+                new
+                {
+                    tag = "245", ind1 = "1", ind2 = "0",
+                    subfields = new[] { new { code = "a", value = "Sách kiểm phạm vi dạng " + Unique() } },
+                },
+            },
+        });
+
+        return (await ReadAsync<SaveBibResultDto>(await admin.PostAsJsonAsync(
+            "/api/cataloging/bibs",
+            new { marcJson = marc, documentTypeId, status = "Published" }))).Id;
     }
 
     [Fact]

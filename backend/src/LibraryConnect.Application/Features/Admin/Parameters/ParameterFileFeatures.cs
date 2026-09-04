@@ -70,7 +70,13 @@ public class UploadParameterFileCommandHandler : IRequestHandler<UploadParameter
                 "file", $"Tệp tối đa {ParameterFiles.MaxSizeBytes / 1024 / 1024} MB.");
         }
 
-        if (!ParameterFiles.AllowedTypes.TryGetValue(command.ContentType, out var extension))
+        // Kiểu do **nội dung tệp** quyết định, không phải do dòng Content-Type người gọi tự viết:
+        // logo này được nhúng vào biểu mẫu in và vào trang tra cứu công khai, nên một tệp bất kỳ
+        // khoác nhãn "image/png" mà lọt vào là nó được phục vụ lại đúng với nhãn giả ấy. Cùng lớp
+        // lỗi với bài học 23 trong CLAUDE.md, chỉ khác chỗ tin: ở đây là kiểu tệp, ở đó là địa chỉ IP.
+        var kieuThat = Cms.CmsMedia.DetectImageType(command.Content);
+
+        if (kieuThat is null || !ParameterFiles.AllowedTypes.TryGetValue(kieuThat, out var extension))
         {
             throw new Common.Exceptions.ValidationException(
                 "file", "Chỉ nhận tệp ảnh PNG, JPG, GIF hoặc WEBP.");

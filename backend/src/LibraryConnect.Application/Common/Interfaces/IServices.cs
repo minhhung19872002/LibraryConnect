@@ -165,6 +165,16 @@ public interface IAuditService
     Task LogAsync(AuditAction action, string entity, string? entityId, string? display = null,
         object? oldValue = null, object? newValue = null, bool result = true, string? message = null,
         CancellationToken ct = default);
+
+    /// <summary>
+    /// Lượt gọi hiện tại đã ghi một dòng "xuất dữ liệu" chưa.
+    ///
+    /// Bộ ghi nhật ký xuất dùng chung (<c>ExportAuditBehaviour</c>) đứng ngoài mọi handler và ghi
+    /// một dòng cho mọi lượt trả tệp về. Handler nào đã tự ghi dòng của riêng nó — kèm bộ lọc, kèm
+    /// mã bản ghi, những thứ bộ dùng chung không biết — thì bộ dùng chung im lặng, để nhật ký không
+    /// có hai dòng cho một lượt xuất.
+    /// </summary>
+    bool ExportLogged { get; }
 }
 
 /// <summary>

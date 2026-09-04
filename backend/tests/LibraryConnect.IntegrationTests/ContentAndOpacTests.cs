@@ -665,6 +665,92 @@ public class ContentAndOpacTests
     }
 
     [Fact]
+    public async Task Dang_tai_lieu_tinh_la_luan_van_khai_duoc_trong_tham_so()
+    {
+        // Mục 1 gạch 9: không hardcode danh mục nghiệp vụ. Bốn mã dạng tài liệu của trang Luận văn
+        // trước 05/09/2026 viết cứng trong mã nguồn, nên thư viện nào đặt mã khác — "LV", "LATS" —
+        // thì trang ấy rỗng vĩnh viễn và không sửa được từ giao diện.
+        var staff = await StaffAsync();
+        var suffix = Unique();
+        var code = $"LV{suffix}"[..8].ToUpperInvariant();
+
+        var typeId = await ReadAsync<Guid>(await staff.PostAsJsonAsync("/api/catalogs/document-types/items", new
+        {
+            code,
+            name = $"Luận văn thạc sĩ {suffix}",
+            isActive = true
+        }));
+
+        var warehouses = await ReadAsync<IReadOnlyList<WarehouseDto>>(
+            await staff.GetAsync("/api/locations/warehouses"));
+
+        var title = $"Luận văn kiểm tham số {suffix}";
+
+        var quick = await ReadAsync<QuickCatalogResultDto>(await staff.PostAsJsonAsync(
+            "/api/acquisition/quick-catalog", new
+            {
+                title,
+                author = "Nguyễn Văn Luận",
+                price = 90000m,
+                itemQuantity = 1,
+                warehouseId = warehouses[0].Id,
+                documentTypeId = typeId
+            }));
+
+        var bibId = quick.BibId;
+
+        // Xuất bản bằng chính đường của trình soạn MARC. `PUT /cataloging/bibs/{id}` thay **toàn bộ**
+        // trạng thái biểu ghi, nên phải gửi lại dạng tài liệu; bỏ trống là xoá nó đi.
+        var detail = await ReadAsync<BibDetailDto>(await staff.GetAsync($"/api/cataloging/bibs/{bibId}"));
+
+        await ReadAsync<SaveBibResultDto>(await staff.PutAsJsonAsync($"/api/cataloging/bibs/{bibId}", new
+        {
+            marcJson = detail.MarcJson,
+            documentTypeId = typeId,
+            status = "Published",
+            changeNote = "Xuất bản luận văn cho kiểm thử"
+        }));
+
+        var anonymous = _factory.CreateClient();
+
+        var truoc = await ReadAsync<PagedResult<Application.Features.Opac.OpacResultDto>>(
+            await anonymous.GetAsync($"/api/browse/theses?keyword={Uri.EscapeDataString(title)}"));
+
+        truoc.Items.Should().BeEmpty("dạng tài liệu này chưa được khai là luận văn");
+
+        (await staff.PutAsJsonAsync("/api/admin/parameters", new
+        {
+            parameters = new[]
+            {
+                new
+                {
+                    key = "OPAC.THESIS_DOCUMENT_TYPES",
+                    value = $"LUANVAN,LUANAN,THESIS,DISSERTATION,{code}"
+                }
+            }
+        })).EnsureSuccessStatusCode();
+
+        var kiem = await ReadAsync<BibDetailDto>(await staff.GetAsync($"/api/cataloging/bibs/{bibId}"));
+
+        kiem.DocumentTypeName.Should().Be($"Luận văn thạc sĩ {suffix}");
+
+        var sau = await ReadAsync<PagedResult<Application.Features.Opac.OpacResultDto>>(
+            await anonymous.GetAsync($"/api/browse/theses?keyword={Uri.EscapeDataString(title)}"));
+
+        sau.Items.Should().Contain(row => row.Id == bibId,
+            "khai thêm mã vào tham số thì trang Luận văn phải thấy ngay, không phải sửa mã nguồn");
+
+        // Trả tham số về mặc định để các kịch bản khác không bị ảnh hưởng.
+        (await staff.PutAsJsonAsync("/api/admin/parameters", new
+        {
+            parameters = new[]
+            {
+                new { key = "OPAC.THESIS_DOCUMENT_TYPES", value = "LUANVAN,LUANAN,THESIS,DISSERTATION" }
+            }
+        })).EnsureSuccessStatusCode();
+    }
+
+    [Fact]
     public async Task So_do_trang_liet_ke_tai_lieu_da_xuat_ban()
     {
         var staff = await StaffAsync();

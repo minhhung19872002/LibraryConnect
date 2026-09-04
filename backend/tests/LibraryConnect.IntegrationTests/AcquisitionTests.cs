@@ -1267,6 +1267,53 @@ public class AcquisitionTests
     }
 
     [Fact]
+    public async Task Tep_dinh_kem_phai_dung_chu_ky_byte_chu_khong_chi_dung_nhan()
+    {
+        // Mục 6.4 đòi "kiểm tra magic number". Hai đường tải tệp — logo thư viện trong tham số hệ
+        // thống và bản scan biên bản bàn giao — trước 05/09/2026 chỉ đọc dòng Content-Type do máy
+        // khách tự viết: gửi một tệp bất kỳ kèm nhãn "image/png" là nó vào kho và được phục vụ lại
+        // đúng với nhãn giả ấy.
+        var client = await ClientAsync();
+
+        var handoverId = await ReadAsync<Guid>(await client.PostAsJsonAsync("/api/acquisition/handovers", new
+        {
+            partyA = "Bên giao kiểm tệp",
+            partyB = "Thư viện Trường",
+            totalItems = 1
+        }));
+
+        // Nội dung không phải PDF, chỉ có nhãn nói vậy.
+        using var giaMao = new MultipartFormDataContent();
+        var rac = new ByteArrayContent(System.Text.Encoding.UTF8.GetBytes("Đây không phải PDF"));
+        rac.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/pdf");
+        giaMao.Add(rac, "file", "bien-ban.pdf");
+
+        var tuChoi = await client.PostAsync($"/api/acquisition/handovers/{handoverId}/scan", giaMao);
+
+        tuChoi.StatusCode.Should().Be(HttpStatusCode.BadRequest,
+            "tệp không mang chữ ký PDF thì không được nhận dù nhãn nói là PDF");
+
+        // Tệp PDF thật (chỉ cần đúng chữ ký đầu tệp) thì nhận.
+        using var that = new MultipartFormDataContent();
+        var pdf = new ByteArrayContent(
+            System.Text.Encoding.ASCII.GetBytes("%PDF-1.7\n1 0 obj\n<<>>\nendobj\n"));
+        pdf.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/pdf");
+        that.Add(pdf, "file", "bien-ban.pdf");
+
+        (await client.PostAsync($"/api/acquisition/handovers/{handoverId}/scan", that))
+            .EnsureSuccessStatusCode();
+
+        // Logo thư viện cũng vậy: nhãn ảnh mà nội dung là chữ thì từ chối.
+        using var logo = new MultipartFormDataContent();
+        var chu = new ByteArrayContent(System.Text.Encoding.UTF8.GetBytes("<svg>không phải PNG</svg>"));
+        chu.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/png");
+        logo.Add(chu, "file", "logo.png");
+
+        (await client.PostAsync("/api/admin/parameters/LIBRARY.LOGO_URL/file", logo))
+            .StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
     public async Task Bien_ban_ban_giao_co_bang_chi_tiet_va_cot_tinh_trang()
     {
         // III.1: "Tạo biên bản từ đơn đặt: bên giao, bên nhận, **danh sách tài liệu, số lượng,

@@ -434,6 +434,18 @@ function UserFormDrawer({
     staleTime: 5 * 60 * 1000,
   });
 
+  // Dạng tài liệu lấy từ chính danh mục nghiệp vụ: thư viện thêm dạng mới thì ô chọn có ngay, không
+  // phải sửa mã.
+  const documentTypes = useQuery({
+    queryKey: ['scope-document-types'],
+    queryFn: () =>
+      api.get<PagedResult<{ id: string; name: string }>>('/catalogs/document-types/items', {
+        params: { pageSize: 200, isActive: true },
+      }).then((page) => page.items),
+    enabled: open,
+    staleTime: 5 * 60 * 1000,
+  });
+
   const mutation = useMutation({
     mutationFn: (values: UserFormValues) => {
       const profile = {
@@ -444,12 +456,9 @@ function UserFormDrawer({
         department: values.department,
         isActive: values.isActive,
         groupIds: values.groupIds ?? [],
-        // An empty list means unrestricted; anything else narrows the user to those libraries and
-        // warehouses. Document-type scopes are not assigned from this screen.
-        dataScopes: [
-          ...buildDataScopes(values),
-          ...(detail.data?.dataScopes ?? []).filter((scope) => scope.scopeType === 'DocumentType'),
-        ],
+        // Danh sách rỗng nghĩa là không giới hạn; có phần tử nào thì người dùng chỉ thao tác được
+        // trong đúng những thư viện, kho và dạng tài liệu ấy.
+        dataScopes: buildDataScopes(values),
       };
 
       return isEdit
@@ -610,6 +619,22 @@ function UserFormDrawer({
             placeholder="Mọi kho"
             loading={warehouses.isFetching}
             options={(warehouses.data ?? []).map((warehouse) => ({ value: warehouse.id, label: warehouse.name }))}
+            optionFilterProp="label"
+          />
+        </Form.Item>
+
+        <Form.Item
+          name="documentTypeIds"
+          label="Phạm vi dữ liệu — dạng tài liệu"
+          extra="Giới hạn biểu ghi người dùng thấy theo dạng tài liệu; bỏ trống là mọi dạng."
+          initialValue={splitDataScopes(detail.data?.dataScopes).documentTypeIds}
+        >
+          <Select
+            mode="multiple"
+            allowClear
+            placeholder="Mọi dạng tài liệu"
+            loading={documentTypes.isFetching}
+            options={(documentTypes.data ?? []).map((type) => ({ value: type.id, label: type.name }))}
             optionFilterProp="label"
           />
         </Form.Item>
