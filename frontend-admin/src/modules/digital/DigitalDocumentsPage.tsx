@@ -31,6 +31,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import type { ColumnsType } from 'antd/es/table';
 import type { DataNode } from 'antd/es/tree';
 import { PageHeader } from '@/components/PageHeader';
+import { BibSearchSelect } from '@/components/BibSearchSelect';
 import { FilterBar } from '@/components/FilterBar';
 import { Can } from '@/components/PermissionGate';
 import { PERMISSIONS } from '@/api/permissions';
@@ -110,8 +111,14 @@ export function DigitalDocumentsPage() {
   });
 
   const save = useMutation({
+    // null = giữ nguyên ở máy chủ, nên bỏ liên kết biểu ghi phải nói rõ bằng clearBibId; mô tả
+    // xoá trắng thì gửi chuỗi rỗng.
     mutationFn: (values: Record<string, unknown>) =>
-      digitalApi.update(editing!.id, values),
+      digitalApi.update(editing!.id, {
+        ...values,
+        description: values.description ?? '',
+        clearBibId: !values.bibId,
+      }),
     onSuccess: () => {
       message.success('Đã lưu tài liệu số.');
       setEditing(null);
@@ -239,8 +246,15 @@ export function DigitalDocumentsPage() {
               icon={<EditOutlined />}
               onClick={() => {
                 setEditing(row);
+                // Dòng danh sách không mang mô tả; lấy từ chi tiết để form không gửi chuỗi rỗng
+                // rồi xoá mất phần mô tả đang có.
+                void digitalApi
+                  .detail(row.id)
+                  .then((detail) => editForm.setFieldsValue({ description: detail.description ?? '' }));
                 editForm.setFieldsValue({
                   title: row.title,
+                  description: '',
+                  bibId: row.bibId ?? undefined,
                   collectionId: row.collectionId ?? undefined,
                   accessLevel: row.accessLevel,
                   allowDownload: row.allowDownload,
@@ -453,6 +467,18 @@ export function DigitalDocumentsPage() {
             rules={[{ required: true, message: 'Chưa nhập nhan đề.' }]}
           >
             <Input />
+          </Form.Item>
+
+          <Form.Item name="description" label="Mô tả">
+            <Input.TextArea rows={3} />
+          </Form.Item>
+
+          <Form.Item
+            name="bibId"
+            label="Biểu ghi thư mục"
+            extra="Gắn vào biểu ghi để bạn đọc thấy tài liệu số ngay trên trang chi tiết tài liệu."
+          >
+            <BibSearchSelect initialLabel={editing?.bibTitle} />
           </Form.Item>
 
           <Form.Item name="collectionId" label="Bộ sưu tập">

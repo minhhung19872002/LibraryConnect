@@ -42,6 +42,47 @@ public static class FormTypes
         [FineReceipt] = "Biên lai thu tiền phạt",
         [Clearance] = "Giấy xác nhận trả sách"
     };
+
+    /// <summary>
+    /// Quyền cần có để in từng loại mẫu. Trước đây cả mười loại đều đòi "In đơn đặt hàng" của phân hệ
+    /// Bổ sung, nên cán bộ quầy không in được phiếu mượn của chính mình. Quyền đi theo nghiệp vụ sinh
+    /// ra chứng từ: ai được ghi trả thì in được phiếu mượn/trả, ai thu phạt thì in biên lai, ai xem hồ
+    /// sơ thì in giấy xác nhận trả sách.
+    /// </summary>
+    public static IReadOnlyList<string> PermissionsToPrint(string formType) => formType.ToUpperInvariant() switch
+    {
+        LoanSlip or ReturnSlip => new[]
+        {
+            Common.Security.PermissionCodes.CirculationLoanReturn,
+            Common.Security.PermissionCodes.CirculationLoanView,
+        },
+        FineReceipt => new[]
+        {
+            Common.Security.PermissionCodes.CirculationFineCollect,
+            Common.Security.PermissionCodes.CirculationFineView,
+        },
+        Clearance => new[] { Common.Security.PermissionCodes.ReaderView },
+        Transfer => new[] { Common.Security.PermissionCodes.AcqItemMove, Common.Security.PermissionCodes.AcqItemView },
+        Disposal => new[] { Common.Security.PermissionCodes.AcqItemDispose, Common.Security.PermissionCodes.AcqItemView },
+        Inventory => new[] { Common.Security.PermissionCodes.AcqInventoryReport, Common.Security.PermissionCodes.AcqInventoryView },
+        _ => new[] { Common.Security.PermissionCodes.AcqOrderPrint },
+    };
+
+    /// <summary>Mọi quyền có thể in một mẫu nào đó — cổng thô ở controller, cổng tinh ở handler.</summary>
+    public static IReadOnlyList<string> AnyPrintPermission { get; } = new[]
+    {
+        Common.Security.PermissionCodes.AcqOrderPrint,
+        Common.Security.PermissionCodes.CirculationLoanReturn,
+        Common.Security.PermissionCodes.CirculationLoanView,
+        Common.Security.PermissionCodes.CirculationFineCollect,
+        Common.Security.PermissionCodes.CirculationFineView,
+        Common.Security.PermissionCodes.ReaderView,
+        Common.Security.PermissionCodes.AcqItemMove,
+        Common.Security.PermissionCodes.AcqItemView,
+        Common.Security.PermissionCodes.AcqItemDispose,
+        Common.Security.PermissionCodes.AcqInventoryReport,
+        Common.Security.PermissionCodes.AcqInventoryView,
+    };
 }
 
 /// <summary>Một dòng thông tin ở phần đầu biểu mẫu, ví dụ "Bên giao: Công ty ...".</summary>

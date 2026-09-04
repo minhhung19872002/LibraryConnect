@@ -296,9 +296,17 @@ public class UpdateDigitalDocumentCommand : IRequest
 {
     public Guid Id { get; set; }
     public string Title { get; set; } = string.Empty;
-    public string? Description { get; set; }
     public Guid? CollectionId { get; set; }
+    /// <summary>
+    /// Biểu ghi thư mục gắn với tài liệu. <c>null</c> nghĩa là <b>giữ nguyên</b> — form sửa của giao
+    /// diện quản trị không gửi trường này, mà gán vô điều kiện thì mỗi lần bấm Lưu là mất liên kết.
+    /// Muốn bỏ liên kết thì đặt <see cref="ClearBibId"/>.
+    /// </summary>
     public Guid? BibId { get; set; }
+    /// <summary>Bỏ liên kết biểu ghi (chỉ có nghĩa khi <see cref="BibId"/> null).</summary>
+    public bool ClearBibId { get; set; }
+    /// <summary>Mô tả: <c>null</c> = giữ nguyên, chuỗi rỗng = xoá.</summary>
+    public string? Description { get; set; }
     public DigitalAccessLevel AccessLevel { get; set; }
     public bool AllowDownload { get; set; }
     public bool AllowPrint { get; set; }
@@ -351,9 +359,21 @@ public class UpdateDigitalDocumentCommandHandler : IRequestHandler<UpdateDigital
         }
 
         document.Title = command.Title.Trim();
-        document.Description = command.Description?.Trim();
+        // null = giữ nguyên; chuỗi rỗng = xoá. Form sửa không gửi mô tả thì mô tả không được mất.
+        if (command.Description is not null)
+        {
+            var description = command.Description.Trim();
+            document.Description = description.Length == 0 ? null : description;
+        }
         document.CollectionId = command.CollectionId;
-        document.BibId = command.BibId;
+        if (command.BibId is not null)
+        {
+            document.BibId = command.BibId;
+        }
+        else if (command.ClearBibId)
+        {
+            document.BibId = null;
+        }
         document.AccessLevel = command.AccessLevel;
         document.AllowDownload = command.AllowDownload;
         document.AllowPrint = command.AllowPrint;

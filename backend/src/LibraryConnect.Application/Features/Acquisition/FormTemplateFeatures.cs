@@ -239,23 +239,34 @@ public class PrintFormCommandHandler : IRequestHandler<PrintFormCommand, Printed
     private readonly IFormDataBuilder _builder;
     private readonly IFileStorage _storage;
     private readonly ISystemParameterService _parameters;
+    private readonly ICurrentUser _currentUser;
 
     public PrintFormCommandHandler(
         IApplicationDbContext db,
         IFormPrintService printer,
         IFormDataBuilder builder,
         IFileStorage storage,
-        ISystemParameterService parameters)
+        ISystemParameterService parameters,
+        ICurrentUser currentUser)
     {
         _db = db;
         _printer = printer;
         _builder = builder;
         _storage = storage;
         _parameters = parameters;
+        _currentUser = currentUser;
     }
 
     public async Task<PrintedFileDto> Handle(PrintFormCommand command, CancellationToken ct)
     {
+        // Quyền theo loại mẫu (xem FormTypes.PermissionsToPrint): controller chỉ gác thô "có quyền in
+        // gì đó", còn đây mới là chỗ quyết cán bộ quầy in phiếu mượn được mà không in được đơn đặt.
+        if (!_currentUser.IsSystemAdministrator
+            && !FormTypes.PermissionsToPrint(command.FormType).Any(_currentUser.HasPermission))
+        {
+            throw new ForbiddenException("Bạn không có quyền in loại biểu mẫu này.");
+        }
+
         if (!FormTypes.Labels.ContainsKey(command.FormType))
         {
             throw new Common.Exceptions.ValidationException("formType", "Loại biểu mẫu không hợp lệ.");

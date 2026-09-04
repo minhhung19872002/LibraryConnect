@@ -5,6 +5,7 @@ using System.Text;
 using FluentAssertions;
 using LibraryConnect.Application.Common.Models;
 using LibraryConnect.Application.Features.Admin.AuditLogs;
+using LibraryConnect.Application.Features.Cataloging;
 using LibraryConnect.Application.Features.Catalogs;
 using LibraryConnect.Application.Features.Readers;
 using LibraryConnect.Application.Features.Digital;
@@ -207,6 +208,78 @@ public class DigitalTests
         detail.Document.HasText.Should().BeTrue("PDF có lớp chữ thì rút được ngay, không cần nhận dạng");
         detail.ChecksumSha256.Should().MatchRegex("^[0-9a-f]{64}$");
         detail.Files.Should().Contain(file => file.Type == Domain.Enums.DigitalFileType.Original);
+    }
+
+    [Fact]
+    public async Task Sua_tai_lieu_khong_gui_bieu_ghi_va_mo_ta_thi_hai_thu_ay_phai_con_nguyen()
+    {
+        // Form "Sửa" của giao diện quản trị chỉ gửi bảy trường (nhan đề, bộ sưu tập, mức truy cập,
+        // số trang xem thử, ba cờ). Trước khi sửa, handler gán BibId và Description vô điều kiện nên
+        // mỗi lần bấm Lưu là mất liên kết biểu ghi và phần mô tả. Luật mới: null = giữ nguyên; bỏ
+        // liên kết thì nói rõ bằng clearBibId, xoá mô tả thì gửi chuỗi rỗng.
+        var client = await ClientAsync();
+
+        var marc = System.Text.Json.JsonSerializer.Serialize(new
+        {
+            leader = "00000nam a2200000 a 4500",
+            controlFields = new[] { new { tag = "008", value = "260101s2024    vm a     b    000 0 vie d" } },
+            dataFields = new[]
+            {
+                new
+                {
+                    tag = "245", ind1 = "1", ind2 = "0",
+                    subfields = new[] { new { code = "a", value = "Biểu ghi gắn tài liệu số " + Unique() } }
+                }
+            }
+        });
+        var bibId = (await ReadAsync<SaveBibResultDto>(await client.PostAsJsonAsync(
+            "/api/cataloging/bibs", new { marcJson = marc, status = "Published" }))).Id;
+
+        var detail = await UploadAndWaitAsync(client, "Tài liệu có biểu ghi và mô tả",
+            new Dictionary<string, string>
+            {
+                ["bibId"] = bibId.ToString(),
+                ["description"] = "Mô tả ban đầu, phải còn sau khi sửa nhan đề",
+            });
+        detail.Document.BibId.Should().Be(bibId);
+
+        (await client.PutAsJsonAsync($"/api/digital/documents/{detail.Document.Id}", new
+        {
+            id = detail.Document.Id,
+            title = "Nhan đề đã sửa",
+            collectionId = detail.Document.CollectionId,
+            accessLevel = detail.Document.AccessLevel.ToString(),
+            allowDownload = detail.Document.AllowDownload,
+            allowPrint = detail.Document.AllowPrint,
+            watermarkEnabled = detail.Document.WatermarkEnabled,
+            previewPages = detail.Document.PreviewPages,
+        })).EnsureSuccessStatusCode();
+
+        var after = await ReadAsync<DigitalDocumentDetailDto>(
+            await client.GetAsync($"/api/digital/documents/{detail.Document.Id}"));
+
+        after.Document.Title.Should().Be("Nhan đề đã sửa");
+        after.Document.BibId.Should().Be(bibId, "không gửi bibId nghĩa là giữ nguyên liên kết");
+        after.Description.Should().Be("Mô tả ban đầu, phải còn sau khi sửa nhan đề");
+
+        // Bỏ liên kết và xoá mô tả thì phải nói rõ.
+        (await client.PutAsJsonAsync($"/api/digital/documents/{detail.Document.Id}", new
+        {
+            id = detail.Document.Id,
+            title = "Nhan đề đã sửa",
+            description = "",
+            clearBibId = true,
+            accessLevel = detail.Document.AccessLevel.ToString(),
+            allowDownload = detail.Document.AllowDownload,
+            allowPrint = detail.Document.AllowPrint,
+            watermarkEnabled = detail.Document.WatermarkEnabled,
+            previewPages = detail.Document.PreviewPages,
+        })).EnsureSuccessStatusCode();
+
+        var cleared = await ReadAsync<DigitalDocumentDetailDto>(
+            await client.GetAsync($"/api/digital/documents/{detail.Document.Id}"));
+        cleared.Document.BibId.Should().BeNull();
+        cleared.Description.Should().BeNullOrEmpty();
     }
 
     [Fact]

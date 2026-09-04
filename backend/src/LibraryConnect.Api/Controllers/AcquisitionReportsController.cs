@@ -201,7 +201,15 @@ public class FormTemplatesController : ApiControllerBase
     /// chuyển kho, số quyết định thanh lý hoặc mã kỳ kiểm kê.
     /// </summary>
     [HttpGet("print/{formType}/{documentId}")]
-    [RequirePermission(PermissionCodes.AcqOrderPrint)]
+    // Cổng thô: có quyền in một loại mẫu nào đó. Quyền đúng theo loại mẫu kiểm trong handler
+    // (FormTypes.PermissionsToPrint) — phiếu mượn không đòi quyền của phân hệ Bổ sung.
+    [RequirePermission(false,
+        PermissionCodes.AcqOrderPrint,
+        PermissionCodes.CirculationLoanReturn, PermissionCodes.CirculationLoanView,
+        PermissionCodes.CirculationFineCollect, PermissionCodes.CirculationFineView,
+        PermissionCodes.ReaderView,
+        PermissionCodes.AcqItemMove, PermissionCodes.AcqItemView, PermissionCodes.AcqItemDispose,
+        PermissionCodes.AcqInventoryReport, PermissionCodes.AcqInventoryView)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Print(

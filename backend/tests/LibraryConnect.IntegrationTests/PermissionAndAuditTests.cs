@@ -59,6 +59,27 @@ public class PermissionAndAuditTests
         return (client, username);
     }
 
+    [Fact]
+    public async Task Can_bo_luu_thong_in_duoc_phieu_muon_nhung_khong_in_duoc_don_dat_hang()
+    {
+        // Endpoint in biểu mẫu từng gắn quyền "In đơn đặt hàng" của phân hệ Bổ sung cho MỌI loại mẫu,
+        // nên cán bộ quầy bấm "In phiếu mượn" là nhận 403. Quyền phải theo loại mẫu: phiếu mượn/trả
+        // theo quyền lưu thông, biên lai theo quyền thu phạt, giấy xác nhận theo quyền xem hồ sơ.
+        var (clerk, _) = await CreateStaffClientAsync("CIRCULATION", "quay");
+
+        // Mã phiếu bịa: qua được cổng quyền thì máy chủ nói "không tìm thấy", chưa qua thì 403.
+        var slip = await clerk.GetAsync("/api/acquisition/forms/print/LOAN_SLIP/PM-KHONG-CO");
+        slip.StatusCode.Should().Be(HttpStatusCode.NotFound,
+            "cán bộ lưu thông phải qua được cổng quyền của phiếu mượn");
+
+        var receipt = await clerk.GetAsync("/api/acquisition/forms/print/FINE_RECEIPT/BL-KHONG-CO");
+        receipt.StatusCode.Should().Be(HttpStatusCode.NotFound);
+
+        var order = await clerk.GetAsync("/api/acquisition/forms/print/ORDER/DH-KHONG-CO");
+        order.StatusCode.Should().Be(HttpStatusCode.Forbidden,
+            "in đơn đặt hàng vẫn là việc của phân hệ Bổ sung");
+    }
+
     /// <summary>Mật khẩu tài khoản dùng trong bài kiểm thử buộc đổi mật khẩu.</summary>
     private const string StaffPassword = "CanBoKiemThu@2026";
 
