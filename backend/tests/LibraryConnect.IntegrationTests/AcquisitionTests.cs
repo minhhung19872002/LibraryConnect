@@ -1179,6 +1179,26 @@ public class AcquisitionTests
         history.ItemCount.Should().Be(5);
         history.FulfilmentRate.Should().Be(100);
         history.Orders.Should().ContainSingle();
+        history.Rating.Should().Be(0, "chưa ai chấm điểm nhà cung cấp này");
+
+        // Đánh giá nhà cung cấp (III.1) chấm qua màn hình danh mục và hiện kèm lịch sử giao dịch.
+        var rated = await ReadAsync<Guid>(await client.PostAsJsonAsync("/api/catalogs/suppliers/items", new
+        {
+            code = "NCC-DANHGIA",
+            name = "Công ty Sách Đánh Giá",
+            extras = new Dictionary<string, string> { ["rating"] = "4" },
+            isActive = true
+        }));
+
+        var item = await ReadAsync<CatalogItemDto>(
+            await client.GetAsync($"/api/catalogs/suppliers/items/{rated}"));
+
+        item.Extras.Should().ContainKey("rating").WhoseValue.Should().Be("4");
+
+        var ratedHistory = await ReadAsync<SupplierHistoryDto>(
+            await client.GetAsync($"/api/acquisition/reports/suppliers/{rated}"));
+
+        ratedHistory.Rating.Should().Be(4);
     }
 
     [Fact]

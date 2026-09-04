@@ -747,6 +747,8 @@ export interface SupplierOrderRowDto {
 export interface SupplierHistoryDto {
   supplierId: string;
   supplierName: string;
+  /** Đánh giá đã chấm ở danh mục nhà cung cấp, 0 là chưa chấm, tối đa 5 sao. */
+  rating: number;
   orderCount: number;
   totalAmount: number;
   itemCount: number;

@@ -6,6 +6,7 @@ import {
   Col,
   DatePicker,
   Progress,
+  Rate,
   Row,
   Select,
   Space,
@@ -683,6 +684,18 @@ export function AcquisitionReportsPage() {
                     variant="borderless"
                     size="small"
                     title={`Lịch sử giao dịch — ${supplierHistory.data.supplierName}`}
+                    extra={
+                      <Space>
+                        <Typography.Text type="secondary">Đánh giá:</Typography.Text>
+                        {supplierHistory.data.rating > 0 ? (
+                          <Rate disabled value={supplierHistory.data.rating} />
+                        ) : (
+                          <Typography.Text type="secondary">
+                            chưa chấm — chấm ở Danh mục › Nhà cung cấp
+                          </Typography.Text>
+                        )}
+                      </Space>
+                    }
                   >
                     <Row gutter={12} style={{ marginBottom: 12 }}>
                       <Col span={6}>
