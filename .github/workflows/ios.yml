@@ -124,6 +124,9 @@ jobs:
           # Bước xác thực trạm mở khung quét (mobile_scanner). Máy ảo không có camera, nhưng iOS vẫn
           # hỏi quyền; cấp trước để hộp thoại hệ thống không hiện đè lên ứng dụng.
           xcrun simctl privacy "$UDID" grant camera vn.bluestar.libraryconnect || true
+          # Nối bàn phím cứng để máy ảo không bật bàn phím mềm khi ô nhập được lấy tiêu điểm (bàn phím
+          # mềm làm biểu mẫu co lại, nút Đăng nhập trôi khỏi màn hình — lượt 33832707349).
+          defaults write com.apple.iphonesimulator ConnectHardwareKeyboard -bool true || true
       - run: flutter devices
 
       - name: Chờ máy chủ sẵn sàng

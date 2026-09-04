@@ -147,6 +147,12 @@ void main() {
     await shot('ios-09-dang-nhap');
     await tester.enterText(find.byType(TextFormField).at(0), card);
     await tester.enterText(find.byType(TextFormField).at(1), password);
+    // Máy ảo iPhone có thể bật bàn phím mềm khi ô nhập được lấy tiêu điểm; biểu mẫu co lại và nút
+    // Đăng nhập trôi ra ngoài màn hình, chạm vào toạ độ cũ thì trượt (lượt 33832707349). Bỏ tiêu
+    // điểm cho bàn phím thu, rồi cuộn nút vào tầm nhìn.
+    FocusManager.instance.primaryFocus?.unfocus();
+    await tester.pumpAndSettle(const Duration(milliseconds: 500));
+    await tester.ensureVisible(find.widgetWithText(FilledButton, 'Đăng nhập'));
     await tester.tap(find.widgetWithText(FilledButton, 'Đăng nhập'));
 
     // Vào thẳng Tủ sách: đang mượn, lịch sử, đặt giữ, tiền phạt — số liệu của máy chủ.
