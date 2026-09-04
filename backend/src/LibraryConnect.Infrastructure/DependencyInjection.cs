@@ -114,6 +114,8 @@ public static class DependencyInjection
                 }));
 
         services.AddScoped<SystemMaintenanceJobs>();
+        // Gói "Xuất toàn bộ dữ liệu hệ thống" (V.3) — ở tầng hạ tầng vì cần thư mục sao lưu.
+        services.AddScoped<LibraryConnect.Application.Features.Digital.IFullSystemExportRunner, FullSystemExportRunner>();
 
         if (serverEnabled)
         {

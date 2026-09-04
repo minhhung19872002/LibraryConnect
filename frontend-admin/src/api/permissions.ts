@@ -185,4 +185,7 @@ export const PERMISSIONS = {
     documentLink: 'COURSE.DOCUMENT.LINK',
     reportView: 'COURSE.REPORT.VIEW',
   },
+  exchange: {
+    fullExport: 'EXCHANGE.DATA.FULL_EXPORT',
+  },
 } as const;

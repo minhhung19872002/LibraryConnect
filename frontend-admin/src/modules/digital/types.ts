@@ -167,6 +167,34 @@ export interface DigitalImportResultDto {
   rows: DigitalImportRowDto[];
 }
 
+export type ExportJobStatus = 'Pending' | 'Running' | 'Completed' | 'Failed' | 'Cancelled';
+
+/** Một lượt "Xuất toàn bộ dữ liệu hệ thống" (V.3, mục 4 E-HSMT), chạy nền. */
+export interface FullSystemExportJobDto {
+  id: string;
+  status: ExportJobStatus;
+  fileName: string | null;
+  sizeBytes: number | null;
+  message: string | null;
+  createdByName: string | null;
+  createdAt: string;
+  startedAt: string | null;
+  finishedAt: string | null;
+  stepsDone: number;
+  stepsTotal: number;
+  currentStep: string | null;
+  bibCount: number;
+  bibSkipped: number;
+  digitalCount: number;
+  digitalFailed: number;
+  readerCount: number;
+  itemCount: number;
+  loanCount: number;
+  fineCount: number;
+  holdCount: number;
+  hasFile: boolean;
+}
+
 export interface DigitalReportFilter {
   fromDate?: string;
   toDate?: string;
