@@ -814,7 +814,7 @@ Dữ liệu ghi thêm mang dấu `NT…` và đã xoá; thứ không xoá đư�
 nhận số) được đánh dấu ngừng dùng. Mã kịch bản bám theo bảng ở trên; mã có hậu tố chữ là bước phụ; mã `F2`, `K…` là lỗi
 tìm ra trong ngày (mục K của `08-so-loi.md`).
 
-Tổng: **453 kịch bản chạy bằng máy, 450 đạt**. Dòng "Không đạt" còn lại là lần chạy trước khi sửa (F2) — sau khi
+Tổng: **463 kịch bản chạy bằng máy, 460 đạt**. Dòng "Không đạt" còn lại là lần chạy trước khi sửa (F2) — sau khi
 triển khai bản sửa đã kiểm lại đạt (K2). Các lỗi K1, K3, K4, K5 lộ ra khi đi bằng trình duyệt hoặc đọc nhật ký máy chủ; K6, K7 tìm ra ở đợt test sâu và lúc triển khai bản sửa. Mã `T.*` là đợt test kỹ thuật buổi tối: tranh chấp đồng thời, truy cập chéo, giả token, tiêm mã, đầu vào lạ, đường dẫn vượt thư mục, tệp lớn, thời gian đáp ứng — T.2 (đặt giữ đồng thời) là lỗi K8, đã sửa. Mã `V.*` là đợt kỹ thuật thứ hai: hạn mức API công khai, chính sách mật khẩu cán bộ, phạm vi dữ liệu theo kho, ghi nhật ký lượt xem, độ liên quan — V.7 (gõ đúng nhan đề ra 0 kết quả) là lỗi K10, đã sửa.
 
 | Mã | Chức năng | Kết quả thực tế | Đạt |
@@ -1050,6 +1050,16 @@ triển khai bản sửa đã kiểm lại đạt (K2). Các lỗi K1, K3, K4, K
 | K7 | Triển khai tự dọn ảnh cũ: ổ đĩa 100% → 83%, còn 8 ảnh libraryconnect (2 bản) | deploy 5a34971 THÀNH CÔNG; df 18G trống | Đạt |
 | K8 | Bốn lượt đặt giữ đồng thời → đúng một phiếu, các lượt còn lại 409 (không 500) | phiếu=1; mã=[200, 409, 409, 409]; lỗi=['Bạn đọc đã đặt giữ tài liệu này rồi.'] | Đạt |
 | K8b | Bộ đếm số bản của 'Báo Nhân Dân' được tính lại (5 → số bản thật) | itemCount=3, bản in liệt kê=3 | Đạt |
+| K10 | Tra cứu 'Cơ sở dữ liệu — lý thuyết và bài tập' (bản so trọn từ 98690a1) | 22 kết quả, đúng nhan đề đứng đầu; 0,07 s ở lần gọi thứ hai | Đạt |
+| K10b | Tra cứu 'cơ sở dữ liệu bài tập' (bản so trọn từ) | 60 kết quả trong 0.17s; đầu: Cơ sở dữ liệu — lý thuyết và bài tập | Đạt |
+| K10c | Tra cứu '"cơ sở dữ liệu" lý thuyết' (bản so trọn từ) | 152 kết quả, đúng nhan đề đứng đầu, 0,29 s | Đạt |
+| K10d | Tra cứu 'an toàn thông tin giáo trình' (bản so trọn từ) | 15 kết quả trong 0.22s; đầu: Các nhân tố ảnh hưởng đến nhu cầu học chứng c | Đạt |
+| K10e | Tra cứu 'cơ sở dữ liệu' — so trọn bốn từ ở mọi trường (kể cả tóm tắt) | 450 kết quả (bản cũ so cả cụm: 45; bản so chuỗi con từng từ: 805), nhan đề đúng đứng đầu, 0,05 s; gõ không dấu cho cùng 450 | Đạt |
+| K10f | Bốn từ AND vẫn dưới 1 giây | 0.20s, 91 kết quả | Đạt |
+| K10g | Tra cứu 'kinh tế' (bản so trọn từ) | 1948 kết quả trong 0.31s; đầu: Kinh tế học vi mô nâng cao | Đạt |
+| K10h | Tra cứu 'Database Systems: theory and practice' (bản so trọn từ) | 1 kết quả trong 0.08s; đầu: Database Systems: theory and practice | Đạt |
+| K10i | Độ trễ tra cứu nhiều từ đo lặp 4 lần | trung vị 0,05–0,07 s cho câu 4–13 từ; lần đầu 0,5 s do dựng kế hoạch truy vấn | Đạt |
+| K12 | SMTP tắt → gửi giỏ báo 409 chưa cấu hình thay vì Đã gửi (bản fb0e1c9) | 409: Thư viện chưa cấu hình máy chủ gửi thư nên chưa gửi được danh sách qua email. | Đạt |
 | LT.1 | Chính sách lưu thông nạp sẵn | 7 chính sách | Đạt |
 | LT.2 | Ô thử chính sách: chọn đúng chính sách ưu tiên | Chính sách NTE93707 (ưu tiên None) | Đạt |
 | LT.3 | Danh sách đặt giữ toàn hệ thống và hàng đợi | 129 phiếu | Đạt |
