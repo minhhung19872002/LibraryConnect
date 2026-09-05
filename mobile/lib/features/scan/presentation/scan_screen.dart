@@ -207,8 +207,10 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
                   child: MobileScanner(
                     controller: _scanner,
                     onDetect: _onDetect,
-                    errorBuilder: (context, error) =>
-                        CameraErrorView(error: error, onEnterCode: _enterManually),
+                    errorBuilder: (context, error) => CameraErrorView(
+                      error: error,
+                      onEnterCode: _enterManually,
+                    ),
                   ),
                 ),
                 IgnorePointer(
