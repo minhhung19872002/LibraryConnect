@@ -75,13 +75,13 @@ internal static class CatalogRaceReconciler
         {
             var entity = (CatalogEntity)entry.Entity;
 
+            var sameNameSql = "SELECT id AS \"Value\" FROM " + Qualified(table)
+                + " WHERE deleted_at IS NULL AND id <> {0}"
+                + " AND cat.lc_name_key(name) = cat.lc_name_key({1})"
+                + " ORDER BY created_at, id LIMIT 1";
+
             var existingId = await db.Database
-                .SqlQueryRaw<Guid>(
-                    $"SELECT id AS \"Value\" FROM {CatalogSchema}.{table} "
-                    + "WHERE deleted_at IS NULL AND id <> {0} "
-                    + "AND cat.lc_name_key(name) = cat.lc_name_key({1}) "
-                    + "ORDER BY created_at, id LIMIT 1",
-                    entity.Id, entity.Name)
+                .SqlQueryRaw<Guid>(sameNameSql, entity.Id, entity.Name)
                 .FirstOrDefaultAsync(ct);
 
             if (existingId != Guid.Empty)
@@ -136,10 +136,26 @@ internal static class CatalogRaceReconciler
         entry.State = EntityState.Unchanged;
     }
 
-    private static async Task<bool> CodeTakenAsync(DbContext db, string table, string code, CancellationToken ct) =>
-        await db.Database
-            .SqlQueryRaw<int>($"SELECT 1 AS \"Value\" FROM {CatalogSchema}.{table} WHERE code = {{0}} LIMIT 1", code)
-            .AnyAsync(ct);
+    /// <summary>
+    /// Tên bảng đủ lược đồ. Chỉ nhận tên đã khớp một bảng trong mô hình EF (xem
+    /// <see cref="TryReconcileAsync"/>) và chỉ gồm chữ thường, số, gạch dưới — không phải chuỗi người dùng gửi lên.
+    /// </summary>
+    private static string Qualified(string table)
+    {
+        if (table.Length == 0 || !table.All(character => char.IsAsciiLetterLower(character) || char.IsAsciiDigit(character) || character == '_'))
+        {
+            throw new InvalidOperationException($"Tên bảng danh mục không hợp lệ: '{table}'.");
+        }
+
+        return string.Concat(CatalogSchema, ".", table);
+    }
+
+    private static async Task<bool> CodeTakenAsync(DbContext db, string table, string code, CancellationToken ct)
+    {
+        var sql = "SELECT 1 AS \"Value\" FROM " + Qualified(table) + " WHERE code = {0} LIMIT 1";
+
+        return await db.Database.SqlQueryRaw<int>(sql, code).AnyAsync(ct);
+    }
 
     private static async Task<string> FreeCodeAsync(
         DbContext db, string table, string root, List<EntityEntry> pending, EntityEntry self, CancellationToken ct)
