@@ -538,7 +538,7 @@ và mã QR vào cảnh ảo bằng `-virtualscene-poster` — để đi ba luồ
 (mượn tự phục vụ quét được mã trạm nhưng không quét nổi cuốn sách). Ngày 06/09/2026 chạy tiếp một đợt **soi số học nghiệp vụ**
 — tự tính kỳ vọng từ bảng chính sách và tham số rồi đối chiếu với hệ thống: hạn trả qua ngày nghỉ, tiền phạt theo ngày mở cửa,
 trần gia hạn, trần số cuốn, hàng đợi giữ chỗ, đền sách mất, ngưỡng nợ, thẻ hết hạn, ra trường còn nợ, sinh số báo theo ba kỳ hạn,
-phân loại kiểm kê. Mười sáu phép đo khớp, một sai: K17. Đối chiếu tiếp số liệu báo cáo với truy vấn SQL độc lập (điều 2.8 của E-HSMT) — tám con số
+phân loại kiểm kê. Mười sáu phép đo khớp, một sai: K17. Soi tiếp quyền đọc tài liệu số (hết hạn tự thu, trần lượt xem, trang xem thử) và đối chiếu số liệu báo cáo với truy vấn SQL độc lập (điều 2.8 của E-HSMT) — tám con số
 của trang Tổng quan khớp tuyệt đối — thì lộ thêm K18: 94 phiếu mượn của bộ dữ liệu trình diễn mang ngày ở tương lai. Cả 18 đã sửa.
 
 | Mã | Mức | Lỗi | Nguyên nhân | Sửa |

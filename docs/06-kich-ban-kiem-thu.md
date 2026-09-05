@@ -1321,7 +1321,7 @@ chủ thật. Các lỗi K1, K3, K4, K5 lộ ra khi đi bằng trình duyệt ho
 riêng, rồi mới đối chiếu với thứ hệ thống trả về qua API. Chạy trên máy phát triển vì cần lùi ngày của phiếu
 mượn để dựng đúng bối cảnh quá hạn; dữ liệu thử tạo ra đều đã xoá.
 
-Tổng: **21 phép đo, 21 khớp**. Ba phép đo đầu tiên đỏ vì kịch bản đoán sai khoá tham số và dựng
+Tổng: **24 phép đo, 24 khớp**. Ba phép đo đầu tiên đỏ vì kịch bản đoán sai khoá tham số và dựng
 sai bối cảnh gia hạn — lỗi của phép thử, đã tính lại và ghi kết quả đúng ở bảng dưới. Hai lỗi thật tìm ra trong đợt:
 K17 (kiểm kê coi sách đang mượn là thiếu) và K18 (dữ liệu trình diễn có phiếu mượn ngày ở tương lai).
 
@@ -1348,3 +1348,6 @@ K17 (kiểm kê coi sách đang mượn là thiếu) và K18 (dữ liệu trình
 | NV.15 | Thống kê bạn đọc theo loại: 'đang hoạt động' trừ cả thẻ hết hạn, chặt hơn cột trạng thái | Sinh viên 456 tổng / 341 hoạt động = 456 − 115 thẻ hết hạn; năm loại đều theo cùng cách tính | Đạt |
 | NV.16 | Top ấn phẩm mượn nhiều nhất: gộp theo nhan đề, số lượt giảm dần | 'Giáo trình cơ sở dữ liệu' 11 lượt gồm nhiều bản in (bản đơn cao nhất LC00000001 7 lượt); thứ tự giảm dần đúng | Đạt |
 | NV.17 | Báo cáo quá hạn: 363 phiếu, 361 bạn đọc, tiền phạt dự kiến 7.465.000 đ, chia dải ngày đúng tổng | khớp SQL 363 phiếu chưa trả có hạn trước hôm nay | Đạt |
+| NV.19 | Tài liệu hạn chế: chưa duyệt chỉ mở số trang xem thử, duyệt xong mở toàn văn, vẫn không cho tải | Tài liệu 10 trang: chưa duyệt mở 3 trang (trang 2 → 200, trang cuối → 403, kèm lý do 'gửi yêu cầu để đọc toàn văn'); duyệt xong trang cuối → 200 và readablePages = null nghĩa là toàn văn (trang tra cứu hiện 'Đọc toàn văn', ứng dụng di động lấy pagesToShow = pa | Đạt |
+| NV.20 | Quyền hết hạn tự thu lại: bạn đọc quay về mức xem thử | sau khi hết hạn: 3/10 trang, trang cuối bị chặn, lý do 'Quyền đọc đã hết hạn hoặc hết lượt xem.' | Đạt |
+| NV.21 | Quyền có trần số lần xem: dùng hết lượt thì quay về mức xem thử | maxViews=2, view_count=9 → 3/10 trang, lý do 'Quyền đọc đã hết hạn hoặc hết lượt xem.' | Đạt |
