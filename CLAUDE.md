@@ -309,9 +309,7 @@ Cần chen migration vào giữa thì đổi tên tệp **và** sửa `[Migratio
 
 ### A.5. Việc còn treo — chờ người dùng quyết
 
-1. **Mật khẩu `admin` của bản chạy thật** đang trùng một chuỗi có mặt trong phép thử Android của kho
-   mã công khai. Đổi thì phải sửa cả tài liệu hướng dẫn nghiệm thu, nên để người dùng chọn thời
-   điểm.
+Không còn mục nào treo.
 
 **Đã chốt, không hỏi lại:**
 
@@ -322,6 +320,9 @@ Cần chen migration vào giữa thì đổi tên tệp **và** sửa `[Migratio
   trình diễn thì bật `ILL.Z3950_SERVER_ENABLED` vài phút rồi tắt. SRU tại `/sru` đã chạy sẵn trên
   bản thật và là lối tương đương.
 - H3 và H9 của sổ lỗi đã đóng ngày 03/09/2026.
+- **Mật khẩu `admin` của bản chạy thật: giữ nguyên.** Ngày 05/09/2026 người dùng quyết không đổi, dù
+  chuỗi ấy trùng với giá trị mặc định trong phép thử Android của kho mã công khai. Không đề xuất lại;
+  tài liệu hướng dẫn nghiệm thu giữ như hiện có.
 
 **Phạm vi từ đây:** chỉ làm thứ `Chương V.YÊU CẦU VỀ KỸ THUẬT.pdf` yêu cầu. Không thêm chức năng
 ngoài hồ sơ; thấy thiếu thì đối chiếu với tệp PDF trước khi làm.
