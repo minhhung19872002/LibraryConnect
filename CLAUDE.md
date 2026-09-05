@@ -67,7 +67,8 @@ hạn mức, phạm vi dữ liệu theo kho, cài mới CSDL trắng, Lighthouse
 thư) tìm thêm bốn: gõ đủ nhan đề ra 0 kết quả vì tra cứu so cả cụm như chuỗi con; màu quản trị; báo "đã
 gửi" khi SMTP tắt; tám ô SMTP trên màn hình không ai đọc. Đợt kỹ thuật thứ ba (tạo đồng thời trên mọi khoá duy nhất,
 nội dung thật của tệp in/xuất, phục hồi sao lưu, quầy bàn phím trên trình duyệt) tìm thêm một: bốn lượt biên mục sơ
-lược song song cùng một tác giả mới thì ba lượt đổ trùng mã. Cả 14 đã sửa, tổng **161 lỗi, đã sửa 161**.
+lược song song cùng một tác giả mới thì ba lượt đổ trùng mã; và lúc dọn dữ liệu thử của chính lỗi ấy lộ thêm một: biểu
+ghi đã xoá vẫn được đếm là "đang dùng" nên không xoá được tác giả. Cả 15 đã sửa, tổng **162 lỗi, đã sửa 162**.
 Phụ lục cuối `docs/06` ghi kết quả từng kịch bản (hơn 450 dòng).
 
 Đọc thẳng hồ sơ gốc còn tìm ra thứ không phải lỗi mã: **bốn hồ sơ bàn giao** mà Chương V mục III và
@@ -325,6 +326,10 @@ docker compose run --rm -d --name lc-api-kiem -e LC_DB_NAME=lc_kiem -e LC_SEED_D
     người thắng vừa tạo rồi lưu lại — làm ở một chỗ (`SaveChangesAsync`, `CatalogRaceReconciler`), không
     chép vào từng handler. Và phép thử đồng thời phải gửi yêu cầu **thật sự song song**; gọi tuần tự thì
     không bao giờ thấy.
+50. **Đếm "đang dùng" là đếm thứ người dùng còn nhìn thấy.** Liên kết biểu ghi–tác giả giữ nguyên khi biểu
+    ghi xoá mềm (đúng, vì biểu ghi khôi phục được), nhưng bộ đếm tham chiếu đếm cả liên kết của biểu ghi
+    đã xoá, nên xoá sách rồi vẫn không dọn được hồ sơ thẩm quyền. Đếm qua bảng có bộ lọc xoá mềm, đừng
+    đếm bảng nối. Và dọn dữ liệu thử cũng là một phép thử — lỗi này lộ ra đúng lúc dọn.
 
 ### A.4. Cơ chế dùng chung — dùng lại, đừng viết chỗ mới
 

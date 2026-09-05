@@ -149,6 +149,51 @@ public class AcceptanceRehearsalTests
     }
 
     /// <summary>
+    /// K15 (05/09/2026): xoá biểu ghi rồi xoá tác giả chỉ có biểu ghi ấy dùng — bị từ chối "đang được 1 bản
+    /// ghi sử dụng". Liên kết bib_authors không xoá mềm theo biểu ghi, mà bộ đếm đếm liên kết chứ không hỏi
+    /// biểu ghi còn sống không. Cán bộ không nhìn thấy biểu ghi ấy ở đâu nữa nhưng vẫn không dọn được hồ sơ
+    /// thẩm quyền.
+    /// </summary>
+    [Fact]
+    public async Task Xoa_bieu_ghi_roi_thi_tac_gia_chi_bieu_ghi_ay_dung_phai_xoa_duoc()
+    {
+        var client = await ClientAsync();
+        var warehouses = await ReadAsync<List<LibraryConnect.Application.Features.Locations.WarehouseDto>>(
+            await client.GetAsync("/api/locations/warehouses"));
+        var author = $"Tác giả một biểu ghi {Unique()}";
+
+        var created = await ReadAsync<LibraryConnect.Application.Features.Acquisition.QuickCatalogResultDto>(
+            await client.PostAsJsonAsync("/api/acquisition/quick-catalog", new
+            {
+                title = $"Sách sẽ xoá {Unique()}",
+                author,
+                price = 1000,
+                ddc = "005",
+                itemQuantity = 0,
+                warehouseId = warehouses[0].Id
+            }));
+
+        var deleted = await client.SendAsync(new HttpRequestMessage(HttpMethod.Delete, $"/api/cataloging/bibs/{created.BibId}")
+        {
+            Content = JsonContent.Create(new { reason = "Kiểm thử K15" })
+        });
+        deleted.IsSuccessStatusCode.Should().BeTrue(await deleted.Content.ReadAsStringAsync());
+
+        Guid authorId;
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<LibraryConnect.Application.Common.Interfaces.IApplicationDbContext>();
+            authorId = (await db.Authors.SingleAsync(entity => entity.Name == author)).Id;
+        }
+
+        var response = await client.DeleteAsync($"/api/catalogs/authors/items/{authorId}");
+
+        response.IsSuccessStatusCode.Should().BeTrue(
+            "tác giả chỉ còn được biểu ghi đã xoá tham chiếu thì phải xoá được: {0}", await response.Content.ReadAsStringAsync());
+    }
+
+    /// <summary>
     /// Đợt test sâu ngày 05/09/2026: in lại phiếu mượn của một bạn đọc đã xóa hồ sơ thì máy chủ đổ
     /// 500 "lỗi hệ thống" — câu hỏi ghép bạn đọc bằng phép nối trong, hồ sơ đã xóa mềm bị lọc mất
     /// nên danh sách rỗng và mã lấy phần tử đầu. Người dùng phải nhận một câu trả lời rõ nghĩa.

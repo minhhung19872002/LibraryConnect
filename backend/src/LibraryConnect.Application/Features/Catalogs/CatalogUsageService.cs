@@ -39,6 +39,11 @@ public class CatalogUsageService : ICatalogUsageService
 
     public async Task<int> CountUsageAsync(CatalogDefinition definition, Guid id, CancellationToken ct = default)
     {
+        // Liên kết biểu ghi–danh mục không xoá mềm theo biểu ghi, nên đếm liên kết là đếm cả biểu ghi đã xoá:
+        // xoá biểu ghi rồi mà tác giả vẫn "đang được 1 bản ghi sử dụng" (K15, 05/09/2026). Chỉ đếm liên
+        // kết mà biểu ghi còn sống — BibRecords đã mang bộ lọc xoá mềm.
+        var liveBibs = _db.BibRecords.Select(record => record.Id);
+
         return definition.EntityType.Name switch
         {
             nameof(DocumentType) =>
@@ -62,24 +67,24 @@ public class CatalogUsageService : ICatalogUsageService
                 + await _db.SeriesList.CountAsync(s => s.PublisherId == id, ct),
 
             nameof(Author) =>
-                await _db.BibAuthors.CountAsync(a => a.AuthorId == id, ct),
+                await _db.BibAuthors.CountAsync(a => a.AuthorId == id && liveBibs.Contains(a.BibId), ct),
 
             nameof(Subject) =>
-                await _db.BibSubjects.CountAsync(s => s.SubjectId == id, ct)
+                await _db.BibSubjects.CountAsync(s => s.SubjectId == id && liveBibs.Contains(s.BibId), ct)
                 + await _db.Subjects.CountAsync(s => s.ParentId == id, ct),
 
             nameof(Keyword) =>
-                await _db.BibKeywords.CountAsync(k => k.KeywordId == id, ct),
+                await _db.BibKeywords.CountAsync(k => k.KeywordId == id && liveBibs.Contains(k.BibId), ct),
 
             nameof(Classification) =>
-                await _db.BibClassifications.CountAsync(c => c.ClassificationId == id, ct)
+                await _db.BibClassifications.CountAsync(c => c.ClassificationId == id && liveBibs.Contains(c.BibId), ct)
                 + await _db.Classifications.CountAsync(c => c.ParentId == id, ct),
 
             nameof(Series) =>
                 await _db.BibRecords.CountAsync(r => r.SeriesId == id, ct),
 
             nameof(Collection) =>
-                await _db.BibCollections.CountAsync(c => c.CollectionId == id, ct)
+                await _db.BibCollections.CountAsync(c => c.CollectionId == id && liveBibs.Contains(c.BibId), ct)
                 + await _db.Collections.CountAsync(c => c.ParentId == id, ct),
 
             nameof(ReaderType) =>
@@ -95,7 +100,7 @@ public class CatalogUsageService : ICatalogUsageService
                 + await _db.CourseMajors.CountAsync(c => c.MajorId == id, ct),
 
             nameof(Course) =>
-                await _db.BibCourses.CountAsync(c => c.CourseId == id, ct)
+                await _db.BibCourses.CountAsync(c => c.CourseId == id && liveBibs.Contains(c.BibId), ct)
                 + await _db.CourseMajors.CountAsync(c => c.CourseId == id, ct),
 
             nameof(ViolationType) =>
