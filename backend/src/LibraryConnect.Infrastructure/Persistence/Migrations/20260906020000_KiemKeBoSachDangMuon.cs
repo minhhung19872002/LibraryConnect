@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -15,6 +16,8 @@ namespace LibraryConnect.Infrastructure.Persistence.Migrations;
 /// xoá những dòng ấy và trừ lại số kỳ vọng. Kỳ **đã đóng** giữ nguyên — đó là biên bản của một lần
 /// kiểm kê đã ký, sửa số liệu của nó là sửa lịch sử; chốt chặn ở `resolve-missing` lo phần an toàn.</para>
 /// </summary>
+[DbContext(typeof(LibraryConnectDbContext))]
+[Migration("20260906020000_KiemKeBoSachDangMuon")]
 public partial class KiemKeBoSachDangMuon : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)

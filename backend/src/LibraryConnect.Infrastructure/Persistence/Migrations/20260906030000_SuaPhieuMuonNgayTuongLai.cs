@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -16,6 +17,8 @@ namespace LibraryConnect.Infrastructure.Persistence.Migrations;
 /// ngày trả đúng bằng số ngày của chính sách, và hạn trả rơi vào chính ngày trả. Phiếu chưa trả mà lại
 /// mang ngày tương lai thì kéo về hôm nay. Chỉ đụng đúng những dòng sai.</para>
 /// </summary>
+[DbContext(typeof(LibraryConnectDbContext))]
+[Migration("20260906030000_SuaPhieuMuonNgayTuongLai")]
 public partial class SuaPhieuMuonNgayTuongLai : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)

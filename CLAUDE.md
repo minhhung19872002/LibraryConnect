@@ -75,7 +75,8 @@ tính kỳ vọng từ bảng chính sách rồi đối chiếu: hạn trả qua
 ngưỡng nợ, thẻ hết hạn, sinh số báo, kiểm kê — 16 phép đo khớp, một sai: kiểm kê coi sách đang ở tay bạn đọc là thiếu (157 cuốn
 trên kho phát triển) và lệnh xử lý thiếu ghi mất luôn cả chúng. Đối chiếu tiếp số liệu tám ô của trang Tổng quan với SQL độc lập
 (điều 2.8) thì khớp tuyệt đối, nhưng lộ ra 94 phiếu mượn của bộ dữ liệu trình diễn mang ngày ở tương lai, ngày trả nằm trước ngày
-mượn. Cả 18 đã sửa, tổng **165 lỗi, đã sửa 165**.
+mượn. Kiểm lại chính bản sửa ấy trên máy chủ thật thì lộ lỗi thứ mười chín: hai migration sửa dữ liệu **không chạy** vì thiếu
+thuộc tính `[Migration]`, mà máy chủ vẫn ghi "đã ở phiên bản mới nhất". Cả 19 đã sửa, tổng **166 lỗi, đã sửa 166**.
 Phụ lục cuối `docs/06` ghi kết quả từng kịch bản (hơn 450 dòng).
 
 Đọc thẳng hồ sơ gốc còn tìm ra thứ không phải lỗi mã: **bốn hồ sơ bàn giao** mà Chương V mục III và
@@ -148,6 +149,7 @@ vướng — mỗi cái sinh ra từ một lỗi đã xảy ra thật:
 | `mobile/test/features/list_refresh_after_write_test.dart` | Màn hình gọi `checkout`/`renewLoan`/`createHold`/`cancelHold` phải `ref.invalidate` đúng provider tương ứng — hai màn hình từng ghi xong mà danh sách không đổi |
 | `backend/.../Security/NginxConfigParityTests.cs` (luật thứ hai) | Tệp Nginx nào có `limit_req` thì phải có `limit_req_status 429` và trang lỗi 429 dạng JSON — mặc định Nginx trả trang HTML 503, máy khách chỉ hiện được "máy chủ lỗi" |
 | `frontend-admin/src/modules/dashboard/DashboardPage.test.ts` | Trang Tổng quan không mang dòng giữ chỗ về tiến độ dự án và phải đọc báo cáo tổng quan — màn hình đầu tiên sau đăng nhập từng nói "đang bàn giao" suốt từ phase 1 tới bản chạy thật |
+| `backend/.../Infrastructure/MigrationRegistrationTests.cs` | Mỗi tệp trong thư mục Migrations phải có lớp mang đúng `[Migration("<mã>")]`, và không lớp `Migration` nào được thiếu thuộc tính — thiếu là EF Core bỏ qua trong im lặng, bản sửa dữ liệu triển khai xong mà không chạy |
 | `backend/.../Infrastructure/DemoLoanDatesTests.cs` | Không lượt mượn nào của bộ dữ liệu trình diễn rơi vào tương lai, ở mọi cỡ bộ dữ liệu và mọi chính sách — 94 phiếu "mượn 29/11, trả 02/09" từng sống trên cả máy chủ thật |
 | `backend/.../Infrastructure/DeployScriptTests.cs` | `gh-deploy.sh` phải có bước `don_anh_cu` giữ bản mới và bản trước, xoá ảnh `libraryconnect-*` còn lại — 20 bộ ảnh cũ từng làm đầy ổ 96 GB và chặn mọi lượt triển khai |
 
@@ -356,6 +358,9 @@ docker compose run --rm -d --name lc-api-kiem -e LC_DB_NAME=lc_kiem -e LC_SEED_D
     kịch bản đoán khoá tham số (`CIRCULATION.WEEKLY_CLOSED_DAYS` chứ không phải `CLOSED_WEEKDAYS`) và
     vì gia hạn ngay hôm mượn thì hạn mới không dài hơn hạn cũ. Cả ba là lỗi của phép thử. Đọc cấu hình
     thật trước, rồi mới nói sản phẩm sai.
+55. **Triển khai xong phải kiểm chính thứ vừa sửa, trên máy chủ thật.** Hai migration sửa dữ liệu đi
+    qua CI xanh, dựng ảnh, triển khai thành công — và không chạy, vì thiếu `[Migration]`. Bằng chứng
+    duy nhất là con số dữ liệu trên máy chủ vẫn y như cũ. "Đã triển khai" không phải "đã có tác dụng".
 
 ### A.4. Cơ chế dùng chung — dùng lại, đừng viết chỗ mới
 
