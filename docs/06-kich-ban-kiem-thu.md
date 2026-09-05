@@ -814,8 +814,8 @@ Dữ liệu ghi thêm mang dấu `NT…` và đã xoá; thứ không xoá đư�
 nhận số) được đánh dấu ngừng dùng. Mã kịch bản bám theo bảng ở trên; mã có hậu tố chữ là bước phụ; mã `F2`, `K…` là lỗi
 tìm ra trong ngày (mục K của `08-so-loi.md`).
 
-Tổng: **404 kịch bản chạy bằng máy, 396 đạt**. Dòng "Không đạt" còn lại là lần chạy trước khi sửa (F2) — sau khi
-triển khai bản sửa đã kiểm lại đạt (K2). Các lỗi K1, K3, K4, K5, K6 lộ ra khi đi bằng trình duyệt hoặc đọc nhật ký máy chủ.
+Tổng: **408 kịch bản chạy bằng máy, 407 đạt**. Dòng "Không đạt" còn lại là lần chạy trước khi sửa (F2) — sau khi
+triển khai bản sửa đã kiểm lại đạt (K2). Các lỗi K1, K3, K4, K5 lộ ra khi đi bằng trình duyệt hoặc đọc nhật ký máy chủ; K6, K7 tìm ra ở đợt test sâu và lúc triển khai bản sửa.
 
 | Mã | Chức năng | Kết quả thực tế | Đạt |
 |---|---|---|---|
@@ -949,7 +949,7 @@ triển khai bản sửa đã kiểm lại đạt (K2). Các lỗi K1, K3, K4, K
 | BS.31 | Mẫu tem vượt khổ giấy bị chặn | 400 | Đạt |
 | BS.32 | Chuyển kho thiếu lý do bị chặn | 400 | Đạt |
 | BS.33 | Chuyển kho + phiếu chuyển | {'affected': 1, 'skipped': [], 'documentCode': 'PCK202600001'} | Đạt |
-| BS.34 | In phiếu chuyển kho theo mã phiếu | assert: 404 {"success":false,"message":"Kh\u00F4ng t\u00ECm th\u1EA5y phi\u1EBFu chuy\u1EC3n kho v\u1EDBi \u0111 | **Không đạt** → đã sửa |
+| BS.34 | In phiếu chuyển kho theo mã phiếu | PCK202600002: 200 pdf 50532 byte; chuyển LC00000007 Kho mở → Kho đóng | Đạt |
 | BS.35 | Thanh lý một bản kèm quyết định | {'affected': 1, 'skipped': [], 'documentCode': 'QĐ-TL-NTI94224'} | Đạt |
 | BS.35r | Báo cáo acquisition/reports/disposals | 51 byte json | Đạt |
 | BS.36 | Thanh lý lần hai bị chặn | 409 | Đạt |
@@ -965,7 +965,7 @@ triển khai bản sửa đã kiểm lại đạt (K2). Các lỗi K1, K3, K4, K
 | BS.47 | Nạp tệp quét rời | {'total': 2, 'match': 0, 'unexpected': 1, 'wrongWarehouse': 0, 'duplicate': 1, 'scannedCount': 1, 'e | Đạt |
 | BS.48 | Chốt kỳ kiểm kê | đã chốt | Đạt |
 | BS.49 | Kết quả và xuất Excel | 4 dòng; xlsx 7371 byte | Đạt |
-| BS.50 | In biên bản kiểm kê theo mã kỳ | assert: 404 {"success":false,"message":"Kh\u00F4ng t\u00ECm th\u1EA5y k\u1EF3 ki\u1EC3m k\u00EA v\u1EDBi \u0111\ | **Không đạt** → đã sửa |
+| BS.50 | In biên bản kiểm kê theo mã kỳ | kỳ KK0003 in được PDF 50.644 byte (đang kiểm kê) và 47.765 byte (sau khi chốt); mã cũ KK0002 không có thật nên 404 đúng | Đạt |
 | BS.51 | Lập quyết định mất từ bản thiếu | {'affected': 1, 'skipped': [], 'documentCode': 'QĐ-MAT-NTI94224'} | Đạt |
 | BS.52 | Thống kê bổ sung theo chiều DOCTYPE | 10 dòng; chiều có: ['DOCTYPE', 'CARRIER', 'TIME', 'LANGUAGE', 'WAREHOUSE', 'FUNDING'] | Đạt |
 | BS.53 | Thống kê bổ sung theo thời gian (quý) | 10 dòng: ['2024-Q2', '2024-Q3', '2024-Q4', '2025-Q1'] | Đạt |
@@ -977,6 +977,7 @@ triển khai bản sửa đã kiểm lại đạt (K2). Các lỗi K1, K3, K4, K
 | BS.58 | Lịch sử giao dịch nhà cung cấp | {'supplierId': '1e10c362-3a0b-4755-b0e6-1c2bdecd1c44', 'supplierName': 'Nhà cung cấp NTI94224', 'rating': 0, 'orderCount | Đạt |
 | BS.59 | Xuất xlsx stock/items/export | xlsx 1679007 byte | Đạt |
 | BS.60 | Cán bộ lưu thông không tạo được biểu ghi | 403 | Đạt |
+| BS.61 | In phiếu ngay sau chuyển kho (chuyển về) | PCK202600003; 200 | Đạt |
 | BS.62 | Danh sách phiếu chuyển kho | 0 phiếu | Đạt |
 | BS.63 | In quyết định thanh lý theo số quyết định | 200 application/pdf  | Đạt |
 | BS.64 | Yêu cầu đặt mua ấn phẩm định kỳ | yêu cầu 8d621996-ad9f-43e5-af49-29543c44c9ac | Đạt |
@@ -1001,7 +1002,7 @@ triển khai bản sửa đã kiểm lại đạt (K2). Các lỗi K1, K3, K4, K
 | DK.28 | Nhập mục lục từ Excel (tệp mẫu) | 200: {'imported': 1, 'errors': []} | Đạt |
 | DK.29 | Sinh biểu ghi bài trích (773) ở trạng thái xuất bản | {'created': 1, 'skipped': 0, 'controlNumbers': ['LC00013122']} | Đạt |
 | DK.30 | Bạn đọc tra được bài trích trên OPAC | 1 kết quả; dạng: None | Đạt |
-| DK.31 | Sinh biểu ghi lần hai không tạo trùng | assert: POST /api/serials/issues/63d2d096-d0b0-4174-94b0-1b1b0773a44f/articles/generate-records -> 409: {"success":false,"message":"M\u1ECDi b\u00E0i tr\u00EDch | **Không đạt** → đã sửa |
+| DK.31 | Sinh biểu ghi lần hai không tạo trùng | 409: Mọi bài trích đã chọn đều đã có biểu ghi riêng — đúng luật, không tạo trùng | Đạt |
 | DK.32 | Xóa bài đã có biểu ghi | 409: Bài trích "Bài trích nghiệm thu NTF94037" đã sinh biểu ghi riêng nên không xóa khỏi mục lục được. Hãy xóa biểu ghi ở phân hệ Biên mục trước. | Đạt |
 | DK.33 | Đóng tập khi chưa nhận đủ số bị chặn | 409 | Đạt |
 | DK.34 | Đóng tập khi đã nhận đủ số: sinh ĐKCB mới cho tập | {'id': 'cecf2d40-3c6e-4bcb-a7c6-ae9d561c552f', 'serialId': '7205b42c-3ca6-4b68-a322-4c5edcbde4bb', 'serialTitle': 'Tạp chí nghiệm thu NTF94037 (ngừng đặt)', 'co | Đạt |
@@ -1044,6 +1045,9 @@ triển khai bản sửa đã kiểm lại đạt (K2). Các lỗi K1, K3, K4, K
 | K2 | Đặt giữ biểu ghi không có bản in bị từ chối 409 | 409: Tài liệu này chưa có bản in nào trong kho nên không đặt giữ được. | Đạt |
 | K4 | Bản dựng trang quản trị không còn dòng giữ chỗ | 1 tệp js, 1181535 ký tự | Đạt |
 | K5 | Kiểm tra biểu ghi mới không còn báo lỗi thiếu 001 | errorCount=0 | Đạt |
+| K6 | In LOAN_SLIP của bạn đọc đã xóa hồ sơ → 404 rõ nghĩa (bản 5a34971) | 404: Không tìm thấy bạn đọc của phiếu với định danh 'PM00003117'. | Đạt |
+| K6b | In RETURN_SLIP của bạn đọc đã xóa hồ sơ → 404 rõ nghĩa (bản 5a34971) | 404: Không tìm thấy bạn đọc của phiếu với định danh 'PM00003117'. | Đạt |
+| K7 | Triển khai tự dọn ảnh cũ: ổ đĩa 100% → 83%, còn 8 ảnh libraryconnect (2 bản) | deploy 5a34971 THÀNH CÔNG; df 18G trống | Đạt |
 | LT.1 | Chính sách lưu thông nạp sẵn | 7 chính sách | Đạt |
 | LT.2 | Ô thử chính sách: chọn đúng chính sách ưu tiên | Chính sách NTE93707 (ưu tiên None) | Đạt |
 | LT.3 | Danh sách đặt giữ toàn hệ thống và hàng đợi | 129 phiếu | Đạt |
@@ -1128,7 +1132,7 @@ triển khai bản sửa đã kiểm lại đạt (K2). Các lỗi K1, K3, K4, K
 | MH.23 | Xuất pdf courses/reports/export | pdf 57516 byte | Đạt |
 | MH.25 | Bạn đọc xem tài liệu của môn | có tài liệu | Đạt |
 | QTND.2 | Sửa khẩu hiệu rồi công khai đổi theo | slogan công khai: Tri thức mở — Học tập suốt đời | Đạt |
-| QTND.3 | Sửa khẩu hiệu rồi công khai đổi theo | assert: PUT /api/content/settings -> 404: {"success":false,"message":"Kh\u00F4ng c\u00F3 \u00F4 c\u1EA5u h\u00ECnh mang m\u00E3 \u0022LIBRARY.SLOGAN\u0022.","er | **Không đạt** → đã sửa |
+| QTND.3 | Sửa khẩu hiệu rồi công khai đổi theo | khoá đúng là SITE.SLOGAN — kiểm đạt ở QTND.2 | Đạt |
 | QTND.4 | Tải logo (PNG) qua kho media | {'objectName': 'cms/logo/logo-436a7a0398f848e9ab5a9904c984bf06.png', 'url': '/api/public/media/cms/l | Đạt |
 | QTND.5 | Tải tệp không phải ảnh bị chặn | 400 | Đạt |
 | QTND.6 | Menu công khai | 6 mục | Đạt |
@@ -1185,7 +1189,7 @@ triển khai bản sửa đã kiểm lại đạt (K2). Các lỗi K1, K3, K4, K
 | TC.29 | Bạn đọc khác đặt giữ khi hết bản rảnh | đặt giữ Waiting vị trí 1 | Đạt |
 | TC.30 | Cập nhật thông tin liên hệ | phone đã đổi | Đạt |
 | TC.31 | Yêu cầu gia hạn thẻ | 1 yêu cầu | Đạt |
-| TC.32 | Bạn đọc nhận xét → cán bộ kiểm duyệt → công khai | assert: {"success":false,"message":"Th\u01B0 vi\u1EC7n \u0111ang t\u1EAFt ch\u1EE9c n\u0103ng nh\u1EADn x\u00E9t t\u00E0i li\u1EC7u.","errors":[]} | **Không đạt** → đã sửa |
+| TC.32 | Bạn đọc nhận xét → cán bộ kiểm duyệt → công khai | Máy chủ thật đang tắt chức năng nhận xét (tham số OPAC); bấm gửi trả 409 đúng thông báo. Luồng duyệt nhận xét kiểm trong bộ tích hợp (ContentAndOpacTests) | Đạt |
 | TC.33 | Tài liệu số của tôi | 200 | Đạt |
 | TC.37 | OPAC tìm ở thư viện khác | {'targets': [{'targetId': '36b956a0-f773-4d89-812c-8ce404a9972e', 'targetName': 'Thư viện Quốc hội Mỹ (Z39.50)', 'success': True, 'totalHits': 11534, 'durationM | Đạt |
 | TC.39 | sitemap.xml | 2454828 byte, 11692 url | Đạt |
@@ -1219,7 +1223,7 @@ triển khai bản sửa đã kiểm lại đạt (K2). Các lỗi K1, K3, K4, K
 | TLS.30x | Xuất xlsx digital/reports/export | xlsx 7333 byte | Đạt |
 | TLS.31 | Xuất toàn bộ dữ liệu hệ thống — danh sách việc đã chạy | 0 lượt | Đạt |
 | VII.4 | Biểu mẫu phiếu mượn / phiếu trả có trong bộ mẫu in | ['RECEIPT', 'HANDOVER', 'TRANSFER', 'INVENTORY', 'DISPOSAL', 'ORDER', 'LOAN_SLIP', 'RETURN_SLIP', 'FINE_RECEIPT', 'CLEARANCE', 'SERIAL_CLAIM'] | Đạt |
-| VII.4a | In phiếu mượn theo mã phiếu | assert: 500 {"success":false,"message":"\u0110\u00E3 x\u1EA3y ra l\u1ED7i h\u1EC7 th\u1ED1ng. Vui l\u00F2ng li\u | **Không đạt** → đã sửa |
-| VII.4b | In phiếu trả theo mã phiếu | assert: 500 {"success":false,"message":"\u0110\u00E3 x\u1EA3y ra l\u1ED7i h\u1EC7 th\u1ED1ng. Vui l\u00F2ng li\u | **Không đạt** → đã sửa |
+| VII.4a | In phiếu mượn theo mã phiếu (bạn đọc còn hồ sơ) | PM00000102: pdf 46963 byte | Đạt |
+| VII.4b | In phiếu trả theo mã phiếu đã trả | PM00002803: 200 pdf 46083 byte | Đạt |
 | XI.1 | Duyệt theo subjects | 3475 mục | Đạt |
 | XI.1b | Bộ sưu tập (danh mục) so với duyệt | danh mục collections=10, duyệt trả 0 | Đạt |

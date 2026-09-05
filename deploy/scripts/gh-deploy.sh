@@ -19,6 +19,10 @@ COMPOSE="docker compose -f docker-compose.yml -f docker-compose.prod.yml -f dock
 
 log() { echo "[$(date -u +%FT%TZ)] $*" | tee -a "$LOG"; }
 
+# Toàn bộ phần chạy nằm trong một hàm: bash đọc trọn hàm trước khi thực thi. Không bọc thì bash đọc tệp
+# theo từng đoạn, mà `git reset --hard` ở giữa thay tệp bằng inode mới — lượt triển khai đầu sau khi sửa
+# kịch bản vẫn chạy nốt phần đuôi của bản cũ (bước dọn ảnh 05/09/2026 vì thế không chạy ở lượt đầu).
+main() {
 TAG="${SSH_ORIGINAL_COMMAND:-latest}"
 case "$TAG" in
     latest | [0-9a-f]*) ;;
@@ -99,3 +103,6 @@ done
 log "LỖI: lc-api không healthy sau 240s"
 docker logs lc-api --tail 40 2>&1 | tee -a "$LOG"
 exit 5
+}
+
+main "$@"
