@@ -78,7 +78,9 @@ trên kho phát triển) và lệnh xử lý thiếu ghi mất luôn cả chúng
 mượn. Kiểm lại chính bản sửa ấy trên máy chủ thật thì lộ lỗi thứ mười chín: hai migration sửa dữ liệu **không chạy** vì thiếu
 thuộc tính `[Migration]`, mà máy chủ vẫn ghi "đã ở phiên bản mới nhất". Đợt kiểm thêm soi bốn việc chạy nền theo lịch và hai
 giao thức liên thư viện bằng máy khách của người khác (`sickle` cho OAI-PMH, `pymarc` cho MARCXML): OAI-PMH đạt cả sáu verb,
-SRU thì trả **toàn bộ kho** cho một truy vấn sai cú pháp và không báo lỗi cho chỉ mục lạ. Cả 20 đã sửa, tổng **167 lỗi, đã sửa 167**.
+SRU thì trả **toàn bộ kho** cho một truy vấn sai cú pháp và không báo lỗi cho chỉ mục lạ. Máy khách Z39.50 tra Thư viện Quốc hội
+Mỹ lấy được biểu ghi thật và nhập vào kho; một máy chủ mẫu (Yale) đóng phiên ẩn danh nên chuyển sang tắt và thay bằng kho khác
+của Thư viện Quốc hội Mỹ. Cả 21 đã sửa, tổng **168 lỗi, đã sửa 168**.
 Phụ lục cuối `docs/06` ghi kết quả từng kịch bản (hơn 450 dòng).
 
 Đọc thẳng hồ sơ gốc còn tìm ra thứ không phải lỗi mã: **bốn hồ sơ bàn giao** mà Chương V mục III và

@@ -58,10 +58,31 @@ public partial class DatabaseSeeder
             },
             new Z3950Target
             {
-                Name = "Thư viện Đại học Yale",
+                // Máy chủ thứ ba giữ ở **trạng thái tắt**: đo ngày 06/09/2026 từ máy chủ thật,
+                // z3950.library.yale.edu mở cổng nhưng đóng phiên ngay sau bắt tay, và hai máy chủ
+                // công khai khác (BnF, Thư viện Quốc gia Úc) cũng từ chối phiên ẩn danh. Để nó bật
+                // là màn hình "Kiểm tra kết nối" hiện một dòng đỏ ngay trong buổi nghiệm thu, do
+                // chính sách của thư viện bạn chứ không phải lỗi của mình. Cán bộ bật lại được bất
+                // cứ lúc nào; cơ sở dữ liệu LCDB_MARC8 dưới đây thay chỗ nó ở danh sách đang chạy.
+                Name = "Thư viện Đại học Yale (đang tắt — máy chủ từ chối phiên ẩn danh)",
                 Host = "z3950.library.yale.edu",
                 Port = 7090,
                 DatabaseName = "voyager",
+                Charset = "MARC-8",
+                RecordSyntax = "USMARC",
+                IsActive = false,
+                ShowOnOpac = false,
+                TimeoutSeconds = 30,
+                SortOrder = 40,
+            },
+            new Z3950Target
+            {
+                // Cơ sở dữ liệu MARC-8 của chính Thư viện Quốc hội Mỹ: cùng máy chủ, khác kho, và
+                // trả lời được (đo 06/09/2026: 949.926 kết quả cho phép tra thử).
+                Name = "Thư viện Quốc hội Mỹ (kho MARC-8)",
+                Host = "lx2.loc.gov",
+                Port = 210,
+                DatabaseName = "LCDB_MARC8",
                 Charset = "MARC-8",
                 RecordSyntax = "USMARC",
                 TimeoutSeconds = 30,
@@ -72,6 +93,6 @@ public partial class DatabaseSeeder
 
         await _db.SaveChangesAsync(ct);
 
-        _logger.LogInformation("Đã nạp ba máy chủ thư viện công khai để tra cứu liên thư viện.");
+        _logger.LogInformation("Đã nạp các máy chủ thư viện công khai để tra cứu liên thư viện.");
     }
 }
