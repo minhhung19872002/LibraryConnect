@@ -1321,9 +1321,10 @@ chủ thật. Các lỗi K1, K3, K4, K5 lộ ra khi đi bằng trình duyệt ho
 riêng, rồi mới đối chiếu với thứ hệ thống trả về qua API. Chạy trên máy phát triển vì cần lùi ngày của phiếu
 mượn để dựng đúng bối cảnh quá hạn; dữ liệu thử tạo ra đều đã xoá.
 
-Tổng: **31 phép đo, 31 khớp**. Ba phép đo đầu tiên đỏ vì kịch bản đoán sai khoá tham số và dựng
+Tổng: **34 phép đo, 34 khớp**. Ba phép đo đầu tiên đỏ vì kịch bản đoán sai khoá tham số và dựng
 sai bối cảnh gia hạn — lỗi của phép thử, đã tính lại và ghi kết quả đúng ở bảng dưới. Hai lỗi thật tìm ra trong đợt:
-K17 (kiểm kê coi sách đang mượn là thiếu) và K18 (dữ liệu trình diễn có phiếu mượn ngày ở tương lai).
+K17 (kiểm kê coi sách đang mượn là thiếu), K18 (dữ liệu trình diễn có phiếu mượn ngày ở tương lai) và K19 (hai migration sửa
+dữ liệu không chạy vì thiếu thuộc tính khai mã).
 
 | Mã | Luật nghiệp vụ | Kết quả thực tế | Đạt |
 |---|---|---|---|
@@ -1358,3 +1359,6 @@ K17 (kiểm kê coi sách đang mượn là thiếu) và K18 (dữ liệu trình
 | NV.26 | Nhập bạn đọc từ Excel: 5 dòng, 3 dòng sai → nhận 2, báo lỗi 3, tệp nhật ký lỗi nêu rõ từng lý do | Tổng 5 / nhận 2 / lỗi 3. Tệp nhật ký lỗi tải về được, 4 dòng thông báo cho 3 dòng sai (dòng trùng mã nhận cả hai lý do): 'Mã sinh viên bị lặp trong chính tệp này.', 'Bạn đọc đã có trong hệ thống. Chọn cách xử lý trùng là Cập nhật hoặc Bỏ qua.', 'Địa chỉ email  | Đạt |
 | NV.27 | Phạm vi dữ liệu theo kho: cán bộ chỉ được gán kho A không thấy bản in kho B, kể cả khi bỏ bộ lọc | được gán 'Kho mở': 4483 bản in (SQL 4483); hỏi kho 'Kho đóng': 0 (mã 200); bỏ lọc: 4483 trong tổng 17910 toàn hệ thống | Đạt |
 | NV.28 | Gộp trùng tác giả: mọi biểu ghi của mục bị gộp chuyển sang mục giữ lại, mục kia xoá mềm | trước gộp {'Phạm Văn Gộp GT34781': 1, 'Pham Van Gop Hai GT34781': 1}; sau gộp mục giữ lại có 2 biểu ghi; mục bị gộp đã xoá mềm = t | Đạt |
+| NV.29 | In thẻ đếm đúng số lần in; cấp lại thẻ giữ thẻ cũ trong lịch sử và chỉ một thẻ hiện hành; gia hạn thẻ cộng đúng số tháng | in 2 lần → print_count=2; cấp lại 200: số thẻ TV2026000669 → TV2026000670, hồ sơ giữ 2 thẻ (hiện hành 1, lý do '['Mất thẻ TL34848']'); gia hạn 12 tháng: 2031-03-06 → 2032-03-06 | Đạt |
+| NV.30 | Chuyển kho: hai bản in sang kho mới và mỗi bản sinh một dòng lịch sử kèm lý do, số quyết định | 2/2 bản in ở kho đích; 2 dòng lịch sử, lý do 'Kiểm nghiệp vụ CK34883' | Đạt |
+| NV.31 | Bản in bị khoá (đang số hóa, đang sửa chữa) thì quầy không cho mượn, câu từ chối nêu lý do khoá | mã 409; phiếu ghi được 0; câu: LC00018026: Ấn phẩm đang bị khóa lưu thông: Đang số hóa CK34883. Ấn phẩm đang ở trạng thái | Đạt |
