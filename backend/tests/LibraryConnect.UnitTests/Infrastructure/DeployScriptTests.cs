@@ -22,6 +22,9 @@ public class DeployScriptTests
             "phải có bước dọn ảnh cũ có tên rõ ràng để đọc nhật ký triển khai biết nó đã chạy");
         script.Should().Contain("libraryconnect-",
             "chỉ dọn ảnh của chính sản phẩm — máy chủ dùng chung, không đụng ảnh của ứng dụng khác");
+        script.Should().Contain("^libraryconnect/(api|admin|opac):",
+            "lối đặt tên cũ (ảnh dựng tại chỗ) cũng phải được dọn — ba ảnh như thế nằm lại 1,5 GB "
+            + "trên máy chủ vì bước dọn chỉ quét tên kéo từ GHCR");
         script.Should().Contain("PREV_TAG",
             "giữ lại bản ngay trước để còn quay lại được bằng LC_IMAGE_TAG");
     }

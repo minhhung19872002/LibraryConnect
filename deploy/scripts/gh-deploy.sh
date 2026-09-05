@@ -55,8 +55,12 @@ echo "LC_IMAGE_TAG=$TAG" >> .env
 # triển khai đổ vì hết chỗ trên ổ dùng chung. Giữ đúng bản mới và bản ngay trước; ảnh của ứng dụng
 # khác trên máy chủ không đụng tới.
 don_anh_cu() {
+    # Hai lối đặt tên cùng sống trên máy chủ: ảnh kéo từ GHCR
+    # (`ghcr.io/<chu>/libraryconnect-api:<sha>`) và ảnh dựng tại chỗ của lối triển khai cũ
+    # (`libraryconnect/api:latest`). Bản đầu chỉ quét lối thứ nhất, nên ba ảnh cũ nặng 1,5 GB nằm
+    # lại trên ổ tới tận 05/09/2026 mới có người thấy.
     docker images --format '{{.Repository}}:{{.Tag}}' \
-        | grep "/libraryconnect-\(api\|admin\|opac\):" \
+        | grep -E "(/libraryconnect-(api|admin|opac):|^libraryconnect/(api|admin|opac):)" \
         | grep -v ":$TAG\$" \
         | { [ -n "$PREV_TAG" ] && grep -v ":$PREV_TAG\$" || cat; } \
         | xargs -r docker rmi -f >/dev/null 2>&1 || true
