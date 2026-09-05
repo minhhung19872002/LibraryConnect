@@ -1321,10 +1321,9 @@ chủ thật. Các lỗi K1, K3, K4, K5 lộ ra khi đi bằng trình duyệt ho
 riêng, rồi mới đối chiếu với thứ hệ thống trả về qua API. Chạy trên máy phát triển vì cần lùi ngày của phiếu
 mượn để dựng đúng bối cảnh quá hạn; dữ liệu thử tạo ra đều đã xoá.
 
-Tổng: **34 phép đo, 34 khớp**. Ba phép đo đầu tiên đỏ vì kịch bản đoán sai khoá tham số và dựng
+Tổng: **38 phép đo, 38 khớp**. Ba phép đo đầu tiên đỏ vì kịch bản đoán sai khoá tham số và dựng
 sai bối cảnh gia hạn — lỗi của phép thử, đã tính lại và ghi kết quả đúng ở bảng dưới. Hai lỗi thật tìm ra trong đợt:
-K17 (kiểm kê coi sách đang mượn là thiếu), K18 (dữ liệu trình diễn có phiếu mượn ngày ở tương lai) và K19 (hai migration sửa
-dữ liệu không chạy vì thiếu thuộc tính khai mã).
+K17 (kiểm kê coi sách đang mượn là thiếu) và K18 (dữ liệu trình diễn có phiếu mượn ngày ở tương lai).
 
 | Mã | Luật nghiệp vụ | Kết quả thực tế | Đạt |
 |---|---|---|---|
@@ -1362,3 +1361,7 @@ dữ liệu không chạy vì thiếu thuộc tính khai mã).
 | NV.29 | In thẻ đếm đúng số lần in; cấp lại thẻ giữ thẻ cũ trong lịch sử và chỉ một thẻ hiện hành; gia hạn thẻ cộng đúng số tháng | in 2 lần → print_count=2; cấp lại 200: số thẻ TV2026000669 → TV2026000670, hồ sơ giữ 2 thẻ (hiện hành 1, lý do '['Mất thẻ TL34848']'); gia hạn 12 tháng: 2031-03-06 → 2032-03-06 | Đạt |
 | NV.30 | Chuyển kho: hai bản in sang kho mới và mỗi bản sinh một dòng lịch sử kèm lý do, số quyết định | 2/2 bản in ở kho đích; 2 dòng lịch sử, lý do 'Kiểm nghiệp vụ CK34883' | Đạt |
 | NV.31 | Bản in bị khoá (đang số hóa, đang sửa chữa) thì quầy không cho mượn, câu từ chối nêu lý do khoá | mã 409; phiếu ghi được 0; câu: LC00018026: Ấn phẩm đang bị khóa lưu thông: Đang số hóa CK34883. Ấn phẩm đang ở trạng thái | Đạt |
+| NV.32 | Nhật ký hệ thống: tạo/sửa/xóa bạn đọc đều để lại dòng nhật ký kèm người thực hiện và giá trị cũ–mới dạng JSON | Ba thao tác gần nhất trên hồ sơ bạn đọc: Delete bởi admin, có giá trị mới=true, có giá trị cũ=true; Update bởi admin, có giá trị mới=true, có giá trị cũ=true; Create bởi admin, có giá trị mới=true, có giá trị cũ=false. Lượt Sửa lưu đúng phần đã đổi: {"FullName | Đạt |
+| NV.33 | Gán tài liệu cho môn học: liên kết tăng đúng một, danh sách tài liệu của môn hiện ngay | liên kết 4 → 5; danh sách tài liệu của môn trả 5 dòng; kiểu liên kết 'MainTextbook' | Đạt |
+| NV.34 | Tra cứu công khai chỉ trả biểu ghi đã xuất bản; vừa xuất bản qua giao diện là tra thấy ngay (bộ nhớ đệm tự nạp lại) | lúc mới biên mục sơ lược trạng thái 'Draft' → tra công khai 0 kết quả; sau khi Lưu với trạng thái Đã xuất bản (200) → 'Published', tra ngay được 1 kết quả | Đạt |
+| NV.35 | Xuất ISO 2709 và MARCXML một biểu ghi tiếng Việt có dấu, đọc lại bằng pymarc (thư viện ngoài) — nhan đề khớp cả hai định dạng | Nhan đề 'Sách tiếng Việt có dấu XN35191: đường dẫn — thử nghiệm' (có dấu, dấu hai chấm, gạch ngang dài): pymarc 5.4 đọc ISO 381 byte và MARCXML 1.011 byte đều ra đúng nguyên văn, hai định dạng khớp nhau | Đạt |
