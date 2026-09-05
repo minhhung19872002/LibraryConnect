@@ -39,7 +39,7 @@ export const MAU = {
 
   /** Chữ. */
   chu: '#2a2118',
-  chuPhu: '#7a6f5f',
+  chuPhu: '#6f6556',
   chuMo: '#7f7461',
 
   /**

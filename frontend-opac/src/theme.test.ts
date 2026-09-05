@@ -111,7 +111,7 @@ describe('Bảng màu đạt WCAG AA', () => {
   const cap: [string, string, string, number][] = [
     ['chữ thân bài trên giấy', '#2a2118', '#fffdf8', 4.5],
     ['chữ thân bài trên nền trang', '#2a2118', '#f4efe6', 4.5],
-    ['chữ phụ trên giấy', '#7a6f5f', '#fffdf8', 4.5],
+    ['chữ phụ trên giấy', '#6f6556', '#fffdf8', 4.5],
     ['chữ mờ nhất trên giấy', '#7f7461', '#fffdf8', 4.5],
     ['xanh rêu trên giấy', '#35523f', '#fffdf8', 4.5],
     ['chữ trên nút chính', '#f2ecdd', '#35523f', 4.5],
@@ -139,6 +139,8 @@ describe('Bảng màu đạt WCAG AA', () => {
     ['chữ trắng trên nút vàng', '#ffffff', '#9a6c1c', 4.5],
     ['chữ trắng trên nút vàng khi rê chuột', '#ffffff', '#8a6114', 4.5],
     ['dòng cuối chân trang', '#a8a28e', '#22301f', 4.5],
+    // Đo lại sau khi sửa: bộ đếm "Tìm thấy N tài liệu" là chữ phụ nằm trên nền trang, không trên giấy — 4,29.
+    ['chữ phụ trên nền trang', '#6f6556', '#f4efe6', 4.5],
   ];
 
   it.each(capRieng)('%s đạt ngưỡng', (_ten, chu, nen, nguong) => {

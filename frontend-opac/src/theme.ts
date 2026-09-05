@@ -44,7 +44,7 @@ export const theme: ThemeConfig = {
     colorErrorBorder: '#d8b5ac',
 
     colorText: '#2a2118',
-    colorTextSecondary: '#7a6f5f',
+    colorTextSecondary: '#6f6556',
     colorTextTertiary: '#7f7461',
     colorTextDescription: '#7f7461',
 
@@ -68,7 +68,7 @@ export const theme: ThemeConfig = {
     Menu: {
       horizontalItemSelectedColor: '#35523f',
       horizontalItemHoverColor: '#35523f',
-      itemColor: '#7a6f5f',
+      itemColor: '#6f6556',
       itemSelectedColor: '#35523f',
       itemSelectedBg: '#eef2e4',
       itemHoverBg: '#f1ebdd',

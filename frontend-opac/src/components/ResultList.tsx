@@ -117,6 +117,7 @@ export function HoldButton({
 
 /** Một thẻ kết quả: bìa, nhan đề, dòng mô tả, thẻ trạng thái, hai nút hành động bên phải. */
 export function ResultRow({ item }: { item: SearchResult }) {
+  const navigate = useNavigate();
   const { message } = App.useApp();
   const add = useCartStore((state) => state.add);
   const inCart = useCartStore((state) => state.items.some((row) => row.id === item.id));
@@ -167,11 +168,10 @@ export function ResultRow({ item }: { item: SearchResult }) {
 
       <div className="lc-result__actions">
         <HoldButton bibId={item.id} hasCopies={item.itemCount > 0} />
-        <Link to={`/tai-lieu/${item.id}`}>
-          <Button size="small" block>
-            Chi tiết
-          </Button>
-        </Link>
+        {/* Nút điều hướng thẳng, không bọc trong <a>: thẻ a inline cao 0,1 px che vùng chạm (Lighthouse 05/09/2026). */}
+        <Button size="small" block onClick={() => navigate(`/tai-lieu/${item.id}`)}>
+          Chi tiết
+        </Button>
         <Tooltip title={inCart ? 'Tài liệu đã ở trong giỏ' : 'Thêm vào giỏ tài liệu'}>
           <Button
             size="small"

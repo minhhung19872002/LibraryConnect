@@ -30,7 +30,7 @@
   --lc-line: #d8cdb6;
 
   --lc-ink: #2a2118;
-  --lc-muted: #7a6f5f;
+  --lc-muted: #6f6556;
   --lc-muted-light: #7f7461;
 
   --lc-gold: #9a6c1c;
@@ -584,11 +584,6 @@ body {
   gap: 6px;
   justify-content: center;
   flex: none;
-}
-
-/* Liên kết bọc nút phải chiếm đúng khối của nút: thẻ a inline cao 0,1 px làm điểm chạm "Chi tiết" gần như không có (Lighthouse 05/09/2026). */
-.lc-result__actions > a {
-  display: block;
 }
 
 .lc-cover {
