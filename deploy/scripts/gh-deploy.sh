@@ -40,9 +40,23 @@ cd "$DEPLOY_DIR"
 git fetch -q origin main && git reset -q --hard origin/main
 log "mã nguồn tại $(git rev-parse --short HEAD)"
 
-# Ghim tag ảnh cho lượt này, ghi vào .env để `up` sau cũng dùng đúng bản.
+# Ghim tag ảnh cho lượt này, ghi vào .env để `up` sau cũng dùng đúng bản. Giữ lại tag đang chạy để
+# còn quay lại được, và để bước dọn ảnh bên dưới biết bản nào không được xoá.
+PREV_TAG=$(grep '^LC_IMAGE_TAG=' .env | cut -d= -f2- || true)
 sed -i '/^LC_IMAGE_TAG=/d' .env
 echo "LC_IMAGE_TAG=$TAG" >> .env
+
+# Dọn ảnh cũ của chính sản phẩm. Mỗi lượt kéo ba ảnh gắn tag theo mã commit (ảnh API 1,37 GB) mà
+# `docker image prune` chỉ dọn ảnh không tag — ngày 05/09/2026 hai mươi bản cũ chiếm 27 GB và lượt
+# triển khai đổ vì hết chỗ trên ổ dùng chung. Giữ đúng bản mới và bản ngay trước; ảnh của ứng dụng
+# khác trên máy chủ không đụng tới.
+don_anh_cu() {
+    docker images --format '{{.Repository}}:{{.Tag}}' \
+        | grep "/libraryconnect-\(api\|admin\|opac\):" \
+        | grep -v ":$TAG\$" \
+        | { [ -n "$PREV_TAG" ] && grep -v ":$PREV_TAG\$" || cat; } \
+        | xargs -r docker rmi -f >/dev/null 2>&1 || true
+}
 
 log "kéo ảnh api/admin/opac:$TAG"
 $COMPOSE pull -q api admin opac
@@ -74,7 +88,9 @@ for i in $(seq 1 48); do
     if [ "$s" = healthy ]; then
         code=$(curl -s -o /dev/null -w '%{http_code}' https://thuvien.bluestar.com.vn/api/public/settings || echo 000)
         log "deploy $TAG THÀNH CÔNG (healthy sau $((i * 5))s, /api/public/settings → $code)"
+        don_anh_cu
         docker image prune -f >/dev/null 2>&1 || true
+        log "đã dọn ảnh cũ, còn trống $(df -h / | awk 'NR==2 {print $4}') trên ổ"
         exit 0
     fi
     sleep 5

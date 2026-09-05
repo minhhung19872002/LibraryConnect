@@ -58,8 +58,10 @@ hết hạn đúng hôm ấy vì khóa viết cứng; trang Tổng quan còn dò
 trình soạn MARC báo lỗi thiếu 001 trên mọi biểu ghi mới. Tối cùng ngày chạy **test sâu từng dòng của
 Chương V** bằng luồng ghi thật trên máy chủ (đơn đặt → biên bản, kiểm kê → quyết định mất, đầu báo → đóng
 tập, tài liệu số → thu hồi quyền, sao lưu thật, nhập Excel/ZIP, biểu mẫu in): **không dòng nào của Chương V
-thiếu chức năng**, tìm thêm một lỗi (in phiếu mượn của bạn đọc đã xóa hồ sơ đổ 500). Cả 6 đã sửa, tổng
-**153 lỗi, đã sửa 153**. Phụ lục cuối `docs/06` ghi kết quả từng kịch bản (hơn 370 dòng).
+thiếu chức năng**, tìm thêm một lỗi (in phiếu mượn của bạn đọc đã xóa hồ sơ đổ 500). Đưa bản sửa lên
+máy chủ thì lộ lỗi vận hành thứ bảy: ổ đĩa đầy vì kịch bản triển khai không dọn ảnh cũ (20 bộ ảnh,
+27 GB). Cả 7 đã sửa, tổng **154 lỗi, đã sửa 154**. Phụ lục cuối `docs/06` ghi kết quả từng kịch bản
+(hơn 400 dòng).
 
 Đọc thẳng hồ sơ gốc còn tìm ra thứ không phải lỗi mã: **bốn hồ sơ bàn giao** mà Chương V mục III và
 mục 5 đòi — kế hoạch triển khai, kế hoạch đào tạo, cam kết bảo hành, hồ sơ nghiệm thu — nay là
@@ -130,6 +132,7 @@ vướng — mỗi cái sinh ra từ một lỗi đã xảy ra thật:
 | `mobile/test/features/list_refresh_after_write_test.dart` | Màn hình gọi `checkout`/`renewLoan`/`createHold`/`cancelHold` phải `ref.invalidate` đúng provider tương ứng — hai màn hình từng ghi xong mà danh sách không đổi |
 | `backend/.../Security/NginxConfigParityTests.cs` (luật thứ hai) | Tệp Nginx nào có `limit_req` thì phải có `limit_req_status 429` và trang lỗi 429 dạng JSON — mặc định Nginx trả trang HTML 503, máy khách chỉ hiện được "máy chủ lỗi" |
 | `frontend-admin/src/modules/dashboard/DashboardPage.test.ts` | Trang Tổng quan không mang dòng giữ chỗ về tiến độ dự án và phải đọc báo cáo tổng quan — màn hình đầu tiên sau đăng nhập từng nói "đang bàn giao" suốt từ phase 1 tới bản chạy thật |
+| `backend/.../Infrastructure/DeployScriptTests.cs` | `gh-deploy.sh` phải có bước `don_anh_cu` giữ bản mới và bản trước, xoá ảnh `libraryconnect-*` còn lại — 20 bộ ảnh cũ từng làm đầy ổ 96 GB và chặn mọi lượt triển khai |
 
 > Một phép thử quét mã nguồn chỉ chặn đúng thư mục nó quét. Thêm luật mới thì hỏi ngay: gói kia có
 > vi phạm cùng luật ấy không? Lỗi D8 sửa cho `frontend-admin` rồi ghi là "cả sản phẩm", nhưng
@@ -289,6 +292,10 @@ docker compose run --rm -d --name lc-api-kiem -e LC_DB_NAME=lc_kiem -e LC_SEED_D
 42. **Hai lối đi tới cùng một luật phải cho cùng một câu trả lời.** Đường lưu cấp 001 rồi mới kiểm,
     endpoint kiểm tra riêng thì không — trình soạn báo lỗi mà bấm Lưu vẫn xong. Nhập ISO 2709 đã
     gặp đúng chuyện này và lọc thông báo ở chỗ của nó thay vì sửa gốc; lần này sửa gốc.
+43. **Mỗi lượt triển khai để lại một bộ ảnh; ai không dọn thì ổ đĩa dọn.** `docker image prune -f`
+    chỉ xoá ảnh không tag, mà ảnh kéo về gắn tag theo mã commit nên nằm nguyên: 21 lượt trong hai
+    ngày là 27 GB, ổ dùng chung đầy 100% và bản sửa không lên được. Kịch bản triển khai phải tự dọn,
+    giữ đúng bản đang chạy và bản trước để quay lại.
 
 ### A.4. Cơ chế dùng chung — dùng lại, đừng viết chỗ mới
 
