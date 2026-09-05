@@ -76,7 +76,9 @@ ngưỡng nợ, thẻ hết hạn, sinh số báo, kiểm kê — 16 phép đo k
 trên kho phát triển) và lệnh xử lý thiếu ghi mất luôn cả chúng. Đối chiếu tiếp số liệu tám ô của trang Tổng quan với SQL độc lập
 (điều 2.8) thì khớp tuyệt đối, nhưng lộ ra 94 phiếu mượn của bộ dữ liệu trình diễn mang ngày ở tương lai, ngày trả nằm trước ngày
 mượn. Kiểm lại chính bản sửa ấy trên máy chủ thật thì lộ lỗi thứ mười chín: hai migration sửa dữ liệu **không chạy** vì thiếu
-thuộc tính `[Migration]`, mà máy chủ vẫn ghi "đã ở phiên bản mới nhất". Cả 19 đã sửa, tổng **166 lỗi, đã sửa 166**.
+thuộc tính `[Migration]`, mà máy chủ vẫn ghi "đã ở phiên bản mới nhất". Đợt kiểm thêm soi bốn việc chạy nền theo lịch và hai
+giao thức liên thư viện bằng máy khách của người khác (`sickle` cho OAI-PMH, `pymarc` cho MARCXML): OAI-PMH đạt cả sáu verb,
+SRU thì trả **toàn bộ kho** cho một truy vấn sai cú pháp và không báo lỗi cho chỉ mục lạ. Cả 20 đã sửa, tổng **167 lỗi, đã sửa 167**.
 Phụ lục cuối `docs/06` ghi kết quả từng kịch bản (hơn 450 dòng).
 
 Đọc thẳng hồ sơ gốc còn tìm ra thứ không phải lỗi mã: **bốn hồ sơ bàn giao** mà Chương V mục III và
@@ -361,6 +363,11 @@ docker compose run --rm -d --name lc-api-kiem -e LC_DB_NAME=lc_kiem -e LC_SEED_D
 55. **Triển khai xong phải kiểm chính thứ vừa sửa, trên máy chủ thật.** Hai migration sửa dữ liệu đi
     qua CI xanh, dựng ảnh, triển khai thành công — và không chạy, vì thiếu `[Migration]`. Bằng chứng
     duy nhất là con số dữ liệu trên máy chủ vẫn y như cũ. "Đã triển khai" không phải "đã có tác dụng".
+56. **Giao thức trao đổi phải trả lời sai một cách ồn ào.** SRU nhận `(dc.title="a" and` rồi trả cả
+    12.060 biểu ghi vì bộ phân tích coi phần không hiểu là từ khóa. Thư viện bạn nhận đủ kết quả nên
+    tưởng đúng. Với mọi thứ nói chuyện với hệ thống khác, phép thử phải hỏi cả **câu sai có bị chặn
+    không**, không chỉ câu đúng có chạy không — và kiểm bằng máy khách của người khác, không bằng máy
+    khách của chính mình.
 
 ### A.4. Cơ chế dùng chung — dùng lại, đừng viết chỗ mới
 

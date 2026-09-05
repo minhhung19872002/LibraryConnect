@@ -128,6 +128,40 @@ public class InterLibraryTests
         indexes.Should().Contain(new[] { "title", "creator", "isbn" });
     }
 
+    /// <summary>
+    /// K20 (06/09/2026): trên máy chủ thật, `(dc.title="a" and` trả về **12.060 biểu ghi** — cả kho —
+    /// thay vì một chẩn đoán lỗi; chỉ mục lạ `dc.khongco` trả về hai biểu ghi bất kỳ; version=9.9 được
+    /// phục vụ như thể là 1.2. Thư viện bạn nối vào không có cách nào biết mình hỏi sai.
+    /// </summary>
+    [Theory]
+    [InlineData("(dc.title=%22a%22 and", "1.2", "info:srw/diagnostic/1/10")]
+    [InlineData("dc.title=a and dc.author=b or dc.subject=c", "1.2", "info:srw/diagnostic/1/10")]
+    [InlineData("dc.khongco=abc", "1.2", "info:srw/diagnostic/1/16")]
+    [InlineData("dc.date%3E2020", "1.2", "info:srw/diagnostic/1/19")]
+    [InlineData("dc.title=a", "9.9", "info:srw/diagnostic/1/5")]
+    public async Task SRU_hoi_sai_thi_tra_chan_doan_dung_ma_chu_khong_tra_ket_qua(
+        string query, string version, string uri)
+    {
+        var client = _factory.CreateClient();
+
+        var document = await GetXmlAsync(
+            client, $"/sru?operation=searchRetrieve&version={version}&query={query}");
+
+        var uris = document.Descendants()
+            .Where(element => element.Name.LocalName == "uri")
+            .Select(element => element.Value)
+            .ToList();
+
+        uris.Should().Contain(uri, "câu hỏi sai phải nhận chẩn đoán, không phải một tập kết quả");
+
+        var soBieuGhi = document.Descendants()
+            .Where(element => element.Name.LocalName == "numberOfRecords")
+            .Select(element => element.Value)
+            .FirstOrDefault();
+
+        soBieuGhi.Should().Be("0", "không được trả biểu ghi nào cho một câu hỏi sai");
+    }
+
     [Fact]
     public async Task SRU_tra_cuu_tra_ve_MARCXML_dung_khong_gian_ten()
     {

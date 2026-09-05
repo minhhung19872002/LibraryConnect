@@ -55,10 +55,13 @@ public static class CqlParser
             throw new CqlException("Chưa có truy vấn.");
         }
 
+        KiemCuPhap(query);
+
         var tokens = Tokenize(query);
         var result = new CqlQuery();
         var index = 0;
         var seenOperator = false;
+        RpnOperator? toanTuDauTien = null;
 
         while (index < tokens.Count)
         {
@@ -78,7 +81,15 @@ public static class CqlParser
                 if (!seenOperator)
                 {
                     result.Operator = op;
+                    toanTuDauTien = op;
                     seenOperator = true;
+                }
+                else if (toanTuDauTien != op)
+                {
+                    // Bộ tìm kiếm nối mọi mệnh đề bằng **một** toán tử. Nhận `a and b or c` rồi lặng
+                    // lẽ dùng VÀ cho cả câu là trả về tập kết quả khác hẳn thứ người hỏi muốn (K20).
+                    throw new CqlException(
+                        "Chưa hỗ trợ nhiều toán tử khác nhau trong một truy vấn; hãy tách thành hai lượt tìm.");
                 }
 
                 index++;
@@ -91,6 +102,23 @@ public static class CqlParser
                 && IsRelation(tokens[index + 1].Text)
                 && !tokens[index + 1].Quoted)
             {
+                // Tên chỉ mục dính dấu ngoặc nghĩa là câu hỏi dùng cú pháp lồng nhau chưa hỗ trợ.
+                if (ChuaHoTro(token.Text))
+                {
+                    throw new CqlException(
+                        $"Không hiểu phần '{token.Text}' của truy vấn. Bộ phân tích chưa hỗ trợ dấu ngoặc "
+                        + "và toán tử lồng nhau.");
+                }
+
+                var quanHe = tokens[index + 1].Text;
+
+                // Quan hệ so sánh có trong CQL nhưng bộ tìm kiếm ở đây chỉ so khớp chuỗi. Nhận nó rồi
+                // đối xử như dấu bằng là trả về kết quả sai mà không ai biết; thà nói thẳng là chưa hỗ trợ.
+                if (quanHe is not ("=" or "=="))
+                {
+                    throw new CqlException($"Chưa hỗ trợ quan hệ '{quanHe}'; hãy dùng dấu '='.", 19);
+                }
+
                 result.Clauses.Add(new CqlClause(
                     token.Text, tokens[index + 1].Text, tokens[index + 2].Text));
 
@@ -99,6 +127,19 @@ public static class CqlParser
             }
 
             // Dạng trần: chỉ có từ khóa, hiểu là tìm ở mọi chỗ.
+            //
+            // Nhưng chỉ khi nó **là** một từ khóa. Trước 06/09/2026 mọi thứ không hiểu được đều rơi
+            // vào đây: `(dc.title="a" and` thành một mệnh đề tìm chuỗi `(dc.title`, và vì mệnh đề ấy
+            // không khớp gì nên toán tử VÀ/HOẶC còn lại kéo cả kho ra — một câu hỏi hỏng trả về
+            // **toàn bộ 12.060 biểu ghi** thay vì báo lỗi cú pháp (K20). Thư viện bạn nối vào qua SRU
+            // không có cách nào biết mình gõ sai.
+            if (!token.Quoted && ChuaHoTro(token.Text))
+            {
+                throw new CqlException(
+                    $"Không hiểu phần '{token.Text}' của truy vấn. Bộ phân tích chưa hỗ trợ dấu ngoặc "
+                    + "và toán tử lồng nhau; hãy viết dạng «chỉ mục quan hệ \"từ khóa\"».");
+            }
+
             result.Clauses.Add(new CqlClause("cql.serverChoice", "=", token.Text));
             index++;
         }
@@ -108,7 +149,123 @@ public static class CqlParser
             throw new CqlException("Truy vấn không có mệnh đề nào hiểu được.");
         }
 
+        // Toán tử đứng cuối câu nghĩa là vế phải bị cụt: `dc.title=a and` không phải câu hỏi hoàn chỉnh.
+        if (tokens.Count > 0 && IsOperator(tokens[^1].Text) && !tokens[^1].Quoted)
+        {
+            throw new CqlException("Truy vấn kết thúc bằng toán tử nên còn thiếu vế sau.");
+        }
+
         return result;
+    }
+
+    /// <summary>
+    /// Bắt những kiểu viết mà bộ phân tích giản lược này **không** diễn dịch đúng được.
+    ///
+    /// <para>Bộ tách từ vốn bỏ hẳn dấu ngoặc, nên `(a or b) and c` biến thành `a or b and c` rồi rút về
+    /// một toán tử duy nhất — trả về tập kết quả khác hẳn câu hỏi, mà không báo gì (K20). Ngoặc bọc
+    /// trọn một câu chỉ có một toán tử thì vô hại, giữ nguyên; còn lại thì nói thẳng là chưa hỗ trợ.</para>
+    /// </summary>
+    private static void KiemCuPhap(string query)
+    {
+        var trongNhay = false;
+        var doSau = 0;
+        var soNgoac = 0;
+        var soToanTu = 0;
+        var tu = new StringBuilder();
+
+        void HetTu()
+        {
+            if (tu.Length > 0)
+            {
+                if (IsOperator(tu.ToString()))
+                {
+                    soToanTu++;
+                }
+
+                tu.Clear();
+            }
+        }
+
+        foreach (var ky_tu in query)
+        {
+            if (ky_tu == '"')
+            {
+                trongNhay = !trongNhay;
+                HetTu();
+                continue;
+            }
+
+            if (trongNhay)
+            {
+                continue;
+            }
+
+            switch (ky_tu)
+            {
+                case '(':
+                    HetTu();
+                    doSau++;
+                    soNgoac++;
+                    break;
+                case ')':
+                    HetTu();
+                    doSau--;
+                    if (doSau < 0)
+                    {
+                        throw new CqlException("Truy vấn thừa dấu ngoặc đóng.");
+                    }
+
+                    break;
+                case ' ':
+                case '\t':
+                case '\n':
+                case '\r':
+                    HetTu();
+                    break;
+                default:
+                    tu.Append(ky_tu);
+                    break;
+            }
+        }
+
+        HetTu();
+
+        if (trongNhay)
+        {
+            throw new CqlException("Truy vấn thiếu dấu nháy kép đóng.");
+        }
+
+        if (doSau != 0)
+        {
+            throw new CqlException("Truy vấn thiếu dấu ngoặc đóng.");
+        }
+
+        if (soNgoac > 0 && soToanTu > 1)
+        {
+            throw new CqlException(
+                "Chưa hỗ trợ nhóm ngoặc lồng nhiều toán tử; hãy viết dạng «chỉ mục = \"từ khóa\"» nối bằng một toán tử.");
+        }
+    }
+
+    /// <summary>Ký tự chỉ có nghĩa trong CQL đầy đủ; gặp trong một từ trần là câu hỏi viết sai.</summary>
+    private static bool ChuaHoTro(string token) =>
+        token.IndexOfAny(new[] { '(', ')', '/', '<', '>' }) >= 0;
+
+    /// <summary>
+    /// Tên chỉ mục có nằm trong danh sách hỗ trợ không. Trả <c>false</c> cho chỉ mục lạ, để tầng SRU
+    /// còn trả về chẩn đoán 16 thay vì lặng lẽ tìm ở mọi trường và đưa ra kết quả sai (K20).
+    /// </summary>
+    public static bool TryMapIndex(string index, out Bib1Use use)
+    {
+        var key = (index ?? string.Empty).Trim().ToLowerInvariant();
+        var name = key.Contains('.') ? key[(key.LastIndexOf('.') + 1)..] : key;
+
+        use = MapIndex(index ?? string.Empty);
+
+        return name is "serverchoice" or "anywhere" or "any" or "keyword" or "all"
+            or "title" or "creator" or "author" or "personalname" or "name" or "publisher"
+            or "subject" or "isbn" or "identifier" or "issn" or "date" or "issued"
+            or "description" or "note";
     }
 
     /// <summary>Ánh xạ tên chỉ mục CQL sang tiêu chí Bib-1 tương ứng.</summary>
@@ -231,5 +388,9 @@ public static class CqlParser
 
 public class CqlException : Exception
 {
-    public CqlException(string message) : base(message) { }
+    public CqlException(string message, int diagnosticCode = 10) : base(message) =>
+        DiagnosticCode = diagnosticCode;
+
+    /// <summary>Mã chẩn đoán SRU tương ứng: 10 là lỗi cú pháp, 19 là quan hệ không hỗ trợ.</summary>
+    public int DiagnosticCode { get; }
 }

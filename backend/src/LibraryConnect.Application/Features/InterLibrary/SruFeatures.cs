@@ -71,6 +71,15 @@ public class HandleSruRequestQueryHandler : IRequestHandler<HandleSruRequestQuer
             return Diagnostic(7, "Thiếu tham số query.", request.Version);
         }
 
+        // Phiên bản lạ phải bị từ chối, không phải phục vụ như thể là 1.2: máy khách nghĩ mình đang
+        // nói SRU 2.0 mà nhận về khuôn 1.2 thì đọc sai kết quả mà không biết (K20).
+        var version = (request.Version ?? "1.2").Trim();
+
+        if (version is not ("1.1" or "1.2"))
+        {
+            return Diagnostic(5, $"Chỉ hỗ trợ SRU 1.1 và 1.2, không hỗ trợ '{version}'.", "1.2");
+        }
+
         CqlQuery cql;
 
         try
@@ -79,7 +88,18 @@ public class HandleSruRequestQueryHandler : IRequestHandler<HandleSruRequestQuer
         }
         catch (CqlException ex)
         {
-            return Diagnostic(10, ex.Message, request.Version);
+            return Diagnostic(ex.DiagnosticCode, ex.Message, request.Version);
+        }
+
+        // Chỉ mục lạ: trả chẩn đoán 16 thay vì âm thầm tìm ở mọi trường rồi đưa ra kết quả không
+        // liên quan — thư viện bạn hỏi "dc.khongco" mà nhận về hai biểu ghi là tệ hơn nhận về lỗi.
+        var chiMucLa = cql.Clauses
+            .Select(clause => clause.Index)
+            .FirstOrDefault(index => !CqlParser.TryMapIndex(index, out _));
+
+        if (chiMucLa is not null)
+        {
+            return Diagnostic(16, $"Không hỗ trợ chỉ mục '{chiMucLa}'.", request.Version);
         }
 
         var schema = (request.RecordSchema ?? "marcxml").ToLowerInvariant();
