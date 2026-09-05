@@ -351,14 +351,14 @@ Cập nhật lần cuối: 05/09/2026, sau ba đợt rà theo đặc tả và đ
 
 | Mã | Yêu cầu E-HSMT | Đáp ứng | Tên chức năng / chứng minh |
 |---|---|---|---|
-| XI.1.1 | Tra cứu cơ bản, nâng cao, theo ISBN, quét mã vạch, quét QR | **Có** | Màn hình Tra cứu (phạm vi, gợi ý, gõ không dấu, facet, sắp xếp, nâng cao VÀ/HOẶC/KHÔNG), màn hình Quét mã nhận ISBN-10/13, ĐKCB, QR (mobile_scanner) kèm nhập tay — MB.10, MB.11, MB.30, MB.31 |
+| XI.1.1 | Tra cứu cơ bản, nâng cao, theo ISBN, quét mã vạch, quét QR | **Có** | Màn hình Tra cứu (phạm vi, gợi ý, gõ không dấu, facet, sắp xếp, nâng cao VÀ/HOẶC/KHÔNG), màn hình Quét mã nhận ISBN-10/13, ĐKCB, QR (mobile_scanner) kèm nhập tay; **đã quét thật bằng camera**: mã vạch ĐKCB và QR chứa ISBN đều mở đúng tài liệu — MB.10, MB.11, MB.30, MB.31, MB.42, MB.43 |
 | XI.1.2 | Duyệt theo chủ đề, đề mục, tác giả | **Có** | Duyệt danh mục: cây chủ đề và phân loại DDC bung từng cấp, tác giả A–Z, bộ sưu tập, lọc tại chỗ không dấu — MB.15 |
 | XI.1.3 | Duyệt theo chuyên ngành, môn học | **Có** | Ngành → môn → tài liệu kèm nhãn giáo trình / tham khảo — MB.15 |
 | XI.1.4 | Danh mục luận văn / luận án; ấn phẩm định kỳ | **Có** | Hai danh sách phân trang có ô tìm — MB.15 |
 | XI.1.5 | Chi tiết tài liệu, tình trạng sẵn có, vị trí kho | **Có** | Năm thẻ: Thông tin (ISBD), Bản in (kho · giá · tình trạng), Tài liệu số, MARC dạng bảng, Nhận xét; nút đặt giữ đổi theo tình trạng thật — MB.10, MB.12 |
 | XI.1.6 | Tin tức, thông tin thư viện, giờ mở cửa, bản đồ | **Có** | Trang chủ, tin tức và trang tĩnh dựng HTML, nút Gọi và Chỉ đường — MB.13, MB.14 |
 | XI.2.1 | Đọc tài liệu số trong ứng dụng; tải về vùng ngoại tuyến mã hoá, tự hết hạn | **Có** | Trình đọc trang ảnh máy chủ đóng chữ chìm, tìm trong văn bản, đánh dấu trang; gói AES-256-CBC lưu mã hoá, tự hết hạn — MB.21, MB.22 |
-| XI.2.2 | Mượn sách giấy tự phục vụ có xác thực vị trí | **Có** | Xác thực NONE / Wi-Fi / QR trạm rồi quét mã vạch liên tiếp, phiếu tóm tắt; máy chủ kiểm chính sách — MB.19, MB.20 |
+| XI.2.2 | Mượn sách giấy tự phục vụ có xác thực vị trí | **Có** | Xác thực NONE / Wi-Fi / QR trạm rồi quét mã vạch liên tiếp, phiếu tóm tắt; máy chủ kiểm chính sách; **đã chạy trọn luồng bằng camera trên máy chủ thật** (quét QR trạm rồi quét mã vạch sách, phiếu mượn ghi thật) — MB.19, MB.20, MB.44 |
 | XI.2.3 | Đặt giữ chỗ, vị trí hàng đợi, thông báo khi sẵn sàng | **Có** | Đặt giữ từ chi tiết, thẻ Đặt giữ trong Sách của tôi kèm vị trí và hủy; thông báo HOLD_READY của máy chủ — MB.17, MB.32 |
 | XI.2.4 | Gửi yêu cầu tài liệu số hạn chế; lịch sử xem/tải | **Có** | Nút Gửi yêu cầu kèm lý do, thẻ Yêu cầu và Lịch sử — MB.23 |
 | XI.2.5 | Lịch sử mượn trả; xin gia hạn | **Có** | Sách của tôi: Đang mượn (gia hạn do máy chủ quyết, hiện đúng câu từ chối), Lịch sử có lọc — MB.16, MB.32 |
