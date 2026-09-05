@@ -222,6 +222,31 @@ public class AcceptanceRehearsalTests
     }
 
     /// <summary>
+    /// Kiểm trên máy chủ thật sau lần sửa đầu: "cơ sở dữ liệu" từ 45 vọt lên 805 kết quả — mỗi từ so
+    /// như chuỗi con nên "co" trúng "công", "so" trúng "số", "du" trúng "du lịch". Tiếng Việt là từng
+    /// âm tiết ngắn: phải so **trọn từ**, chỉ từ dài (tiếng Anh: "system" ↔ "systems") mới so tiền tố.
+    /// </summary>
+    [Fact]
+    public async Task Tra_cuu_nhieu_tu_so_tron_tu_khong_bat_am_tiet_nam_trong_tu_khac()
+    {
+        var client = await ClientAsync();
+        var marker = Unique();
+        var (documentTypeId, marcJson) = await RecordWithoutControlNumberAsync(client, $"Cơ sở dữ liệu nhập môn {marker}");
+        var wanted = await ReadAsync<SaveBibResultDto>(await client.PostAsJsonAsync(
+            "/api/cataloging/bibs", new { marcJson, documentTypeId, status = "Published" }, LibraryConnectFactory.JsonOptions));
+        var (_, noisyMarc) = await RecordWithoutControlNumberAsync(client, $"Công cụ số hóa tài liệu du lịch {marker}");
+        var noisy = await ReadAsync<SaveBibResultDto>(await client.PostAsJsonAsync(
+            "/api/cataloging/bibs", new { marcJson = noisyMarc, documentTypeId, status = "Published" }, LibraryConnectFactory.JsonOptions));
+
+        var page = await ReadAsync<PagedResult<LibraryConnect.Application.Features.Opac.OpacResultDto>>(
+            await client.GetAsync($"/api/search?keyword={Uri.EscapeDataString("cơ sở dữ liệu " + marker)}"));
+
+        page.Items.Should().Contain(item => item.Id == wanted.Id);
+        page.Items.Should().NotContain(item => item.Id == noisy.Id,
+            "\"công cụ số hóa tài liệu du lịch\" chứa co/so/du/lieu làm chuỗi con nhưng không chứa từ nào trọn vẹn");
+    }
+
+    /// <summary>
     /// Máy chủ thật chưa cấu hình SMTP (SMTP.ENABLED = false), nhưng "Gửi giỏ tài liệu qua email" vẫn
     /// trả 200 "Đã gửi danh sách tới …" — bộ gửi im lặng bỏ qua. Môi trường kiểm thử cũng không có
     /// SMTP, nên đúng là bối cảnh để đòi một câu trả lời thẳng (bài học 11: "đã lưu" chưa phải "đã đến").

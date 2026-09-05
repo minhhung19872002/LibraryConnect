@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using System.Text.RegularExpressions;
 using LibraryConnect.Application.Common.Extensions;
 using LibraryConnect.Application.Common.Text;
 using LibraryConnect.Domain.Entities.Bib;
@@ -49,10 +50,15 @@ public static class OpacQueryBuilder
 
         return scope switch
         {
-            OpacSearchScope.Title => EveryWord(keyword, word => bib =>
-                DatabaseFunctions.Unaccent(bib.Title).Contains(word)
-                || DatabaseFunctions.Unaccent(bib.Subtitle ?? string.Empty).Contains(word)
-                || DatabaseFunctions.Unaccent(bib.UniformTitle ?? string.Empty).Contains(word)),
+            OpacSearchScope.Title => EveryWord(keyword,
+                word => bib =>
+                    DatabaseFunctions.Unaccent(bib.Title).Contains(word)
+                    || DatabaseFunctions.Unaccent(bib.Subtitle ?? string.Empty).Contains(word)
+                    || DatabaseFunctions.Unaccent(bib.UniformTitle ?? string.Empty).Contains(word),
+                pattern => bib =>
+                    Regex.IsMatch(DatabaseFunctions.Unaccent(bib.Title), pattern)
+                    || Regex.IsMatch(DatabaseFunctions.Unaccent(bib.Subtitle ?? string.Empty), pattern)
+                    || Regex.IsMatch(DatabaseFunctions.Unaccent(bib.UniformTitle ?? string.Empty), pattern)),
 
             // Chỉ hỏi qua bảng liên kết chứ không kèm điều kiện trên cột tác giả chính: tác giả
             // chính luôn được ghi vào bảng liên kết cùng lúc với biểu ghi, nên hai điều kiện cho
@@ -92,7 +98,9 @@ public static class OpacQueryBuilder
             // ISSN, số kiểm soát và tóm tắt. Cơ sở dữ liệu đã gộp sẵn tất cả vào một cột có chỉ mục,
             // nên ở đây chỉ còn một điều kiện — viết tách ra thành mười một điều kiện HOẶC thì mỗi
             // lượt tra cứu phải quét cả kho.
-            _ => EveryWord(keyword, word => bib => bib.SearchAll.Contains(word))
+            _ => EveryWord(keyword,
+                word => bib => bib.SearchAll.Contains(word),
+                pattern => bib => Regex.IsMatch(bib.SearchAll, pattern))
         };
     }
 
@@ -113,15 +121,33 @@ public static class OpacQueryBuilder
             .ToList();
 
     /// <summary>
+    /// Mẫu biểu thức chính quy PostgreSQL cho một từ: <c>\m</c> là đầu từ, <c>\M</c> là cuối từ. Từ ngắn
+    /// (âm tiết tiếng Việt: "co", "so", "du", "lieu") phải trọn vẹn — so chuỗi con thì "co" trúng "cong",
+    /// "so" trúng "so" của "số hóa", và "cơ sở dữ liệu" trên kho thật vọt từ 45 lên 805 kết quả. Từ dài
+    /// hơn bốn ký tự (thường là tiếng Anh) chỉ cần đúng tiền tố, để "system" vẫn khớp "systems".
+    /// </summary>
+    public static string WordPattern(string word)
+    {
+        var escaped = Regex.Escape(word);
+
+        return word.Length <= 4 ? $"\\m{escaped}\\M" : $"\\m{escaped}";
+    }
+
+    /// <summary>
     /// Mọi từ trong từ khóa đều phải có mặt, mỗi từ ở đâu cũng được.
     ///
     /// Trước 05/09/2026 cả cụm từ khóa được so như một chuỗi con liền nhau: gõ đúng nhan đề "Cơ sở dữ
     /// liệu — lý thuyết và bài tập" ra 0 kết quả vì dấu gạch, gõ "cơ sở dữ liệu bài tập" cũng 0 vì
     /// hai cụm không đứng cạnh nhau. Bạn đọc nhớ vài từ của nhan đề chứ không nhớ thứ tự và dấu câu.
-    /// Mỗi từ vẫn là một phép so chuỗi con trên cột có chỉ mục ba ký tự, nên PostgreSQL vẫn dùng chỉ mục.
+    ///
+    /// Một từ thì giữ phép so chuỗi con như cũ ("kinh" vẫn ra "kinh tế"). Từ hai từ trở lên thì mỗi từ
+    /// so trọn từ bằng biểu thức chính quy có biên từ — pg_trgm hỗ trợ toán tử <c>~</c> nên chỉ mục ba
+    /// ký tự trên cột vẫn được dùng.
     /// </summary>
     private static Expression<Func<BibRecord, bool>> EveryWord(
-        string keyword, Func<string, Expression<Func<BibRecord, bool>>> clause)
+        string keyword,
+        Func<string, Expression<Func<BibRecord, bool>>> substring,
+        Func<string, Expression<Func<BibRecord, bool>>> wholeWord)
     {
         var words = Words(keyword);
 
@@ -130,7 +156,14 @@ public static class OpacQueryBuilder
             return PredicateBuilder.True<BibRecord>();
         }
 
-        return words.Skip(1).Aggregate(clause(words[0]), (current, word) => current.And(clause(word)));
+        if (words.Count == 1)
+        {
+            return substring(words[0]);
+        }
+
+        return words.Skip(1).Aggregate(
+            wholeWord(WordPattern(words[0])),
+            (current, word) => current.And(wholeWord(WordPattern(word))));
     }
 
     /// <summary>
