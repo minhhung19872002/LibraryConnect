@@ -816,7 +816,7 @@ Dữ liệu ghi thêm mang dấu `NT…` và đã xoá; thứ không xoá đư�
 nhận số) được đánh dấu ngừng dùng. Mã kịch bản bám theo bảng ở trên; mã có hậu tố chữ là bước phụ; mã `F2`, `K…` là lỗi
 tìm ra trong ngày (mục K của `08-so-loi.md`).
 
-Tổng: **488 kịch bản chạy bằng máy, 483 đạt**. Năm dòng "Không đạt" là lần chạy **trước khi sửa** của bốn lỗi, giữ
+Tổng: **490 kịch bản chạy bằng máy, 485 đạt**. Năm dòng "Không đạt" là lần chạy **trước khi sửa** của bốn lỗi, giữ
 lại làm bằng chứng đỏ-trước: F2 → kiểm lại đạt ở K2, T.2 → K8, V.7 → K10, X.3 → K14; dòng III.x là kịch bản của bộ chạy
 dừng giữa chừng vì đoán sai hình dạng tham số (đã chạy lại trọn phân hệ III, không phải lỗi sản phẩm). Mã `X.*` là đợt
 kỹ thuật thứ ba (tạo đồng thời trên mọi khoá duy nhất, nội dung thật của tệp in/xuất); K14, K15 là hai lỗi đợt ấy tìm
@@ -1072,6 +1072,8 @@ chủ thật. Các lỗi K1, K3, K4, K5 lộ ra khi đi bằng trình duyệt ho
 | K15 | Xoá tác giả mà mọi biểu ghi dùng nó đã xoá (dữ liệu K14) → 200, trước bản sửa là 409 'đang được 4 bản ghi sử dụng' | Tác giả song song NTY18594: 200 Xóa giá trị danh mục thành công. | Đạt |
 | K15b | Hồ sơ thẩm quyền không còn mục thử nào | còn 0 | Đạt |
 | K16 | Mượn tự phục vụ: sau bản sửa, khung quét bước 2 mở được camera và ghi mượn bằng camera | Trước sửa: khung đen + 'Chưa được phép dùng camera' dù quyền đang bật. Sau sửa (một bộ điều khiển dùng chung): thấy hình, quét QR trạm rồi quét mã vạch → 'Đã mượn · hạn trả 14/09/2026' | Đạt |
+| K18b | Trang Tổng quan trên máy chủ thật sau khi dọn dữ liệu | đang mượn 621, quá hạn 363, lượt mượn trong kỳ 1905, bản in 17903 | Đạt |
+| K19 | Hai migration sửa dữ liệu đã chạy thật trên máy chủ và dữ liệu sai đã hết | Sau bản sửa d6b88b0: sys.__ef_migrations_history có 20260906020000_KiemKeBoSachDangMuon và 20260906030000_SuaPhieuMuonNgayTuongLai; phiếu mượn ngày tương lai 94 → 0; phiếu trả trước ngày mượn 98 → 0 | Đạt |
 | LT.1 | Chính sách lưu thông nạp sẵn | 7 chính sách | Đạt |
 | LT.2 | Ô thử chính sách: chọn đúng chính sách ưu tiên | Chính sách NTE93707 (ưu tiên None) | Đạt |
 | LT.3 | Danh sách đặt giữ toàn hệ thống và hàng đợi | 129 phiếu | Đạt |
