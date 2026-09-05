@@ -55,8 +55,11 @@ qua tám màn hình chính. Tìm ra **5 lỗi** mà tám đợt trên máy phát
 ở bản chạy thật: hạn mức đăng nhập của Nginx trả trang HTML 503 thay vì JSON 429; đặt giữ được
 biểu ghi không có bản in nào (7.000 biểu ghi thu hoạch chỉ có siêu dữ liệu); 162 thẻ bạn đọc mẫu
 hết hạn đúng hôm ấy vì khóa viết cứng; trang Tổng quan còn dòng giữ chỗ "đang bàn giao" từ phase 1;
-trình soạn MARC báo lỗi thiếu 001 trên mọi biểu ghi mới. Cả 5 đã sửa, tổng **152 lỗi, đã sửa 152**.
-Phụ lục cuối `docs/06` ghi kết quả từng kịch bản.
+trình soạn MARC báo lỗi thiếu 001 trên mọi biểu ghi mới. Tối cùng ngày chạy **test sâu từng dòng của
+Chương V** bằng luồng ghi thật trên máy chủ (đơn đặt → biên bản, kiểm kê → quyết định mất, đầu báo → đóng
+tập, tài liệu số → thu hồi quyền, sao lưu thật, nhập Excel/ZIP, biểu mẫu in): **không dòng nào của Chương V
+thiếu chức năng**, tìm thêm một lỗi (in phiếu mượn của bạn đọc đã xóa hồ sơ đổ 500). Cả 6 đã sửa, tổng
+**153 lỗi, đã sửa 153**. Phụ lục cuối `docs/06` ghi kết quả từng kịch bản (hơn 370 dòng).
 
 Đọc thẳng hồ sơ gốc còn tìm ra thứ không phải lỗi mã: **bốn hồ sơ bàn giao** mà Chương V mục III và
 mục 5 đòi — kế hoạch triển khai, kế hoạch đào tạo, cam kết bảo hành, hồ sơ nghiệm thu — nay là

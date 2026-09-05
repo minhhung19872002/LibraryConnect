@@ -539,6 +539,13 @@ public class FormDataBuilder : IFormDataBuilder
             })
             .ToListAsync(ct);
 
+        // The reader is joined inner: a profile deleted after the loan leaves the list empty, and
+        // indexing it turned a printable "not found" into a 500 on the real server (05/09/2026).
+        if (loans.Count == 0)
+        {
+            throw new NotFoundException("bạn đọc của phiếu", documentId);
+        }
+
         var first = loans[0];
 
         data.Fields["code"] = documentId;
@@ -608,6 +615,13 @@ public class FormDataBuilder : IFormDataBuilder
                 ClassName = loan.Reader!.ClassName
             })
             .ToListAsync(ct);
+
+        // The reader is joined inner: a profile deleted after the loan leaves the list empty, and
+        // indexing it turned a printable "not found" into a 500 on the real server (05/09/2026).
+        if (loans.Count == 0)
+        {
+            throw new NotFoundException("bạn đọc của phiếu", documentId);
+        }
 
         var first = loans[0];
 

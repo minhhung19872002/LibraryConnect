@@ -516,8 +516,11 @@ Tám đợt rà trước đều chạy trên máy phát triển. Đợt này ch�
 gọi API bằng tài khoản đúng vai (quản trị, cán bộ lưu thông, hai bạn đọc thử), rồi mở trình duyệt
 đi qua trang chủ, tra cứu, chi tiết, đăng nhập bạn đọc, trang quản trị, trình soạn MARC, quầy lưu
 thông. Mọi dữ liệu ghi thêm mang dấu `NTT` và đã xoá sau khi xong; kết quả từng kịch bản ở phụ lục
-cuối `06-kich-ban-kiem-thu.md`: **223 kịch bản chạy bằng máy, 222 đạt**; cộng phần đi bằng trình duyệt,
-đợt tìm ra **5 lỗi** — tất cả đã sửa trong ngày.
+cuối `06-kich-ban-kiem-thu.md`. Buổi chiều: 223 kịch bản chạy bằng máy, 222 đạt, cộng phần đi bằng trình
+duyệt tìm ra **5 lỗi** (K1–K5). Buổi tối chạy tiếp **test sâu từng dòng của Chương V** bằng luồng ghi
+thật — đơn đặt từ yêu cầu tới biên bản, kiểm kê từ đóng kho tới quyết định mất, đầu báo từ sinh số tới
+đóng tập, tài liệu số từ tải lên tới thu hồi, sao lưu thật, biểu mẫu in — thêm khoảng 150 kịch bản,
+**không thấy dòng nào của Chương V thiếu chức năng**, tìm thêm **1 lỗi** (K6). Cả 6 đã sửa trong ngày.
 
 | Mã | Mức | Lỗi | Nguyên nhân | Sửa |
 |---|---|---|---|---|
@@ -525,6 +528,7 @@ cuối `06-kich-ban-kiem-thu.md`: **223 kịch bản chạy bằng máy, 222 đ�
 | K2 | Nghiêm trọng | **Bạn đọc đặt giữ được biểu ghi không có bản in nào.** Trên máy chủ thật có hơn 7.000 biểu ghi thu hoạch qua OAI-PMH chỉ có siêu dữ liệu; trang tra cứu vẫn hiện nút "Đặt giữ" và máy chủ nhận phiếu, xếp bạn đọc vào hàng đợi chờ một cuốn sách không bao giờ về | Luật đặt giữ kiểm chính sách, hạn mức, trùng phiếu, đang mượn — nhưng không hỏi câu đầu tiên: thư viện có bản in không. Kho phát triển mọi biểu ghi mẫu đều có ĐKCB nên không ai gặp | Máy chủ từ chối 409 khi biểu ghi không có bản in nào ngoài Mất/Thanh lý; trang tra cứu ẩn nút khi `itemCount = 0`. `AcceptanceRehearsalTests.Dat_giu_bieu_ghi_chua_co_ban_in_nao_thi_bi_tu_choi` đỏ trước khi sửa |
 | K3 | Nặng (dữ liệu trình diễn) | **162 thẻ bạn đọc mẫu hết hạn đúng ngày 05/09/2026**, ba thẻ đã hết hạn từ tháng 8. Từ hôm sau, một phần tư bạn đọc mẫu bị quầy từ chối và OPAC cảnh báo "thẻ hết hạn" — hội đồng sẽ kết luận dữ liệu chưa sẵn sàng | Bộ dữ liệu trình diễn viết cứng bốn khóa 2021–2024, thẻ hết hạn ngày 05/09 của năm nhập học cộng năm; nạp năm 2025 thì đẹp, tới 2026 là khóa đầu rụng | Trên máy chủ: gia hạn 165 thẻ thêm 12 tháng bằng chính chức năng gia hạn hàng loạt (kịch bản BD.18). Trong mã: `DemoReaderCohort` tính khóa theo ngày nạp, khóa cũ nhất còn ít nhất một năm thẻ; `DemoReaderCohortTests` đỏ với ngày 05/09/2026 trước khi sửa |
 | K4 | Vừa (ấn tượng đầu) | **Trang Tổng quan của giao diện quản trị vẫn mang dòng giữ chỗ từ phase 1**: "Hệ thống đang trong quá trình bàn giao theo từng phân hệ…", kèm ba con số về quyền của chính tài khoản. Màn hình đầu tiên sau đăng nhập nói phần mềm chưa xong | Viết ở phase 1 để hội đồng kiểm quyền, rồi không ai quay lại vì mọi đợt rà đi thẳng vào từng phân hệ | Trang Tổng quan hiện số liệu hoạt động từ đầu năm lấy từ báo cáo tổng quan (dùng chung với mục Báo cáo thống kê), kèm lối mở báo cáo; tài khoản không có quyền báo cáo thì chỉ thấy quyền của mình. `DashboardPage.test.ts` cấm dòng giữ chỗ quay lại |
+| K6 | Vừa | **In lại phiếu mượn / phiếu trả của bạn đọc đã xóa hồ sơ thì máy chủ đổ 500 "lỗi hệ thống"** (tìm ra ở đợt test sâu buổi tối, khi in phiếu `PM00003117` của bạn đọc thử đã xóa) | Câu hỏi ghép bạn đọc bằng phép nối trong; hồ sơ xóa mềm bị bộ lọc toàn cục loại ra nên danh sách rỗng, mã lấy phần tử đầu và ném `IndexOutOfRange`. Bộ kiểm thử chỉ in phiếu của bạn đọc còn sống | Danh sách rỗng thì trả 404 "không tìm thấy bạn đọc của phiếu"; `AcceptanceRehearsalTests.In_phieu_muon_cua_ban_doc_da_xoa_ho_so_thi_bao_khong_tim_thay_chu_khong_do_500` đỏ trước khi sửa |
 | K5 | Vừa | **Trình soạn MARC báo "1 lỗi phải sửa trước khi lưu: thiếu 001" trên mọi biểu ghi mới**, dù bấm Lưu vẫn xong vì đường lưu tự cấp số kiểm soát trước khi kiểm. Cán bộ hoặc tự bịa một số 001, hoặc học cách bỏ qua ô đỏ — cả hai đều tệ | Đường lưu cấp 001 rồi mới kiểm; endpoint kiểm tra riêng (trình soạn gọi sau mỗi lần gõ) thì không. Nhập ISO 2709 đã gặp đúng lỗi này và tự lọc thông báo 001 ở chỗ của nó thay vì sửa gốc | Endpoint kiểm tra bỏ lỗi thiếu 001, vì đó là số hệ thống cấp. `AcceptanceRehearsalTests.Kiem_tra_bieu_ghi_khong_bao_loi_thieu_001_vi_he_thong_tu_cap` đỏ trước khi sửa |
 
 ### Đã kiểm trên máy chủ thật và vẫn tốt
@@ -661,8 +665,8 @@ dạng quét mã nguồn chặn cả lớp lỗi quay lại thay vì chỉ chặ
 | Nguy cơ | 1 | 0 | 1 (H9, ghi ở "Làm tiếp") |
 
 Cộng cả ba đợt, đợt áp thiết kế, đợt triển khai và ba đợt rà hoàn thiện ngày 04/09/2026:
-**147 lỗi, đã sửa 145**; thêm **5 lỗi của đợt nghiệm thu thử trên máy chủ thật ngày 05/09/2026 (mục K),
-đã sửa cả 5** — tổng **152 lỗi, đã sửa 152**. Hai mục H3 và H9 đã làm xong ngày 03/09/2026 và ghi ở cột cuối
+**147 lỗi, đã sửa 145**; thêm **6 lỗi của đợt nghiệm thu thử và test sâu trên máy chủ thật ngày 05/09/2026
+(mục K), đã sửa cả 6** — tổng **153 lỗi, đã sửa 153**. Hai mục H3 và H9 đã làm xong ngày 03/09/2026 và ghi ở cột cuối
 của chính hai dòng ấy — con số 134 giữ nguyên cách đếm cũ để đối chiếu được với các bản trước.
 Mỗi lỗi đã sửa đều có phép thử chạy đỏ trước khi sửa và xanh sau khi sửa, kể cả H7: phép thử giả
 tiêu đề đỏ trước khi sửa `CurrentUser.Ip`.

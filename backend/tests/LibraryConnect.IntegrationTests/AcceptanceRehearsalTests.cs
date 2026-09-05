@@ -94,6 +94,59 @@ public class AcceptanceRehearsalTests
     }
 
     /// <summary>
+    /// Đợt test sâu ngày 05/09/2026: in lại phiếu mượn của một bạn đọc đã xóa hồ sơ thì máy chủ đổ
+    /// 500 "lỗi hệ thống" — câu hỏi ghép bạn đọc bằng phép nối trong, hồ sơ đã xóa mềm bị lọc mất
+    /// nên danh sách rỗng và mã lấy phần tử đầu. Người dùng phải nhận một câu trả lời rõ nghĩa.
+    /// </summary>
+    [Fact]
+    public async Task In_phieu_muon_cua_ban_doc_da_xoa_ho_so_thi_bao_khong_tim_thay_chu_khong_do_500()
+    {
+        var client = await ClientAsync();
+
+        var types = await ReadAsync<PagedResult<CatalogItemDto>>(
+            await client.GetAsync("/api/catalogs/reader-types/items?pageSize=50"));
+        var readerId = await ReadAsync<Guid>(await client.PostAsJsonAsync("/api/readers", new
+        {
+            fullName = "Bạn đọc sẽ xóa hồ sơ",
+            studentCode = $"SV{Unique()}",
+            readerTypeId = types.Items.First(item => item.Code == "SV").Id
+        }));
+
+        var warehouses = await ReadAsync<IReadOnlyList<LibraryConnect.Application.Features.Locations.WarehouseDto>>(
+            await client.GetAsync("/api/locations/warehouses"));
+        var quick = await ReadAsync<LibraryConnect.Application.Features.Acquisition.QuickCatalogResultDto>(
+            await client.PostAsJsonAsync("/api/acquisition/quick-catalog", new
+            {
+                title = $"Sách in phiếu {Unique()}", author = "Tác giả", price = 10000m, ddc = "005",
+                itemQuantity = 1, warehouseId = warehouses[0].Id
+            }));
+        var stock = await ReadAsync<PagedResult<LibraryConnect.Application.Features.Acquisition.StockItemDto>>(
+            await client.PostAsJsonAsync("/api/stock/items/search",
+                new { page = 1, pageSize = 5, filter = new { bibId = quick.BibId } }));
+        await ReadAsync<LibraryConnect.Application.Features.Acquisition.BulkItemResultDto>(await client.PostAsJsonAsync(
+            "/api/stock/items/inspect", new { itemIds = stock.Items.Select(item => item.Id).ToArray(), condition = "Tốt" }));
+        var barcodes = stock.Items.Select(item => item.Barcode).ToArray();
+
+        var checkout = await ReadAsync<LibraryConnect.Application.Features.Circulation.CheckoutResultDto>(
+            await client.PostAsJsonAsync("/api/circulation/desk/checkout", new { readerId, barcodes }));
+        await ReadAsync<LibraryConnect.Application.Features.Circulation.ReturnResultDto>(
+            await client.PostAsJsonAsync("/api/circulation/desk/return", new { barcodes }));
+
+        (await client.DeleteAsync($"/api/readers/{readerId}")).EnsureSuccessStatusCode();
+
+        foreach (var formType in new[] { "LOAN_SLIP", "RETURN_SLIP" })
+        {
+            var response = await client.GetAsync($"/api/acquisition/forms/print/{formType}/{checkout.SlipCode}");
+
+            response.StatusCode.Should().Be(HttpStatusCode.NotFound,
+                $"{formType}: {await response.Content.ReadAsStringAsync()}");
+
+            var payload = await response.Content.ReadFromJsonAsync<ApiResponse>(LibraryConnectFactory.JsonOptions);
+            payload!.Message.Should().Contain("bạn đọc");
+        }
+    }
+
+    /// <summary>
     /// Đường lưu cấp số kiểm soát (001) trước khi kiểm tra, nên lưu được biểu ghi không có 001. Nhưng
     /// endpoint kiểm tra riêng — thứ trình soạn MARC gọi sau mỗi lần gõ — không làm bước ấy, nên mọi
     /// biểu ghi mới đều hiện "1 lỗi phải sửa trước khi lưu: thiếu 001" dù bấm Lưu vẫn xong. Hai lối
