@@ -93,7 +93,7 @@ cd mobile   && flutter analyze && flutter test       # 118 test
 > `npx tsc --noEmit` **không kiểm gì cả** ở hai thư mục frontend: `tsconfig.json` là tệp solution
 > rỗng chỉ trỏ tới hai tsconfig con. Luôn dùng `npx tsc -b`.
 
-**Mười ba phép thử quét mã nguồn** chặn cả một lớp lỗi thay vì chặn một chỗ. Đừng bỏ chúng đi khi thấy
+**Mười bảy phép thử quét mã nguồn** chặn cả một lớp lỗi thay vì chặn một chỗ. Đừng bỏ chúng đi khi thấy
 vướng — mỗi cái sinh ra từ một lỗi đã xảy ra thật:
 
 | Phép thử | Luật |
@@ -112,6 +112,10 @@ vướng — mỗi cái sinh ra từ một lỗi đã xảy ra thật:
 | `frontend-*/src/lib/palette.test.ts` | Không viết mã màu thẳng trong TSX — màu viết thẳng không đi qua token nào, nên đổi thiết kế xong 130 chỗ vẫn giữ màu cũ. Sáu chỗ ngoại lệ là thứ đi ra máy in, không phải màn hình |
 | `frontend-*/src/lib/palette.test.ts` (luật thứ hai) | Không chuỗi nháy đơn nào chứa `${MAU.…}` — đợt thay 130 màu để lại 11 chỗ `'1px solid ${MAU.vien}'` trong dấu nháy đơn, trình duyệt bỏ qua cả dòng CSS mà phép thử cấm mã màu vẫn xanh vì không còn mã màu để bắt |
 | `backend/.../Infrastructure/RequestLoggingOrderTests.cs` | Bộ ghi nhật ký yêu cầu đứng trước bộ xử lý ngoại lệ trong `Program.cs`; đứng sau là mọi lỗi 400/401/404 bị ghi thành ERR 500 kèm vết ngăn xếp |
+| `backend/.../Security/NginxConfigParityTests.cs` | **Ba** tệp cấu hình Nginx phải cùng mang sáu luật: bốn tiêu đề bảo mật, nhánh rẽ cho máy thu thập, và `resolver` thay cho `upstream`. Thêm luật vào hai tệp mà quên tệp thứ ba đã xảy ra hai lần trong một ngày, cả hai lần đều mất đúng ở bản chạy thật |
+| `frontend-opac/src/components/keyboard.test.ts` | `div`/`span` có `onClick` phải kèm `clickable(...)` hoặc đủ bộ ba `role` + `tabIndex` + `onKeyDown` — thanh menu chính của trang tra cứu từng không Tab tới được |
+| `mobile/test/core/push_background_test.dart` | Có đăng ký `onBackgroundMessage`, hàm xử lý là hàm cấp cao nhất mang `@pragma('vm:entry-point')`, và Gradle áp dụng trình cắm google-services khi có tệp cấu hình |
+| `mobile/test/features/list_refresh_after_write_test.dart` | Màn hình gọi `checkout`/`renewLoan`/`createHold`/`cancelHold` phải `ref.invalidate` đúng provider tương ứng — hai màn hình từng ghi xong mà danh sách không đổi |
 
 > Một phép thử quét mã nguồn chỉ chặn đúng thư mục nó quét. Thêm luật mới thì hỏi ngay: gói kia có
 > vi phạm cùng luật ấy không? Lỗi D8 sửa cho `frontend-admin` rồi ghi là "cả sản phẩm", nhưng
@@ -221,6 +225,71 @@ docker compose run --rm -d --name lc-api-kiem -e LC_DB_NAME=lc_kiem -e LC_SEED_D
     ứng dụng; mất mạng là đổi phông. Đóng gói phông vào tài nguyên và tắt tải lúc chạy.
 28. **Đồng hồ thiết bị không phải mốc đồng bộ.** Máy ảo lệch vài chục giây so với máy chủ nên
     `updatedSince` tính từ điện thoại bỏ sót đúng bản ghi vừa sửa. Máy chủ trả `serverTime` là để dùng.
+
+29. **Đọc đặc tả rồi đi tìm bằng chứng, đừng đọc mã rồi hỏi nó có đúng không.** Năm đợt rà ngày
+    04–05/09/2026 làm theo cách thứ nhất và tìm ra 38 lỗi mà 1.073 phép thử không chạm tới. Phép thử
+    chỉ hỏi "mã có làm đúng thứ người viết nghĩ không"; đặc tả hỏi "sản phẩm có làm đúng thứ khách
+    cần không". Hai câu hỏi khác nhau.
+30. **Công tắc được lưu không có nghĩa là có ai đọc nó.** Ô "ghi nhật ký lượt xem", cờ "hiện làm bộ
+    lọc trên tra cứu" của danh mục tự tạo, chiều phạm vi dữ liệu theo dạng tài liệu — cả ba lưu đúng
+    vào cơ sở dữ liệu và không nơi nào đọc ra. Thêm một ô cấu hình thì phải chỉ được ra **chỗ đọc**
+    nó; không chỉ ra được thì đó là một công tắc chết.
+31. **Cấu hình đọc một lần lúc khởi động là cấu hình không đổi được.** Lịch sao lưu sửa trên màn
+    hình chỉ ghi vào bảng; việc định kỳ giữ giờ cũ tới lần khởi động lại, mà màn hình vẫn hiện giờ
+    mới. Đổi tham số nào có việc nền đi kèm thì đăng ký lại ngay, và màn hình nên hiện **cái đang
+    chạy thật** bên cạnh cái đã khai.
+32. **Thư viện nhật ký nuốt lỗi của sink.** Sink PostgreSQL của Serilog ném ở mỗi lô — một lần vì
+    chữ ký `NpgsqlBinaryImporter.Complete()` của Npgsql 7 trong khi dự án dùng Npgsql 8, một lần vì
+    `DateTimeOffset` lệch +07 đưa vào cột chỉ nhận UTC — mà biểu hiện duy nhất là bảng rỗng mãi.
+    `Serilog.Debugging.SelfLog` thấy ngay, nay đã bật sẵn ra stderr.
+33. **`PUT` thay toàn bộ tài nguyên.** Gọi `PUT /cataloging/bibs/{id}` mà không gửi `documentTypeId`
+    là xoá dạng tài liệu của biểu ghi. Giao diện luôn gửi đủ nên không ai thấy; máy khách khác thì
+    mất dữ liệu lặng lẽ. Phép thử đi qua API phải gửi đủ trạng thái, đúng như giao diện gửi.
+34. **Khoá chuẩn hoá của danh mục coi "Phạm Văn Gộp" và "Pham Van Gop" là một.** Phép thử gộp trùng
+    lập hai cách viết ấy rồi gộp, nhưng lượt lập thứ hai chỉ trả về đúng mục cũ nên không còn gì để
+    gộp — phép thử đỏ vì lý do sai. Muốn hai mục thật sự khác nhau thì tên phải khác **sau khi bỏ
+    dấu**.
+35. **Sửa cấu hình hạ tầng thì đếm xem có mấy tệp cùng loại.** Kho có ba tệp Nginx cho ba cách
+    triển khai. Nhánh rẽ máy thu thập và chính sách nội dung đều được thêm vào hai tệp, quên tệp
+    dùng khi chạy thật — mất đúng ở môi trường duy nhất cần tới.
+36. **Không tin `Content-Type` do máy khách gửi.** Hai đường tải tệp (logo thư viện nhúng vào biểu
+    mẫu in và trang công khai, bản scan biên bản bàn giao) chỉ đọc cái nhãn ấy. Kiểm bằng chữ ký
+    byte, và giữ **một** bảng chữ ký dùng chung — bốn bản sao rải rác là lý do không ai thấy thiếu.
+37. **Đặc tả nội bộ này không thay được hồ sơ gốc.** `Chương V.YÊU CẦU VỀ KỸ THUẬT.pdf` ở thư mục
+    gốc mới là bản bên mời thầu chấm. Tài liệu này chép lại phần chức năng nhưng bỏ mục III (triển
+    khai, đào tạo, bảo hành, quyền dữ liệu) và mục 5 (kiểm thử, hồ sơ bàn giao) — bốn hồ sơ bắt buộc
+    vì thế thiếu tới tận ngày 05/09/2026. Trước khi nói "đã đủ", mở lại tệp PDF ấy.
+
+### A.4. Cơ chế dùng chung — dùng lại, đừng viết chỗ mới
+
+Bốn thứ dưới đây sinh ra để chặn "chỗ thứ tám quên gọi". Thêm chức năng cùng loại thì cắm vào đây,
+đừng chép logic sang handler mới:
+
+| Cơ chế | Dùng khi | Ghi chú |
+|---|---|---|
+| `[AuditRead("Reader")]` (`Api/Security/AuditReadAttribute.cs`) | Endpoint xem chi tiết dữ liệu cá nhân hoặc dữ liệu hạn chế | Chỉ ghi khi `audit_settings` bật `Read` cho thực thể ấy |
+| `ExportAuditBehaviour` (đường ống MediatR) | Mọi lượt trả về tệp | Nhận diện theo **kiểu trả về** (`ExportedFile`…), không theo tên lệnh; handler đã tự ghi dòng riêng thì bộ dùng chung im lặng |
+| `IStaffNotifier` (`NotifyUsersAsync` / `NotifyGroupAsync` / `NotifyPermissionAsync`) | Việc cần cán bộ biết: chờ duyệt, quá hạn, việc nền hỏng | Người nhận là `Expression<Func<User,bool>>` đẩy xuống SQL; gửi thư hỏng thì ghi nhật ký, không ném |
+| `IBibRecordWriter.ApplyAsync` | Mọi lượt sửa dữ liệu rút từ MARC | Nhớ `.Include(Authors/Subjects/Keywords/Classifications)`, thiếu là bộ ghi thêm lại liên kết và đổ ở `ux_bib_classifications` |
+
+Lệnh sinh migration chạy đúng trong kho này (dự án hạ tầng vừa là dự án khởi động):
+
+```bash
+cd backend && dotnet ef migrations add TenCoNghia   --project src/LibraryConnect.Infrastructure   --startup-project src/LibraryConnect.Infrastructure   --output-dir Persistence/Migrations
+```
+
+Cần chen migration vào giữa thì đổi tên tệp **và** sửa `[Migration("…")]` cho khớp.
+
+### A.5. Việc còn treo — chờ người dùng quyết
+
+1. **Máy chủ Z39.50 trên bản chạy thật.** Mã đã xong và có phép thử, nhưng `ILL.Z3950_SERVER_ENABLED`
+   còn tắt trên `14.225.83.93`: bật là mở một cổng TCP ra Internet. Chờ chủ hệ thống đồng ý và chốt
+   dải IP được phép.
+2. **Mật khẩu `admin` của bản chạy thật** đang trùng một chuỗi có mặt trong phép thử Android của kho
+   mã công khai. Đổi thì phải sửa cả tài liệu hướng dẫn nghiệm thu, nên để người dùng chọn thời
+   điểm.
+3. **Hai mục của sổ lỗi chưa đóng**: H3 (thiếu chức năng) và H9 (nguy cơ) — xem "Làm tiếp gì sau
+   đây" ở cuối `docs/08-so-loi.md`.
 
 ---
 
@@ -1399,8 +1468,10 @@ Tối ưu hiệu năng, rà soát bảo mật, seed dữ liệu demo đầy đ�
 Rà soát lần cuối nhóm `/api/reader/*` (mục XI.4): đủ endpoint, đủ test, đủ mô tả Swagger, đã viết chương "API cho ứng dụng khách" trong `docs/05-api-reference.md`.
 → *Nghiệm thu Phase: `docker compose up -d` là hệ thống web chạy hoàn chỉnh với dữ liệu demo, mọi phân hệ I–X demo được.*
 
-**⬜ Phase 15 — Mobile App (Phân hệ XI)** — *ĐỢT SAU, KHÔNG THỰC HIỆN TRONG LẦN BUILD NÀY*
-Flutter, đầy đủ chức năng mục XI, gọi vào nhóm endpoint đã hoàn thiện ở Phase 14, build APK/IPA.
+**✅ Phase 15 — Mobile App (Phân hệ XI)** — *đã làm xong, xem mục A.1*
+Flutter, đầy đủ chức năng mục XI, gọi vào nhóm endpoint đã hoàn thiện ở Phase 14, build APK/AAB trên
+Android và chạy trên iPhone Simulator. Chưa có: máy iPhone thật, IPA ký, thông báo đẩy FCM thật,
+quét bằng camera thật — ghi rõ trong `docs/06`/`docs/07`, không đánh "Đạt".
 
 ---
 
