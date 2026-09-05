@@ -1313,3 +1313,38 @@ chủ thật. Các lỗi K1, K3, K4, K5 lộ ra khi đi bằng trình duyệt ho
 | X.14 | Phích PDF chứa nhan đề biểu ghi | 149 ký tự | Đạt |
 | XI.1 | Duyệt theo subjects | 3475 mục | Đạt |
 | XI.1b | Bộ sưu tập (danh mục) so với duyệt | danh mục collections=10, duyệt trả 0 | Đạt |
+
+## Phụ lục — Soi số học nghiệp vụ ngày 06/09/2026
+
+Đợt này không hỏi "màn hình có chạy không" mà hỏi "con số có đúng không": kỳ vọng được **tự tính từ bảng
+`cir.circulation_policies`, bảng `sys.system_parameters` và lịch nghỉ `cat.holidays`** bằng một kịch bản Python
+riêng, rồi mới đối chiếu với thứ hệ thống trả về qua API. Chạy trên máy phát triển vì cần lùi ngày của phiếu
+mượn để dựng đúng bối cảnh quá hạn; dữ liệu thử tạo ra đều đã xoá.
+
+Tổng: **21 phép đo, 21 khớp**. Ba phép đo đầu tiên đỏ vì kịch bản đoán sai khoá tham số và dựng
+sai bối cảnh gia hạn — lỗi của phép thử, đã tính lại và ghi kết quả đúng ở bảng dưới. Hai lỗi thật tìm ra trong đợt:
+K17 (kiểm kê coi sách đang mượn là thiếu) và K18 (dữ liệu trình diễn có phiếu mượn ngày ở tương lai).
+
+| Mã | Luật nghiệp vụ | Kết quả thực tế | Đạt |
+|---|---|---|---|
+| K17 | Kiểm kê không được xếp sách đang ở tay bạn đọc vào 'thiếu' (trước sửa: 157 cuốn) | Trước sửa: 157/4.420 dòng 'Thiếu' là sách còn phiếu mượn mở, và resolve-missing ghi mất cả. Sau sửa: danh sách kỳ vọng loại bản còn phiếu mở, resolve-missing bỏ qua chúng, migration dọn kỳ chưa đóng | Đạt |
+| K18 | Bộ dữ liệu trình diễn không còn phiếu mượn ngày ở tương lai | Trước sửa: 94 phiếu, xa nhất 29/11/2026, ngày trả 02/09/2026 nằm trước ngày mượn — có trên cả máy chủ thật. Sau sửa: công thức mới + migration kéo về quá khứ, chạy thử trong giao dịch còn 0 dòng sai | Đạt |
+| NV.1 | Hạn trả = ngày mượn + số ngày chính sách, đẩy khỏi ngày thư viện đóng cửa (nghỉ Chủ nhật + 4 kỳ nghỉ lễ) | SV 14 ngày, mượn 06/09/2026 (Chủ nhật) → hạn thô 20/09 rơi Chủ nhật → hệ thống trả 21/09 (thứ Hai). Tự tính lại từ CIRCULATION.WEEKLY_CLOSED_DAYS=7 và cat.holidays: khớp | Đạt |
+| NV.2 | Tiền phạt = (ngày mở cửa quá hạn − ân hạn) × mức phạt/ngày | Lùi hạn về 27/08/2026 rồi trả 06/09: 10 ngày lịch, trừ 2 Chủ nhật và 2 ngày Quốc khánh = 6 ngày mở cửa, trừ 1 ngày ân hạn = 5 × 2.000 = 10.000 đ; hệ thống tính đúng 10.000 đ | Đạt |
+| NV.3 | Gia hạn: cho đúng 2 lần theo chính sách sinh viên, lần thứ 3 bị chặn kèm câu rõ nghĩa | mã trả về [200, 200, 409, 409]; câu chặn: 'Đã gia hạn đủ 2 lần theo chính sách "Chính sách mượn — Sinh viên".'; sổ ghi renewed_count=2 | Đạt |
+| NV.4 | Mượn vượt trần: hệ thống ghi tới đúng trần và nói rõ từng cuốn bị từ chối | trần 3, đang giữ 3; 2 cuốn bị từ chối, câu đầu: 'Bạn đọc đã mượn đủ 3 tài liệu theo chính sách.' | Đạt |
+| NV.5 | Ba bạn đọc đặt giữ cùng một tài liệu → vị trí hàng đợi 1, 2, 3 theo thứ tự đến | [(200, 1), (200, 2), (200, 3)] | Đạt |
+| NV.6 | Sách về kho → phiếu đầu hàng chuyển 'Sẵn sàng', hạn giữ đúng số ngày của chính sách | trạng thái hàng đợi [['Ready', '1', '2026-09-09 01:01:02.311777+07'], ['Waiting', '2', ''], ['Waiting', '3', '']]; hạn giữ theo chính sách 3 ngày | Đạt |
+| NV.7 | Chính sách theo loại bạn đọc: giảng viên nhận đúng số ngày mượn của nhóm mình | giảng viên 60 ngày → mong đợi 2026-11-05, hệ thống 2026-11-05 | Đạt |
+| NV.8 | Sách báo mất: tiền đền = giá ĐKCB × hệ số đền của tham số, và bản in chuyển trạng thái Mất | giá 85,000 × hệ số 2.0 = 170,000 đ; hệ thống lập khoản 170,000 đ; trạng thái bản in 'Lost' | Đạt |
+| NV.9 | Nợ vượt ngưỡng tham số thì không cho mượn tiếp, và câu từ chối nói rõ số nợ | ngưỡng 50,000 đ, đang nợ 170,000 đ → chặn; mã 409; câu: Bạn đọc còn nợ 170,000 đ tiền phạt. | Đạt |
+| NV.10 | Thẻ hết hạn hôm qua thì quầy không ghi mượn được, câu từ chối nói về thẻ | mã 409; số phiếu ghi được 0; câu: Thẻ hết hạn ngày 05/09/2026. | Đạt |
+| NV.11 | Cho ra trường bị chặn khi bạn đọc còn nợ phí chưa thanh toán | mã 200; trạng thái sau lệnh: 'Active'; nợ 170,000 đ; câu: Đã chuyển 0 bạn đọc; 1 người còn công nợ nên chưa chuyển. | Đạt |
+| NV.12.Monthly | Sinh số cho cả năm 2027 với kỳ hạn Monthly → đúng 12 số, đánh số liên tục từ 1 | sinh 12 số (mong đợi 12); ba số đầu ['1', '2', '3']; mã 200 | Đạt |
+| NV.12.Quarterly | Sinh số cho cả năm 2027 với kỳ hạn Quarterly → đúng 4 số, đánh số liên tục từ 1 | sinh 4 số (mong đợi 4); ba số đầu ['1', '2', '3']; mã 200 | Đạt |
+| NV.12.Weekly | Sinh số cho cả năm 2027 với kỳ hạn Weekly → đúng 52 số, đánh số liên tục từ 1 | sinh 52 số (mong đợi 52); ba số đầu ['1', '2', '3']; mã 200 | Đạt |
+| NV.13 | Kiểm kê phân loại khớp / thiếu / sai kho đúng số, sau khi trừ bản đã thanh lý và đã ghi mất | Kho 4.476 bản: 33 ghi mất + 23 thanh lý bị loại khỏi danh sách kỳ vọng (4.422); quét 2 → Khớp 2, Thiếu 4.420, quét cuốn kho khác → Sai kho 1 kèm câu 'Bản này thuộc kho Kho đóng' | Đạt |
+| NV.14 | Trang Tổng quan: tám con số khớp truy vấn kiểm chứng độc lập (E-HSMT 2.8) | biểu ghi 12.627, đã xuất bản 11.686, bản in 17.903, sẵn sàng 16.510, đang cho mượn 621, bạn đọc 651, đang quá hạn 363, thẻ đã hết hạn 165 — tất cả khớp SQL | Đạt |
+| NV.15 | Thống kê bạn đọc theo loại: 'đang hoạt động' trừ cả thẻ hết hạn, chặt hơn cột trạng thái | Sinh viên 456 tổng / 341 hoạt động = 456 − 115 thẻ hết hạn; năm loại đều theo cùng cách tính | Đạt |
+| NV.16 | Top ấn phẩm mượn nhiều nhất: gộp theo nhan đề, số lượt giảm dần | 'Giáo trình cơ sở dữ liệu' 11 lượt gồm nhiều bản in (bản đơn cao nhất LC00000001 7 lượt); thứ tự giảm dần đúng | Đạt |
+| NV.17 | Báo cáo quá hạn: 363 phiếu, 361 bạn đọc, tiền phạt dự kiến 7.465.000 đ, chia dải ngày đúng tổng | khớp SQL 363 phiếu chưa trả có hạn trước hôm nay | Đạt |
