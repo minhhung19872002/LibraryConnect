@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
+import 'camera_error_view.dart';
+
 import '../../../core/api/api_exception.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_theme.dart';
@@ -205,14 +207,8 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
                   child: MobileScanner(
                     controller: _scanner,
                     onDetect: _onDetect,
-                    errorBuilder: (context, error) => _CameraError(
-                      message:
-                          error.errorCode ==
-                              MobileScannerErrorCode.permissionDenied
-                          ? l10n.scanCameraDenied
-                          : error.errorDetails?.message ?? error.errorCode.name,
-                      onEnter: _enterManually,
-                    ),
+                    errorBuilder: (context, error) =>
+                        CameraErrorView(error: error, onEnterCode: _enterManually),
                   ),
                 ),
                 IgnorePointer(
@@ -286,44 +282,6 @@ class _ManualCodeDialogState extends State<_ManualCodeDialog> {
       ],
     );
   }
-}
-
-class _CameraError extends StatelessWidget {
-  const _CameraError({required this.message, required this.onEnter});
-
-  final String message;
-  final VoidCallback onEnter;
-
-  @override
-  Widget build(BuildContext context) => ColoredBox(
-    color: LcColors.greenDark,
-    child: Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.no_photography_outlined,
-              size: 48,
-              color: LcColors.cream,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: LcColors.cream),
-            ),
-            const SizedBox(height: 12),
-            FilledButton.tonal(
-              onPressed: onEnter,
-              child: Text(L10n.of(context).scanEnterCode),
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
 }
 
 class _StatusPanel extends StatelessWidget {

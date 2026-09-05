@@ -6,6 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+
+import '../../scan/data/scan_code.dart';
+import '../../scan/presentation/camera_error_view.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -75,14 +78,30 @@ class _SelfCheckoutScreenState extends ConsumerState<SelfCheckoutScreen> {
   String? _checking;
   Color? _flash;
   Timer? _flashTimer;
-  MobileScannerController? _scanner;
+
+  /// **Một** bộ điều khiển camera cho cả hai bước.
+  ///
+  /// Trước 05/09/2026 trang quét mã trạm dựng bộ điều khiển riêng: bấm quét xong, trang ấy chưa kịp
+  /// nhả camera (dispose chạy sau khi hoạt cảnh đóng trang xong) thì màn này đã mở bộ thứ hai, và bộ
+  /// thứ hai không giành được camera. Bạn đọc thấy khung quét đen kịt kèm câu "chưa được phép dùng
+  /// camera" trong khi quyền đang bật — quét trạm được mà không quét nổi cuốn sách (K16).
+  final _scanner = MobileScannerController(
+    detectionSpeed: DetectionSpeed.normal,
+    detectionTimeoutMs: 800,
+    formats: const [
+      BarcodeFormat.code128,
+      BarcodeFormat.code39,
+      BarcodeFormat.ean13,
+      BarcodeFormat.qrCode,
+    ],
+  );
   String? _lastCode;
   DateTime _lastAt = DateTime.fromMillisecondsSinceEpoch(0);
 
   @override
   void dispose() {
     _flashTimer?.cancel();
-    _scanner?.dispose();
+    _scanner.dispose();
     super.dispose();
   }
 
@@ -125,16 +144,6 @@ class _SelfCheckoutScreenState extends ConsumerState<SelfCheckoutScreen> {
       setState(() {
         _verification = result;
         _phase = _Phase.scan;
-        _scanner ??= MobileScannerController(
-          detectionSpeed: DetectionSpeed.normal,
-          detectionTimeoutMs: 800,
-          formats: const [
-            BarcodeFormat.code128,
-            BarcodeFormat.code39,
-            BarcodeFormat.ean13,
-            BarcodeFormat.qrCode,
-          ],
-        );
       });
     } on ApiException catch (error) {
       if (!mounted) return;
@@ -155,8 +164,10 @@ class _SelfCheckoutScreenState extends ConsumerState<SelfCheckoutScreen> {
     final raw = await Navigator.of(context).push<String>(
       MaterialPageRoute(
         fullscreenDialog: true,
-        builder: (_) =>
-            _StationScannerPage(title: L10n.of(context).verifyQrAction),
+        builder: (_) => _StationScannerPage(
+          title: L10n.of(context).verifyQrAction,
+          controller: _scanner,
+        ),
       ),
     );
     if (raw != null && raw.isNotEmpty) await _verify(qrContent: raw);
@@ -185,6 +196,10 @@ class _SelfCheckoutScreenState extends ConsumerState<SelfCheckoutScreen> {
     for (final barcode in capture.barcodes) {
       final raw = barcode.rawValue?.trim();
       if (raw == null || raw.isEmpty) continue;
+      // Mã trạm dán ngay cửa kho nên rất dễ lọt vào khung khi bạn đọc giơ máy lên cuốn sách. Gửi nó
+      // lên như mã ĐKCB thì máy chủ trả "không tìm thấy ấn phẩm" — một dòng đỏ vô nghĩa, lặp lại mỗi
+      // lần khung quét thấy nó. Màn Quét mã đã phân loại đúng bằng ScanCode; ở đây dùng lại.
+      if (ScanCode.classify(raw).kind == ScanKind.station) continue;
       final now = DateTime.now();
       if (raw == _lastCode && now.difference(_lastAt).inSeconds < 3) return;
       _lastCode = raw;
@@ -467,19 +482,8 @@ class _SelfCheckoutScreenState extends ConsumerState<SelfCheckoutScreen> {
                 child: MobileScanner(
                   controller: _scanner,
                   onDetect: _onDetect,
-                  errorBuilder: (context, error) => ColoredBox(
-                    color: LcColors.greenDark,
-                    child: Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Text(
-                          l10n.scanCameraDenied,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: LcColors.cream),
-                        ),
-                      ),
-                    ),
-                  ),
+                  errorBuilder: (context, error) =>
+                      CameraErrorView(error: error, onEnterCode: _enterBarcode),
                 ),
               ),
               IgnorePointer(
@@ -605,31 +609,27 @@ class _OutcomeTile extends StatelessWidget {
 
 /// Máy quét toàn màn hình trả về nội dung mã QR trạm đầu tiên đọc được.
 class _StationScannerPage extends StatefulWidget {
-  const _StationScannerPage({required this.title});
+  const _StationScannerPage({required this.title, required this.controller});
 
   final String title;
+
+  /// Bộ điều khiển dùng chung với màn Mượn tự phục vụ — xem ghi chú ở `_scanner`.
+  final MobileScannerController controller;
 
   @override
   State<_StationScannerPage> createState() => _StationScannerPageState();
 }
 
 class _StationScannerPageState extends State<_StationScannerPage> {
-  final _controller = MobileScannerController(
-    formats: const [BarcodeFormat.qrCode],
-  );
   bool _done = false;
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
+  // Bộ điều khiển là của màn hình gọi tới; trang này chỉ mượn nên không được dispose.
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(title: Text(widget.title)),
     body: MobileScanner(
-      controller: _controller,
+      controller: widget.controller,
+      errorBuilder: (context, error) => CameraErrorView(error: error),
       onDetect: (capture) {
         if (_done) return;
         final raw = capture.barcodes.firstOrNull?.rawValue;

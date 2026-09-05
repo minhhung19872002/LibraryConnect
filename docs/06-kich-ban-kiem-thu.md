@@ -759,7 +759,9 @@ lại máy chủ — workflow giờ chờ Deploy của đúng commit xong hẳn 
 
 **Đối chiếu 12 luồng bắt buộc của PROMPT-MOBILE mục 6:** 1 → MB.09 + MB.18 · 2 → MB.10 · 3 → MB.30 · 4 → MB.11 · 5 → MB.31 · 6 → MB.32, MB.38 · 7 → MB.32, MB.40 (thành công) + MB.16 (từ chối) · 8 → MB.19, MB.20, MB.39 · 9 → MB.21, MB.23 · 10 → MB.22 (gói ngoại tuyến; chế độ máy bay kiểm qua MB.28) · 11 → MB.24 (phần trong ứng dụng; **đẩy thật chưa kiểm**) · 12 → MB.33.
 
-**Chưa kiểm được trong đợt này (không có thiết bị):** quét mã bằng camera trên sách thật (đủ sáng/thiếu sáng), thẻ điện tử quét bằng máy quét ở quầy, xoay ngang trên máy thật, cỡ chữ hệ thống lớn nhất trên máy thật, nhận thông báo đẩy FCM thật, bản iOS.
+**Đã kiểm thêm ngày 05/09/2026 bằng camera của máy ảo Android** (cảnh ảo `-camera-back virtualscene`, ảnh mã vạch/QR chèn vào cảnh bằng `-virtualscene-poster`): quét mã vạch ĐKCB, quét QR chứa ISBN, và **trọn luồng mượn tự phục vụ** — quét QR trạm rồi quét mã vạch sách, ghi mượn thật trên máy chủ. Xem MB.42–MB.44 ở phụ lục cuối; đợt này tìm ra lỗi K16 (khung quét bước 2 không mở được camera và báo nhầm là thiếu quyền).
+
+**Chưa kiểm được trong đợt này (không có thiết bị):** quét mã trên **sách thật** bằng camera phần cứng (đủ sáng/thiếu sáng), thẻ điện tử quét bằng máy quét ở quầy, xoay ngang trên máy thật, cỡ chữ hệ thống lớn nhất trên máy thật, nhận thông báo đẩy FCM thật, bản iOS.
 
 Ảnh chụp máy ảo của các kịch bản MB: `docs/images/mobile/` (mb-login, mb-home, mb-search, mb-bib-detail, mb-scan, mb-my-library, mb-card-offline, mb-reader-online, mb-reader-find, mb-reader-offline, mb-digital-restricted, mb-digital-offline-list, mb-notifications, mb-account, mb-dark-home, mb-dark-my-library, mb-dark-search, mb-offline-my-library, mb-offline-search, mb-advanced-search, mb-facets, mb-renew, mb-holds, mb-sync).
 
@@ -814,7 +816,7 @@ Dữ liệu ghi thêm mang dấu `NT…` và đã xoá; thứ không xoá đư�
 nhận số) được đánh dấu ngừng dùng. Mã kịch bản bám theo bảng ở trên; mã có hậu tố chữ là bước phụ; mã `F2`, `K…` là lỗi
 tìm ra trong ngày (mục K của `08-so-loi.md`).
 
-Tổng: **484 kịch bản chạy bằng máy, 479 đạt**. Năm dòng "Không đạt" là lần chạy **trước khi sửa** của bốn lỗi, giữ
+Tổng: **488 kịch bản chạy bằng máy, 483 đạt**. Năm dòng "Không đạt" là lần chạy **trước khi sửa** của bốn lỗi, giữ
 lại làm bằng chứng đỏ-trước: F2 → kiểm lại đạt ở K2, T.2 → K8, V.7 → K10, X.3 → K14; dòng III.x là kịch bản của bộ chạy
 dừng giữa chừng vì đoán sai hình dạng tham số (đã chạy lại trọn phân hệ III, không phải lỗi sản phẩm). Mã `X.*` là đợt
 kỹ thuật thứ ba (tạo đồng thời trên mọi khoá duy nhất, nội dung thật của tệp in/xuất); K14, K15 là hai lỗi đợt ấy tìm
@@ -1069,6 +1071,7 @@ chủ thật. Các lỗi K1, K3, K4, K5 lộ ra khi đi bằng trình duyệt ho
 | K14b | Tạo tay tác giả khác tên nhưng trùng mã → vẫn báo 409 rõ, không tự đổi mã | 409: Mã 'TAC_GIA_SONG_SONG_NTY18594' đã tồn tại trong danh mục Tác giả. (bộ hoà giải chỉ nhận mục cùng tên; trùng mã do người nhập vẫn báo lỗi) | Đạt |
 | K15 | Xoá tác giả mà mọi biểu ghi dùng nó đã xoá (dữ liệu K14) → 200, trước bản sửa là 409 'đang được 4 bản ghi sử dụng' | Tác giả song song NTY18594: 200 Xóa giá trị danh mục thành công. | Đạt |
 | K15b | Hồ sơ thẩm quyền không còn mục thử nào | còn 0 | Đạt |
+| K16 | Mượn tự phục vụ: sau bản sửa, khung quét bước 2 mở được camera và ghi mượn bằng camera | Trước sửa: khung đen + 'Chưa được phép dùng camera' dù quyền đang bật. Sau sửa (một bộ điều khiển dùng chung): thấy hình, quét QR trạm rồi quét mã vạch → 'Đã mượn · hạn trả 14/09/2026' | Đạt |
 | LT.1 | Chính sách lưu thông nạp sẵn | 7 chính sách | Đạt |
 | LT.2 | Ô thử chính sách: chọn đúng chính sách ưu tiên | Chính sách NTE93707 (ưu tiên None) | Đạt |
 | LT.3 | Danh sách đặt giữ toàn hệ thống và hàng đợi | 129 phiếu | Đạt |
@@ -1145,6 +1148,9 @@ chủ thật. Các lỗi K1, K3, K4, K5 lộ ra khi đi bằng trình duyệt ho
 | MB.31 | Tra theo ISBN | 0765399768 -> [{'id': '610cda21-69aa-4da6-90eb-3bf872efd0c4', 'controlNumber': 'LC00012165', ' | Đạt |
 | MB.32 | Hủy đặt giữ | 1 đặt giữ còn hiệu lực | Đạt |
 | MB.41 | Ba luồng ghi của ứng dụng di động (đặt giữ → hủy, xác thực trạm QR, mượn tự phục vụ, gia hạn) chạy trên máy ảo Android gọi vào máy chủ thật sau bản sửa K14 | flutter test integration_test/ios_write_flows_test.dart -d emulator-5556 → All tests passed (1:15); bạn đọc TV2026000677 sau khi chạy: đang mượn=0, đặt giữ mở=0, lịch sử=1 | Đạt |
+| MB.42 | Quét mã vạch ĐKCB bằng camera thật của máy ảo → ứng dụng mở đúng biểu ghi trên máy chủ thật | Code128 LC00000013 dán vào cảnh ảo của máy ảo; app mở 'Cơ sở dữ liệu — lý thuyết và bài tập', 3 bản in | Đạt |
+| MB.43 | Quét mã QR chứa ISBN bằng camera thật → mở đúng tài liệu | QR 9786041000049 → cùng biểu ghi trên | Đạt |
+| MB.44 | Mượn tự phục vụ trọn vẹn bằng camera: quét QR trạm → quét mã vạch sách → ghi mượn thật | trạm 'Cửa kho mở tầng 2' xác thực bằng camera; sách LC00000001 'Giáo trình cơ sở dữ liệu' hạn trả 14/09/2026; API xác nhận 1 phiếu đang mượn | Đạt |
 | MH.4 | Gán môn vào nhiều ngành | 2 ngành | Đạt |
 | MH.8 | Gán tài liệu cho môn (giáo trình chính) | thêm 1 | Đạt |
 | MH.12 | Tệp mẫu tài liệu môn học | xlsx 9724 byte | Đạt |

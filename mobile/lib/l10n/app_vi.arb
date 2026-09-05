@@ -103,6 +103,7 @@
   "scanIsbnMany": "{count} tài liệu cùng ISBN {isbn}",
   "@scanIsbnMany": {"placeholders": {"count": {"type": "int"}, "isbn": {"type": "String"}}},
   "scanCameraDenied": "Chưa được phép dùng camera. Bạn vẫn có thể nhập mã bằng tay.",
+  "scanCameraUnavailable": "Không mở được camera. Bạn vẫn có thể nhập mã bằng tay.",
   "scanOpen": "Mở chi tiết",
   "scanStationCode": "Đây là mã trạm mượn tự phục vụ, dùng ở màn hình Mượn tự phục vụ.",
   "detailTabInfo": "Thông tin",

@@ -314,6 +314,10 @@ class L10nVi extends L10n {
       'Chưa được phép dùng camera. Bạn vẫn có thể nhập mã bằng tay.';
 
   @override
+  String get scanCameraUnavailable =>
+      'Không mở được camera. Bạn vẫn có thể nhập mã bằng tay.';
+
+  @override
   String get scanOpen => 'Mở chi tiết';
 
   @override

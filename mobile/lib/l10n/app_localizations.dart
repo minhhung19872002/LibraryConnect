@@ -655,6 +655,12 @@ abstract class L10n {
   /// **'Chưa được phép dùng camera. Bạn vẫn có thể nhập mã bằng tay.'**
   String get scanCameraDenied;
 
+  /// No description provided for @scanCameraUnavailable.
+  ///
+  /// In vi, this message translates to:
+  /// **'Không mở được camera. Bạn vẫn có thể nhập mã bằng tay.'**
+  String get scanCameraUnavailable;
+
   /// No description provided for @scanOpen.
   ///
   /// In vi, this message translates to:

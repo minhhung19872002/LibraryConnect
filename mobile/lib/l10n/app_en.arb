@@ -103,6 +103,7 @@
   "scanIsbnMany": "{count} documents share ISBN {isbn}",
   "@scanIsbnMany": {"placeholders": {"count": {"type": "int"}, "isbn": {"type": "String"}}},
   "scanCameraDenied": "Camera permission not granted. You can still type the code.",
+  "scanCameraUnavailable": "The camera could not be opened. You can still type the code.",
   "scanOpen": "Open details",
   "scanStationCode": "This is a self-checkout station code; use it on the Self-checkout screen.",
   "detailTabInfo": "Details",

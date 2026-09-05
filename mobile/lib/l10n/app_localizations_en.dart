@@ -314,6 +314,10 @@ class L10nEn extends L10n {
       'Camera permission not granted. You can still type the code.';
 
   @override
+  String get scanCameraUnavailable =>
+      'The camera could not be opened. You can still type the code.';
+
+  @override
   String get scanOpen => 'Open details';
 
   @override

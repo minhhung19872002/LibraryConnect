@@ -18,7 +18,7 @@ lên hệ thống hoàn chỉnh. **Phân hệ XI (ứng dụng di động Flutte
 máy ảo với máy chủ Docker thật (`docs/06`, MB.01–MB.33), APK/AAB release dựng được. **iOS** dựng và
 chạy trên iPhone Simulator của máy Mac GitHub Actions (`.github/workflows/ios.yml`, MB.34–MB.40), kể
 cả ba luồng ghi dữ liệu vào máy chủ thật bằng một bạn đọc kiểm thử riêng. Chưa có: máy iPhone thật,
-IPA ký (không có tài khoản Apple Developer), nhận thông báo đẩy FCM thật, quét bằng camera thật — ghi
+IPA ký (không có tài khoản Apple Developer), nhận thông báo đẩy FCM thật, quét trên **sách thật** bằng camera phần cứng — ghi
 rõ trong `docs/06`/`docs/07`, không đánh "Đạt". Cách làm việc, cạm bẫy dựng Android, cách chụp ảnh bằng
 `flutter drive`: `mobile/README.md`.
 
@@ -68,7 +68,9 @@ thư) tìm thêm bốn: gõ đủ nhan đề ra 0 kết quả vì tra cứu so c
 gửi" khi SMTP tắt; tám ô SMTP trên màn hình không ai đọc. Đợt kỹ thuật thứ ba (tạo đồng thời trên mọi khoá duy nhất,
 nội dung thật của tệp in/xuất, phục hồi sao lưu, quầy bàn phím trên trình duyệt) tìm thêm một: bốn lượt biên mục sơ
 lược song song cùng một tác giả mới thì ba lượt đổ trùng mã; và lúc dọn dữ liệu thử của chính lỗi ấy lộ thêm một: biểu
-ghi đã xoá vẫn được đếm là "đang dùng" nên không xoá được tác giả. Cả 15 đã sửa, tổng **162 lỗi, đã sửa 162**.
+ghi đã xoá vẫn được đếm là "đang dùng" nên không xoá được tác giả. Cuối ngày quét mã **bằng camera của máy ảo Android**
+(chèn ảnh mã vạch/QR vào cảnh ảo) và đi trọn luồng mượn tự phục vụ trên máy chủ thật — tìm thêm một: khung quét bước 2
+không mở được camera vì trang trước chưa nhả, lại báo nhầm thành thiếu quyền. Cả 16 đã sửa, tổng **163 lỗi, đã sửa 163**.
 Phụ lục cuối `docs/06` ghi kết quả từng kịch bản (hơn 450 dòng).
 
 Đọc thẳng hồ sơ gốc còn tìm ra thứ không phải lỗi mã: **bốn hồ sơ bàn giao** mà Chương V mục III và
@@ -137,6 +139,7 @@ vướng — mỗi cái sinh ra từ một lỗi đã xảy ra thật:
 | `backend/.../Security/NginxConfigParityTests.cs` | **Ba** tệp cấu hình Nginx phải cùng mang sáu luật: bốn tiêu đề bảo mật, nhánh rẽ cho máy thu thập, và `resolver` thay cho `upstream`. Thêm luật vào hai tệp mà quên tệp thứ ba đã xảy ra hai lần trong một ngày, cả hai lần đều mất đúng ở bản chạy thật |
 | `frontend-opac/src/components/keyboard.test.ts` | `div`/`span` có `onClick` phải kèm `clickable(...)` hoặc đủ bộ ba `role` + `tabIndex` + `onKeyDown` — thanh menu chính của trang tra cứu từng không Tab tới được |
 | `mobile/test/core/push_background_test.dart` | Có đăng ký `onBackgroundMessage`, hàm xử lý là hàm cấp cao nhất mang `@pragma('vm:entry-point')`, và Gradle áp dụng trình cắm google-services khi có tệp cấu hình |
+| `mobile/test/features/camera_error_view_test.dart` | Mọi `errorBuilder` của khung quét phải dựng `CameraErrorView` (chỉ lỗi quyền mới được nói về quyền), và màn Mượn tự phục vụ chỉ được có **một** `MobileScannerController` — hai bộ là hai máy khách camera, bộ sau không giành được và bạn đọc bị bảo đi cấp một quyền đã bật |
 | `mobile/test/features/list_refresh_after_write_test.dart` | Màn hình gọi `checkout`/`renewLoan`/`createHold`/`cancelHold` phải `ref.invalidate` đúng provider tương ứng — hai màn hình từng ghi xong mà danh sách không đổi |
 | `backend/.../Security/NginxConfigParityTests.cs` (luật thứ hai) | Tệp Nginx nào có `limit_req` thì phải có `limit_req_status 429` và trang lỗi 429 dạng JSON — mặc định Nginx trả trang HTML 503, máy khách chỉ hiện được "máy chủ lỗi" |
 | `frontend-admin/src/modules/dashboard/DashboardPage.test.ts` | Trang Tổng quan không mang dòng giữ chỗ về tiến độ dự án và phải đọc báo cáo tổng quan — màn hình đầu tiên sau đăng nhập từng nói "đang bàn giao" suốt từ phase 1 tới bản chạy thật |
@@ -326,6 +329,15 @@ docker compose run --rm -d --name lc-api-kiem -e LC_DB_NAME=lc_kiem -e LC_SEED_D
     người thắng vừa tạo rồi lưu lại — làm ở một chỗ (`SaveChangesAsync`, `CatalogRaceReconciler`), không
     chép vào từng handler. Và phép thử đồng thời phải gửi yêu cầu **thật sự song song**; gọi tuần tự thì
     không bao giờ thấy.
+51. **Không kiểm được bằng thiết bị thật thì dựng lấy thiết bị.** Máy ảo Android chèn được ảnh vào cảnh
+    camera (`-camera-back virtualscene -virtualscene-poster wall=<png>`), nên mã vạch và mã QR sinh ra bằng
+    `python-barcode`/`qrcode` là quét được thật. Ba luồng quét bị ghi "chưa kiểm" suốt chín đợt chạy được
+    trong một buổi, và luồng thứ ba lộ ngay một lỗi nặng. Ảnh phải nhỏ và nằm giữa tấm áp phích, không thì
+    nó tràn ra ngoài khung ngắm.
+52. **Một lời báo lỗi sai còn tệ hơn không có lời nào.** "Chưa được phép dùng camera" khi quyền đang bật
+    đẩy bạn đọc vào Cài đặt, thấy quyền đã bật, rồi hết đường. Chỉ lỗi quyền mới được nói về quyền; mọi lỗi
+    khác nói đúng lỗi của nó. Và luật ấy để **một chỗ** (`CameraErrorView`) — màn thứ hai tự viết lại là
+    đúng chỗ nó sai.
 50. **Đếm "đang dùng" là đếm thứ người dùng còn nhìn thấy.** Liên kết biểu ghi–tác giả giữ nguyên khi biểu
     ghi xoá mềm (đúng, vì biểu ghi khôi phục được), nhưng bộ đếm tham chiếu đếm cả liên kết của biểu ghi
     đã xoá, nên xoá sách rồi vẫn không dọn được hồ sơ thẩm quyền. Đếm qua bảng có bộ lọc xoá mềm, đừng
