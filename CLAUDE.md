@@ -73,7 +73,9 @@ ghi đã xoá vẫn được đếm là "đang dùng" nên không xoá được 
 không mở được camera vì trang trước chưa nhả, lại báo nhầm thành thiếu quyền. Ngày 06/09/2026 soi **số học nghiệp vụ** — tự
 tính kỳ vọng từ bảng chính sách rồi đối chiếu: hạn trả qua ngày nghỉ, tiền phạt, trần gia hạn, hàng đợi giữ chỗ, đền sách mất,
 ngưỡng nợ, thẻ hết hạn, sinh số báo, kiểm kê — 16 phép đo khớp, một sai: kiểm kê coi sách đang ở tay bạn đọc là thiếu (157 cuốn
-trên kho phát triển) và lệnh xử lý thiếu ghi mất luôn cả chúng. Cả 17 đã sửa, tổng **164 lỗi, đã sửa 164**.
+trên kho phát triển) và lệnh xử lý thiếu ghi mất luôn cả chúng. Đối chiếu tiếp số liệu tám ô của trang Tổng quan với SQL độc lập
+(điều 2.8) thì khớp tuyệt đối, nhưng lộ ra 94 phiếu mượn của bộ dữ liệu trình diễn mang ngày ở tương lai, ngày trả nằm trước ngày
+mượn. Cả 18 đã sửa, tổng **165 lỗi, đã sửa 165**.
 Phụ lục cuối `docs/06` ghi kết quả từng kịch bản (hơn 450 dòng).
 
 Đọc thẳng hồ sơ gốc còn tìm ra thứ không phải lỗi mã: **bốn hồ sơ bàn giao** mà Chương V mục III và
@@ -146,6 +148,7 @@ vướng — mỗi cái sinh ra từ một lỗi đã xảy ra thật:
 | `mobile/test/features/list_refresh_after_write_test.dart` | Màn hình gọi `checkout`/`renewLoan`/`createHold`/`cancelHold` phải `ref.invalidate` đúng provider tương ứng — hai màn hình từng ghi xong mà danh sách không đổi |
 | `backend/.../Security/NginxConfigParityTests.cs` (luật thứ hai) | Tệp Nginx nào có `limit_req` thì phải có `limit_req_status 429` và trang lỗi 429 dạng JSON — mặc định Nginx trả trang HTML 503, máy khách chỉ hiện được "máy chủ lỗi" |
 | `frontend-admin/src/modules/dashboard/DashboardPage.test.ts` | Trang Tổng quan không mang dòng giữ chỗ về tiến độ dự án và phải đọc báo cáo tổng quan — màn hình đầu tiên sau đăng nhập từng nói "đang bàn giao" suốt từ phase 1 tới bản chạy thật |
+| `backend/.../Infrastructure/DemoLoanDatesTests.cs` | Không lượt mượn nào của bộ dữ liệu trình diễn rơi vào tương lai, ở mọi cỡ bộ dữ liệu và mọi chính sách — 94 phiếu "mượn 29/11, trả 02/09" từng sống trên cả máy chủ thật |
 | `backend/.../Infrastructure/DeployScriptTests.cs` | `gh-deploy.sh` phải có bước `don_anh_cu` giữ bản mới và bản trước, xoá ảnh `libraryconnect-*` còn lại — 20 bộ ảnh cũ từng làm đầy ổ 96 GB và chặn mọi lượt triển khai |
 
 > Một phép thử quét mã nguồn chỉ chặn đúng thư mục nó quét. Thêm luật mới thì hỏi ngay: gói kia có

@@ -359,14 +359,7 @@ public partial class DatabaseSeeder
 
             // Bốn nhóm: 60 lượt đã trả đúng hạn, 20 lượt trả muộn có phạt, 15 lượt đang mượn còn
             // hạn, 5 lượt đang quá hạn — đúng hình dáng dữ liệu của một thư viện đang hoạt động.
-            var loanDate = index < moc1
-                ? today.AddDays(-soNgayTrai + index * soNgayTrai / Math.Max(1, moc1))
-                : index < moc2
-                    ? today.AddDays(-soNgayTrai * 5 / 6
-                                    + (index - moc1) * soNgayTrai / Math.Max(1, moc2 - moc1))
-                    : index < moc3
-                        ? today.AddDays(-(policy.LoanDays / 2) - (index - moc2) % 5)
-                        : today.AddDays(-policy.LoanDays - 12 - (index - moc3) % 20 * 3);
+            var loanDate = NgayMuonDemo(today, index, moc1, moc2, moc3, soNgayTrai, policy.LoanDays);
 
             var dueDate = CirculationRules.DueDate(
                 loanDate, policy.LoanDays, calendar, reader.CardExpireDate);
@@ -687,4 +680,34 @@ public partial class DatabaseSeeder
 
     private DateTimeOffset ToMoment(DateOnly date, int hour) =>
         new(date.ToDateTime(new TimeOnly(Math.Clamp(hour, 0, 23), 0)), _clock.Now.Offset);
+
+    /// <summary>
+    /// Ngày mượn của một lượt trong bộ dữ liệu trình diễn. Luôn nằm **trong quá khứ**.
+    ///
+    /// <para>Bản trước rải nhóm thứ hai bằng công thức <c>-soNgayTrai*5/6 + (index-moc1) * soNgayTrai /
+    /// (moc2-moc1)</c>: nhóm ấy chỉ chiếm 20% số lượt nhưng vẫn được rải trọn <c>soNgayTrai</c> ngày, nên
+    /// đuôi của nó vọt qua hôm nay tới <c>soNgayTrai/6</c> ngày. Kho trình diễn vì thế có 94 phiếu mang
+    /// ngày mượn ở tương lai, mà cột ngày trả lại nằm trước ngày mượn — người xem buổi nghiệm thu mở lịch
+    /// sử một bạn đọc là thấy ngay "mượn 29/11, trả 02/09" (K18, 06/09/2026).</para>
+    ///
+    /// <para>Nay mỗi nhóm được rải trong đúng khoảng của mình, và có chốt chặn cuối: không ngày nào
+    /// vượt quá hôm nay.</para>
+    /// </summary>
+    public static DateOnly NgayMuonDemo(
+        DateOnly today, int index, int moc1, int moc2, int moc3, int soNgayTrai, int loanDays)
+    {
+        var offset = index < moc1
+            // Nhóm đã trả đúng hạn: rải đều suốt cả khoảng, từ xa nhất tới gần hôm nay.
+            ? -soNgayTrai + index * (soNgayTrai * 5 / 6) / Math.Max(1, moc1)
+            : index < moc2
+                // Nhóm trả muộn: nửa sau của khoảng, dừng trước hôm nay một quãng đủ cho ngày trả muộn.
+                ? -soNgayTrai * 5 / 6 + (index - moc1) * (soNgayTrai * 2 / 3) / Math.Max(1, moc2 - moc1)
+                : index < moc3
+                    // Nhóm đang mượn còn hạn.
+                    ? -(loanDays / 2) - (index - moc2) % 5
+                    // Nhóm đang quá hạn.
+                    : -loanDays - 12 - (index - moc3) % 20 * 3;
+
+        return today.AddDays(Math.Min(offset, 0));
+    }
 }
