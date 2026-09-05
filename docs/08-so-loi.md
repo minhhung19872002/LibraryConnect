@@ -509,6 +509,52 @@ mà đặc tả nội bộ không chép lại: hồ sơ bàn giao, kế hoạch 
 | JP10 | Vừa | **Thiếu hẳn bốn hồ sơ mà Chương V đòi**: kế hoạch triển khai kèm đối soát dữ liệu (mục III.1), kế hoạch đào tạo (III.2), cam kết bảo hành và mức phản hồi sự cố (III.3), hồ sơ bàn giao và biểu mẫu nghiệm thu (mục 5.5) | Đặc tả nội bộ `CLAUDE.md` chỉ chép phần chức năng của Chương V, bỏ mục III và mục 5. Bảy tài liệu bàn giao làm theo đặc tả nội bộ nên cũng thiếu đúng chừng ấy | Bốn tài liệu mới `docs/10` → `docs/13`, và bảng đáp ứng có thêm hai mục E, F đối chiếu mục III và mục 5 — nay bảng đi đúng thứ tự **toàn bộ** Chương V |
 
 
+## K. Nghiệm thu thử trên máy chủ thật (05/09/2026)
+
+Tám đợt rà trước đều chạy trên máy phát triển. Đợt này chạy trên chính bản mà hội đồng sẽ chấm —
+`thuvien.bluestar.com.vn`, ảnh `524ad90`, dữ liệu 12.608 biểu ghi — theo đúng lối người dùng đi:
+gọi API bằng tài khoản đúng vai (quản trị, cán bộ lưu thông, hai bạn đọc thử), rồi mở trình duyệt
+đi qua trang chủ, tra cứu, chi tiết, đăng nhập bạn đọc, trang quản trị, trình soạn MARC, quầy lưu
+thông. Mọi dữ liệu ghi thêm mang dấu `NTT` và đã xoá sau khi xong; kết quả từng kịch bản ở phụ lục
+cuối `06-kich-ban-kiem-thu.md`: **223 kịch bản chạy bằng máy, 222 đạt**; cộng phần đi bằng trình duyệt,
+đợt tìm ra **5 lỗi** — tất cả đã sửa trong ngày.
+
+| Mã | Mức | Lỗi | Nguyên nhân | Sửa |
+|---|---|---|---|---|
+| K1 | Nghiêm trọng (trang công khai) | **Gõ sai mật khẩu vài lần liền là nhận trang HTML "503 Service Temporarily Unavailable" của Nginx** thay vì thông báo tiếng Việt. Bộ giới hạn trong API trả 429 kèm JSON, nhưng `limit_req` của Nginx đứng trước nó và mặc định trả 503 — trang tra cứu và ứng dụng di động chờ JSON nên chỉ hiện được "máy chủ lỗi". Hội đồng thử "đăng nhập sai 5 lần" ở mục 2.3 sẽ thấy đúng trang ấy | Không ai đọc `limit_req_status` mặc định của Nginx; máy phát triển không có `limit_req` nên không tái hiện được | `limit_req_status 429` và trang lỗi 429 dạng JSON theo khuôn `ApiResponse` ở cả hai tệp có siết tần suất. `NginxConfigParityTests.Tep_nao_siet_tan_suat_thi_phai_tra_429_kem_json` đỏ trước khi sửa |
+| K2 | Nghiêm trọng | **Bạn đọc đặt giữ được biểu ghi không có bản in nào.** Trên máy chủ thật có hơn 7.000 biểu ghi thu hoạch qua OAI-PMH chỉ có siêu dữ liệu; trang tra cứu vẫn hiện nút "Đặt giữ" và máy chủ nhận phiếu, xếp bạn đọc vào hàng đợi chờ một cuốn sách không bao giờ về | Luật đặt giữ kiểm chính sách, hạn mức, trùng phiếu, đang mượn — nhưng không hỏi câu đầu tiên: thư viện có bản in không. Kho phát triển mọi biểu ghi mẫu đều có ĐKCB nên không ai gặp | Máy chủ từ chối 409 khi biểu ghi không có bản in nào ngoài Mất/Thanh lý; trang tra cứu ẩn nút khi `itemCount = 0`. `AcceptanceRehearsalTests.Dat_giu_bieu_ghi_chua_co_ban_in_nao_thi_bi_tu_choi` đỏ trước khi sửa |
+| K3 | Nặng (dữ liệu trình diễn) | **162 thẻ bạn đọc mẫu hết hạn đúng ngày 05/09/2026**, ba thẻ đã hết hạn từ tháng 8. Từ hôm sau, một phần tư bạn đọc mẫu bị quầy từ chối và OPAC cảnh báo "thẻ hết hạn" — hội đồng sẽ kết luận dữ liệu chưa sẵn sàng | Bộ dữ liệu trình diễn viết cứng bốn khóa 2021–2024, thẻ hết hạn ngày 05/09 của năm nhập học cộng năm; nạp năm 2025 thì đẹp, tới 2026 là khóa đầu rụng | Trên máy chủ: gia hạn 165 thẻ thêm 12 tháng bằng chính chức năng gia hạn hàng loạt (kịch bản BD.18). Trong mã: `DemoReaderCohort` tính khóa theo ngày nạp, khóa cũ nhất còn ít nhất một năm thẻ; `DemoReaderCohortTests` đỏ với ngày 05/09/2026 trước khi sửa |
+| K4 | Vừa (ấn tượng đầu) | **Trang Tổng quan của giao diện quản trị vẫn mang dòng giữ chỗ từ phase 1**: "Hệ thống đang trong quá trình bàn giao theo từng phân hệ…", kèm ba con số về quyền của chính tài khoản. Màn hình đầu tiên sau đăng nhập nói phần mềm chưa xong | Viết ở phase 1 để hội đồng kiểm quyền, rồi không ai quay lại vì mọi đợt rà đi thẳng vào từng phân hệ | Trang Tổng quan hiện số liệu hoạt động từ đầu năm lấy từ báo cáo tổng quan (dùng chung với mục Báo cáo thống kê), kèm lối mở báo cáo; tài khoản không có quyền báo cáo thì chỉ thấy quyền của mình. `DashboardPage.test.ts` cấm dòng giữ chỗ quay lại |
+| K5 | Vừa | **Trình soạn MARC báo "1 lỗi phải sửa trước khi lưu: thiếu 001" trên mọi biểu ghi mới**, dù bấm Lưu vẫn xong vì đường lưu tự cấp số kiểm soát trước khi kiểm. Cán bộ hoặc tự bịa một số 001, hoặc học cách bỏ qua ô đỏ — cả hai đều tệ | Đường lưu cấp 001 rồi mới kiểm; endpoint kiểm tra riêng (trình soạn gọi sau mỗi lần gõ) thì không. Nhập ISO 2709 đã gặp đúng lỗi này và tự lọc thông báo 001 ở chỗ của nó thay vì sửa gốc | Endpoint kiểm tra bỏ lỗi thiếu 001, vì đó là số hệ thống cấp. `AcceptanceRehearsalTests.Kiem_tra_bieu_ghi_khong_bao_loi_thieu_001_vi_he_thong_tu_cap` đỏ trước khi sửa |
+
+### Đã kiểm trên máy chủ thật và vẫn tốt
+
+- Bốn header bảo mật (kể cả Content-Security-Policy) có ở cả trang tra cứu lẫn trang quản trị; HTTP
+  chuyển hướng 308 sang HTTPS; `/health` bị Caddy ẩn ra ngoài theo chủ ý, bên trong trả `Healthy`
+  cho PostgreSQL, Redis, MinIO.
+- Tra cứu không dấu ra đúng 45 kết quả như có dấu; gợi ý, facet đếm khớp kết quả lọc, nâng cao
+  VÀ/HOẶC/KHÔNG, giới hạn năm; tra cứu 0,04–0,42 giây đo cả đường mạng.
+- SRU (explain, MARCXML, Dublin Core, không dấu, phân trang, diagnostic) và OAI-PMH đủ sáu verb kèm
+  `resumptionToken`, lọc thời gian, `badVerb`, nhận POST.
+- Kết nối thật tới Thư viện Quốc hội Mỹ qua Z39.50: 949.926 kết quả thử, 11.534 kết quả "Vietnam",
+  lấy được biểu ghi; tab "Tìm ở thư viện khác" của OPAC cũng vậy.
+- Luồng ghi trọn vẹn: tạo nhóm và tài khoản (nhật ký ghi Thêm mới, Phân quyền, Đăng nhập thất bại,
+  không lộ mật khẩu), cán bộ lưu thông bị 403 đủ 5 endpoint quản trị, cấp thêm quyền có hiệu lực sau
+  đăng nhập lại; bạn đọc tạo mới → đổi mật khẩu bắt buộc → thẻ điện tử → mượn 2 bản → gia hạn → bạn
+  đọc khác đặt giữ → gia hạn bị chặn vì có người đợi → trả có cảnh báo giữ sách → phiếu chuyển Sẵn
+  sàng → huỷ → ghi mất → thu phạt → ra vào cổng → tủ gửi đồ → giấy xác nhận trả sách.
+- Biểu ghi MARC tạo qua API, xuất ISO 2709 và MARCXML rồi cho `pymarc` đọc lại đúng nhan đề tiếng
+  Việt; sửa biểu ghi đã có thêm trường 700 lưu được (H4 không quay lại); lịch sử phiên bản có diff.
+- 23 báo cáo trả bảng, 14 lượt xuất PDF/Excel mở được (kiểm chữ ký `%PDF` / `PK`), kể cả in thẻ,
+  tem, nhãn, phích, giấy xác nhận, phiếu chuyển kho.
+- Trang tĩnh nháp không lộ ra công khai, đăng thì thấy ngay; mã độc trong nội dung bị lọc.
+
+### Ghi nhận, chưa sửa (dữ liệu trình diễn trên máy chủ)
+
+- Thư viện chưa tải logo, chưa có banner, chưa khai giá (`shelves` = 0) — bản đồ kho trống.
+- "Sách mới bổ sung" ở trang chủ toàn sách tiếng Anh từ Open Library, vì đó là lượt nạp gần nhất.
+- Danh mục có 10 bộ sưu tập nhưng chưa biểu ghi nào được gắn, nên mục "Duyệt theo bộ sưu tập" rỗng.
+
 ## Đ. Những chỗ đã thử phá nhưng hệ thống chịu được
 
 Ghi lại để biết chỗ nào đã kiểm và không phải kiểm lại — kèm bằng chứng, không ghi suông.
@@ -615,7 +661,8 @@ dạng quét mã nguồn chặn cả lớp lỗi quay lại thay vì chỉ chặ
 | Nguy cơ | 1 | 0 | 1 (H9, ghi ở "Làm tiếp") |
 
 Cộng cả ba đợt, đợt áp thiết kế, đợt triển khai và ba đợt rà hoàn thiện ngày 04/09/2026:
-**147 lỗi, đã sửa 145**. Hai mục còn lại là H3 và H9, đã làm xong ngày 03/09/2026 và ghi ở cột cuối
+**147 lỗi, đã sửa 145**; thêm **5 lỗi của đợt nghiệm thu thử trên máy chủ thật ngày 05/09/2026 (mục K),
+đã sửa cả 5** — tổng **152 lỗi, đã sửa 152**. Hai mục H3 và H9 đã làm xong ngày 03/09/2026 và ghi ở cột cuối
 của chính hai dòng ấy — con số 134 giữ nguyên cách đếm cũ để đối chiếu được với các bản trước.
 Mỗi lỗi đã sửa đều có phép thử chạy đỏ trước khi sửa và xanh sau khi sửa, kể cả H7: phép thử giả
 tiêu đề đỏ trước khi sửa `CurrentUser.Ip`.

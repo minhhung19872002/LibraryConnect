@@ -290,7 +290,15 @@ public class ValidateMarcRecordCommandHandler
 
         var validator = await _rules.GetValidatorAsync(ct);
 
-        return Describe(validator.Validate(record));
+        // The save path issues the control number (001) before it validates, so a record without one
+        // saves fine. This endpoint is what the editor calls after every keystroke; reporting 001 as
+        // an error here shows "1 lỗi phải sửa" on every new record and asks the cataloguer for a
+        // number the system is about to assign anyway.
+        var issues = validator.Validate(record)
+            .Where(issue => !(issue.Tag == "001" && issue.Severity == MarcIssueSeverity.Error))
+            .ToList();
+
+        return Describe(issues);
     }
 
     /// <summary>Chuyển kết quả kiểm tra sang dạng giao diện dùng được.</summary>

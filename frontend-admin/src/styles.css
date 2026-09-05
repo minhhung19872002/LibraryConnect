@@ -403,6 +403,18 @@ body {
   margin-bottom: 0 !important;
 }
 
+.lc-dashboard__period {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.lc-dashboard__groups {
+  margin-top: 16px;
+}
+
 .lc-centered-page {
   display: flex;
   align-items: center;

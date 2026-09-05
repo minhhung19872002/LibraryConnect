@@ -74,6 +74,20 @@ public class PlaceHoldCommandHandler : IRequestHandler<PlaceHoldCommand, HoldRow
             .FirstOrDefaultAsync(ct)
             ?? throw new NotFoundException("biểu ghi", command.BibId);
 
+        // A hold queues for a physical copy. A record that has none — thousands of harvested records
+        // have only metadata, and a record whose every copy is lost or discarded is the same thing —
+        // would keep the reader waiting for a book that never arrives.
+        var hasCopies = await _db.Items.AnyAsync(item =>
+            item.BibId == command.BibId
+            && item.Status != ItemStatus.Lost
+            && item.Status != ItemStatus.Discarded, ct);
+
+        if (!hasCopies)
+        {
+            throw new ConflictException(
+                "Tài liệu này chưa có bản in nào trong kho nên không đặt giữ được.");
+        }
+
         Guid? warehouseId = command.PickupWarehouseId;
 
         if (command.ItemId is not null)

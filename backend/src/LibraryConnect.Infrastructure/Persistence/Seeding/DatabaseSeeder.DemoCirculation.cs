@@ -242,7 +242,7 @@ public partial class DatabaseSeeder
 
             var name = DemoNames.Person(index);
 
-            var enrolmentYear = 2021 + (index % 4);
+            var enrolmentYear = DemoReaderCohort.EnrolmentYear(today, index);
 
             // Thẻ hết hạn và thẻ tạm khóa: mỗi loại một người, để cán bộ demo được cảnh báo ở quầy
             // ghi mượn mà không phải tự tay sửa dữ liệu trước buổi nghiệm thu.
@@ -269,8 +269,8 @@ public partial class DatabaseSeeder
                     ? $"{major.Code}{enrolmentYear % 100}{(char)('A' + index % 3)}"
                     : null,
                 CourseYear = typeCode == "SV" ? $"K{enrolmentYear % 100}" : null,
-                CardIssueDate = new DateOnly(enrolmentYear, 9, 5),
-                CardExpireDate = expired ? today.AddDays(-20) : new DateOnly(enrolmentYear + 5, 9, 5),
+                CardIssueDate = DemoReaderCohort.CardIssueDate(enrolmentYear),
+                CardExpireDate = expired ? today.AddDays(-20) : DemoReaderCohort.CardExpireDate(enrolmentYear),
                 Status = expired
                     ? ReaderStatus.Expired
                     : suspended ? ReaderStatus.Suspended : ReaderStatus.Active,

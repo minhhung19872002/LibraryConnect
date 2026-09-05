@@ -64,10 +64,13 @@ export function Availability({ item }: { item: SearchResult }) {
  */
 export function HoldButton({
   bibId,
+  hasCopies = true,
   size = 'small',
   onDone,
 }: {
   bibId: string;
+  /** Biểu ghi chưa có bản in nào (thu hoạch qua OAI-PMH, hoặc chỉ có bản số) thì không có gì để giữ. */
+  hasCopies?: boolean;
   size?: 'small' | 'middle';
   onDone?: () => void;
 }) {
@@ -89,7 +92,7 @@ export function HoldButton({
     onError: (error: Error) => message.error(error.message),
   });
 
-  if (settings?.allowHold === false) {
+  if (settings?.allowHold === false || !hasCopies) {
     return null;
   }
 
@@ -163,7 +166,7 @@ export function ResultRow({ item }: { item: SearchResult }) {
       </div>
 
       <div className="lc-result__actions">
-        <HoldButton bibId={item.id} />
+        <HoldButton bibId={item.id} hasCopies={item.itemCount > 0} />
         <Link to={`/tai-lieu/${item.id}`}>
           <Button size="small" block>
             Chi tiết

@@ -49,6 +49,15 @@ Gradle, luật thêm vào hai trong ba tệp cấu hình Nginx (chính sách n�
 và một sink nhật ký ném ở mỗi lô mà thư viện log nuốt lỗi nên bảng cứ rỗng.
 Cộng tất cả: **147 lỗi, đã sửa 145**.
 
+Chiều 05/09/2026 chạy **nghiệm thu thử trên máy chủ thật** (`thuvien.bluestar.com.vn`, mục K sổ
+lỗi): 223 kịch bản của `docs/06` chạy bằng máy qua API với tài khoản đúng vai, cộng trình duyệt đi
+qua tám màn hình chính. Tìm ra **5 lỗi** mà tám đợt trên máy phát triển không thấy, vì chúng chỉ có
+ở bản chạy thật: hạn mức đăng nhập của Nginx trả trang HTML 503 thay vì JSON 429; đặt giữ được
+biểu ghi không có bản in nào (7.000 biểu ghi thu hoạch chỉ có siêu dữ liệu); 162 thẻ bạn đọc mẫu
+hết hạn đúng hôm ấy vì khóa viết cứng; trang Tổng quan còn dòng giữ chỗ "đang bàn giao" từ phase 1;
+trình soạn MARC báo lỗi thiếu 001 trên mọi biểu ghi mới. Cả 5 đã sửa, tổng **152 lỗi, đã sửa 152**.
+Phụ lục cuối `docs/06` ghi kết quả từng kịch bản.
+
 Đọc thẳng hồ sơ gốc còn tìm ra thứ không phải lỗi mã: **bốn hồ sơ bàn giao** mà Chương V mục III và
 mục 5 đòi — kế hoạch triển khai, kế hoạch đào tạo, cam kết bảo hành, hồ sơ nghiệm thu — nay là
 `docs/10` → `docs/13`, và bảng đáp ứng có thêm hai mục đối chiếu đúng thứ tự của cả Chương V.
@@ -116,6 +125,8 @@ vướng — mỗi cái sinh ra từ một lỗi đã xảy ra thật:
 | `frontend-opac/src/components/keyboard.test.ts` | `div`/`span` có `onClick` phải kèm `clickable(...)` hoặc đủ bộ ba `role` + `tabIndex` + `onKeyDown` — thanh menu chính của trang tra cứu từng không Tab tới được |
 | `mobile/test/core/push_background_test.dart` | Có đăng ký `onBackgroundMessage`, hàm xử lý là hàm cấp cao nhất mang `@pragma('vm:entry-point')`, và Gradle áp dụng trình cắm google-services khi có tệp cấu hình |
 | `mobile/test/features/list_refresh_after_write_test.dart` | Màn hình gọi `checkout`/`renewLoan`/`createHold`/`cancelHold` phải `ref.invalidate` đúng provider tương ứng — hai màn hình từng ghi xong mà danh sách không đổi |
+| `backend/.../Security/NginxConfigParityTests.cs` (luật thứ hai) | Tệp Nginx nào có `limit_req` thì phải có `limit_req_status 429` và trang lỗi 429 dạng JSON — mặc định Nginx trả trang HTML 503, máy khách chỉ hiện được "máy chủ lỗi" |
+| `frontend-admin/src/modules/dashboard/DashboardPage.test.ts` | Trang Tổng quan không mang dòng giữ chỗ về tiến độ dự án và phải đọc báo cáo tổng quan — màn hình đầu tiên sau đăng nhập từng nói "đang bàn giao" suốt từ phase 1 tới bản chạy thật |
 
 > Một phép thử quét mã nguồn chỉ chặn đúng thư mục nó quét. Thêm luật mới thì hỏi ngay: gói kia có
 > vi phạm cùng luật ấy không? Lỗi D8 sửa cho `frontend-admin` rồi ghi là "cả sản phẩm", nhưng
@@ -259,6 +270,22 @@ docker compose run --rm -d --name lc-api-kiem -e LC_DB_NAME=lc_kiem -e LC_SEED_D
     gốc mới là bản bên mời thầu chấm. Tài liệu này chép lại phần chức năng nhưng bỏ mục III (triển
     khai, đào tạo, bảo hành, quyền dữ liệu) và mục 5 (kiểm thử, hồ sơ bàn giao) — bốn hồ sơ bắt buộc
     vì thế thiếu tới tận ngày 05/09/2026. Trước khi nói "đã đủ", mở lại tệp PDF ấy.
+38. **Rà trên máy phát triển không thay được chạy thử trên máy chủ thật.** Nghiệm thu thử ngày
+    05/09/2026 tìm ra 5 lỗi mà tám đợt rà trước không thấy, vì chúng chỉ tồn tại ở bản chạy thật:
+    `limit_req` chỉ có trong hai tệp Nginx triển khai, dữ liệu thật có 7.000 biểu ghi không có bản
+    in, và thẻ mẫu chỉ hết hạn khi lịch đi tới ngày ấy. Trước buổi nghiệm thu, chạy lại đúng bộ
+    kịch bản trên đúng máy chủ sẽ chấm.
+39. **Mỗi tầng chặn đứng trước phải nói cùng một thứ tiếng với tầng sau.** API trả 429 JSON tiếng
+    Việt, nhưng Nginx đứng trước nó trả 503 HTML — người dùng chỉ thấy tầng nào bắt được yêu cầu
+    trước. Thêm một lớp chặn ở hạ tầng thì phải cho nó trả đúng khuôn `ApiResponse`.
+40. **Luật nghiệp vụ phải hỏi câu đầu tiên trước.** Đặt giữ kiểm chính sách, hạn mức, trùng phiếu,
+    đang mượn — mà không hỏi "thư viện có bản in không". Kho phát triển mọi biểu ghi đều có ĐKCB
+    nên câu ấy chưa bao giờ cần; kho thật thì 7.000 biểu ghi trả lời "không".
+41. **Dữ liệu trình diễn không được có ngày viết cứng.** Bốn khóa 2021–2024 đẹp lúc viết, tới đúng
+    05/09/2026 thì cả khóa đầu hết hạn thẻ. Mọi mốc thời gian của dữ liệu mẫu tính từ ngày nạp.
+42. **Hai lối đi tới cùng một luật phải cho cùng một câu trả lời.** Đường lưu cấp 001 rồi mới kiểm,
+    endpoint kiểm tra riêng thì không — trình soạn báo lỗi mà bấm Lưu vẫn xong. Nhập ISO 2709 đã
+    gặp đúng chuyện này và lọc thông báo ở chỗ của nó thay vì sửa gốc; lần này sửa gốc.
 
 ### A.4. Cơ chế dùng chung — dùng lại, đừng viết chỗ mới
 

@@ -176,7 +176,8 @@ export const messages = {
     scopeCount: 'Phạm vi dữ liệu',
     yourGroups: 'Nhóm của bạn',
     noScope: 'Không giới hạn phạm vi dữ liệu',
-    phaseNotice:
-      'Hệ thống đang trong quá trình bàn giao theo từng phân hệ. Các chức năng đã hoàn thiện hiển thị đầy đủ trong menu bên trái.',
+    periodYear: 'Số liệu từ đầu năm đến hôm nay',
+    openReports: 'Mở báo cáo thống kê',
+    noReportRight: 'Tài khoản của bạn chưa được cấp quyền xem báo cáo, nên trang này chỉ hiện quyền hạn của bạn.',
   },
 } as const;

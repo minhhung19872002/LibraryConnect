@@ -67,6 +67,43 @@ public class NginxConfigParityTests
             + "sạch và không ai biết:\n" + string.Join('\n', thieu));
     }
 
+    /// <summary>
+    /// Tệp nào siết tần suất thì phải trả 429 kèm JSON, không phải 503 HTML mặc định của Nginx.
+    ///
+    /// Nghiệm thu thử ngày 05/09/2026: gõ sai mật khẩu bạn đọc vài lần liền là nhận "503 Service
+    /// Temporarily Unavailable" bằng trang HTML của Nginx — trình duyệt và ứng dụng di động chờ JSON
+    /// nên chỉ hiện được "máy chủ lỗi", trong khi bộ giới hạn trong API thì trả 429 tiếng Việt.
+    /// </summary>
+    [Fact]
+    public void Tep_nao_siet_tan_suat_thi_phai_tra_429_kem_json()
+    {
+        var thuMuc = Path.Combine(GocKhoMa(), "deploy", "nginx");
+        var thieu = new List<string>();
+
+        foreach (var ten in TepCauHinh)
+        {
+            var noiDung = File.ReadAllText(Path.Combine(thuMuc, ten));
+
+            if (!noiDung.Contains("limit_req ", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            if (!noiDung.Contains("limit_req_status 429", StringComparison.Ordinal))
+            {
+                thieu.Add($"{ten}: có limit_req nhưng thiếu \"limit_req_status 429\" — mặc định Nginx trả 503");
+            }
+
+            if (!noiDung.Contains("error_page 429", StringComparison.Ordinal)
+                || !noiDung.Contains("application/json", StringComparison.Ordinal))
+            {
+                thieu.Add($"{ten}: thiếu trang lỗi 429 dạng JSON — máy khách chờ JSON, không đọc được HTML của Nginx");
+            }
+        }
+
+        thieu.Should().BeEmpty(string.Join('\n', thieu));
+    }
+
     private static string GocKhoMa()
     {
         var thuMuc = new DirectoryInfo(AppContext.BaseDirectory);

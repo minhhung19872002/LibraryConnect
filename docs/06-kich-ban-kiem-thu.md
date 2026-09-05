@@ -800,3 +800,242 @@ Nhóm kiểm thử 2.7 (ứng dụng di động) trong đợt web này được 
 Các nhóm kiểm thử 2.2 (các phân hệ chưa bàn giao) và 2.7 (ứng dụng di động) sẽ được bổ sung vào tài
 liệu này theo từng phân hệ được bàn giao. Tài liệu luôn phản ánh đúng phạm vi đã hoàn thành tại thời điểm
 nghiệm thu, không liệt kê trước những gì chưa làm.
+
+---
+
+## Phụ lục — Nghiệm thu thử trên máy chủ thật ngày 05/09/2026
+
+Chạy trên `https://thuvien.bluestar.com.vn` (ảnh `524ad90`, dữ liệu 12.608 biểu ghi) bằng tài khoản đúng vai:
+quản trị, một tài khoản Cán bộ lưu thông và hai bạn đọc thử tạo trong lúc chạy. Kết quả đo bằng máy qua API,
+cộng trình duyệt đi qua trang chủ, tra cứu, chi tiết, đăng nhập bạn đọc, trang quản trị, trình soạn MARC và
+quầy lưu thông. Dữ liệu ghi thêm mang dấu `NTT` và đã xoá. Mã kịch bản bám theo bảng ở trên; mã có hậu tố
+chữ (`TC.16b`) là bước phụ của cùng kịch bản, mã `F2` là lỗi mới tìm ra (K2 trong `08-so-loi.md`).
+
+Tổng: **223 kịch bản chạy bằng máy, 222 đạt, 1 không đạt (F2 — đã sửa)**. Bốn lỗi còn lại của đợt (K1, K3, K4, K5
+trong `08-so-loi.md`) lộ ra khi đi bằng trình duyệt và khi đọc nhật ký Nginx, không nằm trong bảng này.
+
+| Mã | Chức năng | Kết quả thực tế | Đạt |
+|---|---|---|---|
+| 2.1.5 | SYS_ADMIN có đủ quyền | SYS_ADMIN: {'groupId': 'd507e294-fdd3-44e6-9b4e-a6818b59636d', 'groupName': 'Quản trị hệ thống', 'isSystem': True, 'tree': [{'key': 'module:Quản trị hệ thống',  | Đạt |
+| 2.1.6 | 5 nhóm mẫu | Cán bộ biên mục, Cán bộ bổ sung, Cán bộ lưu thông, Quản trị hệ thống, Thủ thư | Đạt |
+| 2.1.7 | Tham số hệ thống | 15 nhóm, 136 tham số | Đạt |
+| 2.1.11 | Danh mục nạp sẵn | languages=21, countries=24, document-types=14, reader-types=7, classifications=10, publishers=1869, authors=14286, subjects=3476 | Đạt |
+| 2.1.11b | Thư viện và kho | thư viện=2, kho=4, giá=0 | Đạt |
+| 2.3.1 | Ẩn danh bị 401 | 401: Phiên đăng nhập không hợp lệ hoặc đã hết hạn. | Đạt |
+| 2.3.2 | Cán bộ lưu thông gọi API quản trị → 403 | 403: Bạn không có quyền thực hiện chức năng này. [{'field': 'permission', 'message': 'Thiếu quyền: SYSTEM.USER.VIEW', 'code': 'FORBIDDEN'}] | Đạt |
+| 2.3.2a | Tạo tài khoản Cán bộ lưu thông | user ntt_ntt90073 = 523221d7-1a41-44e1-b528-5de8adcff403, có mật khẩu tạm | Đạt |
+| 2.3.2b | Cán bộ lưu thông đăng nhập, buộc đổi mật khẩu lần đầu | 200; buộc đổi=True  | Đạt |
+| 2.3.2c | Cán bộ lưu thông vẫn xem được lưu thông | 200 | Đạt |
+| 2.3.3 | Chặn cả 5 endpoint quản trị | [403, 403, 403, 403, 403] | Đạt |
+| 2.3.4 | Admin gọi 5 endpoint quản trị | [200, 200, 200, 200, 200] | Đạt |
+| 2.3.6 | Cấp thêm quyền có hiệu lực sau đăng nhập lại | 200 sau khi thêm SYSTEM.USER.VIEW | Đạt |
+| 2.3.7 | Nhật ký đăng nhập thất bại và thành công | [('LoginFailed', False), ('Login', True), ('Update', True), ('Update', True)] | Đạt |
+| 2.3.8 | Tạo nhóm người dùng, nhật ký ghi Thêm mới | nhóm 0f0ac096-14ad-43e3-88d4-9bf9b879ab5b; nhật ký: Create / UserGroup | Đạt |
+| 2.3.9 | Sửa quyền nhóm, nhật ký ghi phân quyền | ['PermissionChange', 'Create'] | Đạt |
+| 2.3.11 | Đặt lại mật khẩu, nhật ký không lộ mật khẩu | 3 dòng nhật ký, không dòng nào chứa mật khẩu | Đạt |
+| 2.3.13 | Cài đặt ghi nhận: lưu vĩnh viễn | 20 đối tượng, thời gian lưu để trống | Đạt |
+| 2.3.14 | Xuất nhật ký Excel theo bộ lọc | 42082 byte xlsx | Đạt |
+| 2.3.14b | Xuất nhật ký PDF theo bộ lọc | 259948 byte pdf trong 0.4s | Đạt |
+| 2.3.15 | Chính sách mật khẩu: 'abc' bị từ chối | 400: [{'field': 'newPassword', 'message': 'Mật khẩu phải có tối thiểu 8 ký tự.', 'code': None}] | Đạt |
+| 6.4.1 | Header bảo mật trang tra cứu | /: đủ 4 header; CSP=default-src 'self'; script-src 'self'; style-src 'self' 'uns... | Đạt |
+| 6.4.2 | Header bảo mật trang quản trị | /admin/: đủ 4 header; CSP=default-src 'self'; script-src 'self'; style-src 'self' 'uns... | Đạt |
+| 6.4.3 | HTTP chuyển hướng HTTPS | 308 -> https://thuvien.bluestar.com.vn/ | Đạt |
+| BD.1 | Thêm bạn đọc, số thẻ tự sinh | TV2026000659 hạn 2036-09-05 | Đạt |
+| BD.3 | Trùng mã sinh viên bị chặn | 400: Dữ liệu không hợp lệ. | Đạt |
+| BD.4 | Tra bạn đọc gõ không dấu | 1 kết quả 'nghiem thu thu' | Đạt |
+| BD.5 | Tra bạn đọc theo số thẻ / mã SV / email | thẻ=1, mãSV=1, email=1 | Đạt |
+| BD.18 | Gia hạn thẻ hàng loạt: 165 thẻ hết hạn 05/09/2026 thêm 12 tháng | Đã gia hạn 165 thẻ; còn 0 thẻ sắp hết hạn trong 30 ngày | Đạt |
+| BD.21 | Ra trường khi còn công nợ bị chặn / xác nhận công nợ | công nợ: {'readerId': '0c8f7336-545d-4ed1-bf6e-bdf35b46f6a7', 'cardNumber': 'TV2026000659', 'fullName': 'Bạn đọc nghiệm thu thử NTT90073', 'studentCode': 'NTT9 | Đạt |
+| BD.24 | Đặt lại mật khẩu bạn đọc | NTT-BanDoc@2026 | Đạt |
+| BD.25 | Mẫu thẻ bạn đọc | 1 mẫu | Đạt |
+| BD.28 | In thẻ bạn đọc PDF (xem trước, không tính lần in) | 200 69671 byte  | Đạt |
+| BD.31 | Đếm số lần in thẻ | printCount=0 | Đạt |
+| BD.33 | Tệp mẫu nhập bạn đọc | xlsx 11232 byte | Đạt |
+| BD.42 | Xuất xlsx readers/export | xlsx 59751 byte | Đạt |
+| BD.44 | Báo cáo readers/reports/count | 1102 byte json | Đạt |
+| BD.45 | Báo cáo readers/reports/registrations | 222 byte json | Đạt |
+| BD.46 | Báo cáo readers/reports/expiring-cards | 54101 byte json | Đạt |
+| BD.48 | Báo cáo readers/reports/activity | 5731 byte json | Đạt |
+| BD.49 | Xuất báo cáo bạn đọc PDF | pdf 60353 byte | Đạt |
+| BD.55 | In giấy xác nhận trả sách | pdf 43257 byte | Đạt |
+| BM.1 | Giá trị ngầm định điền sẵn (040/041) | trường có sẵn: ['020', '040', '041', '044', '082', '100', '245', '250', '260', '300']; control: ['008'] | Đạt |
+| BM.5 | Thêm mới ấn phẩm bằng MARC | id=2cc4b2ef-0e07-436a-affe-e6579ef2a4e9 control=LC00013117 | Đạt |
+| BM.6 | Rút cột phẳng từ MARC | {'isbn': '9786047399999', 'publishYear': 2026, 'pages': '215 tr.', 'authorMain': 'Trần Thị Nghiệm Thu', 'ddc': '025.3'} | Đạt |
+| BM.7 | Tự tạo tác giả / chủ đề danh mục | tác giả 'Trần Thị Nghiệm Thu'=1, chủ đề 'Thư viện số'=1 | Đạt |
+| BM.11 | Tab lịch sử lưu thông của biểu ghi | có lịch sử | Đạt |
+| BM.12 | Lịch sử phiên bản và diff | 1 phiên bản; diff: [{'kind': 'Changed', 'tag': 'LDR', 'before': '00000nam a2200000 a 4500', 'after': '00000cam a2200000 a 4500'}, {'kind':  | Đạt |
+| BM.13 | Đăng ký cá biệt 2 bản | {'created': 2, 'barcodes': ['LC00018020', 'LC00018021'], 'callNumber': '025.3 TRA'} | Đạt |
+| BM.13b | Mã vạch sinh theo quy tắc | ['LC00018020', 'LC00018021'] | Đạt |
+| BM.14 | Chặn xóa biểu ghi còn ĐKCB | 409: Biểu ghi này còn 2 đăng ký cá biệt. Hãy thanh lý hoặc chuyển các bản đó sang biểu ghi khác trước khi xóa biểu ghi. | Đạt |
+| BM.15 | Sau khi xóa, OPAC không còn thấy | 0 kết quả | Đạt |
+| BM.16 | Không dấu và có dấu cùng số kết quả | 45 = 45 | Đạt |
+| BM.17 | Hàng đợi biên mục | {'pending': 936, 'inProgress': 0, 'waitingApproval': 0, 'completed': 7469, 'returned': 0, 'overdue': 0} | Đạt |
+| BM.20 | Năng suất biên mục | [{'userId': '15694970-4a70-42f9-ba0a-23f82ef5c26e', 'userName': 'admin', 'assigned': 1, 'completed': 1, 'returned': 0, 'averageDays': 0}] | Đạt |
+| BM.28 | Xuất ISO 2709 theo bộ lọc từ khoá | 1 biểu ghi, 747 byte | Đạt |
+| BM.30 | Tệp mẫu nhập Excel biên mục | xlsx 11388 byte | Đạt |
+| BM.38 | Mẫu phích | 1 mẫu | Đạt |
+| BM.40 | In phích PDF | pdf 30508 byte | Đạt |
+| BM.43 | Sửa biểu ghi đã có, thêm điểm truy cập 700 | 700 đã lưu; tác giả phụ: ['Trần Thị Nghiệm Thu', 'Lê Văn Đồng Tác Giả'] | Đạt |
+| BS.6 | Bản đồ kho | {'warehouseId': 'd53fa954-dc70-49d2-bc37-3df6be796354', 'warehouseName': 'Kho mở', 'itemCount': 4475, 'rows': 0, 'column | Đạt |
+| BS.7 | Lập yêu cầu đặt mua | yêu cầu acc239b0-7e0b-47e7-bf0b-ebce6d0979aa | Đạt |
+| BS.8 | Cảnh báo tài liệu đã có (ISBN) | {'bibId': '2cc4b2ef-0e07-436a-affe-e6579ef2a4e9', 'controlNumber': 'LC00013117', 'title': 'Giáo trình nghiệm thu thử hệ  | Đạt |
+| BS.10 | Tệp mẫu đề nghị mua | xlsx 10268 byte | Đạt |
+| BS.11 | Duyệt khi chưa gửi bị chặn | 409: Yêu cầu YC202600001 không ở trạng thái chờ duyệt nên không duyệt được. | Đạt |
+| BS.19 | Biên mục sơ lược vào hàng đợi | bib df3bb2f8-186d-4213-8d78-e2ae8e233ad0 có trong hàng đợi Chờ xử lý | Đạt |
+| BS.23 | Ấn phẩm mới chờ kiểm nhận, không cho mượn | chặn: ['Ấn phẩm đang bị khóa lưu thông: Chờ kiểm nhận.', 'Ấn phẩm đang ở trạng thái chưa kiểm nhận, không cho mượn được.'] | Đạt |
+| BS.25 | Kiểm nhận và mở khóa | trạng thái: ['InStock', 'InStock'] | Đạt |
+| BS.27 | Khóa lưu thông thiếu lý do bị chặn | 400: [{'field': 'reason', 'message': 'Phải ghi lý do khóa để người khác biết vì sao bản này không cho mượ | Đạt |
+| BS.28 | In tem mã vạch PDF | pdf 37204 byte | Đạt |
+| BS.28b | Ảnh mã vạch | image/png 552 byte | Đạt |
+| BS.29 | In nhãn gáy PDF | pdf 17117 byte | Đạt |
+| BS.32 | Chuyển kho thiếu lý do bị chặn | 400 | Đạt |
+| BS.33 | Chuyển kho + phiếu chuyển | {'affected': 1, 'skipped': [], 'documentCode': 'PCK202600001'} | Đạt |
+| BS.35r | Báo cáo acquisition/reports/disposals | 51 byte json | Đạt |
+| BS.41 | Kỳ kiểm kê | 0 kỳ | Đạt |
+| BS.52 | Thống kê bổ sung theo chiều DOCTYPE | 10 dòng; chiều có: ['DOCTYPE', 'CARRIER', 'TIME', 'LANGUAGE', 'WAREHOUSE', 'FUNDING'] | Đạt |
+| BS.53 | Thống kê bổ sung theo thời gian (quý) | 10 dòng: ['2024-Q2', '2024-Q3', '2024-Q4', '2025-Q1'] | Đạt |
+| BS.54 | Bảng tổng hợp đa chiều (pivot) | 10 hàng x 4 cột | Đạt |
+| BS.55 | Pivot hai chiều trùng nhau bị chặn | 400: [{'field': 'columnDimension', 'message': 'Chiều hàng và chiều cột phải khác nhau.', 'code': None}] | Đạt |
+| BS.56 | Báo cáo acquisition/reports/acquisition-list | 7396570 byte json | Đạt |
+| BS.56x | Xuất thống kê bổ sung PDF | pdf 56057 byte | Đạt |
+| BS.57 | Báo cáo acquisition/reports/purchase-approval | 231 byte json | Đạt |
+| BS.59 | Xuất xlsx stock/items/export | xlsx 1679007 byte | Đạt |
+| BS.60 | Cán bộ lưu thông không tạo được biểu ghi | 403 | Đạt |
+| BS.65 | Biểu đồ báo cáo bổ sung có dữ liệu | tổng 17900 bản qua 10 dạng | Đạt |
+| BS.66 | Biểu mẫu in dùng chung | 11 loại biểu mẫu: [{'formType': 'RECEIPT', 'name': 'Phiếu nhập kho', 'headerFields': [{'key': 'libraryName', 'label': 'Tên thư viện', 'isRow': False}, {'key': ' | Đạt |
+| DK.1 | Danh sách đầu báo | 5 đầu báo | Đạt |
+| DK.21 | Lưới nhận số | [{'year': 2026, 'expected': 0, 'received': 52, 'missing': 8, 'bound': 0, 'cells': [{'issueId': '31699eb9-0738-4d99-ae47- | Đạt |
+| DK.28 | Tệp mẫu mục lục bài trích | xlsx 9678 byte | Đạt |
+| DK.40 | Thống kê ấn phẩm định kỳ (OVERALL, DDC, FREQUENCY, LANGUAGE, SUPPLIER, WAREHOUSE) | {'title': 'Tổng hợp ấn phẩm định kỳ', 'dimensionName': 'Tổng hợp', 'rows': [{'label': 'Toàn bộ ấn phẩm định kỳ', 'titleCount': 5, 'receivedIssues': 89, 'missing | Đạt |
+| DK.42 | Xuất thống kê định kỳ PDF | pdf 48037 byte | Đạt |
+| DM.8 | Tệp mẫu nhập danh mục | xlsx 10120 byte | Đạt |
+| DM.11 | Xuất xlsx catalogs/languages/export | xlsx 7930 byte | Đạt |
+| DM.14 | Xuất pdf catalogs/languages/export | pdf 61435 byte | Đạt |
+| F2 | Đặt giữ biểu ghi không có bản in nào phải bị từ chối | 200: {"data":{"id":"d32783e7-693b-4c55-843d-626fd6d0e5c2","readerId":"895264cd-164c-439f-9b5a-3dc61406a12f","readerCardNumber":"TV2026000662","readerName":"Bạn  | **Không đạt** → đã sửa |
+| F2.pre | Biểu ghi thử không có ĐKCB | Our Angry Earth: 0 bản in | Đạt |
+| HN.1 | Tra cứu dưới 1 giây (đo cả mạng) | 0.09s, 19 kết quả | Đạt |
+| HN.4 | Câu hỏi rộng dừng đếm ở 10.000 | 10000 kết quả trong 0.42s | Đạt |
+| I.3 | Lịch sử thay đổi tham số | 9 dòng | Đạt |
+| I.5 | Danh sách bản sao lưu | 5 bản; mới nhất: 2026-09-04T19:00:12.237752+00:00 Success | Đạt |
+| I.5b | Dung lượng lưu trữ sao lưu | {'totalBytes': 102888095744, 'freeBytes': 1443389440, 'usedByBackupsBytes': 167166724, 'backupCount': 4, 'autoEnabled': True, 'scheduleCron': '0 2 * * | Đạt |
+| III.2 | Báo cáo reports/overview | 4577 byte json | Đạt |
+| III.2x | Xuất pdf reports/overview/export | pdf 63869 byte | Đạt |
+| IX.1 | Trang chi tiết có thẻ meta cho máy thu thập | Cơ sở dữ liệu — l&#253; thuyết v&#224; b&#224;i tập – Thư viện Trường Đại học Mẫ | Đạt |
+| LT.1 | Chính sách lưu thông nạp sẵn | 7 chính sách | Đạt |
+| LT.4 | Hạn trả rơi vào ngày nghỉ | 4 ngày nghỉ khai báo | Đạt |
+| LT.5 | Quét thẻ ở quầy | ['id', 'cardNumber', 'studentCode', 'fullName', 'readerTypeName', 'readerTypeId', 'className', 'hasPhoto'] | Đạt |
+| LT.6 | Quét mã vạch: được phép mượn | allowed, hạn trả 2026-09-12 | Đạt |
+| LT.9 | Bản đang mượn không cho người khác mượn | chặn: ['Ấn phẩm đang có người mượn, chưa ghi trả.'] | Đạt |
+| LT.10 | Ghi mượn 2 bản, sinh phiếu | phiếu PM00003117, hạn 2026-09-12 | Đạt |
+| LT.12 | Đặt giữ trùng bị từ chối | 409: Bạn đọc đã đặt giữ tài liệu này rồi. | Đạt |
+| LT.14 | Gia hạn khi có người đang đợi bị chặn | 409: Có bạn đọc khác đang đặt giữ tài liệu này nên không gia hạn được. | Đạt |
+| LT.15 | Ghi trả bản có người đặt giữ → cảnh báo giữ sách | trả xong, phạt 0, holdWaiting=True | Đạt |
+| LT.16 | Đặt giữ chuyển Sẵn sàng, bạn đọc thấy trên OPAC | trạng thái Ready, hết hạn giữ 2026-09-08T06:36:57.370929+00:00 | Đạt |
+| LT.18 | Ghi mất tài liệu rồi phạt | phạt: {'readerId': '0c8f7336-545d-4ed1-bf6e-bdf35b46f6a7', 'cardNumber': 'TV2026000659', 'fullName': 'Bạn đọc nghiệm thu thử NTT90073', 'totalOutstanding':  | Đạt |
+| LT.22 | Ghi nhận ra vào thư viện | {'checkedIn': True, 'visit': {'id': '3361afce-b325-45af-8c77-d5090f30a4f7', 'readerId': '0c8f7336-54 | Đạt |
+| LT.23 | Giao và nhận lại tủ gửi đồ | tủ A01: giao rồi trả; usage {'id': '9cd8071a-20b4-4672-ae46-9b897003c9c4', 'lockerId': '3d2563f3-0607-4c69-b | Đạt |
+| LT.24a | Báo cáo circulation/reports/visits | 3226 byte json | Đạt |
+| LT.24b | Báo cáo circulation/reports/current-loans | 457877 byte json | Đạt |
+| LT.24c | Báo cáo circulation/reports/history | 2588913 byte json | Đạt |
+| LT.24d | Báo cáo circulation/reports/overdue | 145875 byte json | Đạt |
+| LT.24e | Báo cáo circulation/reports/lockers | 154 byte json | Đạt |
+| LT.24f | Báo cáo circulation/reports/top-readers | 6039 byte json | Đạt |
+| LT.24g | Báo cáo circulation/reports/top-items | 5557 byte json | Đạt |
+| LT.24x | Xuất báo cáo quá hạn PDF | pdf 265780 byte | Đạt |
+| LT.24y | Xuất xlsx circulation/reports/export | xlsx 7278 byte | Đạt |
+| LT.27 | Thẻ điện tử | số thẻ TV2026000659, hạn 2036-09-05, loại Bạn đọc kiểm thử tự động | Đạt |
+| LT.28 | Bạn đọc chỉ thấy dữ liệu của mình | 0 phiếu mượn với bạn đọc mới | Đạt |
+| LT.29 | Trạm tự mượn | 1 trạm | Đạt |
+| LTV.1 | Máy chủ Z39.50 nạp sẵn | Thư viện Quốc hội Mỹ (Z39.50), Thư viện Quốc hội Mỹ (SRU), Thư viện Đại học Yale | Đạt |
+| LTV.2 | Kiểm tra kết nối Thư viện Quốc hội Mỹ (Z39.50) | {'success': True, 'message': 'Kết nối tốt. Máy chủ: 81. Tra thử được 949.926 kết quả.', 'durationMs': 1168, 'serverName': '81', 'serverVersion': 'Metaproxy/YAZ' | Đạt |
+| LTV.6 | Tra cứu Z39.50 thật | {'targets': [{'targetId': '36b956a0-f773-4d89-812c-8ce404a9972e', 'targetName': 'Thư viện Quốc hội Mỹ (Z39.50)', 'success': True, 'totalHits': 11534, 'durationM | Đạt |
+| LTV.10 | SRU explain | 2395 byte | Đạt |
+| LTV.11 | SRU trả MARCXML | 16 biểu ghi, có MARC21/slim | Đạt |
+| LTV.12 | SRU không dấu | 16 biểu ghi | Đạt |
+| LTV.13 | SRU Dublin Core | 182 biểu ghi, dc | Đạt |
+| LTV.14 | SRU phân trang | trang 1 ['LC00000255', 'LC00000057', 'LC00000410'], trang 2 ['LC00000121', 'LC00000370', 'LC00000217'] | Đạt |
+| LTV.15 | SRU truy vấn sai cú pháp | có diagnostic | Đạt |
+| LTV.16 | OAI Identify | Thư viện Trường Đại học Mẫu | Đạt |
+| LTV.17 | OAI ListMetadataFormats | oai_dc + marc21 | Đạt |
+| LTV.18 | OAI ListSets | 14 set | Đạt |
+| LTV.19 | OAI ListRecords + resumptionToken | 50 biểu ghi, token=True | Đạt |
+| LTV.20 | OAI ListIdentifiers | 50 header | Đạt |
+| LTV.21 | OAI GetRecord | oai:thuvien.bluestar.com.vn:518356bb-b6bf-4a8b-a0b7-b2ca9203290c | Đạt |
+| LTV.22 | OAI lọc theo thời gian | noRecordsMatch | Đạt |
+| LTV.23 | OAI verb sai | badVerb | Đạt |
+| LTV.24 | OAI nhận POST | 200 | Đạt |
+| LTV.25 | Kho OAI-PMH khai báo | 7 kho; nhật ký thu hoạch: {'items': [{'id': '91b1e7af-5e5a-4ad1-877a-a67bec4103e0', 'repositoryId': '441caf7f-1775-42e5-8fd9-0 | Đạt |
+| MARC.1 | Bộ định nghĩa trường MARC | 220 trường | Đạt |
+| MARC.2 | Chi tiết trường 245 | Nhan đề và thông tin trách nhiệm: lặp=False, 12 trường con | Đạt |
+| MARC.8 | Thiếu 245 thì chặn lưu | 400: [{'field': '245', 'message': 'Thiếu trường bắt buộc 245 — Nhan đề và thông tin trách nhiệm.', 'code': None}] | Đạt |
+| MARC.12 | Xuất ISO 2709 rồi cho pymarc đọc | 747 byte, pymarc đọc: Giáo trình nghiệm thu thử hệ thống NTT90073 : / 260$c=2026 | Đạt |
+| MARC.15 | Xuất MARCXML rồi pymarc đọc | 2294 byte, 100$a=Trần Thị Nghiệm Thu | Đạt |
+| MB.11 | Tra ĐKCB theo mã vạch | LC00000001 -> ['barcode', 'registerNumber', 'callNumber', 'libraryName', 'warehouseName'] | Đạt |
+| MB.11b | Mã vạch lạ báo không tìm thấy | 404: Không tìm thấy ấn phẩm mang mã "KHONGCO123". | Đạt |
+| MB.24 | Thông báo | 200 | Đạt |
+| MB.31 | Tra theo ISBN | 0765399768 -> [{'id': '610cda21-69aa-4da6-90eb-3bf872efd0c4', 'controlNumber': 'LC00012165', ' | Đạt |
+| MB.32 | Hủy đặt giữ | 1 đặt giữ còn hiệu lực | Đạt |
+| MH.12 | Tệp mẫu tài liệu môn học | xlsx 9724 byte | Đạt |
+| MH.18 | Báo cáo courses/reports | 1803 byte json | Đạt |
+| MH.22 | Xuất báo cáo môn học Excel | xlsx 7386 byte | Đạt |
+| MH.23 | Xuất pdf courses/reports/export | pdf 57516 byte | Đạt |
+| QTND.6 | Menu công khai | 6 mục | Đạt |
+| QTND.11 | Banner công khai | 0 banner | Đạt |
+| QTND.14 | Tạo trang tĩnh bản nháp, công khai không thấy | nháp slug=trang-nghiem-thu-thu-ntt90073 → công khai 404 | Đạt |
+| QTND.15 | Đăng trang → công khai thấy | công khai 200: Trang nghiệm thu thử NTT90073 | Đạt |
+| QTND.18 | Lọc mã độc trong nội dung | đã lọc: <p>Nội dung <b>đậm</b></p>alert(1)<img src="x"> | Đạt |
+| QTND.23 | Tin tức công khai | 2 tin | Đạt |
+| TC.1 | Dữ liệu trang chủ | keys=['newBooks', 'popularBooks', 'news', 'announcements', 'banners', 'links', 'statistics'] | Đạt |
+| TC.2 | Cấu hình thương hiệu công khai | libraryName='Thư viện Trường Đại học Mẫu', logo=False | Đạt |
+| TC.3 | Tra cứu gõ không dấu | 45 kết quả, đầu: Cơ sở dữ liệu — lý thuyết và bài tập | Đạt |
+| TC.3a | Tra cứu có dấu | 45 kết quả, đầu: Cơ sở dữ liệu — lý thuyết và bài tập | Đạt |
+| TC.3b | Bạn đọc tra được ngay, gõ không dấu | 1 kết quả 'nghiem thu thu he thong' | Đạt |
+| TC.4 | Phạm vi tìm theo tác giả | 359 kết quả, đầu: Bùi Quang Anh | Đạt |
+| TC.4b | Phạm vi tìm theo nhan đề, không dấu | 427 kết quả, mọi nhan đề trang 1 chứa 'kinh te' | Đạt |
+| TC.5 | Gợi ý khi gõ | 8 gợi ý: ['Giáo trình An toàn lao động và vệ sinh môi trường trong xây dựng', 'Giáo trình an toàn thông tin', 'Giáo trình Bảo hiểm', 'Giáo trình biến đổi khí hậ | Đạt |
+| TC.6 | Bộ lọc facet đếm | nhóm facet: [{'code': 'documentType', 'name': 'Dạng tài liệu', 'values': [{'id': '45c6234f-b7d2-44c0-904c-4f194e5c81be', 'label': 'Sách', 'count': 4497}, {'id': | Đạt |
+| TC.8 | Sắp xếp mới nhất | năm: [None, None, None, None, None, None] | Đạt |
+| TC.9 | Nâng cao VÀ | giáo trình=182; VÀ kinh tế=36 | Đạt |
+| TC.10 | Nâng cao HOẶC | HOẶC=586 >= 182 | Đạt |
+| TC.11 | Nâng cao KHÔNG | KHÔNG kinh tế=146 < 182 | Đạt |
+| TC.12 | Giới hạn năm xuất bản 2020–2026 | 13 kết quả, năm: [2023, 2021, 2021, 2022, 2020] | Đạt |
+| TC.13 | Chi tiết tài liệu | title='Our Angry Earth', items=0, marc=True | Đạt |
+| TC.14 | OPAC hiện 2 bản trong kho kèm vị trí | [('LC00018020', None, 'Kho mở'), ('LC00018021', None, 'Kho mở')] | Đạt |
+| TC.14b | OPAC hiện cả 2 bản đang mượn kèm hạn trả | [('LC00018020', 'Đang có người mượn', '2026-09-12'), ('LC00018021', 'Đang có người mượn', '2026-09-12')] | Đạt |
+| TC.15 | Bạn đọc xem MARC trên OPAC | có trường 245 | Đạt |
+| TC.16 | Trích dẫn APA/BibTeX | định dạng: ['style', 'content', 'contentType'] | Đạt |
+| TC.16b | Tải trích dẫn RIS | application/x-research-info-systems; TY - BOOK | Đạt |
+| TC.16c | Trích dẫn BibTeX | @book{hoangminhduc2020, title = {Cơ sở dữ liệu — lý thuyết và bài tập}, auth | Đạt |
+| TC.18 | Duyệt theo classifications | 10 mục | Đạt |
+| TC.19 | Duyệt theo authors | 500 mục | Đạt |
+| TC.19b | Duyệt tác giả theo chữ cái | 500 tác giả chữ N | Đạt |
+| TC.20 | Duyệt theo majors | 6 mục | Đạt |
+| TC.21 | Duyệt theo theses | 2755 mục | Đạt |
+| TC.22 | Duyệt theo serials | 5 mục | Đạt |
+| TC.25 | Bạn đọc đăng nhập bằng số thẻ | TV2026000659, buộc đổi mật khẩu lần đầu=True | Đạt |
+| TC.26 | Sai mật khẩu bị từ chối | 401: Số thẻ hoặc mật khẩu không đúng. | Đạt |
+| TC.27 | Bạn đọc thấy sách đang mượn | 2 phiếu, hạn 2026-09-12 | Đạt |
+| TC.27a | Tiền phạt | 200 | Đạt |
+| TC.27b | Lịch sử mượn | 200 | Đạt |
+| TC.27c | Yêu cầu tài liệu hạn chế | 200 | Đạt |
+| TC.27d | Lịch sử mượn của bạn đọc có 1 dòng | 2 dòng | Đạt |
+| TC.28 | Bạn đọc gia hạn qua OPAC | Đã gia hạn tới ngày 19/09/2026. | Đạt |
+| TC.29 | Bạn đọc khác đặt giữ khi hết bản rảnh | đặt giữ Waiting vị trí 1 | Đạt |
+| TC.30 | Cập nhật thông tin liên hệ | phone đã đổi | Đạt |
+| TC.31 | Yêu cầu gia hạn thẻ | 1 yêu cầu | Đạt |
+| TC.33 | Tài liệu số của tôi | 200 | Đạt |
+| TC.37 | OPAC tìm ở thư viện khác | {'targets': [{'targetId': '36b956a0-f773-4d89-812c-8ce404a9972e', 'targetName': 'Thư viện Quốc hội Mỹ (Z39.50)', 'success': True, 'totalHits': 11534, 'durationM | Đạt |
+| TC.39 | sitemap.xml | 2454828 byte, 11692 url | Đạt |
+| TC.40 | Lọc theo dạng tài liệu qua facet | Sách: facet đếm 183 = kết quả lọc 183 | Đạt |
+| TC.41 | API bạn đọc khi chưa đăng nhập | 401 | Đạt |
+| TC.42 | Bạn đọc gọi API quản trị → 403 | 403 | Đạt |
+| TC.43 | Giờ mở cửa từng cơ sở | [{'id': '1ce2181a-800d-416d-ac22-6537aef6eff5', 'name': 'Thư viện Trụ sở chính', 'address': 'Số 1, đường Đại học, Quận 1', 'phone': '02838222333', 'openingHours | Đạt |
+| TLS.1 | Cây bộ sưu tập số | 6 nút gốc/nút | Đạt |
+| TLS.4 | Tài liệu số | 6 tài liệu | Đạt |
+| TLS.30a | Báo cáo digital/reports/inventory | 752 byte json | Đạt |
+| TLS.30b | Báo cáo digital/reports/usage | 1470 byte json | Đạt |
+| TLS.30c | Báo cáo digital/reports/storage | 179 byte json | Đạt |
+| TLS.30d | Báo cáo digital/reports/requests | 196 byte json | Đạt |
+| TLS.30x | Xuất xlsx digital/reports/export | xlsx 7333 byte | Đạt |
+| XI.1 | Duyệt theo subjects | 3475 mục | Đạt |
+| XI.1b | Bộ sưu tập (danh mục) so với duyệt | danh mục collections=10, duyệt trả 0 | Đạt |

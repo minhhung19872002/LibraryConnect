@@ -237,6 +237,7 @@ export function BibDetailPage() {
           <div className="lc-detail__actions">
             <HoldButton
               bibId={id}
+              hasCopies={data.itemCount > 0}
               size="middle"
               onDone={() => void queryClient.invalidateQueries({ queryKey: ['bib', id] })}
             />
