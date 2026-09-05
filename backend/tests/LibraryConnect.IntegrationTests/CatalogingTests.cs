@@ -338,8 +338,10 @@ public class CatalogingTests
         // nhưng trước 04/09/2026 không có đường nào để nạp lại: sửa hỏng một trường thì phải sửa
         // tay từng ô, hoặc dựng lại cả cơ sở dữ liệu.
         var client = await ClientAsync();
-        // Nhãn trường phải là ba chữ số; dải 9xx là dải dành cho thư viện tự dùng.
-        var tag = $"9{Random.Shared.Next(10, 100)}";
+        // Nhãn trường phải là ba chữ số; dải 9xx là dải dành cho thư viện tự dùng. Dừng ở 997 vì
+        // MarcTests khai 998 và đòi nó *chưa* có định nghĩa trước đó — trúng 998 là hai phép thử đổ
+        // lẫn nhau tùy thứ tự chạy (CI ngày 05/09/2026).
+        var tag = $"9{Random.Shared.Next(10, 98)}";
 
         // Một trường dùng riêng của thư viện: lượt khôi phục không được đụng tới nó.
         var custom = await client.PostAsJsonAsync("/api/marc/fields", new
