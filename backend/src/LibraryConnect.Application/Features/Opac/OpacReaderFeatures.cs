@@ -756,6 +756,14 @@ public class EmailBibListCommandHandler : IRequestHandler<EmailBibListCommand, s
                 "Hồ sơ của bạn chưa có địa chỉ email. Hãy cập nhật trong mục Thông tin cá nhân.");
         }
 
+        // Máy chủ thật ngày 05/09/2026 chưa cấu hình SMTP: bộ gửi im lặng bỏ qua mà màn hình vẫn báo
+        // "Đã gửi danh sách tới …". Nói thẳng cho bạn đọc còn hơn để họ chờ một lá thư không bao giờ tới.
+        if (!await _email.IsEnabledAsync(ct))
+        {
+            throw new ConflictException(
+                "Thư viện chưa cấu hình máy chủ gửi thư nên chưa gửi được danh sách qua email. Hãy báo cán bộ thư viện.");
+        }
+
         var ids = command.BibIds.Distinct().ToList();
 
         var bibs = await OpacQueryBuilder.Published(_db.BibRecords.AsNoTracking())

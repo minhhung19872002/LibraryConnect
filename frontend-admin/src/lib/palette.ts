@@ -54,8 +54,8 @@ export const MAU = {
 
   /** Chữ. */
   chu: '#2a2118',
-  chuPhu: '#7a6f5f',
-  chuMo: '#9a8f7c',
+  chuPhu: '#625848',
+  chuMo: '#6f6556',
 } as const;
 
 /**

@@ -48,9 +48,9 @@ export const theme: ThemeConfig = {
     colorErrorBorder: '#d8b5ac',
 
     colorText: '#2a2118',
-    colorTextSecondary: '#7a6f5f',
-    colorTextTertiary: '#9a8f7c',
-    colorTextDescription: '#9a8f7c',
+    colorTextSecondary: '#625848',
+    colorTextTertiary: '#6f6556',
+    colorTextDescription: '#6f6556',
 
     colorBgLayout: '#f4efe6',
     colorBgContainer: '#fffdf8',
@@ -84,7 +84,7 @@ export const theme: ThemeConfig = {
     },
     Table: {
       headerBg: '#f6f1e5',
-      headerColor: '#9a8f7c',
+      headerColor: '#6f6556',
       headerSplitColor: 'transparent',
       borderColor: '#f0e9da',
       cellPaddingBlock: 11,

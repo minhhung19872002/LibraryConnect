@@ -62,8 +62,11 @@ thiếu chức năng**, tìm thêm một lỗi (in phiếu mượn của bạn �
 máy chủ thì lộ lỗi vận hành thứ bảy: ổ đĩa đầy vì kịch bản triển khai không dọn ảnh cũ (20 bộ ảnh,
 27 GB). Đợt **test kỹ thuật** cuối ngày (tranh chấp đồng thời, truy cập chéo, giả token, tiêm mã, nhất quán
 CSDL, Hangfire, quét 70 màn hình bắt lỗi console, Lighthouse) tìm thêm hai lỗi: đặt giữ đồng thời lọt hai
-phiếu vì thiếu ràng buộc duy nhất, và ba cặp màu OPAC dưới WCAG AA. Cả 9 đã sửa, tổng **156 lỗi, đã sửa
-156**. Phụ lục cuối `docs/06` ghi kết quả từng kịch bản (hơn 440 dòng).
+phiếu vì thiếu ràng buộc duy nhất, và ba cặp màu OPAC dưới WCAG AA. Đợt kỹ thuật thứ hai (cổng mạng, TLS,
+hạn mức, phạm vi dữ liệu theo kho, cài mới CSDL trắng, Lighthouse quản trị, độ liên quan, đường đi của
+thư) tìm thêm bốn: gõ đủ nhan đề ra 0 kết quả vì tra cứu so cả cụm như chuỗi con; màu quản trị; báo "đã
+gửi" khi SMTP tắt; tám ô SMTP trên màn hình không ai đọc. Cả 13 đã sửa, tổng **160 lỗi, đã sửa 160**.
+Phụ lục cuối `docs/06` ghi kết quả từng kịch bản (hơn 450 dòng).
 
 Đọc thẳng hồ sơ gốc còn tìm ra thứ không phải lỗi mã: **bốn hồ sơ bàn giao** mà Chương V mục III và
 mục 5 đòi — kế hoạch triển khai, kế hoạch đào tạo, cam kết bảo hành, hồ sơ nghiệm thu — nay là
@@ -307,6 +310,13 @@ docker compose run --rm -d --name lc-api-kiem -e LC_DB_NAME=lc_kiem -e LC_SEED_D
 46. **Phép thử tương phản chỉ đo cặp nó được kể.** Mười sáu cặp xanh, ba cặp trượt nằm ngoài danh
     sách, và một cặp được cho hưởng ngưỡng 3 của "chữ lớn" dù chữ chỉ 11 px. Chạy Lighthouse trên
     trang thật để tìm cặp còn thiếu, rồi mới đưa vào danh sách.
+47. **Tra cứu phải khớp từng từ, không khớp cả cụm.** So cả từ khóa như một chuỗi con thì gõ đúng
+    nhan đề có dấu gạch ra 0 kết quả, đảo hai từ ra 0. Kho phát triển nhan đề ngắn nên không ai gõ
+    đủ dài để thấy; kho thật lộ ngay ở câu đầu tiên hội đồng gõ.
+48. **Việc gửi đi phải hỏi kênh gửi có mở không, và kênh gửi phải đọc đúng ô cấu hình của nó.**
+    Bộ gửi thư tắt thì lặng im mà màn hình vẫn báo "đã gửi"; tám ô SMTP trên màn hình lưu vào CSDL
+    mà bộ gửi chỉ đọc appsettings. Kho phát triển và CI không có SMTP nên cả hai lỗi sống qua mọi
+    đợt rà cho tới khi soi đường đi của một lá thư trên máy chủ thật.
 
 ### A.4. Cơ chế dùng chung — dùng lại, đừng viết chỗ mới
 

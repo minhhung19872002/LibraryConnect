@@ -181,8 +181,9 @@ export function MainLayout() {
           <NotificationBell />
 
           <Dropdown menu={{ items: accountMenu }} placement="bottomRight" trigger={['click']}>
-            <button type="button" className="lc-account-button">
-              <Avatar size="small" icon={<UserOutlined />} src={user.avatarUrl} />
+            {/* Tên truy cập phải chứa chữ nhìn thấy: biểu tượng "user" của Avatar từng chen vào trước tên (Lighthouse 05/09/2026). */}
+            <button type="button" className="lc-account-button" aria-label={`Tài khoản ${user.fullName}`}>
+              <Avatar size="small" icon={<UserOutlined aria-hidden />} src={user.avatarUrl} />
               {/* Trên điện thoại, tên người dùng nhường chỗ cho tên thư viện. */}
               {!compact && <span className="lc-account-name">{user.fullName}</span>}
             </button>

@@ -49,10 +49,10 @@ public static class OpacQueryBuilder
 
         return scope switch
         {
-            OpacSearchScope.Title => bib =>
-                DatabaseFunctions.Unaccent(bib.Title).Contains(keyword)
-                || DatabaseFunctions.Unaccent(bib.Subtitle ?? string.Empty).Contains(keyword)
-                || DatabaseFunctions.Unaccent(bib.UniformTitle ?? string.Empty).Contains(keyword),
+            OpacSearchScope.Title => EveryWord(keyword, word => bib =>
+                DatabaseFunctions.Unaccent(bib.Title).Contains(word)
+                || DatabaseFunctions.Unaccent(bib.Subtitle ?? string.Empty).Contains(word)
+                || DatabaseFunctions.Unaccent(bib.UniformTitle ?? string.Empty).Contains(word)),
 
             // Chỉ hỏi qua bảng liên kết chứ không kèm điều kiện trên cột tác giả chính: tác giả
             // chính luôn được ghi vào bảng liên kết cùng lúc với biểu ghi, nên hai điều kiện cho
@@ -92,8 +92,45 @@ public static class OpacQueryBuilder
             // ISSN, số kiểm soát và tóm tắt. Cơ sở dữ liệu đã gộp sẵn tất cả vào một cột có chỉ mục,
             // nên ở đây chỉ còn một điều kiện — viết tách ra thành mười một điều kiện HOẶC thì mỗi
             // lượt tra cứu phải quét cả kho.
-            _ => bib => bib.SearchAll.Contains(keyword)
+            _ => EveryWord(keyword, word => bib => bib.SearchAll.Contains(word))
         };
+    }
+
+    /// <summary>
+    /// Ký tự ngăn cách khi tách từ khóa thành từng từ. Dấu chấm và gạch nối giữ lại vì chúng nằm trong
+    /// chỉ số phân loại (005.74) và ISBN; mọi dấu câu khác chỉ là cách người gõ chép nhan đề.
+    /// </summary>
+    private static readonly char[] WordSeparators =
+    {
+        ' ', '\t', '\r', '\n', '\"', '\'', '\u201c', '\u201d', '\u2018', '\u2019', '(', ')', '[', ']', '{', '}',
+        ',', ';', ':', '!', '?', '\u2014', '\u2013', '/', '\\', '|', '+', '&', '*', '<', '>', '='
+    };
+
+    /// <summary>Tách từ khóa đã chuẩn hóa thành các từ riêng, bỏ dấu câu và từ lặp.</summary>
+    public static IReadOnlyList<string> Words(string keyword) =>
+        keyword.Split(WordSeparators, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Distinct()
+            .ToList();
+
+    /// <summary>
+    /// Mọi từ trong từ khóa đều phải có mặt, mỗi từ ở đâu cũng được.
+    ///
+    /// Trước 05/09/2026 cả cụm từ khóa được so như một chuỗi con liền nhau: gõ đúng nhan đề "Cơ sở dữ
+    /// liệu — lý thuyết và bài tập" ra 0 kết quả vì dấu gạch, gõ "cơ sở dữ liệu bài tập" cũng 0 vì
+    /// hai cụm không đứng cạnh nhau. Bạn đọc nhớ vài từ của nhan đề chứ không nhớ thứ tự và dấu câu.
+    /// Mỗi từ vẫn là một phép so chuỗi con trên cột có chỉ mục ba ký tự, nên PostgreSQL vẫn dùng chỉ mục.
+    /// </summary>
+    private static Expression<Func<BibRecord, bool>> EveryWord(
+        string keyword, Func<string, Expression<Func<BibRecord, bool>>> clause)
+    {
+        var words = Words(keyword);
+
+        if (words.Count == 0)
+        {
+            return PredicateBuilder.True<BibRecord>();
+        }
+
+        return words.Skip(1).Aggregate(clause(words[0]), (current, word) => current.And(clause(word)));
     }
 
     /// <summary>

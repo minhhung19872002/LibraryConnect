@@ -140,8 +140,11 @@ Thứ tự khuyến nghị cho một hệ thống mới:
 4. **Tham số hệ thống → Quy tắc sinh mã**: đặt tiền tố và độ dài cho mã vạch ĐKCB, số đăng ký cá
    biệt, số thẻ bạn đọc theo quy ước sẵn có của thư viện.
 5. **Tham số hệ thống → Chính sách mật khẩu**: siết theo quy định của đơn vị nếu cần.
-6. **Tham số hệ thống → Cấu hình email**: khai báo SMTP để hệ thống gửi được thông báo nhắc hạn trả
-   và cảnh báo sao lưu lỗi.
+6. **Tham số hệ thống → Cấu hình email**: khai báo SMTP để hệ thống gửi được thông báo nhắc hạn trả,
+   cảnh báo sao lưu lỗi và danh sách tài liệu bạn đọc gửi từ trang tra cứu. Ô nào điền trên màn hình
+   thì ô ấy có hiệu lực ngay, không cần khởi động lại; ô để trống rơi về biến môi trường `LC_Smtp__*`
+   trong `.env` (cách khai lúc cài đặt). Chưa khai máy chủ thư thì mọi chức năng gửi thư báo rõ
+   "Thư viện chưa cấu hình máy chủ gửi thư" thay vì im lặng.
 7. **Nhóm người dùng**: rà lại quyền của 5 nhóm mẫu, tạo thêm nhóm nếu cơ cấu tổ chức khác.
 8. **Người dùng**: tạo tài khoản cho cán bộ, hoặc nhập hàng loạt từ Excel.
 9. **Sao lưu**: kiểm tra sao lưu thủ công chạy được, sau đó bật lịch sao lưu tự động.

@@ -814,8 +814,8 @@ Dữ liệu ghi thêm mang dấu `NT…` và đã xoá; thứ không xoá đư�
 nhận số) được đánh dấu ngừng dùng. Mã kịch bản bám theo bảng ở trên; mã có hậu tố chữ là bước phụ; mã `F2`, `K…` là lỗi
 tìm ra trong ngày (mục K của `08-so-loi.md`).
 
-Tổng: **442 kịch bản chạy bằng máy, 440 đạt**. Dòng "Không đạt" còn lại là lần chạy trước khi sửa (F2) — sau khi
-triển khai bản sửa đã kiểm lại đạt (K2). Các lỗi K1, K3, K4, K5 lộ ra khi đi bằng trình duyệt hoặc đọc nhật ký máy chủ; K6, K7 tìm ra ở đợt test sâu và lúc triển khai bản sửa. Mã `T.*` là đợt test kỹ thuật buổi tối: tranh chấp đồng thời, truy cập chéo, giả token, tiêm mã, đầu vào lạ, đường dẫn vượt thư mục, tệp lớn, thời gian đáp ứng — T.2 (đặt giữ đồng thời) là lỗi K8, đã sửa.
+Tổng: **453 kịch bản chạy bằng máy, 450 đạt**. Dòng "Không đạt" còn lại là lần chạy trước khi sửa (F2) — sau khi
+triển khai bản sửa đã kiểm lại đạt (K2). Các lỗi K1, K3, K4, K5 lộ ra khi đi bằng trình duyệt hoặc đọc nhật ký máy chủ; K6, K7 tìm ra ở đợt test sâu và lúc triển khai bản sửa. Mã `T.*` là đợt test kỹ thuật buổi tối: tranh chấp đồng thời, truy cập chéo, giả token, tiêm mã, đầu vào lạ, đường dẫn vượt thư mục, tệp lớn, thời gian đáp ứng — T.2 (đặt giữ đồng thời) là lỗi K8, đã sửa. Mã `V.*` là đợt kỹ thuật thứ hai: hạn mức API công khai, chính sách mật khẩu cán bộ, phạm vi dữ liệu theo kho, ghi nhật ký lượt xem, độ liên quan — V.7 (gõ đúng nhan đề ra 0 kết quả) là lỗi K10, đã sửa.
 
 | Mã | Chức năng | Kết quả thực tế | Đạt |
 |---|---|---|---|
@@ -1048,6 +1048,8 @@ triển khai bản sửa đã kiểm lại đạt (K2). Các lỗi K1, K3, K4, K
 | K6 | In LOAN_SLIP của bạn đọc đã xóa hồ sơ → 404 rõ nghĩa (bản 5a34971) | 404: Không tìm thấy bạn đọc của phiếu với định danh 'PM00003117'. | Đạt |
 | K6b | In RETURN_SLIP của bạn đọc đã xóa hồ sơ → 404 rõ nghĩa (bản 5a34971) | 404: Không tìm thấy bạn đọc của phiếu với định danh 'PM00003117'. | Đạt |
 | K7 | Triển khai tự dọn ảnh cũ: ổ đĩa 100% → 83%, còn 8 ảnh libraryconnect (2 bản) | deploy 5a34971 THÀNH CÔNG; df 18G trống | Đạt |
+| K8 | Bốn lượt đặt giữ đồng thời → đúng một phiếu, các lượt còn lại 409 (không 500) | phiếu=1; mã=[200, 409, 409, 409]; lỗi=['Bạn đọc đã đặt giữ tài liệu này rồi.'] | Đạt |
+| K8b | Bộ đếm số bản của 'Báo Nhân Dân' được tính lại (5 → số bản thật) | itemCount=3, bản in liệt kê=3 | Đạt |
 | LT.1 | Chính sách lưu thông nạp sẵn | 7 chính sách | Đạt |
 | LT.2 | Ô thử chính sách: chọn đúng chính sách ưu tiên | Chính sách NTE93707 (ưu tiên None) | Đạt |
 | LT.3 | Danh sách đặt giữ toàn hệ thống và hàng đợi | 129 phiếu | Đạt |
@@ -1256,6 +1258,15 @@ triển khai bản sửa đã kiểm lại đạt (K2). Các lỗi K1, K3, K4, K
 | TLS.30d | Báo cáo digital/reports/requests | 196 byte json | Đạt |
 | TLS.30x | Xuất xlsx digital/reports/export | xlsx 7333 byte | Đạt |
 | TLS.31 | Xuất toàn bộ dữ liệu hệ thống — danh sách việc đã chạy | 0 lượt | Đạt |
+| V.1 | Dồn 150 lượt gọi API công khai → phần vượt hạn mức nhận 429 JSON (không 503) | 200=91 429=59 khác=[]; body 429: {"success":false,"message":"Bạn thao tác quá nhanh. Vui lòng | Đạt |
+| V.2 | Cán bộ đổi mật khẩu yếu 'abc' bị từ chối | 400: [{'field': 'newPassword', 'message': 'Mật khẩu phải có tối thiểu 8 ký tự.', 'code': None}] | Đạt |
+| V.3 | Phạm vi dữ liệu theo kho: chỉ thấy bản ở Kho đóng | 4476 bản đều thuộc kho được gán; bản kho khác → 404 | Đạt |
+| V.4 | Ghi lên bản của kho ngoài phạm vi bị chặn | 200 {'affected': 0, 'skipped': []} | Đạt |
+| V.5 | Cài đặt ghi nhận có mục Bạn đọc kèm cờ Read | {'id': '484d3ab1-1269-4e0b-bc69-943359f434a9', 'entity': 'Reader', 'displayName': 'Bạn đọc', 'logCreate': True, 'logUpdate': True, 'logDelete': True, 'logRead': | Đạt |
+| V.6 | Bật ghi Read cho Bạn đọc → xem hồ sơ sinh dòng nhật ký Read | ['Read', 'Update', 'Update', 'Login'] | Đạt |
+| V.7 | Gõ đúng nhan đề 'Cơ sở dữ liệu — lý thuyết và b…' thì nó đứng đầu | đầu: - (0 kq) | **Không đạt** → đã sửa |
+| V.8 | Gõ đúng nhan đề 'Giáo trình an toàn thông tin…' thì nó đứng đầu | đầu: Giáo trình an toàn thông tin (1 kq) | Đạt |
+| V.9 | Tìm tác giả gõ không dấu đủ tên | 11 kết quả, đầu: Hoàng Minh Đức | Đạt |
 | VII.4 | Biểu mẫu phiếu mượn / phiếu trả có trong bộ mẫu in | ['RECEIPT', 'HANDOVER', 'TRANSFER', 'INVENTORY', 'DISPOSAL', 'ORDER', 'LOAN_SLIP', 'RETURN_SLIP', 'FINE_RECEIPT', 'CLEARANCE', 'SERIAL_CLAIM'] | Đạt |
 | VII.4a | In phiếu mượn theo mã phiếu (bạn đọc còn hồ sơ) | PM00000102: pdf 46963 byte | Đạt |
 | VII.4b | In phiếu trả theo mã phiếu đã trả | PM00002803: 200 pdf 46083 byte | Đạt |

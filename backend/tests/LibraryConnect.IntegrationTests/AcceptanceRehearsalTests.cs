@@ -195,6 +195,133 @@ public class AcceptanceRehearsalTests
     }
 
     /// <summary>
+    /// Test kỹ thuật 05/09/2026 trên máy chủ thật: gõ đúng nhan đề "Cơ sở dữ liệu — lý thuyết và bài
+    /// tập" ra 0 kết quả, gõ "cơ sở dữ liệu bài tập" cũng 0, trong khi "lý thuyết và" ra 112. Phạm vi
+    /// "Tất cả" so cả cụm từ khóa như một chuỗi con liền nhau, nên dấu gạch, dấu ngoặc kép hay đảo thứ
+    /// tự từ là mất hết. Bạn đọc gõ các từ nhớ được của nhan đề, không gõ đúng thứ tự và dấu câu.
+    /// </summary>
+    [Theory]
+    [InlineData("bài tập kiểm thử tìm nhiều từ")]          // đảo thứ tự
+    [InlineData("kiểm thử tìm nhiều từ (bài tập)")]        // dấu ngoặc
+    [InlineData("\"kiểm thử tìm nhiều từ\" bài tập")]      // dấu ngoặc kép
+    [InlineData("kiem thu tim nhieu tu: bai tap")]         // không dấu, dấu hai chấm
+    public async Task Tra_cuu_nhieu_tu_dao_thu_tu_hoac_kem_dau_cau_van_tim_thay(string keyword)
+    {
+        var client = await ClientAsync();
+        var marker = Unique();
+        var (documentTypeId, marcJson) = await RecordWithoutControlNumberAsync(
+            client, $"Kiểm thử tìm nhiều từ {marker} — lý thuyết và bài tập");
+        var saved = await ReadAsync<SaveBibResultDto>(await client.PostAsJsonAsync(
+            "/api/cataloging/bibs", new { marcJson, documentTypeId, status = "Published" }, LibraryConnectFactory.JsonOptions));
+
+        var response = await client.GetAsync($"/api/search?keyword={Uri.EscapeDataString(keyword + " " + marker)}");
+        var page = await ReadAsync<PagedResult<LibraryConnect.Application.Features.Opac.OpacResultDto>>(response);
+
+        page.Items.Should().Contain(item => item.Id == saved.Id,
+            $"từ khóa \"{keyword}\" chứa toàn những từ có trong nhan đề, chỉ khác thứ tự hoặc dấu câu");
+    }
+
+    /// <summary>
+    /// Máy chủ thật chưa cấu hình SMTP (SMTP.ENABLED = false), nhưng "Gửi giỏ tài liệu qua email" vẫn
+    /// trả 200 "Đã gửi danh sách tới …" — bộ gửi im lặng bỏ qua. Môi trường kiểm thử cũng không có
+    /// SMTP, nên đúng là bối cảnh để đòi một câu trả lời thẳng (bài học 11: "đã lưu" chưa phải "đã đến").
+    /// </summary>
+    [Fact]
+    public async Task Gui_gio_tai_lieu_khi_chua_cau_hinh_smtp_thi_bao_ro_chu_khong_noi_da_gui()
+    {
+        var staff = await ClientAsync();
+
+        var types = await ReadAsync<PagedResult<CatalogItemDto>>(
+            await staff.GetAsync("/api/catalogs/reader-types/items?pageSize=50"));
+        var readerId = await ReadAsync<Guid>(await staff.PostAsJsonAsync("/api/readers", new
+        {
+            fullName = "Bạn đọc gửi giỏ qua email",
+            studentCode = $"SV{Unique()}",
+            readerTypeId = types.Items.First(item => item.Code == "SV").Id,
+            email = $"gio{Unique()}@example.edu.vn"
+        }));
+        var reader = await ReadAsync<LibraryConnect.Application.Features.Readers.ReaderDetailDto>(
+            await staff.GetAsync($"/api/readers/{readerId}"));
+        const string password = "BanDoc@2026";
+        (await staff.PostAsJsonAsync($"/api/readers/{readerId}/reset-password", new { newPassword = password }))
+            .EnsureSuccessStatusCode();
+        var client = await _factory.CreateReaderClientAsync(reader.CardNumber, password);
+
+        var (documentTypeId, marcJson) = await RecordWithoutControlNumberAsync(staff, $"Sách trong giỏ {Unique()}");
+        var bib = await ReadAsync<SaveBibResultDto>(await staff.PostAsJsonAsync(
+            "/api/cataloging/bibs", new { marcJson, documentTypeId, status = "Published" }, LibraryConnectFactory.JsonOptions));
+
+        var response = await client.PostAsJsonAsync("/api/reader/cart/email", new { bibIds = new[] { bib.Id } });
+
+        response.StatusCode.Should().Be(HttpStatusCode.Conflict, await response.Content.ReadAsStringAsync());
+
+        var payload = await response.Content.ReadFromJsonAsync<ApiResponse>(LibraryConnectFactory.JsonOptions);
+        payload!.Message.Should().Contain("chưa cấu hình");
+    }
+
+    /// <summary>
+    /// Nhóm tham số "Cấu hình email SMTP" trên màn hình Tham số hệ thống phải là thứ bộ gửi thư đọc.
+    /// Trước 05/09/2026 bộ gửi chỉ đọc appsettings, tám ô trên màn hình là công tắc chết (bài học 30).
+    /// Trỏ tới một cổng không ai lắng nghe: bộ gửi phải *thử kết nối tới đúng địa chỉ ấy* và báo lỗi kết
+    /// nối rõ nghĩa — chứ không phải "chưa cấu hình" như khi nó vẫn đọc appsettings.
+    /// </summary>
+    [Fact]
+    public async Task Cau_hinh_smtp_tren_man_hinh_tham_so_la_thu_bo_gui_thu_doc()
+    {
+        var staff = await ClientAsync();
+        var before = new Dictionary<string, string?>();
+        var groups = await ReadAsync<List<JsonElement>>(await staff.GetAsync("/api/admin/parameters"));
+        foreach (var group in groups)
+        {
+            var list = group.TryGetProperty("parameters", out var ps) ? ps : group.GetProperty("items");
+            foreach (var p in list.EnumerateArray())
+            {
+                var key = p.GetProperty("key").GetString()!;
+                if (key.StartsWith("SMTP.")) before[key] = p.TryGetProperty("value", out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
+            }
+        }
+
+        async Task SetAsync(IEnumerable<KeyValuePair<string, string?>> items) =>
+            (await staff.PutAsJsonAsync("/api/admin/parameters",
+                new { parameters = items.Select(kv => new { key = kv.Key, value = kv.Value }).ToArray() })).EnsureSuccessStatusCode();
+
+        try
+        {
+            await SetAsync(new Dictionary<string, string?>
+            {
+                ["SMTP.ENABLED"] = "true", ["SMTP.HOST"] = "127.0.0.1", ["SMTP.PORT"] = "9",
+                ["SMTP.FROM_ADDRESS"] = "thuvien@example.edu.vn"
+            });
+
+            var types = await ReadAsync<PagedResult<CatalogItemDto>>(
+                await staff.GetAsync("/api/catalogs/reader-types/items?pageSize=50"));
+            var readerId = await ReadAsync<Guid>(await staff.PostAsJsonAsync("/api/readers", new
+            {
+                fullName = "Bạn đọc thử máy chủ thư", studentCode = $"SV{Unique()}",
+                readerTypeId = types.Items.First(item => item.Code == "SV").Id, email = $"smtp{Unique()}@example.edu.vn"
+            }));
+            var reader = await ReadAsync<LibraryConnect.Application.Features.Readers.ReaderDetailDto>(
+                await staff.GetAsync($"/api/readers/{readerId}"));
+            (await staff.PostAsJsonAsync($"/api/readers/{readerId}/reset-password", new { newPassword = "BanDoc@2026" })).EnsureSuccessStatusCode();
+            var client = await _factory.CreateReaderClientAsync(reader.CardNumber, "BanDoc@2026");
+            var (documentTypeId, marcJson) = await RecordWithoutControlNumberAsync(staff, $"Sách thử máy chủ thư {Unique()}");
+            var bib = await ReadAsync<SaveBibResultDto>(await staff.PostAsJsonAsync(
+                "/api/cataloging/bibs", new { marcJson, documentTypeId, status = "Published" }, LibraryConnectFactory.JsonOptions));
+
+            var response = await client.PostAsJsonAsync("/api/reader/cart/email", new { bibIds = new[] { bib.Id } });
+
+            response.StatusCode.Should().Be(HttpStatusCode.Conflict, await response.Content.ReadAsStringAsync());
+            var payload = await response.Content.ReadFromJsonAsync<ApiResponse>(LibraryConnectFactory.JsonOptions);
+            payload!.Message.Should().Contain("127.0.0.1:9",
+                "bộ gửi phải đọc đúng máy chủ và cổng cán bộ điền trên màn hình, không phải appsettings");
+        }
+        finally
+        {
+            await SetAsync(before);
+        }
+    }
+
+    /// <summary>
     /// Đường lưu cấp số kiểm soát (001) trước khi kiểm tra, nên lưu được biểu ghi không có 001. Nhưng
     /// endpoint kiểm tra riêng — thứ trình soạn MARC gọi sau mỗi lần gõ — không làm bước ấy, nên mọi
     /// biểu ghi mới đều hiện "1 lỗi phải sửa trước khi lưu: thiếu 001" dù bấm Lưu vẫn xong. Hai lối

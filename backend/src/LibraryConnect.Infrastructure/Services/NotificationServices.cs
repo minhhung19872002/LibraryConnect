@@ -16,18 +16,44 @@ namespace LibraryConnect.Infrastructure.Services;
 /// </summary>
 public class SmtpEmailSender : IEmailSender
 {
-    private readonly SmtpOptions _options;
+    private readonly SmtpOptions _fallback;
+    private readonly ISystemParameterService _parameters;
     private readonly ILogger<SmtpEmailSender> _logger;
 
-    public SmtpEmailSender(IOptions<SmtpOptions> options, ILogger<SmtpEmailSender> logger)
+    public SmtpEmailSender(
+        IOptions<SmtpOptions> options,
+        ISystemParameterService parameters,
+        ILogger<SmtpEmailSender> logger)
     {
-        _options = options.Value;
+        _fallback = options.Value;
+        _parameters = parameters;
         _logger = logger;
     }
 
+    /// <summary>
+    /// Cấu hình hiệu lực tại thời điểm gửi: nhóm tham số SMTP.* cán bộ sửa trên màn hình thắng, ô trống
+    /// rơi về appsettings. Đọc mỗi lần gửi để đổi tham số là có tác dụng ngay (bài học 31).
+    /// </summary>
+    private async Task<SmtpOptions> ResolveAsync(CancellationToken ct)
+    {
+        var values = new Dictionary<string, string?>();
+
+        foreach (var key in SmtpSettingsResolver.Keys)
+        {
+            values[key] = await _parameters.GetAsync(key, ct);
+        }
+
+        return SmtpSettingsResolver.Resolve(_fallback, values);
+    }
+
+    public async Task<bool> IsEnabledAsync(CancellationToken ct = default) =>
+        SmtpSettingsResolver.IsUsable(await ResolveAsync(ct));
+
     public async Task SendAsync(EmailMessage message, CancellationToken ct = default)
     {
-        if (!_options.Enabled || string.IsNullOrWhiteSpace(_options.Host))
+        var options = await ResolveAsync(ct);
+
+        if (!SmtpSettingsResolver.IsUsable(options))
         {
             _logger.LogInformation(
                 "Email sending is disabled; message \"{Subject}\" to {Recipients} was not delivered",
@@ -36,7 +62,7 @@ public class SmtpEmailSender : IEmailSender
         }
 
         var mime = new MimeMessage();
-        mime.From.Add(new MailboxAddress(_options.FromName, _options.FromAddress));
+        mime.From.Add(new MailboxAddress(options.FromName, options.FromAddress));
 
         foreach (var recipient in message.To.Where(r => !string.IsNullOrWhiteSpace(r)))
         {
@@ -51,6 +77,7 @@ public class SmtpEmailSender : IEmailSender
         mime.Subject = message.Subject;
 
         var body = new BodyBuilder { HtmlBody = message.HtmlBody };
+
         foreach (var attachment in message.Attachments ?? Array.Empty<EmailAttachment>())
         {
             body.Attachments.Add(attachment.FileName, attachment.Content, ContentType.Parse(attachment.ContentType));
@@ -58,22 +85,36 @@ public class SmtpEmailSender : IEmailSender
 
         mime.Body = body.ToMessageBody();
 
-        using var client = new SmtpClient();
-        await client.ConnectAsync(_options.Host, _options.Port,
-            _options.UseSsl ? SecureSocketOptions.StartTls : SecureSocketOptions.Auto, ct);
-
-        if (!string.IsNullOrWhiteSpace(_options.Username))
+        try
         {
-            await client.AuthenticateAsync(_options.Username, _options.Password, ct);
-        }
+            using var client = new SmtpClient();
+            await client.ConnectAsync(options.Host, options.Port,
+                options.UseSsl ? SecureSocketOptions.StartTls : SecureSocketOptions.Auto, ct);
 
-        await client.SendAsync(mime, ct);
-        await client.DisconnectAsync(true, ct);
+            if (!string.IsNullOrWhiteSpace(options.Username))
+            {
+                await client.AuthenticateAsync(options.Username, options.Password, ct);
+            }
+
+            await client.SendAsync(mime, ct);
+            await client.DisconnectAsync(true, ct);
+        }
+        catch (Exception ex) when (ex is SmtpCommandException or SmtpProtocolException or AuthenticationException
+                                   or IOException or System.Net.Sockets.SocketException)
+        {
+            // Máy chủ thư sai địa chỉ hay từ chối đăng nhập là lỗi cấu hình của thư viện, không phải lỗi
+            // hệ thống: nói rõ để cán bộ vào Tham số hệ thống sửa, thay vì một trang 500.
+            _logger.LogWarning(ex, "Không gửi được thư \"{Subject}\" qua {Host}:{Port}", message.Subject, options.Host, options.Port);
+            throw new LibraryConnect.Application.Common.Exceptions.ConflictException(
+                $"Không kết nối được máy chủ thư {options.Host}:{options.Port} — kiểm tra lại Cấu hình email trong Tham số hệ thống. ({ex.Message})");
+        }
     }
 
     public async Task<bool> TestConnectionAsync(CancellationToken ct = default)
     {
-        if (string.IsNullOrWhiteSpace(_options.Host))
+        var options = await ResolveAsync(ct);
+
+        if (string.IsNullOrWhiteSpace(options.Host))
         {
             return false;
         }
@@ -81,18 +122,19 @@ public class SmtpEmailSender : IEmailSender
         try
         {
             using var client = new SmtpClient();
-            await client.ConnectAsync(_options.Host, _options.Port,
-                _options.UseSsl ? SecureSocketOptions.StartTls : SecureSocketOptions.Auto, ct);
+            await client.ConnectAsync(options.Host, options.Port,
+                options.UseSsl ? SecureSocketOptions.StartTls : SecureSocketOptions.Auto, ct);
 
-            if (!string.IsNullOrWhiteSpace(_options.Username))
+            if (!string.IsNullOrWhiteSpace(options.Username))
             {
-                await client.AuthenticateAsync(_options.Username, _options.Password, ct);
+                await client.AuthenticateAsync(options.Username, options.Password, ct);
             }
 
             await client.DisconnectAsync(true, ct);
             return true;
         }
-        catch (Exception ex) when (ex is SmtpCommandException or SmtpProtocolException or AuthenticationException or IOException)
+        catch (Exception ex) when (ex is SmtpCommandException or SmtpProtocolException or AuthenticationException
+                                   or IOException or System.Net.Sockets.SocketException)
         {
             _logger.LogWarning(ex, "SMTP connection test failed");
             return false;

@@ -108,8 +108,8 @@ describe('Bảng màu đạt WCAG AA', () => {
   const cap: [string, string, string, number][] = [
     ['chữ thân bài trên giấy', '#2a2118', '#fffdf8', 4.5],
     ['chữ thân bài trên nền trang', '#2a2118', '#f4efe6', 4.5],
-    ['chữ phụ trên giấy', '#7a6f5f', '#fffdf8', 4.5],
-    ['chữ mờ nhất trên giấy', '#9a8f7c', '#fffdf8', 3],
+    ['chữ phụ trên giấy', '#625848', '#fffdf8', 4.5],
+    ['chữ mờ nhất trên giấy', '#6f6556', '#fffdf8', 4.5],
     ['xanh rêu trên giấy', '#35523f', '#fffdf8', 4.5],
     ['chữ trên nút chính', '#f2ecdd', '#35523f', 4.5],
     ['thẻ trung tính', '#6e6252', '#f1ebdd', 4.5],
@@ -129,7 +129,11 @@ describe('Bảng màu đạt WCAG AA', () => {
   const capRieng: [string, string, string, number][] = [
     ['huy hiệu hoạt động', '#55694a', '#eef2e4', 4.5],
     ['huy hiệu mất kết nối', '#a03c2e', '#f8e8e2', 4.5],
-    ['chân cột menu', '#9a8f7c', '#fffdf8', 3],
+    ['chân cột menu', '#6f6556', '#fffdf8', 4.5],
+    // Lighthouse trên trang Tổng quan thật (05/09/2026): mô tả phụ trên nền trang 2,78; tiêu đề ô thống kê trên giấy 3,13.
+    ['mô tả phụ trên nền trang', '#6f6556', '#f4efe6', 4.5],
+    ['tiêu đề ô thống kê trên giấy', '#6f6556', '#fffdf8', 4.5],
+    ['chữ phụ trên nền trang', '#625848', '#f4efe6', 4.5],
   ];
 
   it.each(capRieng)('%s đạt ngưỡng', (_ten, chu, nen, nguong) => {

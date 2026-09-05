@@ -75,6 +75,12 @@ public record EmailAttachment(string FileName, byte[] Content, string ContentTyp
 
 public interface IEmailSender
 {
+    /// <summary>
+    /// Máy chủ thư đã được cấu hình và bật hay chưa. Chỗ nào người dùng chủ động "gửi email" phải hỏi câu
+    /// này trước: gửi vào một bộ gửi đang tắt là im lặng không gửi, mà màn hình vẫn báo "Đã gửi".
+    /// </summary>
+    Task<bool> IsEnabledAsync(CancellationToken ct = default);
+
     Task SendAsync(EmailMessage message, CancellationToken ct = default);
     Task<bool> TestConnectionAsync(CancellationToken ct = default);
 }
