@@ -60,8 +60,10 @@ Chương V** bằng luồng ghi thật trên máy chủ (đơn đặt → biên 
 tập, tài liệu số → thu hồi quyền, sao lưu thật, nhập Excel/ZIP, biểu mẫu in): **không dòng nào của Chương V
 thiếu chức năng**, tìm thêm một lỗi (in phiếu mượn của bạn đọc đã xóa hồ sơ đổ 500). Đưa bản sửa lên
 máy chủ thì lộ lỗi vận hành thứ bảy: ổ đĩa đầy vì kịch bản triển khai không dọn ảnh cũ (20 bộ ảnh,
-27 GB). Cả 7 đã sửa, tổng **154 lỗi, đã sửa 154**. Phụ lục cuối `docs/06` ghi kết quả từng kịch bản
-(hơn 400 dòng).
+27 GB). Đợt **test kỹ thuật** cuối ngày (tranh chấp đồng thời, truy cập chéo, giả token, tiêm mã, nhất quán
+CSDL, Hangfire, quét 70 màn hình bắt lỗi console, Lighthouse) tìm thêm hai lỗi: đặt giữ đồng thời lọt hai
+phiếu vì thiếu ràng buộc duy nhất, và ba cặp màu OPAC dưới WCAG AA. Cả 9 đã sửa, tổng **156 lỗi, đã sửa
+156**. Phụ lục cuối `docs/06` ghi kết quả từng kịch bản (hơn 440 dòng).
 
 Đọc thẳng hồ sơ gốc còn tìm ra thứ không phải lỗi mã: **bốn hồ sơ bàn giao** mà Chương V mục III và
 mục 5 đòi — kế hoạch triển khai, kế hoạch đào tạo, cam kết bảo hành, hồ sơ nghiệm thu — nay là
@@ -296,6 +298,15 @@ docker compose run --rm -d --name lc-api-kiem -e LC_DB_NAME=lc_kiem -e LC_SEED_D
     chỉ xoá ảnh không tag, mà ảnh kéo về gắn tag theo mã commit nên nằm nguyên: 21 lượt trong hai
     ngày là 27 GB, ổ dùng chung đầy 100% và bản sửa không lên được. Kịch bản triển khai phải tự dọn,
     giữ đúng bản đang chạy và bản trước để quay lại.
+44. **Bash đọc kịch bản theo từng đoạn.** `git reset --hard` giữa chừng thay tệp bằng inode mới, bash
+    vẫn đọc nốt phần đuôi của bản cũ — lượt triển khai đầu sau khi sửa kịch bản chạy đúng kịch bản
+    cũ. Bọc toàn bộ thân kịch bản trong `main()` để bash phân tích trọn tệp trước khi chạy.
+45. **Bài học số 1 áp cho mọi luật "một … một".** Phiếu mượn đã có ràng buộc duy nhất, đặt giữ thì
+    chưa — ba lượt bấm cùng lúc lọt hai phiếu trên máy chủ thật. Có luật "một bạn đọc một phiếu"
+    ở tầng nghiệp vụ thì hỏi ngay: chỉ mục duy nhất tương ứng ở đâu?
+46. **Phép thử tương phản chỉ đo cặp nó được kể.** Mười sáu cặp xanh, ba cặp trượt nằm ngoài danh
+    sách, và một cặp được cho hưởng ngưỡng 3 của "chữ lớn" dù chữ chỉ 11 px. Chạy Lighthouse trên
+    trang thật để tìm cặp còn thiếu, rồi mới đưa vào danh sách.
 
 ### A.4. Cơ chế dùng chung — dùng lại, đừng viết chỗ mới
 

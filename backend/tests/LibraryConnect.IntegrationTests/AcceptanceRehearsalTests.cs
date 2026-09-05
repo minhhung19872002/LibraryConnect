@@ -5,6 +5,7 @@ using FluentAssertions;
 using LibraryConnect.Application.Common.Models;
 using LibraryConnect.Application.Features.Cataloging;
 using LibraryConnect.Application.Features.Catalogs;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace LibraryConnect.IntegrationTests;
 
@@ -144,6 +145,53 @@ public class AcceptanceRehearsalTests
             var payload = await response.Content.ReadFromJsonAsync<ApiResponse>(LibraryConnectFactory.JsonOptions);
             payload!.Message.Should().Contain("bạn đọc");
         }
+    }
+
+    /// <summary>
+    /// Đợt test kỹ thuật 05/09/2026: ba lượt "Đặt giữ" bấm cùng lúc từ một bạn đọc tạo được hai phiếu
+    /// (200, 200, 409). Luật "một bạn đọc một phiếu đang chờ cho một tài liệu" chỉ kiểm ở tầng nghiệp
+    /// vụ — đúng bài học số 1: phải là ràng buộc duy nhất ở cơ sở dữ liệu. Phép thử ghi thẳng hai phiếu
+    /// qua DbContext, bỏ qua tầng nghiệp vụ, để chắc chính máy chủ dữ liệu từ chối.
+    /// </summary>
+    [Fact]
+    public async Task Hai_phieu_dat_giu_dang_cho_cua_cung_ban_doc_cho_cung_tai_lieu_bi_co_so_du_lieu_tu_choi()
+    {
+        var client = await ClientAsync();
+
+        var types = await ReadAsync<PagedResult<CatalogItemDto>>(
+            await client.GetAsync("/api/catalogs/reader-types/items?pageSize=50"));
+        var readerId = await ReadAsync<Guid>(await client.PostAsJsonAsync("/api/readers", new
+        {
+            fullName = "Bạn đọc bấm đặt giữ hai lần",
+            studentCode = $"SV{Unique()}",
+            readerTypeId = types.Items.First(item => item.Code == "SV").Id
+        }));
+        var (documentTypeId, marcJson) = await RecordWithoutControlNumberAsync(client, $"Sách đặt giữ trùng {Unique()}");
+        var bib = await ReadAsync<SaveBibResultDto>(await client.PostAsJsonAsync(
+            "/api/cataloging/bibs", new { marcJson, documentTypeId, status = "Published" }, LibraryConnectFactory.JsonOptions));
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<LibraryConnect.Application.Common.Interfaces.IApplicationDbContext>();
+
+        LibraryConnect.Domain.Entities.Cir.Hold NewHold(int position) => new()
+        {
+            Id = Guid.NewGuid(),
+            ReaderId = readerId,
+            BibId = bib.Id,
+            HoldDate = DateTimeOffset.UtcNow,
+            Status = LibraryConnect.Domain.Enums.HoldStatus.Waiting,
+            QueuePosition = position,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        db.Holds.Add(NewHold(1));
+        await db.SaveChangesAsync(CancellationToken.None);
+
+        db.Holds.Add(NewHold(2));
+        var act = () => db.SaveChangesAsync(CancellationToken.None);
+
+        await act.Should().ThrowAsync<Microsoft.EntityFrameworkCore.DbUpdateException>(
+            "phiếu thứ hai đang chờ cho cùng bạn đọc và cùng tài liệu phải bị ràng buộc duy nhất chặn");
     }
 
     /// <summary>

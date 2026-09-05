@@ -521,7 +521,12 @@ duyệt tìm ra **5 lỗi** (K1–K5). Buổi tối chạy tiếp **test sâu t�
 thật — đơn đặt từ yêu cầu tới biên bản, kiểm kê từ đóng kho tới quyết định mất, đầu báo từ sinh số tới
 đóng tập, tài liệu số từ tải lên tới thu hồi, sao lưu thật, biểu mẫu in — thêm khoảng 150 kịch bản,
 **không thấy dòng nào của Chương V thiếu chức năng**, tìm thêm **1 lỗi** (K6). Khi đưa bản sửa K6 lên
-máy chủ thì lộ lỗi vận hành K7: ổ đĩa đầy vì kịch bản triển khai không dọn ảnh cũ. Cả 7 đã sửa trong ngày.
+máy chủ thì lộ lỗi vận hành K7: ổ đĩa đầy vì kịch bản triển khai không dọn ảnh cũ. Đợt **test kỹ thuật**
+cuối ngày đi vào lớp mà kịch bản nghiệp vụ không chạm — tranh chấp đồng thời, truy cập chéo bạn đọc, giả
+token, tiêm mã, đầu vào lạ, đường dẫn vượt thư mục, nhất quán CSDL, việc nền Hangfire, nhật ký lỗi máy chủ,
+quét 56 màn hình quản trị và 14 trang tra cứu bắt lỗi console, Lighthouse, bộ kiểm thử mobile — bảo mật
+và hiệu năng đều đạt, tìm thêm K8 (đặt giữ đồng thời lọt hai phiếu) và K9 (ba cặp màu dưới WCAG AA).
+Cả 9 đã sửa trong ngày.
 
 | Mã | Mức | Lỗi | Nguyên nhân | Sửa |
 |---|---|---|---|---|
@@ -531,6 +536,8 @@ máy chủ thì lộ lỗi vận hành K7: ổ đĩa đầy vì kịch bản tri
 | K4 | Vừa (ấn tượng đầu) | **Trang Tổng quan của giao diện quản trị vẫn mang dòng giữ chỗ từ phase 1**: "Hệ thống đang trong quá trình bàn giao theo từng phân hệ…", kèm ba con số về quyền của chính tài khoản. Màn hình đầu tiên sau đăng nhập nói phần mềm chưa xong | Viết ở phase 1 để hội đồng kiểm quyền, rồi không ai quay lại vì mọi đợt rà đi thẳng vào từng phân hệ | Trang Tổng quan hiện số liệu hoạt động từ đầu năm lấy từ báo cáo tổng quan (dùng chung với mục Báo cáo thống kê), kèm lối mở báo cáo; tài khoản không có quyền báo cáo thì chỉ thấy quyền của mình. `DashboardPage.test.ts` cấm dòng giữ chỗ quay lại |
 | K6 | Vừa | **In lại phiếu mượn / phiếu trả của bạn đọc đã xóa hồ sơ thì máy chủ đổ 500 "lỗi hệ thống"** (tìm ra ở đợt test sâu buổi tối, khi in phiếu `PM00003117` của bạn đọc thử đã xóa) | Câu hỏi ghép bạn đọc bằng phép nối trong; hồ sơ xóa mềm bị bộ lọc toàn cục loại ra nên danh sách rỗng, mã lấy phần tử đầu và ném `IndexOutOfRange`. Bộ kiểm thử chỉ in phiếu của bạn đọc còn sống | Danh sách rỗng thì trả 404 "không tìm thấy bạn đọc của phiếu"; `AcceptanceRehearsalTests.In_phieu_muon_cua_ban_doc_da_xoa_ho_so_thi_bao_khong_tim_thay_chu_khong_do_500` đỏ trước khi sửa |
 | K7 | Nặng (vận hành) | **Lượt triển khai bản sửa K6 đổ vì ổ đĩa máy chủ đầy 100%** — "no space left on device" khi kéo ảnh API; hệ thống vẫn chạy bản cũ nên người dùng không thấy gì, nhưng mọi bản sửa từ đây không lên được nữa | Mỗi lượt CI/CD kéo ba ảnh gắn tag theo mã commit (ảnh API 1,37 GB); kịch bản `gh-deploy.sh` chỉ gọi `docker image prune -f`, vốn chỉ dọn ảnh không tag. Hai ngày với 21 lượt triển khai để lại 20 bộ ảnh cũ — 27 GB, cộng 10 GB bộ đệm build — trên ổ 96 GB dùng chung với năm ứng dụng khác | Dọn tay trên máy chủ (còn trống 18 GB); `gh-deploy.sh` thêm bước `don_anh_cu` sau khi lên thành công: xoá mọi ảnh `libraryconnect-*` trừ bản mới và bản ngay trước (giữ để quay lại), không đụng ảnh ứng dụng khác. `DeployScriptTests` quét kịch bản, đỏ trước khi sửa |
+| K8 | Nghiêm trọng | **Ba lượt "Đặt giữ" bấm cùng lúc từ một bạn đọc tạo được hai phiếu** (200, 200, 409) — đợt test kỹ thuật buổi tối, thử tranh chấp đồng thời trên máy chủ thật. Luật "một bạn đọc một phiếu đang chờ cho một tài liệu" chỉ kiểm ở tầng nghiệp vụ | Đúng bài học số 1: kiểm rồi mới ghi thì hai yêu cầu song song đều thấy "chưa có". Phiếu mượn đã có `ux_loans_item_dang_muon` nên hai quầy ghi mượn cùng bản chỉ lọt một (T.1 đạt), còn đặt giữ thì chưa có ràng buộc | Chỉ mục duy nhất `ux_holds_reader_bib_dang_cho` trên (reader_id, bib_id) lọc `status IN ('Waiting','Ready')`; migration hủy phiếu trùng có sẵn, giữ phiếu sớm nhất, kèm lý do. Cùng migration tính lại `item_count`/`available_item_count` cho mọi biểu ghi vì kiểm nhất quán CSDL thấy một biểu ghi ghi 5 bản trong khi có 3. `AcceptanceRehearsalTests.Hai_phieu_dat_giu_dang_cho…` ghi thẳng hai phiếu qua DbContext, đỏ trước khi sửa |
+| K9 | Vừa (mục 6.6) | **Lighthouse trên trang tra cứu thật đo ba cặp màu dưới WCAG AA**: nút Tra cứu vàng chữ trắng 3,25:1; chữ mờ ở nhãn nhóm bộ lọc và bộ đếm facet 3,13:1 (chữ 11 px, không được hưởng ngưỡng 3); dòng cuối chân trang 4,01:1. Kèm ô chọn "Sắp xếp" không có nhãn cho trình đọc màn hình, và liên kết "Chi tiết" bọc nút có vùng chạm cao 0,1 px | Phép thử tương phản chỉ đo 16 cặp nó được liệt kê; ba cặp này không có trong danh sách, và một cặp còn được cho hưởng ngưỡng 3 của "chữ phụ" dù chữ chỉ 11 px. Bài học 19 đúng thêm lần nữa: nền giấy làm mọi cặp tối đi | Vàng `#b9852f → #9a6c1c` (4,63), vàng rê chuột `#8a6114` (5,53), chữ mờ `#9a8f7c → #7f7461` (4,52), dòng chân trang `#8f8a76 → #a8a28e` (5,44); đổi ở cả `styles.css`, `theme.ts`, `lib/palette.ts`. `aria-label` cho ô sắp xếp; liên kết trong `.lc-result__actions` chiếm khối. `theme.test.ts` thêm đúng bốn cặp Lighthouse đo, đỏ với số đo cũ trước khi sửa |
 | K5 | Vừa | **Trình soạn MARC báo "1 lỗi phải sửa trước khi lưu: thiếu 001" trên mọi biểu ghi mới**, dù bấm Lưu vẫn xong vì đường lưu tự cấp số kiểm soát trước khi kiểm. Cán bộ hoặc tự bịa một số 001, hoặc học cách bỏ qua ô đỏ — cả hai đều tệ | Đường lưu cấp 001 rồi mới kiểm; endpoint kiểm tra riêng (trình soạn gọi sau mỗi lần gõ) thì không. Nhập ISO 2709 đã gặp đúng lỗi này và tự lọc thông báo 001 ở chỗ của nó thay vì sửa gốc | Endpoint kiểm tra bỏ lỗi thiếu 001, vì đó là số hệ thống cấp. `AcceptanceRehearsalTests.Kiem_tra_bieu_ghi_khong_bao_loi_thieu_001_vi_he_thong_tu_cap` đỏ trước khi sửa |
 
 ### Đã kiểm trên máy chủ thật và vẫn tốt
@@ -667,8 +674,8 @@ dạng quét mã nguồn chặn cả lớp lỗi quay lại thay vì chỉ chặ
 | Nguy cơ | 1 | 0 | 1 (H9, ghi ở "Làm tiếp") |
 
 Cộng cả ba đợt, đợt áp thiết kế, đợt triển khai và ba đợt rà hoàn thiện ngày 04/09/2026:
-**147 lỗi, đã sửa 145**; thêm **7 lỗi của đợt nghiệm thu thử và test sâu trên máy chủ thật ngày 05/09/2026
-(mục K), đã sửa cả 7** — tổng **154 lỗi, đã sửa 154**. Hai mục H3 và H9 đã làm xong ngày 03/09/2026 và ghi ở cột cuối
+**147 lỗi, đã sửa 145**; thêm **9 lỗi của đợt nghiệm thu thử, test sâu và test kỹ thuật trên máy chủ thật
+ngày 05/09/2026 (mục K), đã sửa cả 9** — tổng **156 lỗi, đã sửa 156**. Hai mục H3 và H9 đã làm xong ngày 03/09/2026 và ghi ở cột cuối
 của chính hai dòng ấy — con số 134 giữ nguyên cách đếm cũ để đối chiếu được với các bản trước.
 Mỗi lỗi đã sửa đều có phép thử chạy đỏ trước khi sửa và xanh sau khi sửa, kể cả H7: phép thử giả
 tiêu đề đỏ trước khi sửa `CurrentUser.Ip`.

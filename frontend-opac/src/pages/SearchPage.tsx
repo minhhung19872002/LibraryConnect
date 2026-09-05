@@ -227,6 +227,7 @@ export function SearchPage() {
               ) : null}
               <Select
                 size="small"
+                aria-label="Sắp xếp kết quả"
                 value={sort}
                 options={SORT_OPTIONS}
                 onChange={(value) => update({ sort: value })}

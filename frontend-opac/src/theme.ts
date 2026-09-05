@@ -28,7 +28,7 @@ export const theme: ThemeConfig = {
     colorLink: '#35523f',
     colorInfo: '#35523f',
     colorSuccess: '#4d6a42',
-    colorWarning: '#b9852f',
+    colorWarning: '#9a6c1c',
     colorError: '#a03c2e',
 
     // Nền và viền của bốn loại thông báo. Phải khai thẳng: Ant Design suy nền của Alert ra từ
@@ -45,8 +45,8 @@ export const theme: ThemeConfig = {
 
     colorText: '#2a2118',
     colorTextSecondary: '#7a6f5f',
-    colorTextTertiary: '#9a8f7c',
-    colorTextDescription: '#9a8f7c',
+    colorTextTertiary: '#7f7461',
+    colorTextDescription: '#7f7461',
 
     colorBgLayout: '#f4efe6',
     colorBgContainer: '#fffdf8',
@@ -98,7 +98,7 @@ export const theme: ThemeConfig = {
     },
     Table: {
       headerBg: '#f6f1e5',
-      headerColor: '#9a8f7c',
+      headerColor: '#7f7461',
       borderColor: '#f0e9da',
       rowHoverBg: '#f8f4ea',
     },

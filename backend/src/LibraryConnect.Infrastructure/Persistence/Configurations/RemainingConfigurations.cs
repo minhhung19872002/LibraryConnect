@@ -313,6 +313,14 @@ public class HoldConfiguration : IEntityTypeConfiguration<Hold>
 
         builder.HasIndex(x => new { x.BibId, x.Status, x.QueuePosition }).HasDatabaseName("ix_holds_queue");
         builder.HasIndex(x => new { x.ReaderId, x.Status }).HasDatabaseName("ix_holds_reader");
+
+        // Một bạn đọc chỉ có một phiếu đang chờ (Waiting/Ready) cho một tài liệu. Tầng nghiệp vụ đã
+        // kiểm luật này, nhưng ba lượt bấm "Đặt giữ" cùng lúc trên máy chủ thật (05/09/2026) vẫn lọt
+        // hai phiếu — cùng lớp với ux_loans_item_dang_muon: chỉ máy chủ dữ liệu mới chặn được tranh chấp.
+        builder.HasIndex(x => new { x.ReaderId, x.BibId })
+            .IsUnique()
+            .HasFilter("status IN ('Waiting', 'Ready') AND deleted_at IS NULL")
+            .HasDatabaseName("ux_holds_reader_bib_dang_cho");
     }
 }
 

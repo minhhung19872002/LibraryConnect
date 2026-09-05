@@ -112,7 +112,7 @@ describe('Bảng màu đạt WCAG AA', () => {
     ['chữ thân bài trên giấy', '#2a2118', '#fffdf8', 4.5],
     ['chữ thân bài trên nền trang', '#2a2118', '#f4efe6', 4.5],
     ['chữ phụ trên giấy', '#7a6f5f', '#fffdf8', 4.5],
-    ['chữ mờ nhất trên giấy', '#9a8f7c', '#fffdf8', 3],
+    ['chữ mờ nhất trên giấy', '#7f7461', '#fffdf8', 4.5],
     ['xanh rêu trên giấy', '#35523f', '#fffdf8', 4.5],
     ['chữ trên nút chính', '#f2ecdd', '#35523f', 4.5],
     ['thẻ trung tính', '#6e6252', '#f1ebdd', 4.5],
@@ -132,7 +132,13 @@ describe('Bảng màu đạt WCAG AA', () => {
   const capRieng: [string, string, string, number][] = [
     ['nhan đề kết quả tra cứu', '#35523f', '#fffdf8', 4.5],
     ['chân trang', '#c9c3ae', '#22301f', 4.5],
-    ['nhãn nhóm bộ lọc', '#9a8f7c', '#fffdf8', 3],
+    // Lighthouse trên máy chủ thật ngày 05/09/2026 đo ba cặp dưới đây trượt: nhãn nhóm bộ lọc và bộ
+    // đếm facet là chữ 11–13,5 px nên không được hưởng ngưỡng 3 của chữ lớn; nút Tra cứu vàng chữ
+    // trắng chỉ đạt 3,25; dòng cuối chân trang 4,01. Bài học 19: nền giấy làm mọi cặp tối đi một chút.
+    ['nhãn nhóm bộ lọc và bộ đếm facet', '#7f7461', '#fffdf8', 4.5],
+    ['chữ trắng trên nút vàng', '#ffffff', '#9a6c1c', 4.5],
+    ['chữ trắng trên nút vàng khi rê chuột', '#ffffff', '#8a6114', 4.5],
+    ['dòng cuối chân trang', '#a8a28e', '#22301f', 4.5],
   ];
 
   it.each(capRieng)('%s đạt ngưỡng', (_ten, chu, nen, nguong) => {

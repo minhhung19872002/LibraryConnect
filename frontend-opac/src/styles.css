@@ -31,10 +31,10 @@
 
   --lc-ink: #2a2118;
   --lc-muted: #7a6f5f;
-  --lc-muted-light: #9a8f7c;
+  --lc-muted-light: #7f7461;
 
-  --lc-gold: #b9852f;
-  --lc-gold-hover: #a2731f;
+  --lc-gold: #9a6c1c;
+  --lc-gold-hover: #8a6114;
 
   /* Ba cặp màu thẻ trạng thái của bản thiết kế: còn / cần để ý / hỏng, và một cặp trung tính. */
   --lc-tot: #4d6a42;
@@ -47,7 +47,7 @@
 
   /* Chữ trên nền xanh rêu đậm. */
   --lc-kem-mo: #c9c3ae;
-  --lc-kem-toi: #8f8a76;
+  --lc-kem-toi: #a8a28e;
 
   --lc-chu-trinh-bay: 'Lora', Georgia, 'Times New Roman', serif;
   --lc-chu-deu-net: 'Cascadia Mono', Consolas, 'Courier New', monospace;
@@ -584,6 +584,11 @@ body {
   gap: 6px;
   justify-content: center;
   flex: none;
+}
+
+/* Liên kết bọc nút phải chiếm đúng khối của nút: thẻ a inline cao 0,1 px làm điểm chạm "Chi tiết" gần như không có (Lighthouse 05/09/2026). */
+.lc-result__actions > a {
+  display: block;
 }
 
 .lc-cover {

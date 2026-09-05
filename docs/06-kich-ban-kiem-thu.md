@@ -814,8 +814,8 @@ Dữ liệu ghi thêm mang dấu `NT…` và đã xoá; thứ không xoá đư�
 nhận số) được đánh dấu ngừng dùng. Mã kịch bản bám theo bảng ở trên; mã có hậu tố chữ là bước phụ; mã `F2`, `K…` là lỗi
 tìm ra trong ngày (mục K của `08-so-loi.md`).
 
-Tổng: **408 kịch bản chạy bằng máy, 407 đạt**. Dòng "Không đạt" còn lại là lần chạy trước khi sửa (F2) — sau khi
-triển khai bản sửa đã kiểm lại đạt (K2). Các lỗi K1, K3, K4, K5 lộ ra khi đi bằng trình duyệt hoặc đọc nhật ký máy chủ; K6, K7 tìm ra ở đợt test sâu và lúc triển khai bản sửa.
+Tổng: **442 kịch bản chạy bằng máy, 440 đạt**. Dòng "Không đạt" còn lại là lần chạy trước khi sửa (F2) — sau khi
+triển khai bản sửa đã kiểm lại đạt (K2). Các lỗi K1, K3, K4, K5 lộ ra khi đi bằng trình duyệt hoặc đọc nhật ký máy chủ; K6, K7 tìm ra ở đợt test sâu và lúc triển khai bản sửa. Mã `T.*` là đợt test kỹ thuật buổi tối: tranh chấp đồng thời, truy cập chéo, giả token, tiêm mã, đầu vào lạ, đường dẫn vượt thư mục, tệp lớn, thời gian đáp ứng — T.2 (đặt giữ đồng thời) là lỗi K8, đã sửa.
 
 | Mã | Chức năng | Kết quả thực tế | Đạt |
 |---|---|---|---|
@@ -1150,6 +1150,40 @@ triển khai bản sửa đã kiểm lại đạt (K2). Các lỗi K1, K3, K4, K
 | QTND.24 | Hẹn giờ đăng: chưa tới giờ thì công khai không thấy | chưa hiện | Đạt |
 | QTND.26 | Gỡ bản tin → công khai không còn | đã gỡ | Đạt |
 | QTND.28 | Tạo album ảnh | ok | Đạt |
+| T.1 | Hai quầy ghi mượn cùng một bản cùng lúc → chỉ một phiếu | phiếu thành công=1, phiếu Active của LC00018033=1; mã trả về=[200, 409] | Đạt |
+| T.2 | Ba lượt đặt giữ đồng thời của một bạn đọc → tối đa một phiếu | phiếu đặt giữ=2; mã=[200, 200, 409] | **Không đạt** → đã sửa |
+| T.3 | Thu cùng một khoản phạt ba lần cùng lúc → không thu quá số nợ | paidAmount=30000.0 amount=30000.0; mã=[200, 200, 200] | Đạt |
+| T.4 | Bạn đọc gia hạn phiếu của người khác → bị chặn | 403: Lượt mượn này không thuộc về bạn đọc đang đăng nhập. | Đạt |
+| T.5 | Bạn đọc hủy đặt giữ của người khác → bị chặn | 403: Phiếu đặt giữ này không thuộc về bạn đọc đang đăng nhập. | Đạt |
+| T.6 | Bạn đọc gọi hồ sơ cán bộ của người khác → 403 | 403 | Đạt |
+| T.7 | Thông báo chỉ của chính mình | 0 thông báo | Đạt |
+| T.8 | Token sửa sub (đổi danh tính) bị từ chối | 401 | Đạt |
+| T.9 | Token bỏ chữ ký (alg none kiểu) bị từ chối | 401 | Đạt |
+| T.10 | Token bạn đọc gọi API quản trị → 403 không phải 500 | 403 | Đạt |
+| T.11 | Refresh token bịa bị từ chối | 401 | Đạt |
+| T.12 | Tra cứu với đầu vào lạ "'; DROP TABLE bib.bib_rec" | 200  | Đạt |
+| T.13 | Tra cứu với đầu vào lạ '" OR 1=1 --' | 200  | Đạt |
+| T.14 | Tra cứu với đầu vào lạ '<script>alert(1)</script>' | 200  | Đạt |
+| T.15 | Tra cứu với đầu vào lạ 'aaaaaaaaaaaaaaaaaaaaaaaaa' | 200  | Đạt |
+| T.16 | Tra cứu với đầu vào lạ '%00%ff' | 200  | Đạt |
+| T.17 | Tra cứu với đầu vào lạ 'tsquery:*&|!()' | 200  | Đạt |
+| T.18 | pageSize khổng lồ và page âm được kẹp | 200 items=500 page=1 | Đạt |
+| T.19 | Id sai định dạng → 400/404 tiếng Việt, không 500 | 404  | Đạt |
+| T.20 | Đường dẫn vượt thư mục trên media bị chặn | 404 | Đạt |
+| T.21 | Đường dẫn vượt thư mục mã hoá bị chặn | 404 | Đạt |
+| T.22 | SRU với truy vấn lạ và maximumRecords khổng lồ | 200 records=0 | Đạt |
+| T.23 | OAI resumptionToken bịa → badResumptionToken | 200 | Đạt |
+| T.24 | Nhan đề chứa HTML được thoát trong trang SEO cho máy thu thập | escaped=True, raw=False | Đạt |
+| T.25 | API trả nhan đề nguyên văn (JSON, giao diện React tự thoát) | 1 kết quả | Đạt |
+| T.26 | Ảnh PNG hỏng (đúng chữ ký, sai nội dung) → lỗi rõ, không 500 | 200 | Đạt |
+| T.27 | Tải tệp 12 MB qua proxy không bị cắt | 200  | Đạt |
+| T.28 | Thời gian /api/search | 0.30s 31690 byte | Đạt |
+| T.29 | Thời gian /api/stock/items/search | 0.10s 61464 byte | Đạt |
+| T.30 | Thời gian /api/circulation/reports/history | 0.35s 2589602 byte | Đạt |
+| T.31 | Thời gian /api/admin/audit-logs | 0.12s 33492 byte | Đạt |
+| T.32 | Thời gian /api/readers | 0.12s 70930 byte | Đạt |
+| T.33 | Thời gian /api/cataloging/bibs | 0.11s 55710 byte | Đạt |
+| T.34 | Thời gian /api/public/home | 0.14s 9252 byte | Đạt |
 | TC.1 | Dữ liệu trang chủ | keys=['newBooks', 'popularBooks', 'news', 'announcements', 'banners', 'links', 'statistics'] | Đạt |
 | TC.2 | Cấu hình thương hiệu công khai | libraryName='Thư viện Trường Đại học Mẫu', logo=False | Đạt |
 | TC.3 | Tra cứu gõ không dấu | 45 kết quả, đầu: Cơ sở dữ liệu — lý thuyết và bài tập | Đạt |

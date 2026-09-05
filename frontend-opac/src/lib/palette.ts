@@ -21,7 +21,7 @@ export const MAU = {
 
   /** Vàng đồng "cần để ý". */
   luuY: '#8a6114',
-  luuYTuoi: '#b9852f',
+  luuYTuoi: '#9a6c1c',
   luuYNhat: '#f7ecd8',
   luuYVien: '#e6cfa4',
 
@@ -40,7 +40,7 @@ export const MAU = {
   /** Chữ. */
   chu: '#2a2118',
   chuPhu: '#7a6f5f',
-  chuMo: '#9a8f7c',
+  chuMo: '#7f7461',
 
   /**
    * Chữ đặt trên nền xanh rêu đậm — khối tra cứu ở đầu trang chủ và chân trang.
