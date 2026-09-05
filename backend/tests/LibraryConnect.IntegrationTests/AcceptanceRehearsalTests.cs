@@ -149,6 +149,115 @@ public class AcceptanceRehearsalTests
     }
 
     /// <summary>
+    /// K17 (06/09/2026): sách **đang ở tay bạn đọc** bị kỳ kiểm kê xếp vào danh sách "thiếu", và
+    /// `resolve-missing` ghi mất luôn cả những cuốn ấy trong khi phiếu mượn vẫn đang mở. Trên kho
+    /// phát triển, một kỳ kiểm kê toàn kho đếm 157 cuốn đang mượn là thiếu.
+    ///
+    /// Cuốn sách nằm trong tay bạn đọc thì không nằm trên giá, nên nó không phải là mất — kiểm kê
+    /// đếm cái trên giá. Danh sách "thiếu" là danh sách dùng để lập quyết định mất (Chương V III.4
+    /// bước 5), nên một cuốn lọt vào đấy là một quyết định mất sai.
+    /// </summary>
+    [Fact]
+    public async Task Kiem_ke_khong_duoc_coi_sach_dang_muon_la_thieu()
+    {
+        var client = await ClientAsync();
+
+        var libraries = await ReadAsync<IReadOnlyList<LibraryConnect.Application.Features.Locations.LibraryDto>>(
+            await client.GetAsync("/api/locations/libraries"));
+
+        var warehouseId = await ReadAsync<Guid>(await client.PostAsJsonAsync("/api/locations/warehouses", new
+        {
+            code = $"KHOKK{Unique()[..4]}",
+            name = "Kho kiểm kê có sách đang mượn",
+            libraryId = libraries[0].Id,
+            type = LibraryConnect.Domain.Enums.WarehouseType.ClosedStack,
+            isActive = true
+        }));
+
+        var quick = await ReadAsync<LibraryConnect.Application.Features.Acquisition.QuickCatalogResultDto>(
+            await client.PostAsJsonAsync("/api/acquisition/quick-catalog", new
+            {
+                title = $"Sách kiểm kê {Unique()}",
+                author = "Trần Văn Kiểm",
+                price = 50000m,
+                itemQuantity = 2,
+                warehouseId
+            }));
+
+        var items = await ReadAsync<PagedResult<LibraryConnect.Application.Features.Acquisition.StockItemDto>>(
+            await client.PostAsJsonAsync("/api/stock/items/search", new
+            {
+                page = 1,
+                pageSize = 10,
+                filter = new { bibId = quick.BibId }
+            }));
+
+        await client.PostAsJsonAsync("/api/stock/items/inspect", new
+        {
+            itemIds = items.Items.Select(item => item.Id).ToList(),
+            condition = "Tốt"
+        });
+
+        var types = await ReadAsync<PagedResult<CatalogItemDto>>(
+            await client.GetAsync("/api/catalogs/reader-types/items?pageSize=50"));
+
+        var readerId = await ReadAsync<Guid>(await client.PostAsJsonAsync("/api/readers", new
+        {
+            fullName = "Bạn đọc giữ sách khi kiểm kê",
+            studentCode = $"SV{Unique()}",
+            readerTypeId = types.Items.First(item => item.Code == "SV").Id
+        }));
+
+        var onLoan = items.Items[0];
+        var onShelf = items.Items[1];
+
+        var checkout = await client.PostAsJsonAsync("/api/circulation/desk/checkout", new
+        {
+            readerId,
+            barcodes = new[] { onLoan.Barcode }
+        });
+        checkout.IsSuccessStatusCode.Should().BeTrue(await checkout.Content.ReadAsStringAsync());
+
+        var periodId = await ReadAsync<Guid>(await client.PostAsJsonAsync("/api/inventory/periods", new
+        {
+            name = "Kiểm kê kho có sách đang mượn",
+            warehouseId,
+            scopeType = "ALL",
+            assignedStaff = "Cán bộ kiểm kê",
+            closeWarehouse = false
+        }));
+
+        var results = await ReadAsync<PagedResult<LibraryConnect.Application.Features.Acquisition.InventoryResultRowDto>>(
+            await client.GetAsync($"/api/inventory/periods/{periodId}/results?page=1&pageSize=50"));
+
+        results.Items.Where(row => row.Barcode == onLoan.Barcode)
+            .Should().BeEmpty("cuốn đang ở tay bạn đọc không nằm trên giá nên không thuộc danh sách kiểm kê");
+
+        results.Items.Should().Contain(row => row.Barcode == onShelf.Barcode,
+            "cuốn còn trên giá vẫn phải được kiểm");
+
+        // Và dù kỳ cũ có sót dòng như thế, lệnh xử lý thiếu cũng không được ghi mất một cuốn đang mượn.
+        await client.PostAsJsonAsync($"/api/inventory/periods/{periodId}/close", new { });
+
+        var resolve = await client.PostAsJsonAsync($"/api/inventory/periods/{periodId}/resolve-missing", new
+        {
+            periodId,
+            disposalType = "Mất",
+            reason = "Kiểm thử K17"
+        });
+
+        if (resolve.IsSuccessStatusCode)
+        {
+            using var scope = _factory.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<LibraryConnect.Application.Common.Interfaces.IApplicationDbContext>();
+            var status = await db.Items.Where(item => item.Id == onLoan.Id).Select(item => item.Status).SingleAsync();
+
+            status.Should().NotBe(LibraryConnect.Domain.Enums.ItemStatus.Lost,
+                "phiếu mượn còn mở thì không được ghi mất cuốn sách ấy");
+        }
+    }
+
+    /// <summary>
     /// K15 (05/09/2026): xoá biểu ghi rồi xoá tác giả chỉ có biểu ghi ấy dùng — bị từ chối "đang được 1 bản
     /// ghi sử dụng". Liên kết bib_authors không xoá mềm theo biểu ghi, mà bộ đếm đếm liên kết chứ không hỏi
     /// biểu ghi còn sống không. Cán bộ không nhìn thấy biểu ghi ấy ở đâu nữa nhưng vẫn không dọn được hồ sơ

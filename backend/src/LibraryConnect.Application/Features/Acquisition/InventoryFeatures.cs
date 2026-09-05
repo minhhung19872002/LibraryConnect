@@ -341,7 +341,17 @@ public class CreateInventoryPeriodCommandHandler : IRequestHandler<CreateInvento
             .AsNoTracking()
             .Where(item => item.WarehouseId == period.WarehouseId)
             // Bản đã thanh lý hoặc ghi mất không còn nằm trên giá nên không thuộc danh sách kỳ vọng.
-            .Where(item => item.Status != ItemStatus.Discarded && item.Status != ItemStatus.Lost);
+            .Where(item => item.Status != ItemStatus.Discarded && item.Status != ItemStatus.Lost)
+            // Bản đang ở tay bạn đọc cũng không nằm trên giá. Kiểm kê đếm cái **trên giá**; xếp một
+            // cuốn đang mượn vào "thiếu" là sai hai lần: cán bộ đi tìm một cuốn không thể có ở đó, và
+            // danh sách thiếu — thứ dùng để lập quyết định mất (Chương V III.4 bước 5) — mang theo cả
+            // những cuốn có người đang giữ hợp lệ. Một kỳ kiểm kê toàn kho trên kho phát triển đếm
+            // nhầm 157 cuốn như thế (K17, 06/09/2026).
+            //
+            // Cuốn nào sổ ghi đang mượn mà thật ra nằm trên giá thì lúc quét sẽ hiện "thừa" — đúng
+            // thứ cần biết, vì nghĩa là có lượt trả chưa được ghi.
+            .Where(item => !_db.Loans.Any(loan =>
+                loan.ItemId == item.Id && loan.ReturnDate == null && loan.DeletedAt == null));
 
         return period.ScopeType switch
         {
@@ -1048,6 +1058,11 @@ public class ResolveMissingItemsCommandHandler
                              && result.Result == InventoryResultType.Missing
                              && !result.IsResolved
                              && result.ItemId != null)
+            // Chốt chặn thứ hai cho K17: kỳ lập trước bản sửa vẫn còn dòng của sách đang mượn trong
+            // danh sách thiếu. Không bao giờ ghi mất một cuốn mà phiếu mượn còn đang mở — bạn đọc vẫn
+            // phải trả nó, và bản ghi "mất" sẽ chặn chính lượt trả ấy.
+            .Where(result => !_db.Loans.Any(loan =>
+                loan.ItemId == result.ItemId && loan.ReturnDate == null && loan.DeletedAt == null))
             .WhereIf(command.ResultIds.Count > 0, result => command.ResultIds.Contains(result.Id))
             .ToListAsync(ct);
 

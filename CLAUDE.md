@@ -70,7 +70,10 @@ nội dung thật của tệp in/xuất, phục hồi sao lưu, quầy bàn phí
 lược song song cùng một tác giả mới thì ba lượt đổ trùng mã; và lúc dọn dữ liệu thử của chính lỗi ấy lộ thêm một: biểu
 ghi đã xoá vẫn được đếm là "đang dùng" nên không xoá được tác giả. Cuối ngày quét mã **bằng camera của máy ảo Android**
 (chèn ảnh mã vạch/QR vào cảnh ảo) và đi trọn luồng mượn tự phục vụ trên máy chủ thật — tìm thêm một: khung quét bước 2
-không mở được camera vì trang trước chưa nhả, lại báo nhầm thành thiếu quyền. Cả 16 đã sửa, tổng **163 lỗi, đã sửa 163**.
+không mở được camera vì trang trước chưa nhả, lại báo nhầm thành thiếu quyền. Ngày 06/09/2026 soi **số học nghiệp vụ** — tự
+tính kỳ vọng từ bảng chính sách rồi đối chiếu: hạn trả qua ngày nghỉ, tiền phạt, trần gia hạn, hàng đợi giữ chỗ, đền sách mất,
+ngưỡng nợ, thẻ hết hạn, sinh số báo, kiểm kê — 16 phép đo khớp, một sai: kiểm kê coi sách đang ở tay bạn đọc là thiếu (157 cuốn
+trên kho phát triển) và lệnh xử lý thiếu ghi mất luôn cả chúng. Cả 17 đã sửa, tổng **164 lỗi, đã sửa 164**.
 Phụ lục cuối `docs/06` ghi kết quả từng kịch bản (hơn 450 dòng).
 
 Đọc thẳng hồ sơ gốc còn tìm ra thứ không phải lỗi mã: **bốn hồ sơ bàn giao** mà Chương V mục III và
@@ -342,6 +345,14 @@ docker compose run --rm -d --name lc-api-kiem -e LC_DB_NAME=lc_kiem -e LC_SEED_D
     ghi xoá mềm (đúng, vì biểu ghi khôi phục được), nhưng bộ đếm tham chiếu đếm cả liên kết của biểu ghi
     đã xoá, nên xoá sách rồi vẫn không dọn được hồ sơ thẩm quyền. Đếm qua bảng có bộ lọc xoá mềm, đừng
     đếm bảng nối. Và dọn dữ liệu thử cũng là một phép thử — lỗi này lộ ra đúng lúc dọn.
+53. **Kiểm kê đếm cái trên giá, không đếm cái trong sổ.** Sách đang ở tay bạn đọc không nằm trên giá,
+    nên xếp nó vào "thiếu" là sai hai lần: cán bộ đi tìm thứ không thể có ở đó, và danh sách thiếu —
+    thứ dùng để lập quyết định mất — mang theo cả những cuốn có người giữ hợp lệ. Mọi danh sách kỳ
+    vọng phải hỏi "vật này lúc này đang ở đâu", không phải "vật này thuộc kho nào".
+54. **Kỳ vọng của phép thử phải đọc từ đúng chỗ cấu hình.** Ba phép đo đầu của đợt nghiệp vụ đỏ vì
+    kịch bản đoán khoá tham số (`CIRCULATION.WEEKLY_CLOSED_DAYS` chứ không phải `CLOSED_WEEKDAYS`) và
+    vì gia hạn ngay hôm mượn thì hạn mới không dài hơn hạn cũ. Cả ba là lỗi của phép thử. Đọc cấu hình
+    thật trước, rồi mới nói sản phẩm sai.
 
 ### A.4. Cơ chế dùng chung — dùng lại, đừng viết chỗ mới
 
