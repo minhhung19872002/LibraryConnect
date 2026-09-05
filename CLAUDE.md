@@ -65,7 +65,9 @@ CSDL, Hangfire, quét 70 màn hình bắt lỗi console, Lighthouse) tìm thêm 
 phiếu vì thiếu ràng buộc duy nhất, và ba cặp màu OPAC dưới WCAG AA. Đợt kỹ thuật thứ hai (cổng mạng, TLS,
 hạn mức, phạm vi dữ liệu theo kho, cài mới CSDL trắng, Lighthouse quản trị, độ liên quan, đường đi của
 thư) tìm thêm bốn: gõ đủ nhan đề ra 0 kết quả vì tra cứu so cả cụm như chuỗi con; màu quản trị; báo "đã
-gửi" khi SMTP tắt; tám ô SMTP trên màn hình không ai đọc. Cả 13 đã sửa, tổng **160 lỗi, đã sửa 160**.
+gửi" khi SMTP tắt; tám ô SMTP trên màn hình không ai đọc. Đợt kỹ thuật thứ ba (tạo đồng thời trên mọi khoá duy nhất,
+nội dung thật của tệp in/xuất, phục hồi sao lưu, quầy bàn phím trên trình duyệt) tìm thêm một: bốn lượt biên mục sơ
+lược song song cùng một tác giả mới thì ba lượt đổ trùng mã. Cả 14 đã sửa, tổng **161 lỗi, đã sửa 161**.
 Phụ lục cuối `docs/06` ghi kết quả từng kịch bản (hơn 450 dòng).
 
 Đọc thẳng hồ sơ gốc còn tìm ra thứ không phải lỗi mã: **bốn hồ sơ bàn giao** mà Chương V mục III và
@@ -317,6 +319,12 @@ docker compose run --rm -d --name lc-api-kiem -e LC_DB_NAME=lc_kiem -e LC_SEED_D
     Bộ gửi thư tắt thì lặng im mà màn hình vẫn báo "đã gửi"; tám ô SMTP trên màn hình lưu vào CSDL
     mà bộ gửi chỉ đọc appsettings. Kho phát triển và CI không có SMTP nên cả hai lỗi sống qua mọi
     đợt rà cho tới khi soi đường đi của một lá thư trên máy chủ thật.
+49. **Ràng buộc duy nhất chặn được tranh chấp, nhưng chặn xong phải nói đúng chuyện.** Hai lượt cùng
+    tạo một tác giả chưa có: ràng buộc chặn lượt sau đúng như bài học 1, mà câu trả lời "nhập mã khác"
+    vô nghĩa với người không nhập mã nào. Mục danh mục tự sinh từ biểu ghi thì lượt thua phải nhận mục
+    người thắng vừa tạo rồi lưu lại — làm ở một chỗ (`SaveChangesAsync`, `CatalogRaceReconciler`), không
+    chép vào từng handler. Và phép thử đồng thời phải gửi yêu cầu **thật sự song song**; gọi tuần tự thì
+    không bao giờ thấy.
 
 ### A.4. Cơ chế dùng chung — dùng lại, đừng viết chỗ mới
 

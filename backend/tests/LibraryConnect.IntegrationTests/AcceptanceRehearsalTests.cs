@@ -5,6 +5,7 @@ using FluentAssertions;
 using LibraryConnect.Application.Common.Models;
 using LibraryConnect.Application.Features.Cataloging;
 using LibraryConnect.Application.Features.Catalogs;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace LibraryConnect.IntegrationTests;
@@ -92,6 +93,59 @@ public class AcceptanceRehearsalTests
         var payload = await response.Content.ReadFromJsonAsync<ApiResponse>(LibraryConnectFactory.JsonOptions);
 
         payload!.Message.Should().Contain("chưa có bản in");
+    }
+
+    /// <summary>
+    /// Đợt rà kỹ thuật ngày 05/09/2026 (K14): bốn lượt biên mục sơ lược cùng lúc, cùng một tác giả
+    /// chưa có trong hồ sơ thẩm quyền — ba lượt đổ 409 "ràng buộc ux_author_code". Hai cán bộ kiểm
+    /// nhận cùng một lô sách của cùng tác giả là chuyện thường; lượt về sau phải nhận đúng mục tác
+    /// giả mà lượt trước vừa tạo, không phải đổ, và hồ sơ thẩm quyền chỉ có một mục.
+    /// </summary>
+    [Fact]
+    public async Task Bien_muc_so_luoc_song_song_cung_mot_tac_gia_moi_thi_ca_bon_luot_deu_luu_duoc()
+    {
+        var client = await ClientAsync();
+        var warehouses = await ReadAsync<List<LibraryConnect.Application.Features.Locations.WarehouseDto>>(
+            await client.GetAsync("/api/locations/warehouses"));
+        var author = $"Tác giả song song {Unique()}";
+
+        var responses = await Task.WhenAll(Enumerable.Range(0, 4).Select(index =>
+            client.PostAsJsonAsync("/api/acquisition/quick-catalog", new
+            {
+                title = $"Sách song song {index} {Unique()}",
+                author,
+                price = 1000,
+                ddc = "005",
+                itemQuantity = 1,
+                warehouseId = warehouses[0].Id
+            })));
+
+        var bodies = await Task.WhenAll(responses.Select(response => response.Content.ReadAsStringAsync()));
+
+        responses.Select(response => response.StatusCode).Should().AllBeEquivalentTo(
+            HttpStatusCode.OK, string.Join(Environment.NewLine, bodies));
+
+        var bibIds = new List<Guid>();
+
+        foreach (var response in responses)
+        {
+            bibIds.Add((await ReadAsync<LibraryConnect.Application.Features.Acquisition.QuickCatalogResultDto>(response)).BibId);
+        }
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<LibraryConnect.Application.Common.Interfaces.IApplicationDbContext>();
+
+        var authors = await db.Authors.Where(entity => entity.Name == author).ToListAsync();
+
+        authors.Should().HaveCount(1, "bốn lượt cùng một tên phải dồn về một mục thẩm quyền");
+
+        var linked = await db.BibAuthors
+            .Where(link => link.AuthorId == authors[0].Id && bibIds.Contains(link.BibId))
+            .Select(link => link.BibId)
+            .Distinct()
+            .CountAsync();
+
+        linked.Should().Be(4, "cả bốn biểu ghi đều phải trỏ tới mục tác giả duy nhất ấy");
     }
 
     /// <summary>

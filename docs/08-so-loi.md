@@ -529,7 +529,10 @@ và hiệu năng đều đạt, tìm thêm K8 (đặt giữ đồng thời lọt
 Đợt kỹ thuật thứ hai đi vào cổng mạng lộ ra ngoài, TLS, hạn mức API công khai, phạm vi dữ liệu theo kho,
 ghi nhật ký lượt xem, cài mới trên CSDL trắng với bộ dữ liệu mẫu, Lighthouse giao diện quản trị, độ liên
 quan tra cứu và đường đi của thư điện tử — tìm thêm K10 (gõ đủ nhan đề ra 0 kết quả), K11 (màu quản
-trị), K12 (báo "đã gửi" khi SMTP tắt) và K13 (tham số SMTP không ai đọc). Cả 13 đã sửa trong ngày.
+trị), K12 (báo "đã gửi" khi SMTP tắt) và K13 (tham số SMTP không ai đọc). Đợt kỹ thuật thứ ba ("kiểm tra tất cả
+chức năng kỹ thêm lần nữa") đi vào tạo đồng thời trên mọi khoá duy nhất, nội dung thật của 10 loại tệp in và xuất,
+phục hồi sao lưu trên máy phát triển, và quầy lưu thông đi bằng bàn phím trên trình duyệt — tìm thêm K14 (biên mục
+sơ lược song song cùng tác giả mới thì ba lượt đổ). Cả 14 đã sửa trong ngày.
 
 | Mã | Mức | Lỗi | Nguyên nhân | Sửa |
 |---|---|---|---|---|
@@ -545,6 +548,7 @@ trị), K12 (báo "đã gửi" khi SMTP tắt) và K13 (tham số SMTP không ai
 | K11 | Vừa (mục 6.6) | **Lighthouse trang Tổng quan quản trị: mô tả phụ trên nền trang 2,78:1, tiêu đề ô thống kê 3,13:1**; nút tài khoản ở thanh trên có tên truy cập không chứa chữ nhìn thấy (biểu tượng "user" của Avatar chen vào trước tên) | Cùng lớp K9 nhưng ở gói quản trị — phép thử quét chỉ chặn đúng thư mục nó quét (bài học 9); một cặp còn được cho hưởng ngưỡng 3 dù là chữ 12 px | Chữ phụ `#7a6f5f → #625848`, chữ mờ `#9a8f7c → #6f6556` ở `styles.css`, `theme.ts`, `lib/palette.ts`; `aria-label` cho nút tài khoản, biểu tượng `aria-hidden`. `theme.test.ts` của gói quản trị thêm ba cặp đo được, đỏ trước khi sửa. Accessibility Tổng quan: 95 → đo lại sau triển khai |
 | K12 | Vừa | **"Gửi giỏ tài liệu qua email" báo "Đã gửi danh sách tới …" trong khi máy chủ thật chưa cấu hình SMTP** — bộ gửi im lặng bỏ qua, bạn đọc chờ một lá thư không bao giờ tới | Bộ gửi tắt thì `return` lặng, không ai hỏi nó có bật không (bài học 11: "đã lưu" chưa phải "đã đến") | `IEmailSender.IsEnabledAsync`; gửi giỏ hỏi trước, chưa cấu hình thì 409 "Thư viện chưa cấu hình máy chủ gửi thư…". Nhắc quá hạn không đổi vì đi qua kênh thông báo trong ứng dụng, bạn đọc vẫn nhận được. `Gui_gio_tai_lieu_khi_chua_cau_hinh_smtp…` đỏ trước khi sửa |
 | K13 | Nặng | **Tám ô "Cấu hình email SMTP" trên màn hình Tham số hệ thống là công tắc chết**: lưu vào CSDL, không nơi nào đọc — bộ gửi chỉ đọc mục `Smtp` của appsettings/biến môi trường. Cán bộ khai máy chủ thư trên màn hình thì thư vẫn không đi | Bài học 30 đúng thêm một lần: thêm ô cấu hình mà không chỉ ra chỗ đọc. Kho phát triển và CI đều không có SMTP nên không ai gửi được thư để thấy | `SmtpSettingsResolver`: tham số đã điền thắng, ô trống rơi về appsettings; bộ gửi đọc lại mỗi lần gửi (đổi là có tác dụng ngay, bài học 31); lỗi kết nối máy chủ thư trả 409 nêu rõ host:port thay vì 500. `SmtpSettingsResolverTests` (3) và `Cau_hinh_smtp_tren_man_hinh_tham_so_la_thu_bo_gui_thu_doc` — trỏ tới `127.0.0.1:9` rồi đòi lỗi kết nối nêu đúng địa chỉ ấy; đỏ trước khi sửa vì bộ gửi vẫn nói "chưa cấu hình" |
+| K14 | Vừa | **Bốn lượt biên mục sơ lược cùng lúc, cùng một tác giả chưa có trong hồ sơ thẩm quyền: một lượt lưu được, ba lượt đổ 409 "Giá trị đã tồn tại (ràng buộc `ux_author_code`)"** — cán bộ không nhập mã tác giả nào mà bị bảo nhập mã khác. Đề mục, từ khoá, nhà xuất bản, tùng thư sinh từ biểu ghi đều cùng cảnh; hai người cùng kiểm nhận một lô sách của một tác giả là chuyện thường ở buổi nhập kho | `BibAuthorityLinker` tra không thấy thì tạo; hai lượt cùng tra không thấy là cùng tạo, ràng buộc duy nhất chặn lượt sau — đúng bài học 1 — nhưng câu trả lời đúng lúc ấy là *dùng mục người kia vừa tạo*, không phải báo lỗi. Bộ kiểm thử chỉ gọi tuần tự nên không bao giờ thấy | `CatalogRaceReconciler` cắm vào `SaveChangesAsync`: đổ ở ràng buộc duy nhất của một bảng `cat.*` thì đối chiếu lại từng mục đang chờ thêm vào bảng ấy — có mục còn sống cùng khoá tên thì nhận khoá của mục ấy và trỏ lại mọi khoá ngoại đang tham chiếu, chỉ trùng mã (hai tên khác nhau cắt về cùng 40 ký tự) thì sinh mã có hậu tố — rồi lưu lại, tối đa ba lần. Nhật ký đã dựng cho lượt đổ được bỏ đi để không ghi đôi và không ghi "tạo" một mục không tồn tại. Một chỗ cho mọi bảng danh mục và mọi handler, kể cả tạo tay ở màn hình danh mục. `Bien_muc_so_luoc_song_song_cung_mot_tac_gia_moi_thi_ca_bon_luot_deu_luu_duoc` — bốn yêu cầu thật gửi song song: đỏ trước khi sửa (3 × 409), xanh sau; kiểm lại trên máy chủ thật, dòng K14 ở phụ lục `docs/06` |
 | K5 | Vừa | **Trình soạn MARC báo "1 lỗi phải sửa trước khi lưu: thiếu 001" trên mọi biểu ghi mới**, dù bấm Lưu vẫn xong vì đường lưu tự cấp số kiểm soát trước khi kiểm. Cán bộ hoặc tự bịa một số 001, hoặc học cách bỏ qua ô đỏ — cả hai đều tệ | Đường lưu cấp 001 rồi mới kiểm; endpoint kiểm tra riêng (trình soạn gọi sau mỗi lần gõ) thì không. Nhập ISO 2709 đã gặp đúng lỗi này và tự lọc thông báo 001 ở chỗ của nó thay vì sửa gốc | Endpoint kiểm tra bỏ lỗi thiếu 001, vì đó là số hệ thống cấp. `AcceptanceRehearsalTests.Kiem_tra_bieu_ghi_khong_bao_loi_thieu_001_vi_he_thong_tu_cap` đỏ trước khi sửa |
 
 ### Đã kiểm trên máy chủ thật và vẫn tốt
@@ -681,8 +685,8 @@ dạng quét mã nguồn chặn cả lớp lỗi quay lại thay vì chỉ chặ
 | Nguy cơ | 1 | 0 | 1 (H9, ghi ở "Làm tiếp") |
 
 Cộng cả ba đợt, đợt áp thiết kế, đợt triển khai và ba đợt rà hoàn thiện ngày 04/09/2026:
-**147 lỗi, đã sửa 145**; thêm **13 lỗi của đợt nghiệm thu thử, test sâu và hai đợt test kỹ thuật trên máy
-chủ thật ngày 05/09/2026 (mục K), đã sửa cả 13** — tổng **160 lỗi, đã sửa 160**. Hai mục H3 và H9 đã làm xong ngày 03/09/2026 và ghi ở cột cuối
+**147 lỗi, đã sửa 145**; thêm **14 lỗi của đợt nghiệm thu thử, test sâu và ba đợt test kỹ thuật trên máy
+chủ thật ngày 05/09/2026 (mục K), đã sửa cả 14** — tổng **161 lỗi, đã sửa 161**. Hai mục H3 và H9 đã làm xong ngày 03/09/2026 và ghi ở cột cuối
 của chính hai dòng ấy — con số 134 giữ nguyên cách đếm cũ để đối chiếu được với các bản trước.
 Mỗi lỗi đã sửa đều có phép thử chạy đỏ trước khi sửa và xanh sau khi sửa, kể cả H7: phép thử giả
 tiêu đề đỏ trước khi sửa `CurrentUser.Ip`.

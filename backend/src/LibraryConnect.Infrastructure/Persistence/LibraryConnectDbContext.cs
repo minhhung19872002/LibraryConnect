@@ -193,7 +193,34 @@ public class LibraryConnectDbContext : DbContext, IApplicationDbContext
     public DbSet<ImportMappingProfile> ImportMappingProfiles => Set<ImportMappingProfile>();
     public DbSet<ApiClient> ApiClients => Set<ApiClient>();
 
-    public override Task<int> SaveChangesAsync(CancellationToken ct = default) => base.SaveChangesAsync(ct);
+    /// <summary>
+    /// Lưu, và nếu đổ vì hai lượt cùng lúc tạo cùng một mục danh mục thì trỏ lại mục ấy rồi lưu lần nữa
+    /// (xem <see cref="CatalogRaceReconciler"/>). Tối đa ba lần — mỗi lần chỉ hoà giải được một bảng.
+    /// </summary>
+    public override async Task<int> SaveChangesAsync(CancellationToken ct = default)
+    {
+        const int maxReconciliations = 3;
+
+        for (var attempt = 0; ; attempt++)
+        {
+            DbUpdateException failure;
+
+            try
+            {
+                return await base.SaveChangesAsync(ct);
+            }
+            catch (DbUpdateException exception)
+                when (attempt < maxReconciliations && CatalogRaceReconciler.LooksLikeCatalogRace(exception))
+            {
+                failure = exception;
+            }
+
+            if (!await CatalogRaceReconciler.TryReconcileAsync(this, failure, ct))
+            {
+                System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(failure).Throw();
+            }
+        }
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

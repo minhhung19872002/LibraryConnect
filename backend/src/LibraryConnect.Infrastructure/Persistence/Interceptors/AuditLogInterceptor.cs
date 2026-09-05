@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using LibraryConnect.Application.Common.Interfaces;
@@ -71,11 +72,9 @@ public class AuditLogInterceptor : SaveChangesInterceptor
     {
         if (eventData.Context is not null)
         {
+            DiscardStaged(eventData.Context);
             var logs = await BuildLogsAsync(eventData.Context, cancellationToken);
-            if (logs.Count > 0)
-            {
-                eventData.Context.Set<AuditLog>().AddRange(logs);
-            }
+            Stage(eventData.Context, logs);
         }
 
         return await base.SavingChangesAsync(eventData, result, cancellationToken);
@@ -87,14 +86,51 @@ public class AuditLogInterceptor : SaveChangesInterceptor
         {
             // The synchronous path is only used by tooling and tests; the settings lookup is served
             // from the in-memory cache in practice.
+            DiscardStaged(eventData.Context);
             var logs = BuildLogsAsync(eventData.Context, CancellationToken.None).GetAwaiter().GetResult();
-            if (logs.Count > 0)
-            {
-                eventData.Context.Set<AuditLog>().AddRange(logs);
-            }
+            Stage(eventData.Context, logs);
         }
 
         return base.SavingChanges(eventData, result);
+    }
+
+    /// <summary>
+    /// Nhật ký đã dựng cho lượt lưu trước nhưng lượt ấy đổ (vẫn ở trạng thái Added) thì bỏ đi: lượt
+    /// lưu lại — sau khi <c>CatalogRaceReconciler</c> trỏ lại mục danh mục trùng — dựng nhật ký mới từ
+    /// đúng trạng thái hiện tại; giữ bản cũ là vừa ghi đôi, vừa ghi "tạo" một mục không tồn tại.
+    /// Nhật ký handler tự thêm (đăng nhập, xuất dữ liệu) không đi qua đây nên không bị đụng.
+    /// </summary>
+    private static readonly ConditionalWeakTable<DbContext, List<AuditLog>> StagedLogs = new();
+
+    private static void DiscardStaged(DbContext context)
+    {
+        if (!StagedLogs.TryGetValue(context, out var staged))
+        {
+            return;
+        }
+
+        foreach (var log in staged)
+        {
+            var entry = context.Entry(log);
+
+            if (entry.State == EntityState.Added)
+            {
+                entry.State = EntityState.Detached;
+            }
+        }
+
+        staged.Clear();
+    }
+
+    private static void Stage(DbContext context, List<AuditLog> logs)
+    {
+        if (logs.Count == 0)
+        {
+            return;
+        }
+
+        context.Set<AuditLog>().AddRange(logs);
+        StagedLogs.AddOrUpdate(context, logs);
     }
 
     private async Task<List<AuditLog>> BuildLogsAsync(DbContext context, CancellationToken ct)
