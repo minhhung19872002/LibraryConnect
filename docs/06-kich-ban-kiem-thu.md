@@ -1321,7 +1321,7 @@ chủ thật. Các lỗi K1, K3, K4, K5 lộ ra khi đi bằng trình duyệt ho
 riêng, rồi mới đối chiếu với thứ hệ thống trả về qua API. Chạy trên máy phát triển vì cần lùi ngày của phiếu
 mượn để dựng đúng bối cảnh quá hạn; dữ liệu thử tạo ra đều đã xoá.
 
-Tổng: **24 phép đo, 24 khớp**. Ba phép đo đầu tiên đỏ vì kịch bản đoán sai khoá tham số và dựng
+Tổng: **31 phép đo, 31 khớp**. Ba phép đo đầu tiên đỏ vì kịch bản đoán sai khoá tham số và dựng
 sai bối cảnh gia hạn — lỗi của phép thử, đã tính lại và ghi kết quả đúng ở bảng dưới. Hai lỗi thật tìm ra trong đợt:
 K17 (kiểm kê coi sách đang mượn là thiếu) và K18 (dữ liệu trình diễn có phiếu mượn ngày ở tương lai).
 
@@ -1351,3 +1351,10 @@ K17 (kiểm kê coi sách đang mượn là thiếu) và K18 (dữ liệu trình
 | NV.19 | Tài liệu hạn chế: chưa duyệt chỉ mở số trang xem thử, duyệt xong mở toàn văn, vẫn không cho tải | Tài liệu 10 trang: chưa duyệt mở 3 trang (trang 2 → 200, trang cuối → 403, kèm lý do 'gửi yêu cầu để đọc toàn văn'); duyệt xong trang cuối → 200 và readablePages = null nghĩa là toàn văn (trang tra cứu hiện 'Đọc toàn văn', ứng dụng di động lấy pagesToShow = pa | Đạt |
 | NV.20 | Quyền hết hạn tự thu lại: bạn đọc quay về mức xem thử | sau khi hết hạn: 3/10 trang, trang cuối bị chặn, lý do 'Quyền đọc đã hết hạn hoặc hết lượt xem.' | Đạt |
 | NV.21 | Quyền có trần số lần xem: dùng hết lượt thì quay về mức xem thử | maxViews=2, view_count=9 → 3/10 trang, lý do 'Quyền đọc đã hết hạn hoặc hết lượt xem.' | Đạt |
+| NV.22 | Đơn đặt: tổng tiền = Σ(số lượng × đơn giá), trạng thái ban đầu là Mới/Đã đặt | mong đợi 650,000 đ; đơn ghi 650,000 đ; trạng thái 'New' | Đạt |
+| NV.23 | Nhận hàng: nhận quá số đặt bị chặn, nhận một phần → 'Giao một phần', nhận đủ → 'Đã nhận' | nhận 9/5 → 400 ([{'field': 'lines', 'message': 'Số lượng thực nhận của "Sách đặt DD334); nhận 2/5 → 'PartiallyReceived'; nhận đủ 5+3 → 'Received' | Đạt |
+| NV.24 | Nhận số báo: mỗi số nhận sinh một ĐKCB riêng, đúng số lượng | nhận 6 số, sinh 6 ĐKCB, mã vạch ['LC00018019', 'LC00018020', 'LC00018021']… | Đạt |
+| NV.25 | Đóng tập: sinh một ĐKCB cho cả tập, sáu số lẻ chuyển trạng thái 'đã đóng tập' | trạng thái các số: {'Bound': 6, 'Expected': 6}; ĐKCB của tập: LC00018025 giá 120000.00 | Đạt |
+| NV.26 | Nhập bạn đọc từ Excel: 5 dòng, 3 dòng sai → nhận 2, báo lỗi 3, tệp nhật ký lỗi nêu rõ từng lý do | Tổng 5 / nhận 2 / lỗi 3. Tệp nhật ký lỗi tải về được, 4 dòng thông báo cho 3 dòng sai (dòng trùng mã nhận cả hai lý do): 'Mã sinh viên bị lặp trong chính tệp này.', 'Bạn đọc đã có trong hệ thống. Chọn cách xử lý trùng là Cập nhật hoặc Bỏ qua.', 'Địa chỉ email  | Đạt |
+| NV.27 | Phạm vi dữ liệu theo kho: cán bộ chỉ được gán kho A không thấy bản in kho B, kể cả khi bỏ bộ lọc | được gán 'Kho mở': 4483 bản in (SQL 4483); hỏi kho 'Kho đóng': 0 (mã 200); bỏ lọc: 4483 trong tổng 17910 toàn hệ thống | Đạt |
+| NV.28 | Gộp trùng tác giả: mọi biểu ghi của mục bị gộp chuyển sang mục giữ lại, mục kia xoá mềm | trước gộp {'Phạm Văn Gộp GT34781': 1, 'Pham Van Gop Hai GT34781': 1}; sau gộp mục giữ lại có 2 biểu ghi; mục bị gộp đã xoá mềm = t | Đạt |
