@@ -282,14 +282,22 @@ Cần chen migration vào giữa thì đổi tên tệp **và** sửa `[Migratio
 
 ### A.5. Việc còn treo — chờ người dùng quyết
 
-1. **Máy chủ Z39.50 trên bản chạy thật.** Mã đã xong và có phép thử, nhưng `ILL.Z3950_SERVER_ENABLED`
-   còn tắt trên `14.225.83.93`: bật là mở một cổng TCP ra Internet. Chờ chủ hệ thống đồng ý và chốt
-   dải IP được phép.
-2. **Mật khẩu `admin` của bản chạy thật** đang trùng một chuỗi có mặt trong phép thử Android của kho
+1. **Mật khẩu `admin` của bản chạy thật** đang trùng một chuỗi có mặt trong phép thử Android của kho
    mã công khai. Đổi thì phải sửa cả tài liệu hướng dẫn nghiệm thu, nên để người dùng chọn thời
    điểm.
-3. **Hai mục của sổ lỗi chưa đóng**: H3 (thiếu chức năng) và H9 (nguy cơ) — xem "Làm tiếp gì sau
-   đây" ở cuối `docs/08-so-loi.md`.
+
+**Đã chốt, không hỏi lại:**
+
+- **Máy chủ Z39.50 trên bản chạy thật: để tắt.** Ngày 05/09/2026 đọc lại `Chương V.YÊU CẦU VỀ KỸ
+  THUẬT.pdf`: hồ sơ chỉ đòi chiều máy khách ("Nhập dữ liệu từ chuẩn Z39.50", kiểm thử 2.4 "tìm/nhận
+  biểu ghi qua Z39.50"), không có dòng nào đòi cho thư viện khác tra vào. Chiều máy chủ là do mục
+  3.3b của tài liệu này tự thêm. Mã và phép thử giữ nguyên, `docs/07` mục B10 vẫn ghi "Có"; cần
+  trình diễn thì bật `ILL.Z3950_SERVER_ENABLED` vài phút rồi tắt. SRU tại `/sru` đã chạy sẵn trên
+  bản thật và là lối tương đương.
+- H3 và H9 của sổ lỗi đã đóng ngày 03/09/2026.
+
+**Phạm vi từ đây:** chỉ làm thứ `Chương V.YÊU CẦU VỀ KỸ THUẬT.pdf` yêu cầu. Không thêm chức năng
+ngoài hồ sơ; thấy thiếu thì đối chiếu với tệp PDF trước khi làm.
 
 ---
 

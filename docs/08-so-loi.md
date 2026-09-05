@@ -636,9 +636,11 @@ giao diện gửi mà máy chủ không đọc.
 3. **II.5 đã làm xong** cùng ngày (JN13). Bộ định nghĩa nạp lại được từ giao diện, cả kiểu nạp bổ
    sung lẫn kiểu khôi phục ghi đè. Chưa có: nhập một bộ định nghĩa **của thư viện khác** từ tệp tải
    lên — chưa gặp nhu cầu ấy, và bộ chuẩn đi kèm bản cài là thứ mọi thư viện Việt Nam dùng chung.
-4. **Đợt sau là ứng dụng di động** (Phase 15) theo `PROMPT-MOBILE-LIBRARYCONNECT.md`. Nhóm
-   `/api/reader/*` đã kiểm lại trong đợt này qua lối bạn đọc thật (đọc tài liệu số có chữ chìm).
-5. Bài học giữ lại từ ba đợt: **lỗi ghi là "đã sửa" chưa chắc đã sửa hết** (B12 dưới D8, H5 dưới lần
+4. **Ứng dụng di động (Phase 15) đã xong** — xem `CLAUDE.md` mục A.1 và `mobile/README.md`. Sau
+   đó là năm đợt rà theo đặc tả ngày 04–05/09/2026 (mục J), không còn lỗi mở.
+5. **Máy chủ Z39.50 trên bản chạy thật giữ ở trạng thái tắt** — đọc lại Chương V ngày 05/09/2026:
+   hồ sơ chỉ đòi chiều máy khách. Chi tiết ở `CLAUDE.md` mục A.5.
+6. Bài học giữ lại từ ba đợt: **lỗi ghi là "đã sửa" chưa chắc đã sửa hết** (B12 dưới D8, H5 dưới lần
    sửa bỏ dấu), và **phép thử tự viết chỉ chạm tới bối cảnh người viết nghĩ ra** — H4 sống từ phase 5
    vì phép thử sửa biểu ghi chưa bao giờ thêm một điểm truy cập; H5 sống qua một lần sửa vì phép thử
    dùng kho trống. Dựng đúng bối cảnh của kho thật (220 tác giả cùng họ) mới bắt được.
