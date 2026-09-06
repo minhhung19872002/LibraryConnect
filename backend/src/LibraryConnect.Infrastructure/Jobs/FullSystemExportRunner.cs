@@ -349,9 +349,13 @@ public class FullSystemExportRunner : IFullSystemExportRunner
             {
                 "Mã", "Số thẻ", "Mã sinh viên", "Họ và tên", "Giới tính", "Ngày sinh", "Email", "Điện thoại",
                 "Địa chỉ", "Loại bạn đọc", "Khoa", "Ngành", "Lớp", "Khóa", "Ngày cấp thẻ", "Ngày hết hạn",
-                "Trạng thái", "Tiền cọc", "Nợ", "Đang mượn", "Tổng lượt mượn", "Ngày tạo"
+                "Trạng thái", "Tiền cọc", "Nợ", "Đang mượn", "Tổng lượt mượn", "Ngày tạo", "Đã xóa hồ sơ"
             },
             skip => _db.Readers
+                // Hồ sơ đã xoá vẫn thuộc dữ liệu của thư viện: xoá ở đây là xoá mềm, và lượt mượn
+                // của họ vẫn nằm trong gói. Bỏ họ ra là gói bàn giao có phiếu mượn trỏ tới một số thẻ
+                // không có trong danh sách bạn đọc (K22).
+                .IgnoreQueryFilters()
                 .AsNoTracking()
                 .OrderBy(reader => reader.CardNumber).ThenBy(reader => reader.Id)
                 .Skip(skip).Take(PageSize)
@@ -364,7 +368,8 @@ public class FullSystemExportRunner : IFullSystemExportRunner
                     reader.Major != null ? reader.Major.Name : null,
                     reader.ClassName, reader.CourseYear, reader.CardIssueDate, reader.CardExpireDate,
                     reader.Status, reader.DepositAmount, reader.DebtAmount, reader.CurrentLoanCount,
-                    reader.TotalLoanCount, reader.CreatedAt
+                    reader.TotalLoanCount, reader.CreatedAt,
+                    reader.DeletedAt == null ? "Không" : "Có"
                 })
                 .ToListAsync(ct),
             ct);
@@ -383,6 +388,7 @@ public class FullSystemExportRunner : IFullSystemExportRunner
                 "Số tập", "Số bản", "Số lượt mượn", "Ghi chú"
             },
             skip => _db.Items
+                .IgnoreQueryFilters().Where(item => item.DeletedAt == null)
                 .AsNoTracking()
                 .OrderBy(item => item.Barcode).ThenBy(item => item.Id)
                 .Skip(skip).Take(PageSize)
@@ -413,6 +419,7 @@ public class FullSystemExportRunner : IFullSystemExportRunner
                 "Cán bộ ghi trả", "Tiền phạt", "Đã nộp", "Ghi chú"
             },
             skip => _db.Loans
+                .IgnoreQueryFilters().Where(loan => loan.DeletedAt == null)
                 .AsNoTracking()
                 .OrderBy(loan => loan.LoanDate).ThenBy(loan => loan.Id)
                 .Skip(skip).Take(PageSize)
@@ -441,6 +448,7 @@ public class FullSystemExportRunner : IFullSystemExportRunner
                 "Ngày nộp", "Người thu", "Miễn giảm", "Lý do miễn giảm", "Ghi chú", "Ngày tạo"
             },
             skip => _db.Fines
+                .IgnoreQueryFilters().Where(fine => fine.DeletedAt == null)
                 .AsNoTracking()
                 .OrderBy(fine => fine.CreatedAt).ThenBy(fine => fine.Id)
                 .Skip(skip).Take(PageSize)
@@ -464,6 +472,7 @@ public class FullSystemExportRunner : IFullSystemExportRunner
                 "Kênh", "Lý do hủy"
             },
             skip => _db.Holds
+                .IgnoreQueryFilters().Where(hold => hold.DeletedAt == null)
                 .AsNoTracking()
                 .OrderBy(hold => hold.HoldDate).ThenBy(hold => hold.Id)
                 .Skip(skip).Take(PageSize)

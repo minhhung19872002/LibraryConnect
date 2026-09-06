@@ -157,6 +157,113 @@ public class DigitalExchangeTests
     // Mục 1 — Xuất toàn bộ dữ liệu hệ thống (E-HSMT mục 4)
     // -----------------------------------------------------------------------------------------
 
+    /// <summary>
+    /// K22 (06/09/2026): gói "xuất toàn bộ dữ liệu khi kết thúc hợp đồng" **bỏ sót** mọi lượt mượn,
+    /// khoản phạt và phiếu đặt giữ của bạn đọc đã xoá hồ sơ. Đo trên kho phát triển: 10 lượt mượn,
+    /// 4 khoản phạt, 3 phiếu đặt giữ biến mất, đúng bằng số bản ghi thuộc hồ sơ đã xoá mềm.
+    ///
+    /// <para>Nguyên nhân là bộ lọc xoá mềm của EF Core: bạn đọc là đầu **bắt buộc** của quan hệ, nên
+    /// lọc mất bạn đọc là lọc mất luôn phiếu mượn. Thư viện bàn giao dữ liệu sẽ mất lịch sử của mọi
+    /// bạn đọc từng bị xoá, mà chính họ không biết.</para>
+    /// </summary>
+    [Fact]
+    public async Task Goi_ban_giao_giu_du_lich_su_cua_ban_doc_da_xoa_ho_so()
+    {
+        var client = await ClientAsync();
+
+        var types = await ReadAsync<PagedResult<CatalogItemDto>>(
+            await client.GetAsync("/api/catalogs/reader-types/items?pageSize=50"));
+
+        var readerId = await ReadAsync<Guid>(await client.PostAsJsonAsync("/api/readers", new
+        {
+            fullName = $"Bạn đọc rồi sẽ bị xoá {Unique()}",
+            studentCode = $"SV{Unique()}",
+            readerTypeId = types.Items.First(item => item.Code == "SV").Id
+        }));
+
+        var reader = await ReadAsync<LibraryConnect.Application.Features.Readers.ReaderDetailDto>(await client.GetAsync($"/api/readers/{readerId}"));
+
+        var warehouses = await ReadAsync<List<LibraryConnect.Application.Features.Locations.WarehouseDto>>(
+            await client.GetAsync("/api/locations/warehouses"));
+
+        var quick = await ReadAsync<LibraryConnect.Application.Features.Acquisition.QuickCatalogResultDto>(
+            await client.PostAsJsonAsync("/api/acquisition/quick-catalog", new
+            {
+                title = $"Sách của bạn đọc bị xoá {Unique()}",
+                author = "Vũ Thị Lịch Sử",
+                price = 30000m,
+                itemQuantity = 1,
+                warehouseId = warehouses[0].Id
+            }));
+
+        var items = await ReadAsync<PagedResult<LibraryConnect.Application.Features.Acquisition.StockItemDto>>(
+            await client.PostAsJsonAsync("/api/stock/items/search", new
+            {
+                page = 1,
+                pageSize = 5,
+                filter = new { bibId = quick.BibId }
+            }));
+
+        await client.PostAsJsonAsync("/api/stock/items/inspect", new
+        {
+            itemIds = items.Items.Select(item => item.Id).ToList(),
+            condition = "Tốt"
+        });
+
+        var muon = await client.PostAsJsonAsync("/api/circulation/desk/checkout", new
+        {
+            readerId,
+            barcodes = new[] { items.Items[0].Barcode }
+        });
+        muon.IsSuccessStatusCode.Should().BeTrue(await muon.Content.ReadAsStringAsync());
+
+        await client.PostAsJsonAsync("/api/circulation/desk/return", new { barcodes = new[] { items.Items[0].Barcode } });
+
+        var xoa = await client.SendAsync(new HttpRequestMessage(HttpMethod.Delete, $"/api/readers/{readerId}")
+        {
+            Content = JsonContent.Create(new { reason = "Kiểm thử K22" })
+        });
+        xoa.IsSuccessStatusCode.Should().BeTrue(await xoa.Content.ReadAsStringAsync());
+
+        var queued = await ReadAsync<FullSystemExportJobDto>(
+            await client.PostAsync("/api/digital/full-export", null));
+
+        FullSystemExportJobDto? done = null;
+
+        for (var attempt = 0; attempt < 240; attempt++)
+        {
+            var jobs = await ReadAsync<IReadOnlyList<FullSystemExportJobDto>>(
+                await client.GetAsync("/api/digital/full-export"));
+
+            var current = jobs.Single(job => job.Id == queued.Id);
+
+            if (current.Status is Domain.Enums.JobStatus.Completed or Domain.Enums.JobStatus.Failed)
+            {
+                done = current;
+                break;
+            }
+
+            await Task.Delay(500);
+        }
+
+        done!.Status.Should().Be(Domain.Enums.JobStatus.Completed, done.Message);
+
+        var download = await client.GetAsync($"/api/digital/full-export/{queued.Id}/download");
+        using var zip = new ZipArchive(new MemoryStream(await download.Content.ReadAsByteArrayAsync()));
+
+        string DocCsv(string ten)
+        {
+            using var reader = new StreamReader(zip.Entries.Single(entry => entry.FullName == ten).Open());
+            return reader.ReadToEnd();
+        }
+
+        DocCsv("du-lieu/luot-muon.csv").Should().Contain(items.Items[0].Barcode,
+            "lượt mượn của bạn đọc đã xoá hồ sơ vẫn là dữ liệu của thư viện");
+
+        DocCsv("du-lieu/ban-doc.csv").Should().Contain(reader.CardNumber,
+            "gói bàn giao không được có phiếu mượn trỏ tới một số thẻ không có trong danh sách bạn đọc");
+    }
+
     [Fact]
     public async Task Xuat_toan_bo_du_lieu_chay_nen_va_goi_ZIP_du_bon_phan()
     {

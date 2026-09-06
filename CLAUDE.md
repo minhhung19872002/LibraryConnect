@@ -80,7 +80,8 @@ thuộc tính `[Migration]`, mà máy chủ vẫn ghi "đã ở phiên bản m�
 giao thức liên thư viện bằng máy khách của người khác (`sickle` cho OAI-PMH, `pymarc` cho MARCXML): OAI-PMH đạt cả sáu verb,
 SRU thì trả **toàn bộ kho** cho một truy vấn sai cú pháp và không báo lỗi cho chỉ mục lạ. Máy khách Z39.50 tra Thư viện Quốc hội
 Mỹ lấy được biểu ghi thật và nhập vào kho; một máy chủ mẫu (Yale) đóng phiên ẩn danh nên chuyển sang tắt và thay bằng kho khác
-của Thư viện Quốc hội Mỹ. Cả 21 đã sửa, tổng **168 lỗi, đã sửa 168**.
+của Thư viện Quốc hội Mỹ. Mở gói "xuất toàn bộ dữ liệu khi kết thúc hợp đồng" ra đếm từng dòng thì thấy nó thiếu lịch sử của
+bạn đọc đã xoá hồ sơ. Cả 22 đã sửa, tổng **169 lỗi, đã sửa 169**.
 Phụ lục cuối `docs/06` ghi kết quả từng kịch bản (hơn 450 dòng).
 
 Đọc thẳng hồ sơ gốc còn tìm ra thứ không phải lỗi mã: **bốn hồ sơ bàn giao** mà Chương V mục III và
@@ -370,6 +371,11 @@ docker compose run --rm -d --name lc-api-kiem -e LC_DB_NAME=lc_kiem -e LC_SEED_D
     tưởng đúng. Với mọi thứ nói chuyện với hệ thống khác, phép thử phải hỏi cả **câu sai có bị chặn
     không**, không chỉ câu đúng có chạy không — và kiểm bằng máy khách của người khác, không bằng máy
     khách của chính mình.
+57. **Bộ lọc xoá mềm lan từ cha sang con.** Bạn đọc là đầu bắt buộc của quan hệ, nên lọc mất bạn đọc
+    là lọc mất luôn phiếu mượn của họ — không cần ai viết dòng nào. Đã trả giá ba lần: in phiếu của
+    bạn đọc đã xoá đổ 500 (K6), bộ đếm "đang dùng" tính cả biểu ghi đã xoá (K15), và gói bàn giao
+    thiếu lịch sử của bạn đọc đã xoá (K22). Truy vấn nào phải thấy **mọi** dòng thì dùng
+    `IgnoreQueryFilters()` rồi tự lọc theo `DeletedAt` của chính bản ghi.
 
 ### A.4. Cơ chế dùng chung — dùng lại, đừng viết chỗ mới
 
