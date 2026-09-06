@@ -816,7 +816,7 @@ Dữ liệu ghi thêm mang dấu `NT…` và đã xoá; thứ không xoá đư�
 nhận số) được đánh dấu ngừng dùng. Mã kịch bản bám theo bảng ở trên; mã có hậu tố chữ là bước phụ; mã `F2`, `K…` là lỗi
 tìm ra trong ngày (mục K của `08-so-loi.md`).
 
-Tổng: **490 kịch bản chạy bằng máy, 485 đạt**. Năm dòng "Không đạt" là lần chạy **trước khi sửa** của bốn lỗi, giữ
+Tổng: **495 kịch bản chạy bằng máy, 490 đạt**. Năm dòng "Không đạt" là lần chạy **trước khi sửa** của bốn lỗi, giữ
 lại làm bằng chứng đỏ-trước: F2 → kiểm lại đạt ở K2, T.2 → K8, V.7 → K10, X.3 → K14; dòng III.x là kịch bản của bộ chạy
 dừng giữa chừng vì đoán sai hình dạng tham số (đã chạy lại trọn phân hệ III, không phải lỗi sản phẩm). Mã `X.*` là đợt
 kỹ thuật thứ ba (tạo đồng thời trên mọi khoá duy nhất, nội dung thật của tệp in/xuất); K14, K15 là hai lỗi đợt ấy tìm
@@ -1074,6 +1074,8 @@ chủ thật. Các lỗi K1, K3, K4, K5 lộ ra khi đi bằng trình duyệt ho
 | K16 | Mượn tự phục vụ: sau bản sửa, khung quét bước 2 mở được camera và ghi mượn bằng camera | Trước sửa: khung đen + 'Chưa được phép dùng camera' dù quyền đang bật. Sau sửa (một bộ điều khiển dùng chung): thấy hình, quét QR trạm rồi quét mã vạch → 'Đã mượn · hạn trả 14/09/2026' | Đạt |
 | K18b | Trang Tổng quan trên máy chủ thật sau khi dọn dữ liệu | đang mượn 621, quá hạn 363, lượt mượn trong kỳ 1905, bản in 17903 | Đạt |
 | K19 | Hai migration sửa dữ liệu đã chạy thật trên máy chủ và dữ liệu sai đã hết | Sau bản sửa d6b88b0: sys.__ef_migrations_history có 20260906020000_KiemKeBoSachDangMuon và 20260906030000_SuaPhieuMuonNgayTuongLai; phiếu mượn ngày tương lai 94 → 0; phiếu trả trước ngày mượn 98 → 0 | Đạt |
+| K20b | SRU trên máy chủ thật sau bản sửa: mọi câu hỏi sai nhận đúng mã chẩn đoán, không câu nào trả biểu ghi | ngoặc lệch→10; hai toán tử khác nhau→10; chỉ mục lạ→16; quan hệ so sánh→19; phiên bản 9.9→5; câu đúng vẫn trả 16 biểu ghi. Trước sửa: ngoặc lệch trả 12.060 biểu ghi, chỉ mục lạ trả 2, phiên bản 9.9 được phục vụ | Đạt |
+| K22b | Gói bàn giao trên máy chủ thật sau bản sửa: đủ mọi dòng, kể cả của bạn đọc đã xoá hồ sơ | Bạn đọc 672 dòng = 653 đang dùng + 19 đã xoá (kèm cột 'Đã xóa hồ sơ'); ấn phẩm 17.903; lượt mượn 3.124; phạt 493; đặt giữ 134 — cả năm bảng khớp tuyệt đối truy vấn SQL trên máy chủ. Trước sửa gói thiếu đúng phần thuộc hồ | Đạt |
 | LT.1 | Chính sách lưu thông nạp sẵn | 7 chính sách | Đạt |
 | LT.2 | Ô thử chính sách: chọn đúng chính sách ưu tiên | Chính sách NTE93707 (ưu tiên None) | Đạt |
 | LT.3 | Danh sách đặt giữ toàn hệ thống và hàng đợi | 129 phiếu | Đạt |
@@ -1162,6 +1164,9 @@ chủ thật. Các lỗi K1, K3, K4, K5 lộ ra khi đi bằng trình duyệt ho
 | MH.22 | Xuất báo cáo môn học Excel | xlsx 7386 byte | Đạt |
 | MH.23 | Xuất pdf courses/reports/export | pdf 57516 byte | Đạt |
 | MH.25 | Bạn đọc xem tài liệu của môn | có tài liệu | Đạt |
+| NT.3 | OAI-PMH: máy khách ngoài (thư viện sickle) đi hết 6 verb trên máy chủ thật, phân trang bằng resumptionToken, lọc theo bộ và theo thời gian, mã lỗi đúng chuẩn | Identify trả tên kho và granularity chuẩn; ListMetadataFormats có oai_dc và marc21 kèm schema LoC; ListSets có bộ theo dạng tài liệu; ListRecords lấy 250 biểu ghi qua resumptionToken trong 2,6 s, 0 mã trùng; GetRecord ma | Đạt |
+| NT.4 | SRU trên máy chủ thật: explain đúng khuôn, searchRetrieve trả MARCXML mà pymarc đọc được, có 001 và 245 | explain trả srw:explainResponse version 1.2 kèm serverInfo; searchRetrieve dc.title='cơ sở dữ liệu' → numberOfRecords 16, lấy 2 biểu ghi 6.947 byte; pymarc đọc cả hai, nhan đề đầu 'Bài giảng Cơ sở dữ liệu quan hệ.' | Đạt |
+| NT.5 | Máy khách Z39.50: tra Thư viện Quốc hội Mỹ trên máy chủ thật, lấy biểu ghi thật về và nhập được vào kho | tra 'database systems' theo nhan đề qua cả hai lối Z39.50 và SRU đều trả 20 biểu ghi; nhập biểu ghi đầu vào kho thành công, nhan đề 'Database systems', đã xoá sau khi kiểm | Đạt |
 | QTND.2 | Sửa khẩu hiệu rồi công khai đổi theo | slogan công khai: Tri thức mở — Học tập suốt đời | Đạt |
 | QTND.3 | Sửa khẩu hiệu rồi công khai đổi theo | khoá đúng là SITE.SLOGAN — kiểm đạt ở QTND.2 | Đạt |
 | QTND.4 | Tải logo (PNG) qua kho media | {'objectName': 'cms/logo/logo-436a7a0398f848e9ab5a9904c984bf06.png', 'url': '/api/public/media/cms/l | Đạt |
@@ -1323,7 +1328,7 @@ chủ thật. Các lỗi K1, K3, K4, K5 lộ ra khi đi bằng trình duyệt ho
 riêng, rồi mới đối chiếu với thứ hệ thống trả về qua API. Chạy trên máy phát triển vì cần lùi ngày của phiếu
 mượn để dựng đúng bối cảnh quá hạn; dữ liệu thử tạo ra đều đã xoá.
 
-Tổng: **38 phép đo, 38 khớp**. Ba phép đo đầu tiên đỏ vì kịch bản đoán sai khoá tham số và dựng
+Tổng: **41 phép đo, 41 khớp**. Ba phép đo đầu tiên đỏ vì kịch bản đoán sai khoá tham số và dựng
 sai bối cảnh gia hạn — lỗi của phép thử, đã tính lại và ghi kết quả đúng ở bảng dưới. Hai lỗi thật tìm ra trong đợt:
 K17 (kiểm kê coi sách đang mượn là thiếu) và K18 (dữ liệu trình diễn có phiếu mượn ngày ở tương lai).
 
@@ -1331,6 +1336,9 @@ K17 (kiểm kê coi sách đang mượn là thiếu) và K18 (dữ liệu trình
 |---|---|---|---|
 | K17 | Kiểm kê không được xếp sách đang ở tay bạn đọc vào 'thiếu' (trước sửa: 157 cuốn) | Trước sửa: 157/4.420 dòng 'Thiếu' là sách còn phiếu mượn mở, và resolve-missing ghi mất cả. Sau sửa: danh sách kỳ vọng loại bản còn phiếu mở, resolve-missing bỏ qua chúng, migration dọn kỳ chưa đóng | Đạt |
 | K18 | Bộ dữ liệu trình diễn không còn phiếu mượn ngày ở tương lai | Trước sửa: 94 phiếu, xa nhất 29/11/2026, ngày trả 02/09/2026 nằm trước ngày mượn — có trên cả máy chủ thật. Sau sửa: công thức mới + migration kéo về quá khứ, chạy thử trong giao dịch còn 0 dòng sai | Đạt |
+| NT.1 | Tiền phạt: trả một phần cộng dồn đúng; trả quá số nợ bị chặn; hai lượt thu cùng lúc không thu vượt | trả 30.000 → đã thu 30000.00; trả 999.999 → mã 400 (Dữ liệu không hợp lệ.), đã thu vẫn 30000.00; hai lượt 70.000 song song → mã [409, 200], đã thu 100000.00/100000.00 | Đạt |
+| NT.2 | Miễn giảm tiền phạt: ghi rõ lý do, khoản được miễn không còn tính vào công nợ | miễn 200; cờ miễn=true, lý do 'Hoàn cảnh khó khăn TP50664'; công nợ còn lại 0 đ | Đạt |
+| NT.6 | Xuất toàn bộ dữ liệu hệ thống (điều 4 E-HSMT): gói ZIP đủ MARC, tài liệu số, siêu dữ liệu và năm bảng nghiệp vụ | Gói 9,8 MB / 17 tệp: bieu-ghi.mrc (pymarc đọc 12.628 biểu ghi, 0 lỗi) + bieu-ghi.xml 41 MB, 6 PDF tài liệu số, siêu dữ liệu Excel + Dublin Core + MARCXML, 5 CSV nghiệp vụ (bạn đọc 651, ấn phẩm 17.910, lượt mượn 3.106, phạt 488, đặt giữ 118) kèm README. Biểu gh | Đạt |
 | NV.1 | Hạn trả = ngày mượn + số ngày chính sách, đẩy khỏi ngày thư viện đóng cửa (nghỉ Chủ nhật + 4 kỳ nghỉ lễ) | SV 14 ngày, mượn 06/09/2026 (Chủ nhật) → hạn thô 20/09 rơi Chủ nhật → hệ thống trả 21/09 (thứ Hai). Tự tính lại từ CIRCULATION.WEEKLY_CLOSED_DAYS=7 và cat.holidays: khớp | Đạt |
 | NV.2 | Tiền phạt = (ngày mở cửa quá hạn − ân hạn) × mức phạt/ngày | Lùi hạn về 27/08/2026 rồi trả 06/09: 10 ngày lịch, trừ 2 Chủ nhật và 2 ngày Quốc khánh = 6 ngày mở cửa, trừ 1 ngày ân hạn = 5 × 2.000 = 10.000 đ; hệ thống tính đúng 10.000 đ | Đạt |
 | NV.3 | Gia hạn: cho đúng 2 lần theo chính sách sinh viên, lần thứ 3 bị chặn kèm câu rõ nghĩa | mã trả về [200, 200, 409, 409]; câu chặn: 'Đã gia hạn đủ 2 lần theo chính sách "Chính sách mượn — Sinh viên".'; sổ ghi renewed_count=2 | Đạt |
