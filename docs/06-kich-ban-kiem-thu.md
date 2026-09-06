@@ -1328,9 +1328,16 @@ chủ thật. Các lỗi K1, K3, K4, K5 lộ ra khi đi bằng trình duyệt ho
 riêng, rồi mới đối chiếu với thứ hệ thống trả về qua API. Chạy trên máy phát triển vì cần lùi ngày của phiếu
 mượn để dựng đúng bối cảnh quá hạn; dữ liệu thử tạo ra đều đã xoá.
 
-Tổng: **51 phép đo, 51 khớp**. Ba phép đo đầu tiên đỏ vì kịch bản đoán sai khoá tham số và dựng
-sai bối cảnh gia hạn — lỗi của phép thử, đã tính lại và ghi kết quả đúng ở bảng dưới. Hai lỗi thật tìm ra trong đợt:
-K17 (kiểm kê coi sách đang mượn là thiếu) và K18 (dữ liệu trình diễn có phiếu mượn ngày ở tương lai).
+Tổng: **51 phép đo, 51 khớp**. Vài phép đo đỏ lúc đầu vì kịch bản đoán sai khoá tham số, dựng sai
+bối cảnh gia hạn, hoặc chạy trúng lúc máy phát triển còn giữ ảnh cũ — lỗi của phép thử, đã tính lại và ghi kết quả đúng ở bảng
+dưới. Mã `NV.*` là số học nghiệp vụ (hạn trả, tiền phạt, hàng đợi giữ chỗ, kiểm kê, sinh số báo, báo cáo đối chiếu SQL);
+`NT.*` là việc chạy nền theo lịch, hai giao thức liên thư viện kiểm bằng máy khách của người khác và gói bàn giao cuối hợp đồng;
+`BM.*` là bảo mật (giả thẻ đăng nhập, truy cập chéo bạn đọc, lọc mã độc, tải tệp giả đuôi, ZIP vượt thư mục, vòng đời thẻ làm
+mới, khoá tài khoản khi dò mật khẩu); `UC.*` là Unicode tiếng Việt và các ca biên của MARC.
+
+Bảy lỗi thật tìm ra trong các đợt này: K17 (kiểm kê coi sách đang mượn là thiếu), K18 (dữ liệu trình diễn có phiếu mượn ngày ở
+tương lai), K19 (migration không chạy vì thiếu thuộc tính khai mã), K20 (SRU trả cả kho cho câu hỏi sai cú pháp), K21 (máy chủ
+liên thư viện mẫu không nối được), K22 (gói bàn giao thiếu lịch sử của bạn đọc đã xoá) và K23 (giờ hiện cho người dùng là giờ UTC).
 
 | Mã | Luật nghiệp vụ | Kết quả thực tế | Đạt |
 |---|---|---|---|
