@@ -1330,7 +1330,11 @@ mượn để dựng đúng bối cảnh quá hạn; dữ liệu thử tạo ra 
 
 Tổng: **41 phép đo, 41 khớp**. Ba phép đo đầu tiên đỏ vì kịch bản đoán sai khoá tham số và dựng
 sai bối cảnh gia hạn — lỗi của phép thử, đã tính lại và ghi kết quả đúng ở bảng dưới. Hai lỗi thật tìm ra trong đợt:
-K17 (kiểm kê coi sách đang mượn là thiếu) và K18 (dữ liệu trình diễn có phiếu mượn ngày ở tương lai).
+K17 (kiểm kê coi sách đang mượn là thiếu), K18 (dữ liệu trình diễn có phiếu mượn ngày ở tương lai) và K19 (hai migration sửa dữ
+liệu không chạy vì thiếu thuộc tính khai mã). Đợt tiếp theo cùng ngày soi bốn việc chạy nền theo lịch, hai giao thức liên thư viện
+bằng máy khách của người khác (`sickle` cho OAI-PMH, `pymarc` cho MARCXML) và gói bàn giao cuối hợp đồng — thêm K20 (SRU trả cả kho
+cho một câu hỏi sai cú pháp), K21 (một máy chủ liên thư viện mẫu không nối được) và K22 (gói bàn giao thiếu lịch sử của bạn đọc đã
+xoá hồ sơ). Mã `NT.*` là các phép đo của đợt ấy.
 
 | Mã | Luật nghiệp vụ | Kết quả thực tế | Đạt |
 |---|---|---|---|
