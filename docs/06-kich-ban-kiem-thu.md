@@ -1328,7 +1328,7 @@ chủ thật. Các lỗi K1, K3, K4, K5 lộ ra khi đi bằng trình duyệt ho
 riêng, rồi mới đối chiếu với thứ hệ thống trả về qua API. Chạy trên máy phát triển vì cần lùi ngày của phiếu
 mượn để dựng đúng bối cảnh quá hạn; dữ liệu thử tạo ra đều đã xoá.
 
-Tổng: **51 phép đo, 50 khớp**. Ba phép đo đầu tiên đỏ vì kịch bản đoán sai khoá tham số và dựng
+Tổng: **51 phép đo, 51 khớp**. Ba phép đo đầu tiên đỏ vì kịch bản đoán sai khoá tham số và dựng
 sai bối cảnh gia hạn — lỗi của phép thử, đã tính lại và ghi kết quả đúng ở bảng dưới. Hai lỗi thật tìm ra trong đợt:
 K17 (kiểm kê coi sách đang mượn là thiếu) và K18 (dữ liệu trình diễn có phiếu mượn ngày ở tương lai).
 
@@ -1382,6 +1382,6 @@ K17 (kiểm kê coi sách đang mượn là thiếu) và K18 (dữ liệu trình
 | NV.33 | Gán tài liệu cho môn học: liên kết tăng đúng một, danh sách tài liệu của môn hiện ngay | liên kết 4 → 5; danh sách tài liệu của môn trả 5 dòng; kiểu liên kết 'MainTextbook' | Đạt |
 | NV.34 | Tra cứu công khai chỉ trả biểu ghi đã xuất bản; vừa xuất bản qua giao diện là tra thấy ngay (bộ nhớ đệm tự nạp lại) | lúc mới biên mục sơ lược trạng thái 'Draft' → tra công khai 0 kết quả; sau khi Lưu với trạng thái Đã xuất bản (200) → 'Published', tra ngay được 1 kết quả | Đạt |
 | NV.35 | Xuất ISO 2709 và MARCXML một biểu ghi tiếng Việt có dấu, đọc lại bằng pymarc (thư viện ngoài) — nhan đề khớp cả hai định dạng | Nhan đề 'Sách tiếng Việt có dấu XN35191: đường dẫn — thử nghiệm' (có dấu, dấu hai chấm, gạch ngang dài): pymarc 5.4 đọc ISO 381 byte và MARCXML 1.011 byte đều ra đúng nguyên văn, hai định dạng khớp nhau | Đạt |
-| UC.1 | Tra cứu tiếng Việt: có dấu, không dấu, viết hoa, chữ Đ, và từ có dấu hỏi ngã đều tìm ra cùng một biểu ghi | Đường…=1; duong…=1; DUONG…=1; đường…=0; ĐƯỜNG…=1; ỷ…=0; y…=0 | Không đạt |
+| UC.1 | Tra cứu tiếng Việt trên bản mã hiện tại: có dấu, không dấu, viết HOA, chữ Đ, dấu hỏi ngã, và đảo thứ tự từ đều ra đúng biểu ghi | Đường lối=1; duong loi=1; DUONG LOI=1; đường=1; UE62702=1; ỷ lại=1; y lai=1; quặn quẹo=1; UE62702=1 | Đạt |
 | UC.2 | Nhan đề giữ nguyên từng ký tự khi lưu và khi trả về trang tra cứu | gửi đi: 'Đường lối UC62408: Ăn – Ấm – Ậu, ỷ lại, quặn quẹo, ﬁ'; nhận về: 'Đường lối UC62408: Ăn – Ấm – Ậu, ỷ lại, quặn quẹo, ﬁ' | Đạt |
 | UC.4 | Nhập tệp biểu ghi hỏng: tệp rỗng, cắt cụt, không phải MARC, Leader sai độ dài — đều báo lỗi rõ chỗ hỏng, không đổ hệ thống | Tệp rỗng → 400 'Vui lòng chọn tệp biểu ghi cần nhập'. Chuỗi chữ thường → 'Biểu ghi chỉ dài 15 byte, ngắn hơn 24 byte của đầu biểu. Tệp có thể bị cắt cụt.' Tệp cắt cụt → 'Danh mục khai báo 22 trường nhưng chỉ tìm thấy 20 trường trong vùng dữ liệu…'. Tệp tốt → đ | Đạt |
