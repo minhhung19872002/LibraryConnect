@@ -1328,16 +1328,19 @@ chủ thật. Các lỗi K1, K3, K4, K5 lộ ra khi đi bằng trình duyệt ho
 riêng, rồi mới đối chiếu với thứ hệ thống trả về qua API. Chạy trên máy phát triển vì cần lùi ngày của phiếu
 mượn để dựng đúng bối cảnh quá hạn; dữ liệu thử tạo ra đều đã xoá.
 
-Tổng: **41 phép đo, 41 khớp**. Ba phép đo đầu tiên đỏ vì kịch bản đoán sai khoá tham số và dựng
+Tổng: **51 phép đo, 50 khớp**. Ba phép đo đầu tiên đỏ vì kịch bản đoán sai khoá tham số và dựng
 sai bối cảnh gia hạn — lỗi của phép thử, đã tính lại và ghi kết quả đúng ở bảng dưới. Hai lỗi thật tìm ra trong đợt:
-K17 (kiểm kê coi sách đang mượn là thiếu), K18 (dữ liệu trình diễn có phiếu mượn ngày ở tương lai) và K19 (hai migration sửa dữ
-liệu không chạy vì thiếu thuộc tính khai mã). Đợt tiếp theo cùng ngày soi bốn việc chạy nền theo lịch, hai giao thức liên thư viện
-bằng máy khách của người khác (`sickle` cho OAI-PMH, `pymarc` cho MARCXML) và gói bàn giao cuối hợp đồng — thêm K20 (SRU trả cả kho
-cho một câu hỏi sai cú pháp), K21 (một máy chủ liên thư viện mẫu không nối được) và K22 (gói bàn giao thiếu lịch sử của bạn đọc đã
-xoá hồ sơ). Mã `NT.*` là các phép đo của đợt ấy.
+K17 (kiểm kê coi sách đang mượn là thiếu) và K18 (dữ liệu trình diễn có phiếu mượn ngày ở tương lai).
 
 | Mã | Luật nghiệp vụ | Kết quả thực tế | Đạt |
 |---|---|---|---|
+| BM.1 | Thẻ đăng nhập bị sửa đều bị từ chối: đổi chữ ký, đổi phần thân để nâng quyền, thuật toán 'none', chuỗi bậy | đổi chữ ký 401; nâng quyền trong thân 401; alg=none 401; chuỗi bậy 401 | Đạt |
+| BM.2 | Bạn đọc không với được sang dữ liệu của bạn đọc khác, cũng không gọi được API quản trị | hồ sơ B=403; phạt của B=403; tài liệu số của B=403; đặt giữ hộ B=400; gọi API quản trị=403; báo cáo lưu thông=403 | Đạt |
+| BM.3 | Trình soạn nội dung lọc mã độc: thẻ script, thuộc tính sự kiện, liên kết javascript và iframe không được lưu cũng không ra trang công khai | lưu trong CSDL còn: không; trả ra trang công khai còn: không; giữ lại phần lành: True | Đạt |
+| BM.4 | Tải tệp lên kiểm bằng chữ ký byte, không tin phần mở rộng; ZIP có đường dẫn vượt thư mục không thoát ra ngoài kho | exe đổi đuôi .pdf → 400; chuỗi chữ đổi đuôi .png → 400; png thật → 200 'Đã tải ảnh lên'; ZIP chứa '../../../../tmp/thoat-ra-ngoai.pdf' → nhập vào kho đối tượng với tên rút gọn, kiểm trên máy chủ thật không có tệp nào ghi ra /tmp | Đạt |
+| BM.5 | Thẻ làm mới dùng một lần: lượt đầu đổi được thẻ mới, dùng lại thẻ cũ bị từ chối, thẻ bịa cũng bị từ chối | lượt đầu 200, thẻ mới khác thẻ cũ = True; dùng lại thẻ cũ 401; dùng thẻ mới 200; thẻ bịa 401 | Đạt |
+| BM.6 | Đăng nhập sai liên tiếp: đếm số lần, tới ngưỡng thì khoá tạm, mật khẩu đúng cũng phải chờ hết khoá | Tham số khoá sau 5 lần sai, khoá 15 phút. Diễn biến thật: sai lần 1–4 → đếm 1,2,3,4; lần 5 → khoá tới 09:44 và bộ đếm về 0; mật khẩu đúng ngay sau đó bị từ chối kèm câu nêu giờ mở khoá | Đạt |
+| BM.7 | Giờ trong câu báo khoá và trong tệp xuất là giờ Việt Nam (K23 — trước sửa in giờ UTC, lệch 7 tiếng) | Trước sửa: 'tạm khóa tới 02:44' trong khi mốc thật là 09:44 giờ Việt Nam. Sau sửa: 5 chỗ (2 câu khoá tài khoản, 3 cột ngày giờ của tệp xuất) đều qua ToLocalTime, có phép thử quét chặn lại | Đạt |
 | K17 | Kiểm kê không được xếp sách đang ở tay bạn đọc vào 'thiếu' (trước sửa: 157 cuốn) | Trước sửa: 157/4.420 dòng 'Thiếu' là sách còn phiếu mượn mở, và resolve-missing ghi mất cả. Sau sửa: danh sách kỳ vọng loại bản còn phiếu mở, resolve-missing bỏ qua chúng, migration dọn kỳ chưa đóng | Đạt |
 | K18 | Bộ dữ liệu trình diễn không còn phiếu mượn ngày ở tương lai | Trước sửa: 94 phiếu, xa nhất 29/11/2026, ngày trả 02/09/2026 nằm trước ngày mượn — có trên cả máy chủ thật. Sau sửa: công thức mới + migration kéo về quá khứ, chạy thử trong giao dịch còn 0 dòng sai | Đạt |
 | NT.1 | Tiền phạt: trả một phần cộng dồn đúng; trả quá số nợ bị chặn; hai lượt thu cùng lúc không thu vượt | trả 30.000 → đã thu 30000.00; trả 999.999 → mã 400 (Dữ liệu không hợp lệ.), đã thu vẫn 30000.00; hai lượt 70.000 song song → mã [409, 200], đã thu 100000.00/100000.00 | Đạt |
@@ -1379,3 +1382,6 @@ xoá hồ sơ). Mã `NT.*` là các phép đo của đợt ấy.
 | NV.33 | Gán tài liệu cho môn học: liên kết tăng đúng một, danh sách tài liệu của môn hiện ngay | liên kết 4 → 5; danh sách tài liệu của môn trả 5 dòng; kiểu liên kết 'MainTextbook' | Đạt |
 | NV.34 | Tra cứu công khai chỉ trả biểu ghi đã xuất bản; vừa xuất bản qua giao diện là tra thấy ngay (bộ nhớ đệm tự nạp lại) | lúc mới biên mục sơ lược trạng thái 'Draft' → tra công khai 0 kết quả; sau khi Lưu với trạng thái Đã xuất bản (200) → 'Published', tra ngay được 1 kết quả | Đạt |
 | NV.35 | Xuất ISO 2709 và MARCXML một biểu ghi tiếng Việt có dấu, đọc lại bằng pymarc (thư viện ngoài) — nhan đề khớp cả hai định dạng | Nhan đề 'Sách tiếng Việt có dấu XN35191: đường dẫn — thử nghiệm' (có dấu, dấu hai chấm, gạch ngang dài): pymarc 5.4 đọc ISO 381 byte và MARCXML 1.011 byte đều ra đúng nguyên văn, hai định dạng khớp nhau | Đạt |
+| UC.1 | Tra cứu tiếng Việt: có dấu, không dấu, viết hoa, chữ Đ, và từ có dấu hỏi ngã đều tìm ra cùng một biểu ghi | Đường…=1; duong…=1; DUONG…=1; đường…=0; ĐƯỜNG…=1; ỷ…=0; y…=0 | Không đạt |
+| UC.2 | Nhan đề giữ nguyên từng ký tự khi lưu và khi trả về trang tra cứu | gửi đi: 'Đường lối UC62408: Ăn – Ấm – Ậu, ỷ lại, quặn quẹo, ﬁ'; nhận về: 'Đường lối UC62408: Ăn – Ấm – Ậu, ỷ lại, quặn quẹo, ﬁ' | Đạt |
+| UC.4 | Nhập tệp biểu ghi hỏng: tệp rỗng, cắt cụt, không phải MARC, Leader sai độ dài — đều báo lỗi rõ chỗ hỏng, không đổ hệ thống | Tệp rỗng → 400 'Vui lòng chọn tệp biểu ghi cần nhập'. Chuỗi chữ thường → 'Biểu ghi chỉ dài 15 byte, ngắn hơn 24 byte của đầu biểu. Tệp có thể bị cắt cụt.' Tệp cắt cụt → 'Danh mục khai báo 22 trường nhưng chỉ tìm thấy 20 trường trong vùng dữ liệu…'. Tệp tốt → đ | Đạt |
