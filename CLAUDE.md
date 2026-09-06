@@ -81,7 +81,9 @@ giao thức liên thư viện bằng máy khách của người khác (`sickle` 
 SRU thì trả **toàn bộ kho** cho một truy vấn sai cú pháp và không báo lỗi cho chỉ mục lạ. Máy khách Z39.50 tra Thư viện Quốc hội
 Mỹ lấy được biểu ghi thật và nhập vào kho; một máy chủ mẫu (Yale) đóng phiên ẩn danh nên chuyển sang tắt và thay bằng kho khác
 của Thư viện Quốc hội Mỹ. Mở gói "xuất toàn bộ dữ liệu khi kết thúc hợp đồng" ra đếm từng dòng thì thấy nó thiếu lịch sử của
-bạn đọc đã xoá hồ sơ. Cả 22 đã sửa, tổng **169 lỗi, đã sửa 169**.
+bạn đọc đã xoá hồ sơ. Đợt soi bảo mật (giả thẻ đăng nhập, truy cập chéo, lọc mã độc, tải tệp giả đuôi, ZIP vượt thư mục, vòng đời
+thẻ làm mới, khoá tài khoản) đạt hết, chỉ lộ một lỗi: giờ hiện cho người dùng là giờ UTC, lệch bảy tiếng. Cả 23 đã sửa,
+tổng **170 lỗi, đã sửa 170**.
 Phụ lục cuối `docs/06` ghi kết quả từng kịch bản (hơn 450 dòng).
 
 Đọc thẳng hồ sơ gốc còn tìm ra thứ không phải lỗi mã: **bốn hồ sơ bàn giao** mà Chương V mục III và
@@ -154,6 +156,7 @@ vướng — mỗi cái sinh ra từ một lỗi đã xảy ra thật:
 | `mobile/test/features/list_refresh_after_write_test.dart` | Màn hình gọi `checkout`/`renewLoan`/`createHold`/`cancelHold` phải `ref.invalidate` đúng provider tương ứng — hai màn hình từng ghi xong mà danh sách không đổi |
 | `backend/.../Security/NginxConfigParityTests.cs` (luật thứ hai) | Tệp Nginx nào có `limit_req` thì phải có `limit_req_status 429` và trang lỗi 429 dạng JSON — mặc định Nginx trả trang HTML 503, máy khách chỉ hiện được "máy chủ lỗi" |
 | `frontend-admin/src/modules/dashboard/DashboardPage.test.ts` | Trang Tổng quan không mang dòng giữ chỗ về tiến độ dự án và phải đọc báo cáo tổng quan — màn hình đầu tiên sau đăng nhập từng nói "đang bàn giao" suốt từ phase 1 tới bản chạy thật |
+| `backend/.../Security/LocalTimeInMessagesTests.cs` | Mọi mốc giờ hiện cho người dùng phải qua `ToLocalTime()` hoặc lấy từ đồng hồ hệ thống — quét cả `{…:HH:mm}` lẫn `.ToString("…HH…")`. Câu "tạm khóa tới 02:44" từng hiện giờ UTC cho một mốc thật ra là 09:44 |
 | `backend/.../Infrastructure/MigrationRegistrationTests.cs` | Mỗi tệp trong thư mục Migrations phải có lớp mang đúng `[Migration("<mã>")]`, và không lớp `Migration` nào được thiếu thuộc tính — thiếu là EF Core bỏ qua trong im lặng, bản sửa dữ liệu triển khai xong mà không chạy |
 | `backend/.../Infrastructure/DemoLoanDatesTests.cs` | Không lượt mượn nào của bộ dữ liệu trình diễn rơi vào tương lai, ở mọi cỡ bộ dữ liệu và mọi chính sách — 94 phiếu "mượn 29/11, trả 02/09" từng sống trên cả máy chủ thật |
 | `backend/.../Infrastructure/DeployScriptTests.cs` | `gh-deploy.sh` phải có bước `don_anh_cu` giữ bản mới và bản trước, xoá ảnh `libraryconnect-*` còn lại — 20 bộ ảnh cũ từng làm đầy ổ 96 GB và chặn mọi lượt triển khai |

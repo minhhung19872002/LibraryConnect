@@ -348,7 +348,7 @@ public class ExportCirculationReportQueryHandler
             new("Mã vạch", row => row.Barcode, 14),
             new("Nhan đề", row => row.Title, 40),
             new("Kho", row => row.WarehouseName, 18),
-            new("Ngày mượn", row => row.LoanDate.ToString("dd/MM/yyyy HH:mm"), 18),
+            new("Ngày mượn", row => row.LoanDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm"), 18),
             new("Hạn trả", row => row.DueDate.ToString("dd/MM/yyyy"), 13),
             new("Số lần gia hạn", row => row.RenewedCount, 15),
             new("Trạng thái", row => CirculationLabels.LoanStatus(row.Status), 14),
@@ -365,7 +365,7 @@ public class ExportCirculationReportQueryHandler
         else
         {
             columns.Add(new ExcelColumn<LoanRowDto>(
-                "Ngày trả", row => row.ReturnDate?.ToString("dd/MM/yyyy HH:mm"), 18));
+                "Ngày trả", row => row.ReturnDate?.ToLocalTime().ToString("dd/MM/yyyy HH:mm"), 18));
             columns.Add(new ExcelColumn<LoanRowDto>("Tiền phạt", row => row.FineAmount, 14, "#,##0"));
         }
 

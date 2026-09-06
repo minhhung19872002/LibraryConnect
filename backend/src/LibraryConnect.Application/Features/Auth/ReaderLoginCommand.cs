@@ -79,7 +79,7 @@ public class ReaderLoginCommandHandler : IRequestHandler<ReaderLoginCommand, Aut
         if (reader.LockedUntil is not null && reader.LockedUntil > _clock.Now)
         {
             throw new UnauthorizedException(
-                $"Tài khoản tạm khóa tới {reader.LockedUntil:HH:mm dd/MM/yyyy} do nhập sai nhiều lần.");
+                $"Tài khoản tạm khóa tới {reader.LockedUntil?.ToLocalTime():HH:mm dd/MM/yyyy} do nhập sai nhiều lần.");
         }
 
         if (!_hasher.Verify(command.Password, reader.PasswordHash))

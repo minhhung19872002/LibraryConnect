@@ -574,7 +574,7 @@ public static class DigitalMetadataBuilder
             new("Mức truy cập", document => DigitalReportLabels.AccessLevel(document.AccessLevel), 16),
             new("Cho tải về", document => document.AllowDownload ? "Có" : "Không", 12),
             new("Mã kiểm tra SHA-256", document => document.ChecksumSha256, 68),
-            new("Ngày tải lên", document => document.UploadAt.ToString("dd/MM/yyyy HH:mm"), 18),
+            new("Ngày tải lên", document => document.UploadAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm"), 18),
         };
 
         return excel.Write("Tài liệu số", columns, documents, "DANH MỤC TÀI LIỆU SỐ");

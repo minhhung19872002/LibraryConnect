@@ -69,7 +69,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResultDto>
         {
             await RecordFailureAsync(user.Id, user.Username, "Tài khoản đang bị khóa", ct);
             throw new UnauthorizedException(
-                $"Tài khoản đang bị khóa đến {user.LockedUntil:HH:mm dd/MM/yyyy}. Vui lòng liên hệ quản trị viên.");
+                $"Tài khoản đang bị khóa đến {user.LockedUntil?.ToLocalTime():HH:mm dd/MM/yyyy}. Vui lòng liên hệ quản trị viên.");
         }
 
         if (!user.IsActive)
