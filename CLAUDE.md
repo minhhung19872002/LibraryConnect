@@ -84,7 +84,16 @@ của Thư viện Quốc hội Mỹ. Mở gói "xuất toàn bộ dữ liệu kh
 bạn đọc đã xoá hồ sơ. Đợt soi bảo mật (giả thẻ đăng nhập, truy cập chéo, lọc mã độc, tải tệp giả đuôi, ZIP vượt thư mục, vòng đời
 thẻ làm mới, khoá tài khoản) đạt hết, chỉ lộ một lỗi: giờ hiện cho người dùng là giờ UTC, lệch bảy tiếng. Cả 23 đã sửa,
 tổng **170 lỗi, đã sửa 170**.
-Phụ lục cuối `docs/06` ghi kết quả từng kịch bản (hơn 450 dòng).
+
+Ngày 06–07/09/2026 chạy tiếp **đợt rà sâu theo phân hệ trên máy chủ thật** (mục L sổ lỗi), lần này chọn đúng những vùng chín đợt
+trước chạm ít nhất: quản trị nội dung, tủ gửi đồ và cổng ra vào, mục lục bài trích, danh mục tự tạo từ trường MARC, kiểm kê nạp
+tệp từ máy đọc rời, năm trình thiết kế biểu mẫu, đường ống xử lý tài liệu số, quy trình duyệt mua nhiều cấp. **135 phép đo, 4 lỗi**:
+nội dung trình diễn của phân hệ VIII (banner trang chủ, album ảnh) nằm sau rào "chỉ nạp khi kho biểu ghi còn trống" nên máy chủ
+nghiệm thu không có banner nào; xoá biểu ghi bài trích ở Biên mục xong vẫn không gỡ được bài khỏi mục lục dù câu báo lỗi bảo làm
+đúng như vậy; sáu tài liệu số minh hoạ không đi qua đường ống xử lý nên endpoint ảnh bìa trả 404 cho cả sáu; hạ số cấp duyệt từ 2
+xuống 1 làm yêu cầu đặt mua đã qua cấp 1 kẹt vĩnh viễn. Cộng thêm hai việc trên chính máy chủ, không phải lỗi mã: dọn dữ liệu thử
+còn sót của các đợt trước, và dựng bộ dữ liệu trình diễn cho nhánh III.1 vốn rỗng. Cả 4 đã sửa, tổng **174 lỗi, đã sửa 174**.
+Phụ lục cuối `docs/06` ghi kết quả từng kịch bản (hơn 590 dòng).
 
 Đọc thẳng hồ sơ gốc còn tìm ra thứ không phải lỗi mã: **bốn hồ sơ bàn giao** mà Chương V mục III và
 mục 5 đòi — kế hoạch triển khai, kế hoạch đào tạo, cam kết bảo hành, hồ sơ nghiệm thu — nay là
@@ -92,7 +101,7 @@ mục 5 đòi — kế hoạch triển khai, kế hoạch đào tạo, cam kết
 
 | Tài liệu | Nội dung |
 |---|---|
-| `docs/08-so-loi.md` | Sổ lỗi tám đợt: 37 lỗi hai đợt đầu, 5 lỗi đợt rà thứ hai (mục E), 9 lỗi đợt áp bản thiết kế (mục G), 7 lỗi đợt rà thứ ba (mục H), 8 lỗi đợt triển khai (mục I), **88 lỗi năm đợt rà theo đặc tả ngày 04–05/09/2026 (mục J và các mục con J.C, J.B, J.L, J.D, J.X, J.A, J.M, J.N, J.P)** |
+| `docs/08-so-loi.md` | Sổ lỗi chín đợt: 37 lỗi hai đợt đầu, 5 lỗi đợt rà thứ hai (mục E), 9 lỗi đợt áp bản thiết kế (mục G), 7 lỗi đợt rà thứ ba (mục H), 8 lỗi đợt triển khai (mục I), **88 lỗi năm đợt rà theo đặc tả ngày 04–05/09/2026 (mục J và các mục con)**, 23 lỗi nghiệm thu thử và soi số học (mục K), **4 lỗi đợt rà sâu theo phân hệ ngày 06–07/09/2026 (mục L)** |
 | `docs/09-nguon-du-lieu.md` | Khảo sát 16 nguồn dữ liệu thư mục, giấy phép từng nguồn, kết quả nạp |
 | `docs/10-ke-hoach-trien-khai.md` | Kế hoạch triển khai, chạy thử và chuyển đổi dữ liệu (Chương V mục III.1) |
 | `docs/11-ke-hoach-dao-tao.md` | Kế hoạch đào tạo 16 buổi cho 7 nhóm học viên (Chương V mục III.2) |
@@ -121,9 +130,9 @@ huống lỗi; phải tự tay dựng đúng bối cảnh ấy trong phép thử
 **Lệnh chạy đúng:**
 
 ```bash
-cd backend  && dotnet test                 # 606 unit + 467 integration
-cd frontend-admin && npx tsc -b && npx vitest run    # 342 test
-cd frontend-opac  && npx tsc -b && npx vitest run    #  98 test
+cd backend  && dotnet test                 # 641 unit + 493 integration
+cd frontend-admin && npx tsc -b && npx vitest run    # 347 test
+cd frontend-opac  && npx tsc -b && npx vitest run    # 102 test
 cd mobile   && flutter analyze && flutter test       # 118 test
 ```
 
@@ -379,6 +388,23 @@ docker compose run --rm -d --name lc-api-kiem -e LC_DB_NAME=lc_kiem -e LC_SEED_D
     bạn đọc đã xoá đổ 500 (K6), bộ đếm "đang dùng" tính cả biểu ghi đã xoá (K15), và gói bàn giao
     thiếu lịch sử của bạn đọc đã xoá (K22). Truy vấn nào phải thấy **mọi** dòng thì dùng
     `IgnoreQueryFilters()` rồi tự lọc theo `DeletedAt` của chính bản ghi.
+58. **Rào của bộ gieo dữ liệu phải hỏi đúng câu.** "Kho biểu ghi còn trống chưa" là câu hỏi đúng cho
+    200 cuốn sách bịa, nhưng sai cho banner trang chủ và album ảnh — chúng không phải dữ liệu thư
+    mục. Máy chủ nghiệm thu có biểu ghi thật từ ngày đầu nên rào ấy đóng vĩnh viễn: trang chủ không
+    có banner nào và trang Thư viện ảnh rỗng, dù mã nguồn có sẵn cả hai. Rào của một phần dữ liệu
+    phải hỏi về **chính phần ấy**, không hỏi về phần khác.
+59. **Câu báo lỗi chỉ đường thì đường ấy phải đi được.** "Hãy xóa biểu ghi ở phân hệ Biên mục trước" —
+    làm đúng vậy vẫn bị chặn y nguyên, vì bộ kiểm nhìn cột khóa ngoại chứ không hỏi biểu ghi còn
+    sống không (bài học 57 lần thứ tư). Viết một câu chỉ đường thì phải tự đi thử con đường ấy;
+    một lối cụt còn tệ hơn câu "không xóa được" trống trơn (bài học 52).
+60. **Đổi tham số cấu hình giữa chừng phải nghĩ tới bản ghi đang dở.** Hạ số cấp duyệt từ 2 xuống 1
+    làm mọi yêu cầu đặt mua đã qua cấp 1 kẹt vĩnh viễn: hệ thống vẫn đòi "cấp tiếp theo do người
+    khác duyệt" trong khi cấp ấy không còn tồn tại. Tham số nào đếm bước của một quy trình thì lúc
+    xử lý phải so **trạng thái hiện có** với giá trị đang khai, không cộng mù thêm một bước.
+61. **Máy chủ nghiệm thu cũng phải dọn.** Dữ liệu thử của các đợt rà trước — 5 nhà cung cấp `NTx…`,
+    9 yêu cầu đặt mua "Nghiệm thu sâu", 3 đơn đặt — nằm nguyên trong màn hình Bổ sung và trong Báo
+    cáo duyệt mua. Kịch bản rà nào ghi dữ liệu lên máy chủ thật thì phần dọn là một bước của kịch
+    bản ấy, không phải việc để lại cho lần sau; và trước buổi nghiệm thu phải soi lại một lượt.
 
 ### A.4. Cơ chế dùng chung — dùng lại, đừng viết chỗ mới
 

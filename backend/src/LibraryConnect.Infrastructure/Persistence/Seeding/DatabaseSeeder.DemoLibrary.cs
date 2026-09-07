@@ -294,6 +294,49 @@ public partial class DatabaseSeeder
         new("Kỷ yếu hội thảo Chuyển đổi số ngành thư viện", "NCKH-GV", DigitalAccessLevel.Internal, true, 9)
     };
 
+    /// <summary>Ghi trên mọi tài liệu số minh họa, dùng để nhận ra chúng ở những lần chạy sau.</summary>
+    private const string DemoDigitalNote = "Tài liệu minh họa đi kèm bản cài đặt.";
+
+    /// <summary>
+    /// Dựng lại phần dẫn xuất còn thiếu của tài liệu số minh họa: ảnh bìa và phần chữ dùng để tìm
+    /// toàn văn.
+    ///
+    /// Bản cài đặt trước sinh sáu tài liệu ấy mà không cho đi qua đường ống xử lý, nên chúng có tệp
+    /// gốc và số trang nhưng không có ảnh bìa — endpoint ảnh bìa trả 404 cho cả sáu trên máy chủ
+    /// nghiệm thu ngày 06/09/2026. Sửa bộ gieo thôi thì không cứu được những bản đã cài: chúng đã có
+    /// tài liệu số nên nhánh gieo ở trên không chạy nữa. Vì thế phần vá này đứng riêng, chỉ đụng tới
+    /// tài liệu mang đúng ghi chú của bộ minh họa và chỉ khi thiếu ảnh bìa.
+    /// </summary>
+    private async Task EnsureDemoDigitalDerivativesAsync(CancellationToken ct)
+    {
+        var missing = await _db.DigitalDocuments
+            .Where(document => document.Description == DemoDigitalNote)
+            .Where(document => !document.Files.Any(file => file.Type == DigitalFileType.Thumbnail))
+            .Select(document => document.Id)
+            .ToListAsync(ct);
+
+        if (missing.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var id in missing)
+        {
+            try
+            {
+                await _digitalProcessing.ProcessAsync(id, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex,
+                    "Không dựng được ảnh bìa cho tài liệu số minh họa {DocumentId}", id);
+            }
+        }
+
+        _logger.LogInformation(
+            "Đã dựng lại ảnh bìa cho {Count} tài liệu số minh họa còn thiếu", missing.Count);
+    }
+
     private async Task SeedDemoDigitalAsync(CancellationToken ct)
     {
         if (await _db.DigitalDocuments.AnyAsync(ct))
@@ -332,7 +375,7 @@ public partial class DatabaseSeeder
                 Id = id,
                 CollectionId = collection.Id,
                 Title = entry.Title,
-                Description = "Tài liệu minh họa đi kèm bản cài đặt.",
+                Description = DemoDigitalNote,
                 FileName = fileName,
                 FilePath = DigitalStorage.OriginalObject(id, fileName),
                 FileSize = content.LongLength,

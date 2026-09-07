@@ -656,7 +656,13 @@ public class ApprovePurchaseRequestCommandHandler
             line.ApprovedQuantity * SerialSubscription.IssueCount(request.Type, line) * line.UnitPrice);
 
         var levels = await ApprovalFlow.RequiredLevelsAsync(_parameters, ct);
-        var level = request.ApprovalLevel + 1;
+
+        // Thư viện hạ số cấp duyệt xuống khi đã có yêu cầu duyệt dở: yêu cầu ấy đã đi qua đủ số cấp
+        // đang khai, nên không còn cấp nào để đòi nữa — lượt bấm này là lượt chốt. Trước 06/09/2026
+        // vẫn cộng thêm một cấp rồi chặn bằng câu "cấp tiếp theo phải do người khác duyệt", mà cấp
+        // tiếp theo ấy không tồn tại: yêu cầu nằm lại hàng chờ vĩnh viễn, không ai duyệt được nữa.
+        var consumesNewLevel = request.ApprovalLevel < levels;
+        var level = consumesNewLevel ? request.ApprovalLevel + 1 : request.ApprovalLevel;
 
         // Cấp này có gán nhóm duyệt thì người bấm phải thuộc nhóm ấy. Quản trị hệ thống đi qua được
         // mọi cấp — họ vốn có toàn quyền, chặn ở đây chỉ làm tắc việc khi thư viện thiếu người.
@@ -677,7 +683,8 @@ public class ApprovePurchaseRequestCommandHandler
 
         // Một người không duyệt hai cấp liên tiếp: duyệt nhiều cấp là để có hai cặp mắt, không phải
         // để cùng một người bấm hai lần.
-        if (level > 1 && request.ApprovedBy is { } previous && previous == _currentUser.UserId)
+        if (consumesNewLevel && level > 1
+            && request.ApprovedBy is { } previous && previous == _currentUser.UserId)
         {
             throw new ConflictException(
                 "Bạn đã duyệt cấp trước của yêu cầu này; cấp tiếp theo phải do người khác duyệt.");

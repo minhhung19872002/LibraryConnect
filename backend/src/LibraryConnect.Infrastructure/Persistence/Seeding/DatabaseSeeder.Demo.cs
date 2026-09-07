@@ -82,6 +82,18 @@ public partial class DatabaseSeeder
             return;
         }
 
+        // Nội dung trang thư viện (banner, album ảnh, bản tin, nhận diện thư viện) không phải dữ
+        // liệu thư mục, nên nó không được nằm sau rào "kho còn trống" ở dưới. Máy chủ nghiệm thu
+        // nạp biểu ghi thật ngay từ ngày đầu, và vì rào ấy mà trang chủ không có banner nào, trang
+        // Thư viện ảnh rỗng, còn hai bản tin duy nhất không mang chuyên mục nên bộ lọc chuyên mục
+        // tin trên trang tra cứu cũng rỗng. Từng phần dưới đây đã tự có rào riêng (bảng nào đã có
+        // dòng thì bỏ qua), nên gọi ở đây là an toàn và chạy lại được.
+        await SeedDemoContentAsync(ct);
+
+        // Cùng lý do: bản cài trước sinh tài liệu số minh họa mà không cho đi qua đường ống xử lý,
+        // nên chúng thiếu ảnh bìa; nhánh gieo ở dưới không chạy lại nữa vì kho đã có tài liệu số.
+        await EnsureDemoDigitalDerivativesAsync(ct);
+
         if (await _db.BibRecords.AnyAsync(ct))
         {
             return;
@@ -98,7 +110,6 @@ public partial class DatabaseSeeder
         await SeedDemoCourseDocumentsAsync(bibs, ct);
         await SeedDemoSerialsAsync(ct);
         await SeedDemoDigitalAsync(ct);
-        await SeedDemoContentAsync(ct);
 
         // Đếm lại ĐKCB từ kho: danh sách trả về ở trên chỉ gồm bản sẵn sàng cho mượn, còn con số
         // cần báo là tổng số bản đã tạo.

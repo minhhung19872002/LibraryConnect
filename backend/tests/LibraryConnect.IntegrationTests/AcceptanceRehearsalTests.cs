@@ -7,6 +7,9 @@ using LibraryConnect.Application.Features.Cataloging;
 using LibraryConnect.Application.Features.Catalogs;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
 
 namespace LibraryConnect.IntegrationTests;
 
@@ -576,5 +579,187 @@ public class AcceptanceRehearsalTests
 
         text.Should().NotContain("bắt buộc 001",
             "số kiểm soát do hệ thống cấp lúc lưu, báo lỗi ở đây là bắt cán bộ tự bịa một số");
+    }
+
+    /// <summary>
+    /// Nội dung trang thư viện của bản trình diễn — banner trang chủ và album ảnh sự kiện — từng nằm
+    /// sau rào "chỉ nạp khi kho biểu ghi còn trống". Máy chủ nghiệm thu có biểu ghi thật ngay từ ngày
+    /// đầu, nên rào ấy chặn luôn: ngày 06/09/2026 trang chủ không có banner nào và trang Thư viện ảnh
+    /// rỗng, dù mã nguồn có sẵn cả hai.
+    ///
+    /// Bối cảnh của phép thử phải đúng chỗ ấy: cơ sở dữ liệu **đã có** biểu ghi, rồi mới gọi bộ gieo.
+    /// Chạy trên cơ sở dữ liệu trống thì banner vẫn hiện ra và phép thử xanh vì lý do sai.
+    /// </summary>
+    [Fact]
+    public async Task Noi_dung_trang_thu_vien_van_duoc_nap_khi_kho_bieu_ghi_da_co_du_lieu()
+    {
+        var client = await ClientAsync();
+
+        // Kho phải có ít nhất một biểu ghi — đó chính là điều kiện làm rào ở dưới đóng lại. Bộ kiểm
+        // thử chạy với LC_SEED_DEMO=false nên kho trống; dựng một biểu ghi thật qua đúng lối biên mục.
+        var (documentTypeId, marcJson) = await RecordWithoutControlNumberAsync(
+            client, $"Giáo trình dựng bối cảnh {Unique()}");
+
+        await ReadAsync<SaveBibResultDto>(await client.PostAsJsonAsync(
+            "/api/cataloging/bibs",
+            new { marcJson, documentTypeId, status = "Published" },
+            LibraryConnectFactory.JsonOptions));
+
+        using var scope = _factory.Services.CreateScope();
+
+        var db = scope.ServiceProvider
+            .GetRequiredService<LibraryConnect.Infrastructure.Persistence.LibraryConnectDbContext>();
+
+        (await db.BibRecords.AnyAsync()).Should().BeTrue(
+            "phép thử này chỉ có nghĩa khi kho đã có biểu ghi, đúng như máy chủ nghiệm thu");
+
+        // Dựng lại đúng tình trạng của máy chủ nghiệm thu: chưa có banner, chưa có album nào. Xóa ở
+        // đây là xóa mềm — đúng như thư viện xóa trên màn hình — nên phải đếm bằng bộ lọc mặc định.
+        db.CmsBanners.RemoveRange(await db.CmsBanners.ToListAsync());
+        db.CmsGalleries.RemoveRange(await db.CmsGalleries.ToListAsync());
+        await db.SaveChangesAsync();
+        db.ChangeTracker.Clear();
+
+        (await db.CmsBanners.AnyAsync()).Should().BeFalse();
+        (await db.CmsGalleries.AnyAsync()).Should().BeFalse();
+
+        var bibsBefore = await db.BibRecords.CountAsync();
+
+        var configuration = scope.ServiceProvider
+            .GetRequiredService<Microsoft.Extensions.Configuration.IConfiguration>();
+        var seeder = scope.ServiceProvider
+            .GetRequiredService<LibraryConnect.Infrastructure.Persistence.Seeding.DatabaseSeeder>();
+
+        Environment.SetEnvironmentVariable("LC_SEED_DEMO", "true");
+        (configuration as Microsoft.Extensions.Configuration.IConfigurationRoot)?.Reload();
+
+        try
+        {
+            await seeder.SeedAsync();
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("LC_SEED_DEMO", "false");
+            (configuration as Microsoft.Extensions.Configuration.IConfigurationRoot)?.Reload();
+        }
+
+        (await db.CmsBanners.CountAsync()).Should().BeGreaterThan(0,
+            "trang chủ của bản trình diễn phải có banner, kể cả khi thư viện đã nhập biểu ghi");
+
+        (await db.CmsGalleries.CountAsync()).Should().BeGreaterThan(0,
+            "trang Thư viện ảnh của bản trình diễn không được rỗng");
+
+        (await db.BibRecords.CountAsync()).Should().Be(bibsBefore,
+            "rào 'kho còn trống' vẫn phải giữ nguyên: không trộn biểu ghi minh họa vào kho đã có dữ liệu");
+    }
+
+    /// <summary>
+    /// Sáu tài liệu số của bản trình diễn được nạp thẳng vào kho đối tượng, không đi qua đường ống
+    /// xử lý, nên chúng có tệp gốc và số trang mà không có ảnh bìa: ngày 06/09/2026 endpoint ảnh bìa
+    /// trả 404 cho cả sáu tài liệu trên máy chủ nghiệm thu.
+    ///
+    /// Sửa bộ gieo thôi thì không cứu được bản đã cài — kho đã có tài liệu số nên nhánh gieo không
+    /// chạy lại. Bối cảnh của phép thử vì thế phải là **một tài liệu đã tồn tại mà thiếu ảnh bìa**,
+    /// đúng như trên máy chủ.
+    /// </summary>
+    [Fact]
+    public async Task Tai_lieu_so_minh_hoa_thieu_anh_bia_duoc_dung_lai_o_lan_khoi_dong_sau()
+    {
+        var client = await ClientAsync();
+
+        QuestPDF.Settings.License = LicenseType.Community;
+
+        var pdf = Document.Create(document => document.Page(page =>
+        {
+            page.Size(PageSizes.A4);
+            page.Margin(2, Unit.Centimetre);
+            page.DefaultTextStyle(style => style.FontFamily("DejaVu Sans"));
+            page.Content().Text("Tài liệu minh họa thiếu ảnh bìa").FontSize(18);
+        })).GeneratePdf();
+
+        using var form = new MultipartFormDataContent();
+        var file = new ByteArrayContent(pdf);
+        file.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/pdf");
+        form.Add(file, "file", $"{Unique()}.pdf");
+        form.Add(new StringContent($"Tài liệu minh họa {Unique()}", System.Text.Encoding.UTF8), "title");
+        form.Add(new StringContent("Public", System.Text.Encoding.UTF8), "accessLevel");
+
+        var documentId = await ReadAsync<Guid>(
+            await client.PostAsync("/api/digital/documents/upload", form));
+
+        using var scope = _factory.Services.CreateScope();
+
+        var db = scope.ServiceProvider
+            .GetRequiredService<LibraryConnect.Infrastructure.Persistence.LibraryConnectDbContext>();
+
+        // Chờ đường ống của lối tải lên chạy xong rồi mới tháo ảnh bìa ra — tháo trước thì nó dựng lại
+        // ngay và phép thử xanh vì lý do sai.
+        for (var attempt = 0; attempt < 60; attempt++)
+        {
+            if (await db.DigitalDocumentFiles.AnyAsync(row =>
+                    row.DocumentId == documentId
+                    && row.Type == LibraryConnect.Domain.Enums.DigitalFileType.Thumbnail))
+            {
+                break;
+            }
+
+            await Task.Delay(500);
+            db.ChangeTracker.Clear();
+        }
+
+        (await db.DigitalDocumentFiles.AnyAsync(row =>
+            row.DocumentId == documentId
+            && row.Type == LibraryConnect.Domain.Enums.DigitalFileType.Thumbnail))
+            .Should().BeTrue("lối tải lên phải dựng được ảnh bìa — nếu không thì phép thử dưới đây vô nghĩa");
+
+        // Dựng lại đúng tình trạng của máy chủ: tài liệu mang ghi chú của bộ minh họa, chỉ còn tệp gốc.
+        var seededDocument = await db.DigitalDocuments.FirstAsync(row => row.Id == documentId);
+        seededDocument.Description = "Tài liệu minh họa đi kèm bản cài đặt.";
+
+        db.DigitalDocumentFiles.RemoveRange(await db.DigitalDocumentFiles
+            .Where(row => row.DocumentId == documentId
+                          && row.Type == LibraryConnect.Domain.Enums.DigitalFileType.Thumbnail)
+            .ToListAsync());
+
+        await db.SaveChangesAsync();
+
+        // Bỏ hết trạng thái đang theo dõi: lần khởi động sau của máy chủ mở một ngữ cảnh sạch, và
+        // dòng ảnh bìa vừa xoá còn nằm trong bộ nhớ thì bộ dựng lại sửa đúng dòng đã xoá ấy.
+        db.ChangeTracker.Clear();
+
+        (await db.DigitalDocumentFiles.AnyAsync(row =>
+            row.DocumentId == documentId
+            && row.Type == LibraryConnect.Domain.Enums.DigitalFileType.Thumbnail))
+            .Should().BeFalse("đã tháo ảnh bìa ra để dựng đúng bối cảnh của máy chủ");
+
+        var configuration = scope.ServiceProvider
+            .GetRequiredService<Microsoft.Extensions.Configuration.IConfiguration>();
+        var seeder = scope.ServiceProvider
+            .GetRequiredService<LibraryConnect.Infrastructure.Persistence.Seeding.DatabaseSeeder>();
+
+        Environment.SetEnvironmentVariable("LC_SEED_DEMO", "true");
+        (configuration as Microsoft.Extensions.Configuration.IConfigurationRoot)?.Reload();
+
+        try
+        {
+            await seeder.SeedAsync();
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("LC_SEED_DEMO", "false");
+            (configuration as Microsoft.Extensions.Configuration.IConfigurationRoot)?.Reload();
+        }
+
+        db.ChangeTracker.Clear();
+
+        (await db.DigitalDocumentFiles.AnyAsync(row =>
+            row.DocumentId == documentId
+            && row.Type == LibraryConnect.Domain.Enums.DigitalFileType.Thumbnail))
+            .Should().BeTrue("lần khởi động sau phải dựng lại ảnh bìa còn thiếu của tài liệu minh họa");
+
+        var thumbnail = await client.GetAsync($"/api/digital/documents/{documentId}/thumbnail");
+
+        thumbnail.StatusCode.Should().Be(HttpStatusCode.OK,
+            "endpoint ảnh bìa phải trả về ảnh, không phải 404");
     }
 }

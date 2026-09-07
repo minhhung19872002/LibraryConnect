@@ -114,9 +114,31 @@ public class SaveSerialArticlesCommandHandler : IRequestHandler<SaveSerialArticl
             .Select(article => article.Id!.Value)
             .ToHashSet();
 
-        foreach (var removed in existing.Where(article => !kept.Contains(article.Id)))
+        var dropped = existing.Where(article => !kept.Contains(article.Id)).ToList();
+
+        // Bài trích đã sinh biểu ghi thì phải xóa biểu ghi trước — nhưng chỉ khi biểu ghi ấy còn
+        // sống. Cột BibId vẫn trỏ tới biểu ghi đã xóa mềm, nên nếu chỉ nhìn cột này thì cán bộ làm
+        // đúng thứ câu báo lỗi bảo (xóa biểu ghi ở phân hệ Biên mục) mà vẫn bị chặn, và bài trích ấy
+        // khóa cứng trong mục lục vĩnh viễn. Bộ lọc xóa mềm toàn cục đã loại biểu ghi đã xóa khỏi
+        // truy vấn dưới đây, nên nó trả lời đúng câu cần hỏi: biểu ghi còn ai nhìn thấy không.
+        var stillLinked = new HashSet<Guid>();
+        var linkedIds = dropped.Where(article => article.BibId is not null)
+            .Select(article => article.BibId!.Value)
+            .Distinct()
+            .ToList();
+
+        if (linkedIds.Count > 0)
         {
-            if (removed.BibId is not null)
+            stillLinked = (await _db.BibRecords
+                    .Where(bib => linkedIds.Contains(bib.Id))
+                    .Select(bib => bib.Id)
+                    .ToListAsync(ct))
+                .ToHashSet();
+        }
+
+        foreach (var removed in dropped)
+        {
+            if (removed.BibId is { } bibId && stillLinked.Contains(bibId))
             {
                 throw new ConflictException(
                     $"Bài trích \"{removed.Title}\" đã sinh biểu ghi riêng nên không xóa khỏi mục lục được. " +

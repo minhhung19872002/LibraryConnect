@@ -27,6 +27,11 @@ public partial class DatabaseSeeder
     private readonly ICirculationPolicyResolver _policies;
     private readonly ICirculationCalendarProvider _calendars;
     private readonly IFileStorage _storage;
+
+    // Tài liệu số minh họa phải đi qua đúng đường ống mà tệp tải lên từ giao diện đi qua: đếm trang,
+    // dựng ảnh bìa, tách chữ để tìm toàn văn. Trước 06/09/2026 bộ gieo tự đặt số trang rồi thôi, nên
+    // sáu tài liệu trên máy chủ nghiệm thu không có ảnh bìa nào.
+    private readonly Application.Features.Digital.IDigitalProcessingJob _digitalProcessing;
     private readonly IConfiguration _configuration;
     private readonly Application.Features.Admin.AuditLogs.IAuditSettingsInvalidator _auditSettings;
 
@@ -41,6 +46,7 @@ public partial class DatabaseSeeder
         ICirculationPolicyResolver policies,
         ICirculationCalendarProvider calendars,
         IFileStorage storage,
+        Application.Features.Digital.IDigitalProcessingJob digitalProcessing,
         IConfiguration configuration,
         Application.Features.Admin.AuditLogs.IAuditSettingsInvalidator auditSettings)
     {
@@ -54,6 +60,7 @@ public partial class DatabaseSeeder
         _policies = policies;
         _calendars = calendars;
         _storage = storage;
+        _digitalProcessing = digitalProcessing;
         _configuration = configuration;
         _auditSettings = auditSettings;
     }

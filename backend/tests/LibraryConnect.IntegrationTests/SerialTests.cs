@@ -620,6 +620,32 @@ public class SerialTests
             new { articles = Array.Empty<object>() });
 
         removal.StatusCode.Should().Be(HttpStatusCode.Conflict);
+
+        // Câu chặn ở trên bảo cán bộ "xóa biểu ghi ở phân hệ Biên mục trước". Làm đúng như vậy thì
+        // phải gỡ được — trước 06/09/2026 bộ kiểm chỉ nhìn cột BibId, mà cột ấy vẫn trỏ tới biểu ghi
+        // đã xóa mềm, nên lối đi duy nhất mà thông báo chỉ ra lại không dẫn tới đâu và bài trích khóa
+        // cứng trong mục lục vĩnh viễn.
+        var deleteRecord = await client.SendAsync(new HttpRequestMessage(
+            HttpMethod.Delete, $"/api/cataloging/bibs/{withRecord[0].BibId}")
+        {
+            Content = JsonContent.Create(new { reason = "Gỡ biểu ghi bài trích để sửa lại mục lục" })
+        });
+
+        deleteRecord.IsSuccessStatusCode.Should().BeTrue(
+            "xóa biểu ghi bài trích: {0}", await deleteRecord.Content.ReadAsStringAsync());
+
+        var afterDelete = await client.PutAsJsonAsync(
+            $"/api/serials/issues/{issueId}/articles",
+            new { articles = Array.Empty<object>() });
+
+        afterDelete.IsSuccessStatusCode.Should().BeTrue(
+            "xóa biểu ghi xong thì gỡ bài trích khỏi mục lục được: {0}",
+            await afterDelete.Content.ReadAsStringAsync());
+
+        var emptied = await ReadAsync<IReadOnlyList<SerialArticleDto>>(
+            await client.GetAsync($"/api/serials/issues/{issueId}/articles"));
+
+        emptied.Should().BeEmpty();
     }
 
     [Fact]

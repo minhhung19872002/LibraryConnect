@@ -152,6 +152,53 @@ public class AcquisitionTests
     }
 
     [Fact]
+    public async Task Ha_so_cap_duyet_thi_yeu_cau_dang_duyet_do_khong_bi_ket()
+    {
+        // Thư viện đổi quy trình từ hai cấp xuống một cấp trong khi đang có yêu cầu đã qua cấp 1.
+        // Yêu cầu ấy đã đi đủ số cấp đang khai, nên lượt bấm duyệt tiếp phải chốt được. Trước
+        // 06/09/2026 hệ thống vẫn cộng thêm một cấp rồi trả 409 "cấp tiếp theo phải do người khác
+        // duyệt" — cấp ấy không còn tồn tại, và yêu cầu nằm lại hàng chờ vĩnh viễn.
+        var admin = await ClientAsync();
+
+        await SetParameterAsync(admin, "ACQ.APPROVAL_LEVELS", "2");
+
+        try
+        {
+            var requestId = await NewSubmittedRequestAsync(admin);
+
+            (await admin.PostAsJsonAsync(
+                $"/api/acquisition/requests/{requestId}/approve",
+                new { lines = Array.Empty<object>() })).EnsureSuccessStatusCode();
+
+            var midway = await ReadAsync<PurchaseRequestDetailDto>(
+                await admin.GetAsync($"/api/acquisition/requests/{requestId}"));
+
+            midway.ApprovalLevel.Should().Be(1);
+            midway.Status.Should().Be(PurchaseRequestStatus.Submitted);
+
+            await SetParameterAsync(admin, "ACQ.APPROVAL_LEVELS", "1");
+
+            var final = await admin.PostAsJsonAsync(
+                $"/api/acquisition/requests/{requestId}/approve",
+                new { lines = Array.Empty<object>() });
+
+            final.IsSuccessStatusCode.Should().BeTrue(
+                "yêu cầu đã qua đủ số cấp đang khai thì chốt được: {0}",
+                await final.Content.ReadAsStringAsync());
+
+            var detail = await ReadAsync<PurchaseRequestDetailDto>(
+                await admin.GetAsync($"/api/acquisition/requests/{requestId}"));
+
+            detail.Status.Should().Be(PurchaseRequestStatus.Approved);
+            detail.ApprovalLevel.Should().Be(1, "không cộng thêm cấp nào ngoài số cấp đang khai");
+        }
+        finally
+        {
+            await SetParameterAsync(admin, "ACQ.APPROVAL_LEVELS", "1");
+        }
+    }
+
+    [Fact]
     public async Task Gui_duyet_thi_nguoi_duyet_nhan_duoc_thong_bao()
     {
         // III.1: "Gửi duyệt → chuyển trạng thái, **thông báo tới người duyệt**". Trước 04/09/2026

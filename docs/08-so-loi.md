@@ -603,6 +603,78 @@ Cả 23 đã sửa.
 - "Sách mới bổ sung" ở trang chủ toàn sách tiếng Anh từ Open Library, vì đó là lượt nạp gần nhất.
 - Danh mục có 10 bộ sưu tập nhưng chưa biểu ghi nào được gắn, nên mục "Duyệt theo bộ sưu tập" rỗng.
 
+## L. Đợt rà sâu theo phân hệ trên máy chủ thật (06–07/09/2026)
+
+Chín đợt trước đi theo đặc tả và theo luồng nghiệp vụ chính. Đợt này chọn đúng những vùng mà chín
+đợt ấy **chạm ít nhất**: phân hệ VIII (quản trị nội dung), tủ gửi đồ và cổng ra vào của phân hệ VII,
+mục lục bài trích, danh mục tự tạo từ trường MARC, kiểm kê nạp tệp từ máy đọc rời, năm trình thiết
+kế biểu mẫu, đường ống xử lý tài liệu số, và quy trình duyệt mua nhiều cấp. Toàn bộ chạy trên
+`thuvien.bluestar.com.vn` — ảnh `128fe02`, cùng mã với `main` vì ba commit sau đó chỉ sửa tài liệu.
+
+Cách làm: kịch bản Python gọi API bằng tài khoản đúng vai, ghi dữ liệu thật rồi dọn; chỗ nào con số
+đáng ngờ thì đối chiếu thẳng bằng `psql` trong container. **135 phép đo, 4 lỗi mã nguồn** (L1–L4)
+cộng hai việc phải làm trên chính máy chủ (L5, L6). Kết quả từng phép đo ở phụ lục cuối
+`06-kich-ban-kiem-thu.md`.
+
+| # | Màn hình | Mô tả lỗi | Cách tái hiện | Mức độ | Loại | Trạng thái |
+|---|---|---|---|---|---|---|
+| L1 | Trang chủ tra cứu · Thư viện ảnh · Tin tức | Nội dung trang thư viện của bản trình diễn — banner trang chủ, album ảnh sự kiện, sáu bản tin có chuyên mục — nằm **sau rào "chỉ nạp khi kho biểu ghi còn trống"**. Máy chủ nghiệm thu nạp biểu ghi thật từ ngày đầu nên rào ấy đóng vĩnh viễn: trang chủ không có banner nào, trang Thư viện ảnh rỗng, và hai bản tin duy nhất không mang chuyên mục nên bộ lọc chuyên mục tin trên trang tra cứu cũng rỗng. Mã nguồn có sẵn cả ba, không ai gọi tới. | Trên máy chủ: `GET /api/public/banners` trả `[]`, `GET /api/public/galleries` trả `[]`, `GET /api/public/news/categories` trả `[]` trong khi danh mục có 4 chuyên mục. `select count(*) from web.cms_banners where deleted_at is null` = 0. | Vừa | Dữ liệu | Đã sửa — tách phần nội dung trang thư viện ra trước rào (mỗi phần vẫn tự có rào riêng nên chạy lại được); `AcceptanceRehearsalTests.Noi_dung_trang_thu_vien_van_duoc_nap_khi_kho_bieu_ghi_da_co_du_lieu` |
+| L2 | Ấn phẩm định kỳ → Mục lục bài trích | Bài trích đã sinh biểu ghi riêng thì không gỡ khỏi mục lục được — đúng, và câu chặn bảo cán bộ "Hãy xóa biểu ghi ở phân hệ Biên mục trước". **Làm đúng như vậy rồi vẫn bị chặn y nguyên**: bộ kiểm chỉ nhìn cột `bib_id`, mà cột ấy vẫn trỏ tới biểu ghi đã xóa mềm. Lối đi duy nhất mà thông báo chỉ ra không dẫn tới đâu, và bài trích khóa cứng trong mục lục vĩnh viễn. | Nhập một bài trích → "Sinh biểu ghi" → xóa biểu ghi ấy ở Biên mục (200, "Đã xóa biểu ghi") → gỡ bài khỏi mục lục: vẫn 409 với đúng câu cũ. | Vừa | Nghiệp vụ | Đã sửa — hỏi biểu ghi còn sống không thay vì chỉ nhìn cột khóa ngoại; `SerialTests.Articles_become_analytic_records…` |
+| L3 | Tài liệu số → danh sách và trang tra cứu | Sáu tài liệu số của bộ dữ liệu trình diễn được nạp thẳng vào kho đối tượng, **không đi qua đường ống xử lý**: có tệp gốc và số trang (bộ gieo tự đặt) nhưng không có ảnh bìa và không có bản chữ dùng để tìm toàn văn. Chính lời chú trong bộ gieo nói "có tệp thật thì bước dựng ảnh bìa mới chạy được" — bước ấy không ai gọi. | `GET /api/digital/documents/{id}/thumbnail` trả **404 cho cả sáu** tài liệu trên máy chủ; `files` của mỗi tài liệu chỉ có `Original`. Cùng lúc, tải một tệp PDF lên qua giao diện thì 3 giây sau đã có `Thumbnail` — đường ống chạy tốt, chỉ bộ gieo không dùng. | Vừa | Dữ liệu | Đã sửa — bộ gieo cho tài liệu đi qua đúng đường ống ấy, kèm phần dựng lại cho bản đã cài (chỉ đụng tài liệu mang ghi chú của bộ minh họa và chỉ khi thiếu ảnh bìa); `AcceptanceRehearsalTests.Tai_lieu_so_minh_hoa_thieu_anh_bia…` |
+| L4 | Bổ sung → Duyệt yêu cầu đặt mua | Thư viện hạ số cấp duyệt từ 2 xuống 1 trong khi đang có yêu cầu **đã qua cấp 1**: yêu cầu ấy đã đi đủ số cấp đang khai, nhưng lượt bấm duyệt tiếp vẫn cộng thêm một cấp rồi trả 409 *"Bạn đã duyệt cấp trước của yêu cầu này; cấp tiếp theo phải do người khác duyệt."* Cấp tiếp theo ấy không còn tồn tại, nên yêu cầu nằm lại hàng chờ vĩnh viễn — không ai duyệt được nữa, kể cả quản trị. | Đặt `ACQ.APPROVAL_LEVELS=2`, gửi duyệt một yêu cầu, duyệt cấp 1, đặt lại tham số về `1`, bấm duyệt: 409, trạng thái vẫn `Submitted`, `approvalLevel` vẫn 1. | Vừa | Nghiệp vụ | Đã sửa — đã qua đủ số cấp đang khai thì lượt bấm là lượt chốt, không cộng cấp và không đòi người thứ hai; `AcquisitionTests.Ha_so_cap_duyet_thi_yeu_cau_dang_duyet_do_khong_bi_ket` |
+
+### Hai việc phải làm trên chính máy chủ, không phải lỗi mã
+
+| # | Việc | Tình trạng |
+|---|---|---|
+| L5 | **Dữ liệu thử của các đợt rà trước còn nằm trên máy chủ nghiệm thu**: 5 nhà cung cấp `Nhà cung cấp NTx… (ngừng dùng)`, 9 yêu cầu đặt mua và 3 đơn đặt mang lý do "Nghiệm thu sâu" / "Nhập từ tệp Excel", 2 biểu ghi tạp chí thử, một chủ đề thử. Chúng nằm lẫn trong màn hình Bổ sung và trong Báo cáo duyệt mua — hội đồng mở ra là thấy. | Đã dọn bằng xóa mềm, đúng lối mà thư viện xóa trên màn hình, nên vẫn lần lại được nếu cần |
+| L6 | **Nhánh III.1 trên máy chủ rỗng sau khi dọn**: bộ dữ liệu trình diễn không sinh yêu cầu đặt mua, đơn đặt hay biên bản bàn giao — mục 8 của đặc tả không đòi những thứ này, nên đây không phải lỗi mã và cũng không thêm mã. Nhưng bảy màn hình của III.1 mở ra là bảng rỗng và Báo cáo duyệt mua toàn số 0. | Đã dựng bộ dữ liệu trình diễn bằng chính API: 4 yêu cầu ở đủ bốn trạng thái (Nháp, Chờ duyệt, Đã duyệt, Từ chối kèm lý do), 1 đơn đặt đã nhận đủ kèm số hợp đồng, 1 biên bản bàn giao. Báo cáo duyệt mua nay có số thật: 4 yêu cầu, 10.394.000 đ đề nghị, 2.320.000 đ đã duyệt, tỷ lệ duyệt 50% |
+
+### Đã kiểm trong đợt này và vẫn tốt
+
+- **Phân hệ VIII đầy đủ**: tin hẹn giờ chưa tới hạn không lọt ra trang công khai kể cả khi gõ thẳng
+  đường dẫn; kéo ngày về quá khứ thì hiện ngay; nút Đăng/Gỡ đổi trạng thái đúng chiều; đếm lượt xem
+  tăng theo từng lượt đọc; banner hết hạn và banner chưa tới ngày đều bị ẩn, banner không đặt ngày
+  thì luôn hiện; tắt banner/liên kết/menu thì trang công khai không còn; menu con nằm đúng dưới menu
+  cha; trang tĩnh chưa đăng không đọc được từ ngoài; thẻ `script`, thuộc tính `onerror`, liên kết
+  `javascript:` và `iframe` bị lọc sạch mà phần lành giữ nguyên.
+- **Tủ gửi đồ và cổng ra vào**: giao tủ theo số thẻ, tủ đang có người thì lượt thứ hai bị chặn, tủ
+  báo hỏng không giao được, trả tủ đóng đúng lượt và tủ về "Trống"; quét thẻ ở cổng lần đầu là vào
+  lần sau là ra, thẻ không có thật báo lỗi rõ nghĩa; hai báo cáo có số liệu theo giờ và theo khu vực.
+- **Bảy báo cáo lưu thông** xuất Excel ra tệp thật (chữ ký `PK`), mã QR của trạm mượn tự phục vụ ra
+  ảnh PNG thật.
+- **Trang tra cứu**: bảy chiều facet đều có bộ đếm; gợi ý tự động chạy với chữ không dấu gõ dở; năm
+  kiểu sắp xếp cho kết quả khác nhau; sáu kiểu trích dẫn (APA, MLA, Chicago, BibTeX, RIS, EndNote)
+  đều ra nội dung và tải được tệp RIS; yêu thích bấm lần nữa thì bỏ ra; tìm kiếm đã lưu giữ đúng cả
+  cờ cảnh báo; `sitemap.xml` 2,4 MB và `robots.txt` trỏ đúng. Gửi email danh sách giỏ tài liệu khi
+  chưa cấu hình SMTP thì **nói thẳng là chưa gửi được**, không báo "đã gửi".
+- **Nhận xét tài liệu**: bật tham số `OPAC.ALLOW_REVIEW` lên thì bạn đọc gửi được, nhận xét vào hàng
+  chờ duyệt chứ không hiện ngay, duyệt xong mới lên trang công khai và điểm trung bình đổi theo; đã
+  trả tham số về giá trị cũ sau khi kiểm.
+- **Bài trích và danh mục tự tạo**: bài trích sinh biểu ghi mang trường 773 đủ `$t`, `$g`, `$x` và
+  bạn đọc tra được ngay trên trang công khai; danh mục tự tạo từ `260$a` quét ra 5 giá trị duy nhất
+  và **xuất hiện thật** trong bộ lọc của trang tra cứu (`custom:NOI_XUAT_BAN…`).
+- **Kiểm kê**: phạm vi theo khoảng số ĐKCB chốt đúng danh sách kỳ vọng; nạp tệp quét từ máy đọc rời
+  phân loại đúng khớp / thừa / sai kho; bản đang ở tay bạn đọc không bị xếp vào "thiếu" (K17 vẫn
+  đúng); xuất kết quả ra Excel được.
+- **Năm trình thiết kế**: mẫu phích (in và xem trước ngay từ trình soạn khi chưa lưu), mẫu thẻ bạn
+  đọc khổ CR80, mẫu tem mã vạch, mẫu nhãn gáy, và trình thiết kế biểu mẫu dùng chung với 11 loại
+  chứng từ — tất cả tạo mới được và in ra PDF thật. Sinh ảnh mã vạch CODE39, CODE128 và QR đều ra PNG.
+- **Đường ống tài liệu số**: tải một tệp PDF lên máy chủ thật thì trong 3 giây có số trang, ảnh bìa,
+  checksum SHA-256 **khớp với checksum tự tính trên tệp gốc**, và trình đọc từng trang trả ảnh PNG.
+- **Chuỗi đơn đặt trọn vẹn**: yêu cầu → gửi duyệt → duyệt hai cấp (cấp 2 đòi người khác, đúng ý đồ
+  "hai cặp mắt") → lập đơn theo nhà cung cấp → in đơn PDF → nhận một phần → nhận đủ → biên bản bàn
+  giao → in biên bản. Nhận quá số đặt bị chặn kèm câu nêu đúng số; sinh ĐKCB đòi chọn kho và báo rõ
+  dòng nào chưa biên mục.
+- **Giao thức trên bản chạy thật**: OAI-PMH `Identify`, `ListRecords` (50 biểu ghi + thẻ đọc tiếp),
+  `ListMetadataFormats` (oai_dc, marc21, marcxml), verb sai trả `badVerb`; SRU trả MARCXML cho câu
+  đúng, trả **chẩn đoán** cho câu sai cú pháp và cho chỉ mục lạ (K20 vẫn đúng), `explain` khai báo
+  được. Xuất toàn kho ra ISO 2709 (17,9 MB) và MARCXML (41,3 MB).
+- **Sao lưu trên máy chủ thật**: bấm "Sao lưu ngay" → việc chạy nền → bản sao lưu 44,8 MB ở trạng
+  thái Thành công; đã xóa bản thử sau khi kiểm.
+- **Nhập bạn đọc**: tệp Excel mẫu tải được, hồ sơ ánh xạ cột lưu lại được, nhập ảnh hàng loạt từ ZIP
+  báo đúng ảnh nào không khớp bạn đọc nào, và có đầu mối đồng bộ từ hệ thống quản lý đào tạo.
+
 ## Đ. Những chỗ đã thử phá nhưng hệ thống chịu được
 
 Ghi lại để biết chỗ nào đã kiểm và không phải kiểm lại — kèm bằng chứng, không ghi suông.

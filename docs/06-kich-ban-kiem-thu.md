@@ -1392,3 +1392,175 @@ liên thư viện mẫu không nối được), K22 (gói bàn giao thiếu lị
 | UC.1 | Tra cứu tiếng Việt trên bản mã hiện tại: có dấu, không dấu, viết HOA, chữ Đ, dấu hỏi ngã, và đảo thứ tự từ đều ra đúng biểu ghi | Đường lối=1; duong loi=1; DUONG LOI=1; đường=1; UE62702=1; ỷ lại=1; y lai=1; quặn quẹo=1; UE62702=1 | Đạt |
 | UC.2 | Nhan đề giữ nguyên từng ký tự khi lưu và khi trả về trang tra cứu | gửi đi: 'Đường lối UC62408: Ăn – Ấm – Ậu, ỷ lại, quặn quẹo, ﬁ'; nhận về: 'Đường lối UC62408: Ăn – Ấm – Ậu, ỷ lại, quặn quẹo, ﬁ' | Đạt |
 | UC.4 | Nhập tệp biểu ghi hỏng: tệp rỗng, cắt cụt, không phải MARC, Leader sai độ dài — đều báo lỗi rõ chỗ hỏng, không đổ hệ thống | Tệp rỗng → 400 'Vui lòng chọn tệp biểu ghi cần nhập'. Chuỗi chữ thường → 'Biểu ghi chỉ dài 15 byte, ngắn hơn 24 byte của đầu biểu. Tệp có thể bị cắt cụt.' Tệp cắt cụt → 'Danh mục khai báo 22 trường nhưng chỉ tìm thấy 20 trường trong vùng dữ liệu…'. Tệp tốt → đ | Đạt |
+
+## Phụ lục — Rà sâu theo phân hệ trên máy chủ thật ngày 06–07/09/2026
+
+Đợt này chọn đúng những vùng mà chín đợt trước **chạm ít nhất**, thay vì đi lại luồng nghiệp vụ chính:
+phân hệ VIII (quản trị nội dung), tủ gửi đồ và cổng ra vào của phân hệ VII, mục lục bài trích, danh
+mục tự tạo từ trường MARC, kiểm kê nạp tệp từ máy đọc rời, năm trình thiết kế biểu mẫu, đường ống xử
+lý tài liệu số, và quy trình duyệt mua nhiều cấp.
+
+Chạy trên `https://thuvien.bluestar.com.vn` — ảnh `128fe02`, cùng mã nguồn với `main` vì ba commit sau
+đó chỉ sửa tài liệu. Kịch bản Python gọi API bằng tài khoản đúng vai; con số nào đáng ngờ thì đối
+chiếu thẳng bằng `psql` trong container. Dữ liệu ghi thêm mang dấu `NTT…` và đã dọn sau khi xong.
+
+Tiền tố mã: `CMS.*` quản trị nội dung · `LK.*` tủ gửi đồ · `GT.*` cổng ra vào và giao thức trao đổi ·
+`OP.*` trang tra cứu và tài khoản bạn đọc · `SR.*` bài trích ấn phẩm định kỳ · `CI.*` danh mục tự tạo
+từ MARC · `KK.*` kiểm kê · `BC.*` báo cáo · `PH.* TH.* MV.* BM.*` năm trình thiết kế và in ấn ·
+`TS.* DU.*` tài liệu số · `DM.*` đơn đặt và duyệt mua · `SL.*` sao lưu · `BD.*` nhập dữ liệu bạn đọc.
+
+Tổng: **135 phép đo**. Bốn lỗi mã nguồn tìm ra (L1–L4 ở `08-so-loi.md`) đã sửa và có phép thử tự động
+đi kèm; hai việc dữ liệu trên chính máy chủ (L5, L6) đã xử lý.
+
+| Mã | Luật nghiệp vụ | Kết quả thực tế | Đạt |
+|---|---|---|---|
+| CMS.1 | Chuyên mục tin quản lý được ở màn hình Danh mục | 4 chuyên mục: Thông báo, Sự kiện, Tài liệu mới, Hướng dẫn bạn đọc | Đạt |
+| CMS.1b | Trang công khai liệt kê chuyên mục tin kèm số bài | Trước: 0 chuyên mục (hai bản tin duy nhất không mang chuyên mục nên bộ lọc rỗng). Sau khi gán: `[('Thông báo', 2)]` | Đạt |
+| CMS.2 | Tin hẹn giờ chưa tới hạn không hiện, kể cả khi gõ thẳng đường dẫn; kéo ngày về quá khứ thì hiện ngay | ngày đăng +3 ngày → danh sách công khai 0 tin, đọc thẳng đường dẫn 404 "Không tìm thấy bản tin"; kéo về −1 giờ → 1 tin | Đạt |
+| CMS.3 | Đếm lượt xem tin tăng theo mỗi lượt đọc | lần đầu 1 → sau hai lượt nữa 3 | Đạt |
+| CMS.4 | Thống kê tin tức có số liệu theo chuyên mục và bài xem nhiều nhất | `totalCount 3, publishedCount 3, totalViews 34, byCategory[…], topViewed[…]` | Đạt |
+| CMS.5 | Tin để trạng thái chưa đăng không lọt ra trang công khai | tạo 200, trang công khai trả 0 | Đạt |
+| CMS.6 | Nút Đăng / Gỡ đổi trạng thái đúng chiều | đăng → "Đã đăng bản tin.", công khai 1 tin; gỡ → "Đã gỡ bản tin.", công khai 0 tin | Đạt |
+| CMS.7 | Banner chỉ hiện trong khoảng ngày đã đặt; không đặt ngày thì luôn hiện | bốn banner (hết hạn / chưa tới / đang chạy / không giới hạn) → công khai hiện đúng hai cái sau | Đạt |
+| CMS.7b | Tắt banner thì trang công khai không hiện | còn 0 | Đạt |
+| CMS.8 | Trang tĩnh tạo xong đọc được theo đường dẫn thân thiện | tạo 200 "Đã tạo trang.", đọc 200, nhan đề khớp | Đạt |
+| CMS.9 | Trang tĩnh chưa đăng không đọc được từ ngoài | 404 "Không tìm thấy trang." | Đạt |
+| CMS.10 | Nội dung trang tĩnh lọc sạch mã độc, giữ phần lành | gửi `<script>`, `onerror`, `javascript:`, `<iframe>` → ra công khai còn `<p>Lanh</p>alert(1)<img src="x"><a>bam</a>`: không thẻ script, không thuộc tính sự kiện, không iframe, không liên kết javascript | Đạt |
+| CMS.11 | Liên kết website thêm xong hiện ở trang công khai | tạo 200 "Đã thêm liên kết.", công khai thấy 1 | Đạt |
+| CMS.12 | Tắt liên kết thì trang công khai không hiện nữa | còn 0 | Đạt |
+| CMS.13 | Menu thêm xong hiện trên cây menu công khai | tạo 200, công khai thấy 1 | Đạt |
+| CMS.14 | Menu con nằm đúng dưới menu cha | cha có 1 menu con, đúng id | Đạt |
+| CMS.15 | Tắt menu thì cây công khai không còn mục ấy | còn 0 | Đạt |
+| CMS.16 | Album ảnh đăng xong hiện ở trang công khai | tạo 200 "Đã tạo album.", công khai thấy 1 | Đạt |
+| CMS.17 | Thông tin thư viện công khai đủ tên, địa chỉ, điện thoại, email, giờ mở cửa | đủ; `logoUrl` để trống — thư viện chưa tải logo lên, ghi ở mục "chưa sửa" của `08` | Đạt |
+| CMS.18 | Máy chủ có sẵn banner trang chủ và album ảnh của bản trình diễn | **Trước sửa: 0 banner, 0 album** (L1). Sau sửa: bộ gieo nạp banner và album kể cả khi kho đã có biểu ghi | Đạt |
+| CMS.19 | Trang chủ trả về đủ các khối | `newBooks, popularBooks, news, announcements, banners, links, statistics` | Đạt |
+| LK.1 | Sơ đồ tủ gửi đồ đọc được kèm số đếm theo trạng thái | `areas, free, inUse, broken, overdue, lockers` — 20 tủ | Đạt |
+| LK.2 | Thêm một tủ mới vào sơ đồ | 200 "Đã lưu tủ gửi đồ." | Đạt |
+| LK.3 | Giao tủ cho bạn đọc bằng số thẻ | 200 "Đã giao tủ TU-… cho …", trạng thái `InUse`, có tên người giữ | Đạt |
+| LK.4 | Tủ đang có người giữ thì lượt thứ hai bị chặn | 409 "Tủ … đang có người dùng." | Đạt |
+| LK.5 | Lượt giao tủ ghi vào lịch sử, tra được lượt chưa trả | 1 lượt mở của bạn đọc thử | Đạt |
+| LK.6 | Trả tủ đóng lượt sử dụng | 200 "Đã nhận lại tủ …", có giờ trả | Đạt |
+| LK.7 | Sau khi trả, tủ về trạng thái Trống trên sơ đồ | `Free` | Đạt |
+| LK.8 | Tủ báo hỏng thì không giao được | 409 "Tủ … đang hỏng hoặc bị khóa." | Đạt |
+| LK.9 | Báo cáo sử dụng tủ có tần suất và thời lượng trung bình | `totalLockers 21, totalUsages 2, byArea[…], byDay[…]` | Đạt |
+| GT.1 | Quét thẻ tại cổng: lần đầu là vào, lần sau là ra | "Chào …, đã ghi nhận vào thư viện lúc 22:50." / "Tạm biệt …, đã ghi nhận ra lúc 22:50" — giờ Việt Nam, đúng K23 | Đạt |
+| GT.2 | Lượt ra vào ghi đủ giờ vào và giờ ra | 1 lượt, có `checkoutAt` | Đạt |
+| GT.3 | Báo cáo bạn đọc ra vào có số liệu theo giờ cao điểm | `totalVisits 1, uniqueReaders 1, byDay[…], byHour[24 mốc]` | Đạt |
+| GT.4 | Quét thẻ không có thật báo lỗi rõ nghĩa | 404 "Không tìm thấy bạn đọc mang số thẻ hoặc mã 'KHONGCOTHE999'." | Đạt |
+| ST.1 | Danh sách trạm mượn tự phục vụ | 1 trạm `KHOMO-01` | Đạt |
+| ST.2 | Mã QR của trạm in ra được dạng PNG thật | 1.401 byte, dấu tệp `\x89PNG` | Đạt |
+| BC.CurrentLoans · Overdue · TopReaders · TopItems · Visits · Lockers | Sáu báo cáo lưu thông xuất Excel ra tệp thật | 75.372 / 39.521 / 8.392 / 8.649 / 7.313 / 7.010 byte, dấu tệp `PK` | Đạt |
+| OP.1 | Tra cứu cơ bản không dấu ra kết quả | "co so du lieu" → 5 kết quả | Đạt |
+| OP.2 | Xuất trích dẫn đủ sáu kiểu | APA, MLA, Chicago, BibTeX, RIS, EndNote đều 200 và có nội dung | Đạt |
+| OP.3 | Tải tệp trích dẫn RIS | 302 byte, bắt đầu `TY  - BOOK` | Đạt |
+| OP.4 | Bộ lọc facet đủ chiều kèm số đếm | 7 chiều: dạng tài liệu, tác giả, chủ đề, ngôn ngữ, năm xuất bản, kho, tình trạng — mọi giá trị có `count` | Đạt |
+| OP.5 | Gợi ý tự động khi gõ dở, không dấu | "giao trin" → 10 gợi ý | Đạt |
+| OP.6 | Tìm nâng cao AND / OR / NOT cho kết quả khác nhau đúng chiều | AND=1, NOT=224, OR=240 | Đạt |
+| OP.7 | Năm kiểu sắp xếp đều chạy và cho kết quả khác nhau | Relevance / Newest / Title / Author / Popular — bốn danh sách đầu khác nhau | Đạt |
+| OP.7b | Sắp theo nhan đề bắt đầu từ đầu bảng chữ cái | "An toàn lao động…" … "Bài giảng Kết cấu thép…" | Đạt |
+| OP.8 | Đánh dấu yêu thích, bấm lần nữa thì bỏ ra | 1 mục → 0 mục | Đạt |
+| OP.9 | Lưu một tìm kiếm kèm cảnh báo, đọc lại được | 200 "Đã lưu tìm kiếm."; `alertEnabled=True`, câu truy vấn giữ nguyên | Đạt |
+| OP.10 | Xóa tìm kiếm đã lưu | 200, còn 0 | Đạt |
+| OP.11 | Gửi email danh sách giỏ tài liệu khi chưa cấu hình SMTP thì nói thẳng | 409 "Thư viện chưa cấu hình máy chủ gửi thư nên chưa gửi được danh sách qua email." — không báo "đã gửi" (K11 vẫn đúng) | Đạt |
+| OP.11b | Bật `OPAC.ALLOW_REVIEW` thì trang công khai báo là đang bật | 200 "Đã cập nhật 1 tham số."; `allowReview=True` | Đạt |
+| OP.12 | Nhận xét mới gửi phải chờ duyệt, chưa duyệt thì không hiện công khai | 200 "Đã gửi nhận xét, thư viện sẽ duyệt trước khi hiển thị."; trang chi tiết hiện 0 | Đạt |
+| OP.13 | Nhận xét chờ duyệt hiện ở màn hình kiểm duyệt của cán bộ | tổng chờ duyệt 0 → 1 | Đạt |
+| OP.14 | Duyệt xong thì nhận xét hiện công khai và điểm trung bình đổi theo | 200 "Đã duyệt nhận xét.", hiện 1, `averageRating = 5` | Đạt |
+| OP.14c | Xóa nhận xét thì trang công khai không còn | còn 0 | Đạt |
+| OP.14b | Trả tham số nhận xét về giá trị cũ sau khi kiểm | `allowReview=False` như trước | Đạt |
+| OP.15 | `sitemap.xml` là XML thật có đường dẫn tài liệu | 2.454.828 byte, có `<urlset` | Đạt |
+| OP.16 | `robots.txt` trỏ tới sitemap và chặn vùng riêng | chặn `/admin`, `/api/`, `/tai-khoan`, `/gio-tai-lieu`; có dòng `Sitemap:` | Đạt |
+| OP.17 | Trang tra cứu liệt kê được thư viện bạn để tìm song song | 2 đích: Thư viện Quốc hội Mỹ (Z39.50) và (SRU) | Đạt |
+| OP.18 | Khách chưa đăng nhập xem được danh mục tài liệu số công khai | 200, có danh sách | Đạt |
+| SR.1 | Danh sách báo/tạp chí đọc được | 5 đầu báo | Đạt |
+| SR.2 | Đọc được danh sách số của một đầu báo | 5 số, chọn số ở trạng thái Đã nhận | Đạt |
+| SR.3 | Nhập mục lục bài trích cho một số báo | 200 "Đã lưu mục lục 1 bài." | Đạt |
+| SR.4 | Bài trích vừa nhập đọc lại được | 1 bài | Đạt |
+| SR.5 | Sinh biểu ghi MARC riêng cho bài trích | 200 "Đã sinh 1 biểu ghi bài trích; bạn đọc tra được từ OPAC." | Đạt |
+| SR.6 | Bạn đọc tra cứu trên OPAC ra ngay bài trích | 1 kết quả đúng nhan đề bài | Đạt |
+| SR.7 | Biểu ghi bài trích mang trường 773 trỏ về ấn phẩm mẹ | `773 $t "Báo Nhân Dân" $g "Báo Nhân Dân — Số 60 (2026), tr. 11-18" $x "0866-7128"`, mức thư mục `a` | Đạt |
+| SR.8 | Tải tệp Excel mẫu nhập mục lục bài trích hàng loạt | 9.678 byte, dấu tệp `PK` | Đạt |
+| SR.9 | Xóa biểu ghi bài trích ở Biên mục xong thì gỡ được bài khỏi mục lục | **Trước sửa: vẫn 409 với đúng câu bảo đi xóa biểu ghi** (L2). Sau sửa: gỡ được, mục lục còn 0 bài | Đạt |
+| CI.1 | Danh sách danh mục tự tạo đọc được | 200 | Đạt |
+| CI.2 | Tạo danh mục tự tạo từ tag 260$a | 200 "Đã khai báo danh mục tự tạo. Bấm Quét để rút giá trị từ biểu ghi." | Đạt |
+| CI.3 | Quét toàn kho rút trích giá trị duy nhất | 200 "Quét xong: 5 giá trị, trong đó 5 giá trị mới." | Đạt |
+| CI.4 | Giá trị rút trích ra có thật | Hà Nội, Đà Nẵng, TP. Hồ Chí Minh, London, Baton Rouge, La. | Đạt |
+| CI.5 | Danh mục tự tạo bật "hiện làm bộ lọc" thì xuất hiện trên bộ lọc trang tra cứu | facet có thêm chiều `custom:NOI_XUAT_BAN_…` mang đúng tên đã đặt | Đạt |
+| KK.1 | Tạo kỳ kiểm kê theo khoảng số ĐKCB, không đóng kho thật | 200 "Đã tạo kỳ kiểm kê và chốt danh sách ấn phẩm kỳ vọng." | Đạt |
+| KK.2 | Phạm vi theo khoảng số ĐKCB chốt đúng danh sách kỳ vọng | ĐKCB00000007..ĐKCB00000020 → 3 bản kỳ vọng (hai bản trong khoảng đang ở tay bạn đọc nên không nằm trên giá — K17) | Đạt |
+| KK.3 | Nạp tệp quét từ máy đọc rời phân loại đúng | 4 mã: khớp 2, thừa 2 (một mã lạ và một bản đang có phiếu mượn mở — đúng ý "có lượt trả chưa ghi") | Đạt |
+| KK.5 | Đóng kỳ và đối chiếu ra đúng số | "Đã chốt kỳ kiểm kê: khớp 2, thiếu 1, thừa 2, sai kho 0." | Đạt |
+| KK.6 | Kết quả phân loại Khớp / Thiếu / Thừa / Sai kho | đủ nhóm, tổng khớp số đã quét | Đạt |
+| KK.7 | Xuất kết quả kiểm kê ra Excel | 7.384 byte, dấu tệp `PK` | Đạt |
+| BC.1 | Báo cáo tổng hợp liệt kê được các chiều để tự chọn hàng/cột | 9 chiều: dạng tài liệu, vật mang tin, thời gian, ngôn ngữ, kho, nguồn kinh phí, hình thức bổ sung, tình trạng, nhà cung cấp | Đạt |
+| BC.2 | Bảng tổng hợp đa chiều (pivot) chạy thật | hàng = dạng tài liệu, cột = kho: 4 cột kho, có `columnTotals` và `grandTotal` | Đạt |
+| BC.3 | Bốn báo cáo bổ sung bắt buộc có số liệu | dạng tài liệu 10 dòng (Sách 5.858 bản / 2.904 nhan đề / 979.208.000 đ), vật mang tin 2, thời gian 28 mốc tháng, ngôn ngữ 15 | Đạt |
+| BC.4 | Báo cáo duyệt mua có tỷ lệ duyệt và tổng kinh phí | sau khi dựng dữ liệu trình diễn (L6): 4 yêu cầu, đề nghị 10.394.000 đ, đã duyệt 2.320.000 đ, tỷ lệ 50% | Đạt |
+| PH.1 | Danh sách mẫu phích đọc được | 1 mẫu sẵn có | Đạt |
+| PH.2 | Xem trước phích ngay từ trình soạn khi chưa lưu | 30.355 byte PDF | Đạt |
+| PH.3 | In phích xuất ra PDF đúng khổ | 30.761 byte, `%PDF-1.7` | Đạt |
+| PH.4 | Tạo mẫu phích mới bằng trình thiết kế (khổ 7,5×12,5 cm) | 200 "Đã thêm mẫu phích." | Đạt |
+| PH.5 | In được bằng chính mẫu vừa thiết kế | PDF thật | Đạt |
+| TH.1 | Danh sách mẫu thẻ bạn đọc | "Thẻ bạn đọc CR80 (85,6 × 54 mm)" | Đạt |
+| TH.2 | Trình thiết kế thẻ liệt kê được các trường kéo thả | số thẻ, họ tên, mã sinh viên, loại bạn đọc, khoa… | Đạt |
+| TH.3 | In thẻ bạn đọc ra PDF đúng khổ CR80 | 63.171 byte, `%PDF-1.7` | Đạt |
+| TH.4 | Xem trước thẻ trước khi in | 63.171 byte | Đạt |
+| MV.1 | Danh sách mẫu tem mã vạch | "Tem mã vạch 50×25 mm (4 cột × 10 hàng trên A4)", kiểu Code128 | Đạt |
+| MV.2 | Danh sách mẫu nhãn gáy sách | 1 mẫu | Đạt |
+| MV.3 | In tem mã vạch ra PDF thật | 36.911 byte, `%PDF-1.7` | Đạt |
+| MV.4 | In nhãn gáy sách ra PDF thật | 15.455 byte | Đạt |
+| MV.5 | Sinh ảnh mã vạch CODE39, CODE128 và QR | 367 / 381 / 893 byte, đều `\x89PNG` | Đạt |
+| BM.1 | Trình thiết kế biểu mẫu liệt kê đủ loại chứng từ | 11 loại: phiếu nhập kho, biên bản bàn giao, phiếu chuyển kho, biên bản kiểm kê, danh mục thanh lý, phiếu mượn, biên lai phạt, giấy xác nhận trả sách, đơn đặt hàng… | Đạt |
+| BM.2 | Danh sách biểu mẫu đã thiết kế sẵn | 11 mẫu, mỗi loại một mẫu mặc định | Đạt |
+| BM.3 | Tạo một biểu mẫu mới bằng trình thiết kế | 200 "Đã thêm mẫu biểu."; thiếu tên in giữa trang thì bị chặn kèm câu rõ nghĩa | Đạt |
+| TS.1 | Danh sách tài liệu số đọc được | 6 tài liệu | Đạt |
+| TS.2 | Chi tiết tài liệu số có số trang và checksum SHA-256 | đủ cả sáu | Đạt |
+| TS.3 | Ảnh bìa của tài liệu số sinh ra được | **Trước sửa: 404 cho cả sáu tài liệu** (L3). Sau sửa: bộ gieo dựng lại ảnh bìa còn thiếu ở lần khởi động sau | Đạt |
+| TS.4 | Tìm toàn văn trong nội dung tài liệu số | "thư viện" → 6 kết quả | Đạt |
+| TS.5 | Đọc trực tuyến từng trang dạng ảnh | 199.586 byte PNG | Đạt |
+| TS.6 | Báo cáo dung lượng lưu trữ đã dùng | 12.868.010 byte / 11 tệp, tách bản gốc và bản dẫn xuất | Đạt |
+| DU.1 | Tải một tệp PDF lên kho tài liệu số | 200 "Đã tải tệp lên. Hệ thống đang xử lý trang bìa và nội dung tìm kiếm." | Đạt |
+| DU.2 | Đường ống chạy nền: trích số trang và sinh ảnh bìa | sau 3 giây: 9 trang, tệp dẫn xuất `Original` + `Thumbnail` | Đạt |
+| DU.3 | Ảnh bìa tải về được | 24.807 byte `\x89PNG` | Đạt |
+| DU.4 | Checksum SHA-256 hệ thống tính khớp checksum tính độc lập trên tệp gốc | `e005ee7e660e76b0b1b33f05bfd742b6…` khớp từng ký tự | Đạt |
+| DU.5 | Đọc trực tuyến từng trang có đóng chữ chìm | 190.351 byte PNG | Đạt |
+| DU.6 | Tài liệu vừa tải lên tìm thấy ngay trong kho | 1 kết quả | Đạt |
+| DU.7 | Xóa tài liệu thử | 200 "Đã xóa tài liệu số." | Đạt |
+| DM.0 | Đọc được tham số số cấp duyệt yêu cầu đặt mua | `ACQ.APPROVAL_LEVELS = 1` | Đạt |
+| DM.2 | Tạo yêu cầu đặt mua ấn phẩm đơn bản | 200 "Đã lưu yêu cầu đặt mua."; thiếu tên người đề nghị thì bị chặn | Đạt |
+| DM.3 | Tổng tiền = số lượng × đơn giá | 5 × 120.000 = 600.000 đ, hệ thống ghi 600.000 đ | Đạt |
+| DM.4 | Tra nhanh xem thư viện đã có tài liệu này chưa | ISBN 9786041000100 → trả về biểu ghi LC00000011 "Bài tập lập trình hướng đối tượng" | Đạt |
+| DM.5 | Gửi duyệt chuyển trạng thái sang chờ duyệt | 200 "Đã gửi yêu cầu đi duyệt.", `Submitted` | Đạt |
+| DM.6 | Duyệt cấp 1 chưa phải là duyệt xong khi đặt hai cấp | 200 "Đã duyệt ở cấp này, yêu cầu chuyển lên cấp duyệt tiếp theo.", `approvalLevel=1`, vẫn `Submitted` | Đạt |
+| DM.6b | Người vừa duyệt cấp trước không được duyệt cấp sau | 409 "Bạn đã duyệt cấp trước của yêu cầu này; cấp tiếp theo phải do người khác duyệt." — đúng ý "hai cặp mắt" | Đạt |
+| DM.7 | Hạ số cấp duyệt xuống thì yêu cầu đang duyệt dở không bị kẹt | **Trước sửa: 409 đòi "cấp tiếp theo" không tồn tại, yêu cầu kẹt vĩnh viễn** (L4). Sau sửa: lượt bấm là lượt chốt, `Approved`, `approvalLevel` giữ nguyên | Đạt |
+| DM.8 | Lập đơn đặt từ yêu cầu đã duyệt, gom theo nhà cung cấp | 200 "Đã lập 1 đơn đặt."; dòng chưa có nhà cung cấp thì đòi chọn nhà cung cấp mặc định | Đạt |
+| DM.9 | Đơn đặt mang đủ dòng hàng và tổng tiền từ yêu cầu | DH202600006, 1 dòng, 600.000 đ, trạng thái Mới | Đạt |
+| DM.10 | In đơn đặt hàng ra PDF theo mẫu | 51.029 byte, `%PDF-1.7` | Đạt |
+| DM.11 | Nhận một phần chuyển trạng thái Giao một phần | `PartiallyReceived` | Đạt |
+| DM.12 | Nhận đủ chuyển trạng thái Đã nhận | 5/5, `Received` | Đạt |
+| DM.12b | Nhận quá số đặt bị chặn kèm câu nêu đúng số | 400 "Số lượng thực nhận của \"…\" phải từ 0 đến 5 (số đã đặt)." | Đạt |
+| DM.13 | Lập biên bản bàn giao từ đơn đặt | 200 "Đã lập biên bản bàn giao."; biên bản không gắn đơn đặt thì đòi danh sách tài liệu | Đạt |
+| DM.14 | In biên bản bàn giao ra PDF theo mẫu | 46.986 byte PDF | Đạt |
+| DM.15 | Sinh ĐKCB từ đơn đã nhận đòi chọn kho và báo dòng chưa biên mục | 400 "Chưa chọn kho nhập."; chọn kho rồi → "Đã tạo 0 ĐKCB. Còn 1 dòng chưa biên mục." kèm tên dòng | Đạt |
+| SL.1 | Danh sách bản sao lưu đọc được | 6 bản | Đạt |
+| SL.2 | Bấm "Sao lưu ngay" xếp việc vào hàng đợi | 200 "Đã xếp lượt sao lưu vào hàng đợi. Tiến độ hiện ở bảng bên dưới, không cần giữ trang này mở." | Đạt |
+| SL.3 | Bản sao lưu chạy xong có dung lượng thật | trạng thái Thành công, 44.849.511 byte (44,8 MB); đã xóa bản thử sau khi kiểm | Đạt |
+| BD.1 | Tải tệp Excel mẫu nhập bạn đọc | 11.232 byte `PK` | Đạt |
+| BD.2 | Hồ sơ ánh xạ cột Excel → trường bạn đọc lưu lại được | số thẻ, mã sinh viên, họ tên, giới tính, ngày sinh, CCCD, email, điện thoại, địa chỉ, loại bạn đọc, khoa… | Đạt |
+| BD.3 | Nhập ảnh hàng loạt từ ZIP báo rõ ảnh nào không khớp ai | `totalFiles 1, matched 0, unmatched 1`, kèm câu "Không tìm thấy bạn đọc có mã sinh viên hoặc số thẻ '…'" | Đạt |
+| BD.4 | Có đầu mối đồng bộ bạn đọc từ hệ thống quản lý đào tạo (VI.4) | `POST /api/readers/sync` tồn tại, gọi rỗng thì báo "Chưa có bản ghi nào để đồng bộ." | Đạt |
+| BM.5 | Tải tệp Excel mẫu biên mục | 11.388 byte `PK` | Đạt |
+| BM.6 | Hồ sơ ánh xạ cột Excel → trường MARC lưu lại được | endpoint trả danh sách (máy chủ chưa lưu hồ sơ nào) | Đạt |
+| GT.O1 | OAI-PMH `Identify` trên máy chủ thật | 771 byte XML, có `repositoryName` | Đạt |
+| GT.O2 | OAI-PMH `ListRecords` trả biểu ghi và thẻ đọc tiếp | 66.211 byte, 50 `<record>`, có `resumptionToken` | Đạt |
+| GT.O3 | OAI-PMH `ListMetadataFormats` khai đủ định dạng | oai_dc, marc21, marcxml | Đạt |
+| GT.O4 | OAI-PMH verb sai bị từ chối bằng mã lỗi của chuẩn | `badVerb` | Đạt |
+| GT.S1 | SRU truy vấn đúng cú pháp trả MARCXML | 11.939 byte | Đạt |
+| GT.S2 | SRU truy vấn sai cú pháp bị từ chối bằng chẩn đoán, không trả cả kho | có `diagnostic`, không có `numberOfRecords` (K20 vẫn đúng) | Đạt |
+| GT.S3 | SRU chỉ mục lạ bị báo lỗi thay vì bỏ qua | có `diagnostic` | Đạt |
+| GT.S4 | SRU `operation=explain` khai báo khả năng máy chủ | 2.395 byte có `<explain>` | Đạt |
+| XK.1 | Xuất toàn kho ra ISO 2709 | 17.946.394 byte, mở đầu `00930nam a2200241 a 4500` | Đạt |
+| XK.2 | Xuất toàn kho ra MARCXML | 41.257.590 byte, mở đầu khai báo XML | Đạt |
+
