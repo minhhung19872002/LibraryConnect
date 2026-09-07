@@ -1411,7 +1411,7 @@ từ MARC · `KK.*` kiểm kê · `BC.*` báo cáo · `PH.* TH.* MV.* BM.*` năm
 `QT.*` quản trị hệ thống · `MH.*` tài liệu môn học · `PQ.*` phân quyền và phạm vi dữ liệu (mục 2.3) ·
 `TD.*` trao đổi dữ liệu (mục 2.4).
 
-Tổng: **213 phép đo**. Tám lỗi mã nguồn tìm ra (L1–L8 ở `08-so-loi.md`) đã sửa và có phép thử tự động
+Tổng: **252 phép đo**. Tám lỗi mã nguồn tìm ra (L1–L8 ở `08-so-loi.md`) đã sửa và có phép thử tự động
 đi kèm; hai việc dữ liệu trên chính máy chủ (L9, L10) đã xử lý.
 
 Nhóm `PQ.*` chạy trọn mục 2.3 của E-HSMT trên máy chủ thật bằng một tài khoản *Cán bộ lưu thông* lập

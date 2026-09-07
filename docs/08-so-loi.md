@@ -612,7 +612,7 @@ kế biểu mẫu, đường ống xử lý tài liệu số, và quy trình duy
 `thuvien.bluestar.com.vn` — ảnh `128fe02`, cùng mã với `main` vì ba commit sau đó chỉ sửa tài liệu.
 
 Cách làm: kịch bản Python gọi API bằng tài khoản đúng vai, ghi dữ liệu thật rồi dọn; chỗ nào con số
-đáng ngờ thì đối chiếu thẳng bằng `psql` trong container. **213 phép đo, 8 lỗi mã nguồn** (L1–L8)
+đáng ngờ thì đối chiếu thẳng bằng `psql` trong container. **252 phép đo, 8 lỗi mã nguồn** (L1–L8)
 cộng hai việc phải làm trên chính máy chủ (L9, L10). Kết quả từng phép đo ở phụ lục cuối
 `06-kich-ban-kiem-thu.md`.
 

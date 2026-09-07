@@ -87,7 +87,7 @@ tổng **170 lỗi, đã sửa 170**.
 
 Ngày 06–07/09/2026 chạy tiếp **đợt rà sâu theo phân hệ trên máy chủ thật** (mục L sổ lỗi), lần này chọn đúng những vùng chín đợt
 trước chạm ít nhất: quản trị nội dung, tủ gửi đồ và cổng ra vào, mục lục bài trích, danh mục tự tạo từ trường MARC, kiểm kê nạp
-tệp từ máy đọc rời, năm trình thiết kế biểu mẫu, đường ống xử lý tài liệu số, quy trình duyệt mua nhiều cấp, cộng phân quyền (mục 2.3) và trao đổi dữ liệu (mục 2.4). **213 phép đo, 8 lỗi**:
+tệp từ máy đọc rời, năm trình thiết kế biểu mẫu, đường ống xử lý tài liệu số, quy trình duyệt mua nhiều cấp, cộng phân quyền (mục 2.3) và trao đổi dữ liệu (mục 2.4). **252 phép đo, 8 lỗi**:
 nội dung trình diễn của phân hệ VIII (banner trang chủ, album ảnh) nằm sau rào "chỉ nạp khi kho biểu ghi còn trống" nên máy chủ
 nghiệm thu không có banner nào; xoá biểu ghi bài trích ở Biên mục xong vẫn không gỡ được bài khỏi mục lục dù câu báo lỗi bảo làm
 đúng như vậy; sáu tài liệu số minh hoạ không đi qua đường ống xử lý nên endpoint ảnh bìa trả 404 cho cả sáu; hạ số cấp duyệt từ 2
