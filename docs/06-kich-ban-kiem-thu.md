@@ -1411,10 +1411,10 @@ từ MARC · `KK.*` kiểm kê · `BC.*` báo cáo · `PH.* TH.* MV.* BM.*` năm
 `QT.*` quản trị hệ thống · `MH.*` tài liệu môn học · `PQ.*` phân quyền và phạm vi dữ liệu (mục 2.3) ·
 `TD.*` trao đổi dữ liệu (mục 2.4).
 
-Tổng: **293 phép đo**. Mười một lỗi mã nguồn tìm ra (L1–L11 ở `08-so-loi.md`) đã sửa và có phép thử tự
+Tổng: **285 phép đo**. Mười một lỗi mã nguồn tìm ra (L1–L11 ở `08-so-loi.md`) đã sửa và có phép thử tự
 động đi kèm; hai việc dữ liệu trên chính máy chủ (L12, L13) đã xử lý.
 
-Bốn mươi mốt phép đo cuối (`TS.*`, `PV.*`, `TT.*`, `XR.*`, `DT.*`) thuộc một đợt rà đi theo **lớp** chứ
+Ba mươi ba phép đo cuối (`TS.*`, `PV.*`, `TT.*`, `XR.*`, `DT.*`) thuộc một đợt rà đi theo **lớp** chứ
 không theo phân hệ: tham số truy vấn thù địch, phạm vi dữ liệu ở chiều **ghi** (đợt trước chỉ kiểm
 chiều đọc), chuyển trạng thái phi pháp, xoá khi còn ràng buộc, và tranh chấp đồng thời ở những lối
 chưa đua bao giờ.

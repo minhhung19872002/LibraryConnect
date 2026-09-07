@@ -615,7 +615,7 @@ Cách làm: kịch bản Python gọi API bằng tài khoản đúng vai, ghi d�
 đáng ngờ thì đối chiếu thẳng bằng `psql` trong container. **252 phép đo, 8 lỗi mã nguồn** (L1–L8)
 cộng hai việc phải làm trên chính máy chủ (L12, L13). Đợt rà thứ mười một, đi theo năm lớp
 khác hẳn — tham số thù địch, phạm vi dữ liệu ở chiều **ghi**, chuyển trạng thái phi pháp, xoá khi còn
-ràng buộc, và tranh chấp đồng thời ở những lối chưa đua bao giờ — thêm **41 phép đo** và **3 lỗi nữa**
+ràng buộc, và tranh chấp đồng thời ở những lối chưa đua bao giờ — thêm **33 phép đo** và **3 lỗi nữa**
 (L9, L10, L11), trong đó hai lỗi tranh chấp là loại chỉ hiện ra khi gửi yêu cầu thật sự song song. Kết quả từng phép đo ở phụ lục cuối
 `06-kich-ban-kiem-thu.md`.
 
