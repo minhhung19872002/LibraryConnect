@@ -300,6 +300,53 @@ public partial class DatabaseSeeder
     /// <summary>Số tài liệu nhiều nhất dựng lại ảnh bìa trong một lần khởi động.</summary>
     private const int MaxDigitalRepairPerStart = 20;
 
+    /// <summary>Bộ chữ cũ của ảnh minh họa, thiếu chữ tiếng Việt hai dấu — xem <see cref="DemoImages"/>.</summary>
+    private const string BoChuCu = "Georgia,serif";
+
+    /// <summary>Bộ chữ thay thế, đã mã hóa khoảng trắng đúng kiểu data URI.</summary>
+    private const string BoChuMoi = "Times%20New%20Roman,Times,serif";
+
+    /// <summary>
+    /// Sửa bộ chữ trong những ảnh minh họa đã nằm sẵn trong cơ sở dữ liệu.
+    ///
+    /// Sửa bộ sinh ảnh thôi thì không cứu được bản đã cài: banner và album chỉ được gieo một lần, nên
+    /// chuỗi SVG cũ — kèm nguyên chữ Georgia — nằm lại trong cột <c>image_url</c> và trình duyệt vẫn
+    /// vẽ ra "Tài liệu sô ́ mới cập nhật" như ngày 07/09/2026. Đây là phép thay chuỗi trong đúng một
+    /// thuộc tính của ảnh dựng sẵn, không đụng tới ảnh thật do thư viện tải lên (ảnh ấy là đường dẫn
+    /// tệp, không phải data URI).
+    /// </summary>
+    private async Task EnsureDemoImageFontAsync(CancellationToken ct)
+    {
+        var banners = await _db.CmsBanners
+            .Where(banner => banner.ImageUrl.Contains(BoChuCu))
+            .ToListAsync(ct);
+
+        var images = await _db.CmsGalleryImages
+            .Where(image => image.ImageUrl.Contains(BoChuCu))
+            .ToListAsync(ct);
+
+        if (banners.Count == 0 && images.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var banner in banners)
+        {
+            banner.ImageUrl = banner.ImageUrl.Replace(BoChuCu, BoChuMoi);
+        }
+
+        foreach (var image in images)
+        {
+            image.ImageUrl = image.ImageUrl.Replace(BoChuCu, BoChuMoi);
+        }
+
+        await _db.SaveChangesAsync(ct);
+
+        _logger.LogInformation(
+            "Đã đổi bộ chữ của {Banners} banner và {Images} ảnh album sang bộ có đủ chữ tiếng Việt",
+            banners.Count, images.Count);
+    }
+
     /// <summary>
     /// Dựng lại phần dẫn xuất còn thiếu của tài liệu số minh họa: ảnh bìa và phần chữ dùng để tìm
     /// toàn văn.

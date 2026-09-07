@@ -94,6 +94,10 @@ public partial class DatabaseSeeder
         // nên chúng thiếu ảnh bìa; nhánh gieo ở dưới không chạy lại nữa vì kho đã có tài liệu số.
         await EnsureDemoDigitalDerivativesAsync(ct);
 
+        // Và cùng lý do lần nữa: ảnh minh họa đã gieo mang sẵn bộ chữ Georgia, thứ không có chữ
+        // tiếng Việt hai dấu. Sửa bộ sinh ảnh không đụng tới những dòng đã nằm trong cơ sở dữ liệu.
+        await EnsureDemoImageFontAsync(ct);
+
         if (await _db.BibRecords.AnyAsync(ct))
         {
             return;

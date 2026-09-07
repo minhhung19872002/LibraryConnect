@@ -654,6 +654,66 @@ public class AcceptanceRehearsalTests
     }
 
     /// <summary>
+    /// Ảnh banner và ảnh album đã nằm sẵn trong cơ sở dữ liệu từ bản cài trước mang nguyên bộ chữ
+    /// Georgia — thứ không có chữ tiếng Việt hai dấu, nên trình duyệt tách dấu ra đứng cạnh nguyên
+    /// âm. Sửa bộ sinh ảnh không đụng tới những dòng ấy: chúng chỉ được gieo một lần.
+    /// </summary>
+    [Fact]
+    public async Task Anh_minh_hoa_da_gieo_duoc_doi_sang_bo_chu_co_du_chu_tieng_Viet()
+    {
+        using var scope = _factory.Services.CreateScope();
+
+        var db = scope.ServiceProvider
+            .GetRequiredService<LibraryConnect.Infrastructure.Persistence.LibraryConnectDbContext>();
+
+        // Dựng đúng tình trạng của máy chủ: một banner mang chuỗi SVG của bản cài cũ.
+        var banner = new LibraryConnect.Domain.Entities.Web.CmsBanner
+        {
+            Title = $"Banner bộ chữ cũ {Unique()}",
+            ImageUrl = "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20"
+                       + "viewBox='0%200%201200%20400'%3E%3Ctext%20font-family='Georgia,serif'%3E"
+                       + "T%C3%A0i%20li%E1%BB%87u%20s%E1%BB%91%3C/text%3E%3C/svg%3E",
+            Position = "HOME_SLIDER",
+            IsActive = true
+        };
+
+        db.CmsBanners.Add(banner);
+        await db.SaveChangesAsync();
+        db.ChangeTracker.Clear();
+
+        var configuration = scope.ServiceProvider
+            .GetRequiredService<Microsoft.Extensions.Configuration.IConfiguration>();
+        var seeder = scope.ServiceProvider
+            .GetRequiredService<LibraryConnect.Infrastructure.Persistence.Seeding.DatabaseSeeder>();
+
+        Environment.SetEnvironmentVariable("LC_SEED_DEMO", "true");
+        (configuration as Microsoft.Extensions.Configuration.IConfigurationRoot)?.Reload();
+
+        try
+        {
+            await seeder.SeedAsync();
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("LC_SEED_DEMO", "false");
+            (configuration as Microsoft.Extensions.Configuration.IConfigurationRoot)?.Reload();
+        }
+
+        db.ChangeTracker.Clear();
+
+        var saved = await db.CmsBanners.FirstAsync(row => row.Id == banner.Id);
+
+        saved.ImageUrl.Should().NotContain("Georgia",
+            "banner đã gieo từ bản cài trước cũng phải được đổi sang bộ chữ có đủ chữ tiếng Việt");
+
+        saved.ImageUrl.Should().Contain("Times%20New%20Roman",
+            "khoảng trắng trong tên bộ chữ phải mã hóa đúng kiểu data URI, không thì địa chỉ ảnh hỏng");
+
+        db.CmsBanners.Remove(saved);
+        await db.SaveChangesAsync();
+    }
+
+    /// <summary>
     /// Sáu tài liệu số của bản trình diễn được nạp thẳng vào kho đối tượng, không đi qua đường ống
     /// xử lý, nên chúng có tệp gốc và số trang mà không có ảnh bìa: ngày 06/09/2026 endpoint ảnh bìa
     /// trả 404 cho cả sáu tài liệu trên máy chủ nghiệm thu.
