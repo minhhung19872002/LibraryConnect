@@ -126,8 +126,15 @@ thể khớp gì cả rồi đòi kết quả bằng 0. **233 phép đo, 4 lỗi
 (bộ gieo dựng kho từ phase 6 mà chưa bao giờ dựng giá, nên 17.900/17.900 bản "chưa xếp giá", bản đồ kho
 rỗng, bạn đọc không thấy vị trí giá — chức năng xếp giá thì chạy đúng từng bước); **sắp giảm dần đẩy ô
 trống lên đầu** (7.465/12.609 biểu ghi không có năm xuất bản, nên "mới nhất trước" là 150 trang trắng);
-nhóm định dạng lạ lặng lẽ trả về cả kho; và con số facet xấp xỉ hiện ra như số đúng. Cả 4 đã sửa, tổng
-**194 lỗi, đã sửa 194**.
+nhóm định dạng lạ lặng lẽ trả về cả kho; và con số facet xấp xỉ hiện ra như số đúng. Cả 4 đã sửa.
+
+Đợt thứ mười lăm soi **26 báo cáo thống kê** theo hai câu của hồ sơ: ràng buộc kỹ thuật số 8 (đủ ba dạng đầu
+ra) và mục kiểm thử 2.8 (số liệu khớp truy vấn kiểm chứng độc lập, SQL tự viết từ định nghĩa nghiệp vụ).
+**81 phép đo đầu ra đạt sạch** — mọi báo cáo xuất ra tệp Excel và PDF thật, kiểm bằng chữ ký byte. **40 phép
+đo số liệu: 5 lỗi**, tất cả ở tầng báo cáo mà năm đợt trước không chạm: **báo cáo ĐKCB hủy bỏ trả 0 dòng**
+trên 3 quyết định thanh lý (bài học 57 lần thứ sáu), báo cáo lượt xem tài liệu số đếm 13 trên 14, nhãn kỳ của
+biểu đồ dựng từ giờ UTC nên có cột "tháng 8" trong tháng không có lượt nào, báo cáo dung lượng có tổng và biểu
+đồ chênh nhau 50 lần, và danh sách chạm trần bị cắt trong im lặng. Cả 5 đã sửa, tổng **199 lỗi, đã sửa 199**.
 Phụ lục cuối `docs/06` ghi kết quả từng kịch bản (hơn 660 dòng).
 
 Đọc thẳng hồ sơ gốc còn tìm ra thứ không phải lỗi mã: **bốn hồ sơ bàn giao** mà Chương V mục III và
@@ -165,7 +172,7 @@ huống lỗi; phải tự tay dựng đúng bối cảnh ấy trong phép thử
 **Lệnh chạy đúng:**
 
 ```bash
-cd backend  && dotnet test                 # 646 unit + 518 integration
+cd backend  && dotnet test                 # 647 unit + 522 integration
 cd frontend-admin && npx tsc -b && npx vitest run    # 347 test
 cd frontend-opac  && npx tsc -b && npx vitest run    # 102 test
 cd mobile   && flutter analyze && flutter test       # 124 test
@@ -208,6 +215,7 @@ vướng — mỗi cái sinh ra từ một lỗi đã xảy ra thật:
 | `backend/.../ConcurrencyTests.cs` | Hai luật "một … một" phải có ràng buộc duy nhất ở CSDL: một bạn đọc một thẻ hiệu lực, một kho một kỳ kiểm kê chưa chốt. Phép thử gửi ba yêu cầu **thật sự song song**; gọi tuần tự thì cả hai vẫn xanh |
 | `backend/.../Infrastructure/VietnameseFontStackTests.cs` | Không nơi nào gọi tên Georgia trong danh sách phông — Georgia thiếu glyph dựng sẵn của ố, ề, ắ, ữ nên trình duyệt tách dấu ra đứng cạnh nguyên âm. Quét cả ảnh SVG của bộ dữ liệu trình diễn lẫn `styles.css`/`theme.ts` của hai giao diện |
 | `backend/.../Infrastructure/DeployScriptTests.cs` | `gh-deploy.sh` phải có bước `don_anh_cu` giữ bản mới và bản trước, xoá ảnh `libraryconnect-*` còn lại — 20 bộ ảnh cũ từng làm đầy ổ 96 GB và chặn mọi lượt triển khai |
+| `backend/.../Security/LocalTimeInMessagesTests.cs` (luật thứ hai) | Nhãn kỳ của biểu đồ (`…At.ToString("yyyy…")`) cũng phải qua `ToLocalTime()` — luật cũ chỉ dò chuỗi có `HH` nên nhãn `yyyy-MM` lọt lưới, và một lượt xem lúc 02:00 ngày 01/09 hiện ở cột tháng 8 |
 | `backend/.../Infrastructure/StablePagingOrderTests.cs` | Mọi lượt `ToPagedResultAsync` phải kết thúc chuỗi sắp xếp bằng một khóa duy nhất — qua `ApplySort` (tự gắn) hoặc tự viết `ThenBy(x => x.Id)`. Sắp theo cột không duy nhất là trang sau lặp dòng của trang trước và đúng bấy nhiêu dòng khác không bao giờ hiện ra: 396 dòng tiền phạt chỉ có 316 dòng khác nhau |
 
 > Một phép thử quét mã nguồn chỉ chặn đúng thư mục nó quét. Thêm luật mới thì hỏi ngay: gói kia có
@@ -529,6 +537,30 @@ docker compose run --rm -d --name lc-api-kiem -e LC_DB_NAME=lc_kiem -e LC_SEED_D
     nghiệm thu: bảng giá rỗng, bản đồ kho không có ô nào, 17.900/17.900 bản "chưa xếp giá", và bạn
     đọc không bao giờ thấy vị trí giá mà IX.2 hứa. Chức năng thì chạy đúng từng bước — thiếu mỗi
     chỗ để xếp vào. Đọc `_db.X` ra rỗng trong bộ gieo thì phải hỏi ngay: **ai lẽ ra phải gieo X?**
+
+78. **Tầng báo cáo là một tầng riêng; sửa danh sách không sửa nó.** Đợt 13 chữa chín danh sách khỏi
+    lỗi "phép chiếu đi qua điều hướng bắt buộc làm rơi dòng", nhưng báo cáo dùng truy vấn khác nên
+    còn nguyên: báo cáo ĐKCB hủy bỏ trả **0 dòng** trên 3 quyết định, báo cáo lượt xem tài liệu số
+    đếm 13 trên 14. Sửa xong một lớp lỗi thì liệt kê **mọi tầng đọc dữ liệu** — danh sách, báo cáo,
+    tệp xuất, giao thức — rồi đo lại từng tầng.
+79. **Phép thử quét chỉ bắt đúng khuôn nó biết.** Luật "mốc giờ hiện cho người dùng phải là giờ máy"
+    có từ K23 nhưng chỉ dò chuỗi định dạng chứa `HH`, nên nhãn kỳ `yyyy-MM` của biểu đồ đi qua tự
+    do và một lượt xem lúc 02:00 ngày 01/09 hiện ở cột tháng 8. Nới khuôn ra `yyyy` thì bắt được
+    ngay chỗ thứ hai chưa ai biết: `<dc:date>` của tệp metadata xuất ra cũng ghi ngày UTC.
+80. **Con số tổng và biểu đồ ngay cạnh nó phải đếm cùng một tập.** Báo cáo dung lượng cộng tổng từ
+    bảng tệp (19 tệp, 12,5 MB) còn phần chia theo định dạng cộng từ bảng tài liệu (6 tài liệu,
+    266 KB): người đọc thấy hai con số cạnh nhau chênh nhau 50 lần và không biết tin cái nào. Hỏi
+    cho từng báo cáo: **tổng đếm cái gì, mỗi lát của biểu đồ đếm cái gì** — hai câu trả lời phải
+    trùng nhau.
+81. **Cắt bớt trong im lặng là nói dối trong một hồ sơ.** Mọi báo cáo danh sách đều có
+    `Take(MaxRows)`, đúng theo mục 6.3, nhưng không chỗ nào nói ra khi trần chạm tới — và tệp xuất
+    là thứ đi kèm quyết định. Máy chủ nghiệm thu đang ở 17.900 trên trần 20.000. Đặt trần thì đặt
+    luôn câu nói ra khi chạm trần (`ReportRowLimit`).
+82. **Đặt văn hoá mặc định của tiến trình, đừng để .NET chọn hộ.** Không khai thì mọi `{tien:N0}` ra
+    "2,320,000 đ" giữa câu tiếng Việt — 16 câu thông báo nghiệp vụ và mọi cột tiền của báo cáo in
+    ra. Một dòng `CultureInfo.DefaultThreadCurrentCulture = vi-VN` trong `Program.cs` sửa hết; chỗ
+    nào cần định dạng cho máy đọc (MARC, ISO 2709, khoá cache) vốn đã khai `InvariantCulture` tại
+    chỗ nên không bị kéo theo.
 
 ### A.4. Cơ chế dùng chung — dùng lại, đừng viết chỗ mới
 

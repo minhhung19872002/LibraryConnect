@@ -222,6 +222,8 @@ public class ExportAcquisitionReportQueryHandler
     {
         var rows = await _mediator.Send(new GetAcquisitionListReportQuery(query.Filter), ct);
         header.Title = "DANH SÁCH TÀI LIỆU BỔ SUNG";
+        header.Criteria = Common.Models.ReportRowLimit.WithNote(
+            header.Criteria, rows.Count, Common.Models.ReportRowLimit.Items);
 
         var name = $"danh-sach-bo-sung-{_clock.Today:yyyyMMdd}";
 
@@ -269,6 +271,8 @@ public class ExportAcquisitionReportQueryHandler
         ExportAcquisitionReportQuery query, PdfReportHeader header, CancellationToken ct)
     {
         var rows = await _mediator.Send(new GetDisposalReportQuery(query.Filter), ct);
+        header.Criteria = Common.Models.ReportRowLimit.WithNote(
+            header.Criteria, rows.Count, Common.Models.ReportRowLimit.Items);
         header.Title = "DANH SÁCH ĐKCB HỦY BỎ";
 
         var name = $"dkcb-huy-bo-{_clock.Today:yyyyMMdd}";
@@ -421,7 +425,7 @@ public record ExportStockItemsQuery(StockItemFilter Filter, IReadOnlyList<Guid>?
 
 public class ExportStockItemsQueryHandler : IRequestHandler<ExportStockItemsQuery, ExportedFile>
 {
-    private const int MaxRows = 20_000;
+    private const int MaxRows = Common.Models.ReportRowLimit.Items;
 
     private readonly IApplicationDbContext _db;
     private readonly IExcelService _excel;

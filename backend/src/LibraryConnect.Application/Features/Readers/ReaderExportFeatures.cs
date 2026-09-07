@@ -17,7 +17,7 @@ public record ExportReadersQuery(ReaderListRequest Filter) : IRequest<PrintedFil
 public class ExportReadersQueryHandler : IRequestHandler<ExportReadersQuery, PrintedFileDto>
 {
     /// <summary>Chặn trên số dòng mỗi tệp, đủ cho danh sách bạn đọc toàn trường.</summary>
-    private const int MaxRows = 50_000;
+    private const int MaxRows = Common.Models.ReportRowLimit.Readers;
 
     private readonly IApplicationDbContext _db;
     private readonly IExcelService _excel;

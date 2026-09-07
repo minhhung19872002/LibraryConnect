@@ -1791,3 +1791,22 @@ kết quả bằng 0 — ô lọc chết trả về đúng tổng gốc.
 | XG.3–XG.9 | Chức năng xếp giá chạy từng bước | lập giá, xếp bản, sinh lại ký hiệu xếp giá (`005.74 LE`), lọc lại theo giá đúng số bản, chi tiết ĐKCB hiện tên giá, trang tra cứu hiện vị trí kho/giá cho bạn đọc (IX.2), bản đồ kho hiện giá mới | Đạt |
 | FC.1 | Bộ đếm facet khớp kết quả lọc thật, câu hỏi dưới ngưỡng đếm | 36/36 phép đo khớp tuyệt đối trên hai câu hỏi có từ khoá | Đạt |
 | FC.2 | Bộ đếm facet với câu hỏi vượt ngưỡng đếm | **Trước sửa: "Sách (4.453)" bấm vào ra 4.544; Tiếng Việt 4.739 → 6.026 — con số xấp xỉ hiện như số đúng.** Sau sửa: hiện "4.453+" kèm chú giải, đúng cách con số tổng vẫn báo "Tìm thấy hơn…" | Đạt |
+
+### Đợt mười lăm — báo cáo thống kê: ba dạng đầu ra và đối chiếu số liệu (07/09/2026)
+
+Hai câu hỏi lấy thẳng từ hồ sơ: ràng buộc kỹ thuật số 8 (mỗi báo cáo đủ ba dạng đầu ra) và mục kiểm
+thử 2.8 (số liệu khớp truy vấn kiểm chứng độc lập). Chạy trên `thuvien.bluestar.com.vn`; tệp xuất ra
+được mở kiểm chữ ký byte chứ không chỉ xem mã HTTP.
+
+| Mã | Kịch bản | Kết quả thực tế | Đạt |
+|---|---|---|---|
+| R1 | 26 báo cáo của bảy phân hệ xem được trên màn hình, dữ liệu dùng được cho cả bảng lẫn biểu đồ | 7 báo cáo lưu thông, 4 bạn đọc, 4 tài liệu số, 6 bổ sung, 4 định kỳ, môn học, tổng quan — tất cả trả về cấu trúc có dòng và có nhóm | Đạt |
+| R2 | Mỗi báo cáo xuất được Excel và PDF, tệp mở ra là tệp thật | 52/52 lượt xuất: Excel mang chữ ký `PK` (7–8 KB), PDF mang chữ ký `%PDF` (44–64 KB) | Đạt |
+| SL.1–SL.13 | Số liệu bảy báo cáo lưu thông đối chiếu SQL | tổng lượt vào 291, bạn đọc khác nhau 221, đang trong thư viện 0, tổng cột biểu đồ = tổng lượt; đang mượn 621; quá hạn 363 phiếu / 361 bạn đọc / tổng các nhóm ngày = 363; bạn đọc mượn nhiều nhất 10 lượt và đúng là người nhiều nhất kho; ấn phẩm mượn nhiều nhất 13 lượt / 3 bản | Đạt |
+| BD.1–BD.6 | Số liệu bốn báo cáo bạn đọc | tổng các loại = 653; loại Sinh viên 457, đang hoạt động 457, đã từng mượn 455; thẻ sắp hết hạn 0; chưa từng mượn 8 | Đạt |
+| TS.1–TS.8 | Số liệu bốn báo cáo tài liệu số | **Trước sửa: lượt xem báo 13 trong khi kho có 14; biểu đồ có cột "2026-08" với 2 lượt dù tháng 8 không có lượt nào; dung lượng báo 13.079.611 byte với biểu đồ cộng lại 272.299.** Sau sửa: cả ba khớp | Đạt |
+| BS.1–BS.7 | Số liệu sáu báo cáo bổ sung | tổng ĐKCB 17.900 khớp ở cả ba báo cáo và cộng đúng theo dạng tài liệu lẫn theo kho; biểu ghi có ĐKCB 8.898; yêu cầu đặt mua 4. **Trước sửa: báo cáo ĐKCB hủy bỏ trả 0 dòng trong khi kho có 3 quyết định thanh lý** | Đạt |
+| DK.1–DK.2 | Số liệu báo cáo ấn phẩm định kỳ | 5 đầu báo, tổng theo mức định kỳ cộng lại đúng 5 | Đạt |
+| MH.1 | Môn học chưa có tài liệu | 1, khớp SQL | Đạt |
+| GH.1 | Danh sách chạm trần thì tệp xuất nói ra | **Trước sửa: cắt trong im lặng ở 6 chỗ.** Sau sửa: dòng "Lưu ý: danh sách đã đạt trần 20.000 dòng…" in ngay dưới phần tiêu chí | Đạt |
+| GH.2 | Số trong câu tiếng Việt viết theo lối Việt | **Trước sửa: "2,320,000 đ".** Sau sửa: "2.320.000 đ" — đặt văn hoá mặc định `vi-VN`, 16 câu thông báo và mọi cột tiền đổi theo | Đạt |

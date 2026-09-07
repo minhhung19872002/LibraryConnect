@@ -162,8 +162,16 @@ public class GetDigitalUsageReportQueryHandler
         var filter = query.Filter;
 
         // Chỉ đếm lần mở tài liệu và lần tải, không đếm từng trang lật.
+        //
+        // Bỏ bộ lọc toàn cục rồi tự lọc theo DeletedAt của chính dòng nhật ký: phép chiếu bên dưới
+        // lấy nhan đề qua `log.Document!` — điều hướng bắt buộc — nên bộ lọc xoá mềm của bảng tài
+        // liệu biến JOIN thành INNER và **con số báo cáo tụt xuống**. Đo trên máy chủ thật ngày
+        // 07/09/2026: 14 lượt mở trong kho, báo cáo nói 13. Lượt xem một tài liệu đã gỡ khỏi kho
+        // vẫn là một lượt xem đã xảy ra; báo cáo sử dụng phải đếm nó (bài học 57).
         var source = _db.DigitalAccessLogs
+            .IgnoreQueryFilters()
             .AsNoTracking()
+            .Where(log => log.DeletedAt == null)
             .Where(log => log.PageFrom == null);
 
         if (filter.CollectionId is { } collectionId)
@@ -187,7 +195,7 @@ public class GetDigitalUsageReportQueryHandler
             .Select(log => new
             {
                 log.DocumentId,
-                DocumentTitle = log.Document!.Title,
+                DocumentTitle = log.Document!.Title ?? "(Tài liệu đã gỡ khỏi kho)",
                 CollectionName = log.Document!.Collection!.Name,
                 log.ReaderId,
                 log.Action,
@@ -264,20 +272,22 @@ public class GetDigitalStorageReportQueryHandler
     public async Task<DigitalStorageReportDto> Handle(
         GetDigitalStorageReportQuery query, CancellationToken ct)
     {
+        // Cả con số tổng lẫn phần chia theo định dạng phải đếm **cùng một tập**: từng tệp thật
+        // nằm trong kho đối tượng. Trước 07/09/2026 tổng đếm tệp còn phần chia đếm tài liệu, nên
+        // trên máy chủ thật màn hình báo "12,5 MB đã dùng" với biểu đồ cộng lại được 266 KB —
+        // 2% con số ngay bên cạnh nó. Báo cáo dung lượng của V.4 trả lời câu "kho đối tượng đang
+        // giữ bao nhiêu", nên đơn vị đếm là tệp, kể cả tệp dẫn xuất và tệp của tài liệu đã gỡ.
         var files = await _db.DigitalDocumentFiles
+            .IgnoreQueryFilters()
             .AsNoTracking()
-            .Select(file => new { file.Type, file.Size })
+            .Where(file => file.DeletedAt == null)
+            .Select(file => new { file.Type, file.Size, file.MimeType, DocumentMime = file.Document!.MimeType })
             .ToListAsync(ct);
 
-        var documents = await _db.DigitalDocuments
-            .AsNoTracking()
-            .Select(document => new { document.MimeType, document.FileSize })
-            .ToListAsync(ct);
-
-        var byFormat = documents
-            .GroupBy(document => DigitalStorage.FormatGroup(document.MimeType))
+        var byFormat = files
+            .GroupBy(file => DigitalStorage.FormatGroup(file.MimeType ?? file.DocumentMime ?? string.Empty))
             .Select(group => new DigitalCountRowDto(
-                group.Key, group.Count(), group.Sum(document => document.FileSize)))
+                group.Key, group.Count(), group.Sum(file => file.Size)))
             .OrderByDescending(row => row.TotalSize)
             .ToList();
 
@@ -352,7 +362,7 @@ public class GetDigitalRequestReportQueryHandler
 }
 
 /// <summary>Nhãn tiếng Việt và cách gộp kỳ, dùng chung cho cả bốn báo cáo.</summary>
-internal static class DigitalReportLabels
+public static class DigitalReportLabels
 {
     public static string AccessLevel(DigitalAccessLevel level) => level switch
     {
@@ -362,13 +372,26 @@ internal static class DigitalReportLabels
         _ => "Cấm",
     };
 
-    public static string Period(DateTimeOffset moment, string groupBy) => groupBy.ToUpperInvariant() switch
+    /// <summary>
+    /// Nhãn kỳ của một mốc thời gian, tính theo giờ địa phương.
+    ///
+    /// Mốc lưu trong kho là UTC. Xếp kỳ thẳng từ đó là mọi việc xảy ra trước 7 giờ sáng giờ Việt
+    /// Nam bị tính sang **ngày hôm trước**, và việc xảy ra trong tuần đầu mỗi tháng bị tính sang
+    /// **tháng trước**. Đo trên máy chủ thật ngày 07/09/2026: hai lượt mở tài liệu rạng sáng
+    /// 01/09 hiện thành cột "2026-08" trên biểu đồ, trong khi tháng 8 không có lượt nào.
+    /// </summary>
+    public static string Period(DateTimeOffset moment, string groupBy)
     {
-        "NGAY" => moment.ToString("yyyy-MM-dd"),
-        "QUY" => $"{moment.Year}-Q{(moment.Month - 1) / 3 + 1}",
-        "NAM" => moment.Year.ToString(),
-        _ => moment.ToString("yyyy-MM"),
-    };
+        var local = moment.ToLocalTime();
+
+        return groupBy.ToUpperInvariant() switch
+        {
+            "NGAY" => local.ToString("yyyy-MM-dd"),
+            "QUY" => $"{local.Year}-Q{(local.Month - 1) / 3 + 1}",
+            "NAM" => local.Year.ToString(),
+            _ => local.ToString("yyyy-MM"),
+        };
+    }
 }
 
 // ---------------------------------------------------------------------------------------------

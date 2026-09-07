@@ -79,6 +79,65 @@ public class LocalTimeInMessagesTests
             string.Join(" | ", viPham));
     }
 
+    /// <summary>
+    /// Nhóm ngày / tháng / quý cũng phải tính theo giờ máy.
+    ///
+    /// Luật ở trên chỉ bắt chuỗi có <c>HH</c> — giờ trong ngày. Nhãn kỳ của biểu đồ thì chỉ có
+    /// <c>yyyy-MM</c>, nên nó lọt lưới, và một mốc UTC 31/08 19:00 (tức 01/09 02:00 giờ Việt Nam)
+    /// bị xếp vào cột "2026-08". Đo trên máy chủ thật ngày 07/09/2026: biểu đồ lượt xem tài liệu
+    /// số có cột tháng 8 với 2 lượt, trong khi tháng 8 không có lượt nào.
+    /// </summary>
+    [Fact]
+    public void Nhan_ky_cua_bieu_do_cung_tinh_theo_gio_may_chu()
+    {
+        var goc = GocKhoMa();
+        var viPham = new List<string>();
+
+        // Chỉ soi những biểu thức mang tên của một mốc thời gian đầy đủ (OccurredAt, CreatedAt,
+        // moment…). `DateOnly` và `TimeOnly` không mang múi giờ nên không thuộc luật này.
+        var nhanKy = new Regex(
+            @"(?<bieu_thuc>[A-Za-z_][A-Za-z0-9_.?\[\]()]*(?:At|Moment|moment|Timestamp))"
+            + @"\.ToString\(""[^""]*yyyy[^""]*""\)",
+            RegexOptions.Compiled);
+
+        foreach (var duAn in new[] { "LibraryConnect.Application", "LibraryConnect.Api", "LibraryConnect.Infrastructure" })
+        {
+            var thuMuc = Path.Combine(goc, "backend", "src", duAn);
+
+            if (!Directory.Exists(thuMuc))
+            {
+                continue;
+            }
+
+            foreach (var tep in Directory.EnumerateFiles(thuMuc, "*.cs", SearchOption.AllDirectories))
+            {
+                if (tep.Contains($"{Path.DirectorySeparatorChar}Migrations{Path.DirectorySeparatorChar}"))
+                {
+                    continue;
+                }
+
+                foreach (Match khop in nhanKy.Matches(File.ReadAllText(tep)))
+                {
+                    var bieuThuc = khop.Groups["bieu_thuc"].Value;
+
+                    var anToan = bieuThuc.Contains("ToLocalTime()")
+                                 || bieuThuc.Contains("LocalDateTime")
+                                 || bieuThuc.Contains("Now", StringComparison.OrdinalIgnoreCase);
+
+                    if (!anToan)
+                    {
+                        viPham.Add($"{Path.GetFileName(tep)}: {khop.Value}");
+                    }
+                }
+            }
+        }
+
+        viPham.Should().BeEmpty(
+            "nhãn kỳ dựng thẳng từ mốc UTC là xếp việc rạng sáng sang ngày và tháng trước. "
+            + "Vi phạm: {0}",
+            string.Join(" | ", viPham));
+    }
+
     private static string GocKhoMa()
     {
         var thuMuc = new DirectoryInfo(AppContext.BaseDirectory);

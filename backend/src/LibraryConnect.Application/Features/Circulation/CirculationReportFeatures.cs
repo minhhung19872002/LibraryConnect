@@ -151,7 +151,7 @@ public record GetCurrentLoansReportQuery(CirculationReportFilter Filter)
 public class GetCurrentLoansReportQueryHandler
     : IRequestHandler<GetCurrentLoansReportQuery, IReadOnlyList<LoanRowDto>>
 {
-    private const int MaxRows = 5000;
+    private const int MaxRows = Common.Models.ReportRowLimit.Loans;
 
     private readonly IApplicationDbContext _db;
     private readonly ICirculationPolicyResolver _policies;
@@ -203,7 +203,7 @@ public class LoanHistoryReportDto
 public class GetLoanHistoryReportQueryHandler
     : IRequestHandler<GetLoanHistoryReportQuery, LoanHistoryReportDto>
 {
-    private const int MaxRows = 5000;
+    private const int MaxRows = Common.Models.ReportRowLimit.Loans;
 
     private readonly IApplicationDbContext _db;
     private readonly ICirculationPolicyResolver _policies;
@@ -279,7 +279,7 @@ public class OverdueReportDto
 
 public class GetOverdueReportQueryHandler : IRequestHandler<GetOverdueReportQuery, OverdueReportDto>
 {
-    private const int MaxRows = 5000;
+    private const int MaxRows = Common.Models.ReportRowLimit.Loans;
 
     private readonly IApplicationDbContext _db;
     private readonly ICirculationPolicyResolver _policies;

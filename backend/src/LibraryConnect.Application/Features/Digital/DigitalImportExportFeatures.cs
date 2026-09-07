@@ -594,7 +594,7 @@ public static class DigitalMetadataBuilder
                 new XElement(dc + "title", document.Title),
                 document.Description is null ? null : new XElement(dc + "description", document.Description),
                 new XElement(dc + "format", document.MimeType),
-                new XElement(dc + "date", document.UploadAt.ToString("yyyy-MM-dd")),
+                new XElement(dc + "date", document.UploadAt.ToLocalTime().ToString("yyyy-MM-dd")),
                 document.Bib?.AuthorMain is null
                     ? null
                     : new XElement(dc + "creator", document.Bib.AuthorMain),

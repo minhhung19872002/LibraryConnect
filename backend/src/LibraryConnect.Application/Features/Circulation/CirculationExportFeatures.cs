@@ -152,6 +152,9 @@ public class ExportCirculationReportQueryHandler
                               $"còn giữ {report.StillOut:#,##0}";
         }
 
+        header.Criteria = Common.Models.ReportRowLimit.WithNote(
+            header.Criteria, rows.Count, Common.Models.ReportRowLimit.Loans);
+
         return query.AsPdf
             ? Pdf(_pdf.RenderTable(header, LoanPdfColumns(current), rows),
                 current ? "dang-muon" : "lich-su-muon-tra")

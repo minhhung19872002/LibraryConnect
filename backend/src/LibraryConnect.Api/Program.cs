@@ -29,6 +29,15 @@ using Serilog;
 // as mojibake, which makes on-site troubleshooting needlessly hard.
 Console.OutputEncoding = System.Text.Encoding.UTF8;
 
+// Mọi con số hiện cho người dùng là con số tiếng Việt: "2.320.000 đ", không phải "2,320,000 đ".
+// Không đặt thì .NET dùng đối chiếu bất biến (dấu phẩy ngăn nghìn) cho mọi chuỗi định dạng "N0" và
+// "#,##0" — 16 câu thông báo nghiệp vụ và mọi cột tiền của báo cáo in ra kiểu Anh giữa câu tiếng
+// Việt. Chỗ nào cần định dạng cho máy đọc (MARC, ISO 2709, khoá cache) đã khai
+// CultureInfo.InvariantCulture ngay tại chỗ nên không bị ảnh hưởng.
+var vietnamese = System.Globalization.CultureInfo.GetCultureInfo("vi-VN");
+System.Globalization.CultureInfo.DefaultThreadCurrentCulture = vietnamese;
+System.Globalization.CultureInfo.DefaultThreadCurrentUICulture = vietnamese;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Mục 6.5 — dừng êm. Mặc định của .NET là 5 giây: một lượt nhập biểu ghi, một phiên Z39.50 hay một

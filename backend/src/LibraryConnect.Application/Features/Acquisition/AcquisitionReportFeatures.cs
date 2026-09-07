@@ -451,7 +451,7 @@ public record GetAcquisitionListReportQuery(AcquisitionReportFilter Filter)
 public class GetAcquisitionListReportQueryHandler
     : IRequestHandler<GetAcquisitionListReportQuery, IReadOnlyList<AcquisitionListRowDto>>
 {
-    private const int MaxRows = 20_000;
+    private const int MaxRows = Common.Models.ReportRowLimit.Items;
 
     private readonly IApplicationDbContext _db;
 
@@ -505,16 +505,36 @@ public class GetDisposalReportQueryHandler
     : IRequestHandler<GetDisposalReportQuery, IReadOnlyList<DisposalReportRowDto>>
 {
     private readonly IApplicationDbContext _db;
+    private readonly IDataScopeContext _scope;
 
-    public GetDisposalReportQueryHandler(IApplicationDbContext db) => _db = db;
+    public GetDisposalReportQueryHandler(IApplicationDbContext db, IDataScopeContext scope)
+    {
+        _db = db;
+        _scope = scope;
+    }
 
     public async Task<IReadOnlyList<DisposalReportRowDto>> Handle(
         GetDisposalReportQuery query, CancellationToken ct)
     {
         var filter = query.Filter;
 
+        // Bỏ bộ lọc toàn cục là bỏ luôn phạm vi kho, thứ trước đây được cưỡng chế nhờ chính cái
+        // JOIN sang ĐKCB đã lọc. Áp lại bằng tay để cán bộ chỉ thấy quyết định của kho mình.
+        var scopeWarehouses = _scope.WarehouseRestricted
+            ? _scope.WarehouseIds.ToList()
+            : new List<Guid>();
+
+        // Bỏ bộ lọc toàn cục rồi tự lọc theo DeletedAt của chính dòng quyết định: phép chiếu lấy
+        // mã vạch, nhan đề và tên kho qua `disposal.Item!` — điều hướng bắt buộc — nên bản sách bị
+        // xoá mềm là **cả dòng quyết định biến khỏi báo cáo**. Đúng nghịch lý: báo cáo ĐKCB hủy bỏ
+        // là chỗ duy nhất còn kể được chuyện những bản đã rời kho, mà nó lại im lặng về chính
+        // chúng. Đo trên máy chủ thật ngày 07/09/2026: 3 quyết định trong kho, báo cáo trả 0 dòng.
         return await _db.ItemDisposals
+            .IgnoreQueryFilters()
             .AsNoTracking()
+            .Where(disposal => disposal.DeletedAt == null)
+            .WhereIf(scopeWarehouses.Count > 0,
+                disposal => scopeWarehouses.Contains(disposal.Item!.WarehouseId))
             // Ngày ở đây là ngày ra quyết định, không phải ngày bổ sung: báo cáo hủy bỏ hỏi "năm nay
             // thanh lý những gì", chứ không hỏi những cuốn nhập năm nay.
             .WhereIf(filter.From is not null, disposal => disposal.DisposalDate >= filter.From)

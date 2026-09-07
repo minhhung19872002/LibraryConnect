@@ -767,6 +767,44 @@ chưa bao giờ có giá.
   hai cuốn in năm 1486 và 1491 thu hoạch từ Thư viện Quốc hội Mỹ; `subscribedOnly` ra đủ 5 đầu báo
   vì cả 5 đều còn hạn đặt.
 
+## O. Đợt rà thứ mười lăm — báo cáo thống kê (07/09/2026)
+
+Vùng chưa bao giờ quét ngang: **26 báo cáo** của bảy phân hệ. Hai câu hỏi lấy thẳng từ hồ sơ:
+
+- Ràng buộc kỹ thuật số 8: *"Mọi báo cáo phải có 3 dạng đầu ra: xem trên màn hình (bảng), đồ họa
+  (chart), xuất file (PDF/Excel)"* → gọi từng báo cáo, rồi xuất cả Excel lẫn PDF và **mở tệp ra
+  kiểm chữ ký** (`PK` / `%PDF`), không tin mã 200.
+- Mục kiểm thử 2.8: *"số liệu báo cáo khớp với query kiểm chứng độc lập"* → tự viết SQL từ định
+  nghĩa nghiệp vụ, không đọc mã nguồn của báo cáo, rồi so hai con số.
+
+**81 phép đo đầu ra: 81/81 đạt** — mọi báo cáo đều xem được và xuất ra tệp thật, cái nhỏ nhất
+7 KB, cái lớn nhất 63 KB. **40 phép đo đối chiếu số liệu: 5 lỗi.**
+
+| # | Màn hình | Mô tả lỗi | Cách tái hiện | Mức độ | Loại | Trạng thái |
+|---|---|---|---|---|---|---|
+| O1 | Bổ sung → Báo cáo ĐKCB hủy bỏ (III.2) | **Báo cáo về những bản đã rời kho lại im lặng về chính chúng.** Phép chiếu lấy mã vạch, nhan đề và tên kho qua `disposal.Item!` — điều hướng bắt buộc — nên bản sách bị xoá mềm là cả dòng quyết định thanh lý biến khỏi báo cáo, trong khi bảng `item_disposals` giữ nguyên. Đây là bài học 57 lần thứ sáu, lần này ở tầng báo cáo mà bốn đợt trước chưa chạm tới. | Trên máy chủ thật: `select count(*) from acq.item_disposals where deleted_at is null` = **3**; `POST /api/acquisition/reports/disposals` trả **0 dòng**. | **Nặng** | Nghiệp vụ | Đã sửa — báo cáo bỏ bộ lọc toàn cục rồi tự lọc theo `DeletedAt` của chính dòng quyết định, kèm áp lại phạm vi kho bằng tay; `ReportNumbersTests.Bao_cao_DKCB_huy_bo_van_ke_lai_ban_da_bi_xoa_khoi_kho` |
+| O2 | Tài liệu số → Báo cáo lượt xem / lượt tải (V.4) | Cùng cơ chế: `log.Document!.Title` trong phép chiếu làm mất lượt xem của tài liệu đã gỡ khỏi kho. Lượt xem đã xảy ra thì đã xảy ra; báo cáo sử dụng đếm thiếu là báo cáo sai. | Máy chủ thật: 14 lượt mở tài liệu trong kho (`page_from is null`), báo cáo nói **13**. | Vừa | Nghiệp vụ | Đã sửa — cùng cách với O1; nhan đề của tài liệu đã gỡ hiện "(Tài liệu đã gỡ khỏi kho)" |
+| O3 | Tài liệu số → biểu đồ theo kỳ; xuất metadata Dublin Core | **Nhãn kỳ của biểu đồ dựng thẳng từ mốc UTC**, nên việc xảy ra trước 7 giờ sáng giờ Việt Nam bị xếp sang ngày hôm trước, và việc trong tuần đầu mỗi tháng bị xếp sang tháng trước. Phép thử quét giờ đã có từ K23 chỉ bắt chuỗi có `HH`, nên nhãn `yyyy-MM` lọt lưới. Cùng lỗi ở một chỗ nữa: `<dc:date>` của tệp metadata xuất ra ghi ngày UTC. | Máy chủ thật: biểu đồ lượt xem có cột **"2026-08" với 2 lượt**, trong khi mọi lượt xem của kho đều xảy ra từ 01/09 trở đi tính theo giờ Việt Nam. | Vừa | Nghiệp vụ | Đã sửa — `DigitalReportLabels.Period` đổi sang giờ máy; luật quét mở rộng sang nhãn `yyyy` và bắt được ngay chỗ thứ hai (`LocalTimeInMessagesTests.Nhan_ky_cua_bieu_do_cung_tinh_theo_gio_may_chu`, đỏ với 2 vi phạm trước khi sửa) |
+| O4 | Tài liệu số → Báo cáo dung lượng lưu trữ (V.4) | **Con số tổng và biểu đồ ngay cạnh nó đếm hai tập khác nhau**: tổng cộng từng tệp trong kho đối tượng (19 tệp), còn phần chia theo định dạng cộng cột `file_size` của từng tài liệu (6 tài liệu). Màn hình báo "12,5 MB đã dùng" với biểu đồ cộng lại được 266 KB — 2% con số bên cạnh. | Máy chủ thật: `totalSize` = 13.079.611, `sum(byFormat.totalSize)` = 272.299. | Vừa | Nghiệp vụ | Đã sửa — cả hai nửa đếm cùng một tập là từng tệp; `ReportNumbersTests.Bao_cao_dung_luong_co_tong_bang_dung_tong_cac_nhom_dinh_dang` |
+| O5 | Mọi báo cáo dạng danh sách, và mọi câu thông báo có con số | Hai chuyện nhỏ cùng một gốc "nói cho người Việt đọc". (a) **Danh sách chạm trần bị cắt trong im lặng**: mỗi báo cáo danh sách có `Take(MaxRows)` — đúng theo mục 6.3 — nhưng không cờ trong dữ liệu, không dòng nào trong tệp xuất; một thư viện 25.000 ĐKCB xuất "Danh sách tài liệu bổ sung" nhận tệp thiếu 5.000 dòng mà không biết. Máy chủ nghiệm thu đang ở **17.900 trên trần 20.000**. (b) **Số trong câu tiếng Việt dùng dấu phân cách tiếng Anh**: không nơi nào đặt văn hoá mặc định nên `{amount:N0}` ra "2,320,000 đ" giữa câu tiếng Việt — 16 câu thông báo nghiệp vụ và mọi cột tiền của báo cáo in ra. | (a) đọc mã: `MaxRows` có ở 6 chỗ, không chỗ nào nói ra. (b) `GET /api/acquisition/reports/purchase-approval` → thông báo duyệt in "2,320,000 đ". | Nhẹ | Giao diện | Đã sửa — `ReportRowLimit` gom trần về một chỗ và sinh dòng ghi chú in ngay dưới phần tiêu chí của tệp; `Program.cs` đặt văn hoá mặc định `vi-VN`, chỗ nào cần định dạng cho máy đọc đã khai `InvariantCulture` tại chỗ nên không đổi |
+
+### Đã kiểm trong đợt này và vẫn tốt
+
+- **81/81 phép đo ba dạng đầu ra**: 26 báo cáo của bảy phân hệ đều xem được trên màn hình với cấu
+  trúc dùng được cho cả bảng lẫn biểu đồ, và xuất ra **tệp Excel thật (chữ ký `PK`) lẫn PDF thật
+  (chữ ký `%PDF`)** — kể cả bảng tổng hợp đa chiều (pivot) và báo cáo tổng quan toàn hệ thống.
+- **35/40 phép đo đối chiếu SQL khớp tuyệt đối**, gồm những con số hội đồng hay soi nhất: tổng lượt
+  vào thư viện (291) và số bạn đọc khác nhau (221); số phiếu đang mượn (621); số phiếu quá hạn (363)
+  cùng số bạn đọc quá hạn (361) và tổng các nhóm ngày quá hạn; bạn đọc mượn nhiều nhất **đúng là
+  người có nhiều lượt nhất kho**; ấn phẩm mượn nhiều nhất đúng cả số lượt lẫn số bản; tổng bạn đọc
+  theo loại (653) và riêng từng loại; số bạn đọc chưa từng mượn (8); tổng ĐKCB theo dạng tài liệu và
+  theo kho đều cộng lại đúng 17.900; số biểu ghi có ĐKCB (8.898); tổng yêu cầu đặt mua (4); số đầu
+  báo (5) theo cả hai chiều thống kê; môn học chưa có tài liệu (1).
+- **Quy tắc "chỉ đếm lần mở, không đếm trang lật"** của báo cáo lượt xem là đúng và có chú thích —
+  con số 14 so với 35 dòng nhật ký là do luật ấy, không phải lỗi.
+- **Trần số dòng có ở đủ 6 chỗ** và áp cả cho tệp xuất, đúng tinh thần mục 6.3; chỗ thiếu chỉ là
+  lời nói ra.
+
 ## Đ. Những chỗ đã thử phá nhưng hệ thống chịu được
 
 Ghi lại để biết chỗ nào đã kiểm và không phải kiểm lại — kèm bằng chứng, không ghi suông.
@@ -874,7 +912,7 @@ dạng quét mã nguồn chặn cả lớp lỗi quay lại thay vì chỉ chặ
 
 Cộng cả ba đợt, đợt áp thiết kế, đợt triển khai và ba đợt rà hoàn thiện ngày 04/09/2026:
 **147 lỗi, đã sửa 145**; thêm **23 lỗi của đợt nghiệm thu thử, test sâu, ba đợt test kỹ thuật ngày
-05/09/2026 và ba đợt soi nghiệp vụ – giao thức – bảo mật ngày 06/09/2026 (mục K), đã sửa cả 23** — tổng **170 lỗi, đã sửa 170**; cộng **16 lỗi mục L**, **4 lỗi mục M** và **4 lỗi mục N** của năm đợt rà sâu ngày 06–07/09/2026 — tổng **194 lỗi, đã sửa 194**. Hai mục H3 và H9 đã làm xong ngày 03/09/2026 và ghi ở cột cuối
+05/09/2026 và ba đợt soi nghiệp vụ – giao thức – bảo mật ngày 06/09/2026 (mục K), đã sửa cả 23** — tổng **170 lỗi, đã sửa 170**; cộng **16 lỗi mục L**, **4 lỗi mục M**, **4 lỗi mục N** và **5 lỗi mục O** của sáu đợt rà sâu ngày 06–07/09/2026 — tổng **199 lỗi, đã sửa 199**. Hai mục H3 và H9 đã làm xong ngày 03/09/2026 và ghi ở cột cuối
 của chính hai dòng ấy — con số 134 giữ nguyên cách đếm cũ để đối chiếu được với các bản trước.
 Mỗi lỗi đã sửa đều có phép thử chạy đỏ trước khi sửa và xanh sau khi sửa, kể cả H7: phép thử giả
 tiêu đề đỏ trước khi sửa `CurrentUser.Ip`.
