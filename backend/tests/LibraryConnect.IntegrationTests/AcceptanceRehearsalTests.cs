@@ -712,10 +712,7 @@ public class AcceptanceRehearsalTests
             && row.Type == LibraryConnect.Domain.Enums.DigitalFileType.Thumbnail))
             .Should().BeTrue("lối tải lên phải dựng được ảnh bìa — nếu không thì phép thử dưới đây vô nghĩa");
 
-        // Dựng lại đúng tình trạng của máy chủ: tài liệu mang ghi chú của bộ minh họa, chỉ còn tệp gốc.
-        var seededDocument = await db.DigitalDocuments.FirstAsync(row => row.Id == documentId);
-        seededDocument.Description = "Tài liệu minh họa đi kèm bản cài đặt.";
-
+        // Dựng lại đúng tình trạng của máy chủ: tài liệu PDF chỉ còn tệp gốc, không có ảnh bìa.
         db.DigitalDocumentFiles.RemoveRange(await db.DigitalDocumentFiles
             .Where(row => row.DocumentId == documentId
                           && row.Type == LibraryConnect.Domain.Enums.DigitalFileType.Thumbnail)

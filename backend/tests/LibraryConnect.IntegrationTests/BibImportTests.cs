@@ -429,4 +429,63 @@ public class BibImportTests
             await parameters.InvalidateAsync();
         }
     }
+
+    /// <summary>
+    /// Một biểu ghi hỏng trong tệp không được kéo theo biểu ghi lành đứng sau nó.
+    ///
+    /// Trước 07/09/2026, biểu ghi bị bộ kiểm tra từ chối vẫn nằm lại trong bộ theo dõi của Entity
+    /// Framework: nó đã được <c>Add</c> và dựng xong quan hệ trước bước kiểm tra, còn nhánh trả về
+    /// "không hợp lệ" thì không dọn gì cả (chỉ nhánh ném ngoại lệ mới dọn). Lượt lưu của biểu ghi kế
+    /// tiếp vì thế mang luôn biểu ghi hỏng đi ghi — hoặc đổ vì ràng buộc, hoặc tệ hơn là **ghi được**
+    /// một biểu ghi mà hệ thống vừa nói là không hợp lệ. Trên máy chủ thật, một lượt nhập 12.610
+    /// biểu ghi chết hẳn sau 268 dòng với câu tiếng Anh của khung nền.
+    /// </summary>
+    [Fact]
+    public async Task Mot_bieu_ghi_hong_khong_keo_theo_bieu_ghi_lanh_dung_sau_no()
+    {
+        var client = await ClientAsync();
+        var marker = Guid.NewGuid().ToString("N")[..8].ToUpperInvariant();
+
+        var hong = new MarcRecord();
+        hong.Leader.RecordType = 'a';
+        hong.Leader.BibliographicLevel = 'm';
+        hong.SetControlField("001", $"HONG-{marker}");
+        hong.SetControlField("008", "240115s2024    vm a     b    000 0 vie d");
+        hong.AddField("245", '1', '0').AddSubfield('a', $"Biểu ghi hỏng {marker}");
+        // 856 thiếu $u — đúng lỗi mà tệp trên máy chủ thật vấp phải.
+        hong.AddField("856", '4', '0').AddSubfield('y', "Toàn văn");
+
+        var lanh = new MarcRecord();
+        lanh.Leader.RecordType = 'a';
+        lanh.Leader.BibliographicLevel = 'm';
+        lanh.SetControlField("001", $"LANH-{marker}");
+        lanh.SetControlField("008", "240115s2024    vm a     b    000 0 vie d");
+        lanh.AddField("245", '1', '0').AddSubfield('a', $"Biểu ghi lành {marker}");
+        lanh.AddField("100", '1').AddSubfield('a', $"Nguyễn Văn Lành {marker}");
+
+        var file = Iso2709Writer.WriteMany(new[] { hong, lanh }).Content;
+
+        var job = await RunImportAsync(client, file, new { onDuplicate = "CreateNew", status = "Published" });
+
+        job.Status.Should().Be(Domain.Enums.JobStatus.Completed,
+            "một biểu ghi hỏng không được đánh đổ cả lượt nhập");
+        job.Success.Should().Be(1, "biểu ghi lành vẫn phải vào được");
+        job.Failed.Should().Be(1, "biểu ghi hỏng bị từ chối và được đếm là lỗi");
+
+        job.Errors.Should().Contain(error => error.Message.Contains("856"),
+            "báo cáo lỗi phải nói đúng trường hỏng");
+
+        job.Errors.Should().NotContain(error => error.Message.Contains("An error occurred while saving"),
+            "câu của khung nền là tiếng Anh, không được lọt vào báo cáo cho cán bộ thư viện");
+
+        var found = await client.GetFromJsonAsync<ApiResponse<PagedResult<BibListItemDto>>>(
+            $"/api/cataloging/bibs?keyword={Uri.EscapeDataString(marker)}&pageSize=20",
+            LibraryConnectFactory.JsonOptions);
+
+        var titles = found!.Data!.Items.Select(item => item.Title).ToList();
+
+        titles.Should().Contain(title => title.Contains($"Biểu ghi lành {marker}"));
+        titles.Should().NotContain(title => title.Contains($"Biểu ghi hỏng {marker}"),
+            "biểu ghi hệ thống vừa từ chối không được lọt vào kho theo lượt lưu của biểu ghi sau");
+    }
 }

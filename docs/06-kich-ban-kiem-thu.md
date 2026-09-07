@@ -1406,11 +1406,16 @@ chiếu thẳng bằng `psql` trong container. Dữ liệu ghi thêm mang dấu 
 
 Tiền tố mã: `CMS.*` quản trị nội dung · `LK.*` tủ gửi đồ · `GT.*` cổng ra vào và giao thức trao đổi ·
 `OP.*` trang tra cứu và tài khoản bạn đọc · `SR.*` bài trích ấn phẩm định kỳ · `CI.*` danh mục tự tạo
-từ MARC · `KK.*` kiểm kê · `BC.*` báo cáo · `PH.* TH.* MV.* BM.*` năm trình thiết kế và in ấn ·
-`TS.* DU.*` tài liệu số · `DM.*` đơn đặt và duyệt mua · `SL.*` sao lưu · `BD.*` nhập dữ liệu bạn đọc.
+từ MARC · `KK.*` kiểm kê · `BC.*` báo cáo · `PH.* TH.* MV.* BM.*` năm trình thiết kế, in ấn và biên mục ·
+`TS.* DU.*` tài liệu số · `DM.*` đơn đặt và duyệt mua · `SL.*` sao lưu · `BD.*` bạn đọc ·
+`QT.*` quản trị hệ thống · `MH.*` tài liệu môn học · `PQ.*` phân quyền và phạm vi dữ liệu (mục 2.3) ·
+`TD.*` trao đổi dữ liệu (mục 2.4).
 
-Tổng: **135 phép đo**. Bốn lỗi mã nguồn tìm ra (L1–L4 ở `08-so-loi.md`) đã sửa và có phép thử tự động
-đi kèm; hai việc dữ liệu trên chính máy chủ (L5, L6) đã xử lý.
+Tổng: **173 phép đo**. Sáu lỗi mã nguồn tìm ra (L1–L6 ở `08-so-loi.md`) đã sửa và có phép thử tự động
+đi kèm; hai việc dữ liệu trên chính máy chủ (L7, L8) đã xử lý.
+
+Nhóm `PQ.*` chạy trọn mục 2.3 của E-HSMT trên máy chủ thật bằng một tài khoản *Cán bộ lưu thông* lập
+riêng cho đợt này, gán phạm vi dữ liệu đúng một kho: 13/13 đạt, và đã xóa tài khoản ấy sau khi xong.
 
 | Mã | Luật nghiệp vụ | Kết quả thực tế | Đạt |
 |---|---|---|---|
@@ -1563,4 +1568,74 @@ Tổng: **135 phép đo**. Bốn lỗi mã nguồn tìm ra (L1–L4 ở `08-so-l
 | GT.S4 | SRU `operation=explain` khai báo khả năng máy chủ | 2.395 byte có `<explain>` | Đạt |
 | XK.1 | Xuất toàn kho ra ISO 2709 | 17.946.394 byte, mở đầu `00930nam a2200241 a 4500` | Đạt |
 | XK.2 | Xuất toàn kho ra MARCXML | 41.257.590 byte, mở đầu khai báo XML | Đạt |
-
+| QT.1 | Danh sách nhóm người dùng đủ 5 nhóm mẫu | CATALOGER, ACQUISITION, CIRCULATION, SYS_ADMIN, LIBRARIAN | Đạt |
+| QT.2 | Nhóm Quản trị hệ thống có đủ bảng quyền, cây quyền phân cấp theo module | 161 quyền được chọn, 11 nhóm module | Đạt |
+| QT.3 | Thêm một nhóm người dùng mới | 200 "Thêm nhóm người dùng thành công." | Đạt |
+| QT.4 | Sao chép quyền từ nhóm khác | 200 "Đã sao chép 161 quyền sang nhóm."; nhóm mới nhận đúng 161 | Đạt |
+| QT.5 | Sửa danh sách quyền của nhóm, lưu đúng số quyền đã chọn | còn đúng 2 quyền đã tick | Đạt |
+| QT.6 | Nhóm hệ thống không cho xóa | 409 "Không thể xóa nhóm hệ thống." | Đạt |
+| QT.7 | Thêm người dùng, gán nhóm | 200, kèm câu nhắc phải đổi mật khẩu lần đầu | Đạt |
+| QT.8 | Đặt lại mật khẩu sinh mật khẩu tạm | 200, mật khẩu tạm 10 ký tự | Đạt |
+| QT.9 | Khóa / mở khóa tài khoản đổi trạng thái thật | khóa → `isActive=False`, `lockedUntil=2036-09-04`; mở khóa → `lockedUntil=None` | Đạt |
+| QT.10 | Xem lịch sử đăng nhập của từng người dùng | 200, phân trang | Đạt |
+| QT.11 | Tải tệp Excel mẫu nhập người dùng | 10.268 byte `PK` | Đạt |
+| QT.12 | Lịch sử thay đổi tham số ghi ai đổi, từ giá trị nào sang giá trị nào | 15 dòng; gần nhất `ACQ.APPROVAL_LEVELS` "2" → "1" bởi admin | Đạt |
+| QT.13 | Màn hình nhật ký có sẵn bộ lọc theo người dùng, hành động, đối tượng | danh sách đối tượng đầy đủ theo tên thực thể | Đạt |
+| QT.14 | Tra cứu nhật ký lọc theo hành động | 153.046 bản ghi hành động Thêm mới | Đạt |
+| QT.15 | Chi tiết một bản ghi nhật ký có giá trị trước và sau dạng JSON | có `newValue`, `entity` | Đạt |
+| QT.16 | Xuất nhật ký ra tệp | 2.180.399 byte `PK` | Đạt |
+| QT.17 | Cài đặt chế độ ghi nhật ký theo từng đối tượng | 20 đối tượng, mỗi dòng có bốn công tắc Thêm/Sửa/Xóa/Xem | Đạt |
+| BM.7 | Lịch sử phiên bản của biểu ghi đọc được | 200 | Đạt |
+| BM.9 | Tab lịch sử lưu thông của biểu ghi | 13 lượt mượn | Đạt |
+| BM.10 | Bộ định nghĩa trường MARC 21 nạp sẵn | 220 trường | Đạt |
+| BM.11 | Tra định nghĩa một trường: tên tiếng Việt, chỉ thị, trường con | 245 = "Nhan đề và thông tin trách nhiệm", 2 chỉ thị, 12 trường con | Đạt |
+| BM.12 | Kiểm tra biểu ghi tại chỗ trả về danh sách lỗi và cảnh báo | `isValid` kèm danh sách `issues` nêu đúng tag và trường con | Đạt |
+| BM.13 | Xem trước dạng ISBD và dạng thẻ mục lục | trả `isbd` theo nhãn và `paragraph` | Đạt |
+| BM.14 | Hàng đợi biên mục có số đếm theo từng cột | chờ xử lý 981, đã hoàn thành 7.470 | Đạt |
+| BM.15 | Thống kê năng suất biên mục theo cán bộ | có `assigned`, `completed`, `returned`, `averageDays` | Đạt |
+| BD.1 | Thêm hồ sơ bạn đọc, số thẻ sinh tự động theo quy tắc | TV2026000686, trạng thái Hoạt động | Đạt |
+| BD.2 | Ghi nhận vi phạm của bạn đọc kèm tiền phạt | 1 vi phạm, 50.000 đ | Đạt |
+| BD.3 | Gia hạn thẻ cộng đúng số tháng | hạn thẻ dời thêm 12 tháng | Đạt |
+| BD.4 | Tạm khóa thẻ bạn đọc kèm lý do | 200 "Đã tạm khóa 1 thẻ.", trạng thái `Suspended` | Đạt |
+| BD.5 | Mở khóa thẻ bạn đọc | trạng thái về `Active` | Đạt |
+| BD.6 | Cấp lại thẻ: số thẻ mới, thẻ cũ giữ trong lịch sử | TV2026000686 → TV2026000687 | Đạt |
+| BD.7 | Kiểm tra công nợ trước khi cho ra trường | trả `outstandingLoans`, `outstandingFines`, `cleared`, `blockers` | Đạt |
+| BD.8 | In giấy xác nhận trả sách ra PDF | 43.500 byte `%PDF-1.7` | Đạt |
+| BD.9 | Chuyển trạng thái ra trường hàng loạt | 200 "Đã chuyển 1 bạn đọc sang trạng thái ra trường." | Đạt |
+| BD.10 | Bốn tab lịch sử của hồ sơ bạn đọc (mượn, phạt, ra vào, tài liệu số) | cả bốn trả 200 | Đạt |
+| MH.1 | Danh sách ngành đào tạo quản lý ở màn hình Danh mục | 6 ngành | Đạt |
+| MH.2 | Danh sách môn học kèm số tín chỉ và ngành | 14 môn, mỗi môn có `credits`, `semester`, danh sách ngành | Đạt |
+| MH.3 | Tài liệu đã gán cho một môn học, đủ ba kiểu liên kết | Giáo trình chính, Tham khảo bắt buộc, Tham khảo thêm | Đạt |
+| MH.4 | Bạn đọc duyệt theo ngành đào tạo trên trang tra cứu | 6 ngành | Đạt |
+| MH.5 | Duyệt tiếp sang môn học của ngành ấy | 7 môn | Đạt |
+| MH.6 | Thấy danh sách tài liệu của môn học kèm tình trạng bản in | 4 tài liệu kèm nhãn kiểu liên kết và thông tin biểu ghi | Đạt |
+| MH.7 | Danh mục luận văn / luận án trên trang tra cứu | 2.755 bản ghi | Đạt |
+| MH.8 | Danh mục ấn phẩm định kỳ trên trang tra cứu | 5 đầu báo | Đạt |
+| MH.9 | Báo cáo tài liệu môn học: môn chưa có tài liệu, mức độ đáp ứng theo ngành | có `withoutDocuments` nêu đúng mã môn và các ngành | Đạt |
+| MH.10 | Tải tệp Excel mẫu gán tài liệu cho môn học | 9.724 byte `PK` | Đạt |
+| TS.7 | Danh sách yêu cầu đọc tài liệu hạn chế | 3 yêu cầu | Đạt |
+| TS.8 | Nhật ký truy cập tài liệu số: ai xem, tài liệu nào, IP | 38 dòng, có `action`, `ip`, `userName` | Đạt |
+| TS.9 | Báo cáo lượt xem / lượt tải theo thời gian | 12 lượt xem, 1 lượt tải, chia theo tháng, có top tài liệu | Đạt |
+| TS.10 | Thống kê yêu cầu truy cập hạn chế | tổng 3, chờ 1, duyệt 1, thời gian xử lý trung bình 0,1 giờ | Đạt |
+| PQ.1 | Tạo tài khoản cán bộ lưu thông, gán phạm vi dữ liệu chỉ một kho | 200, mật khẩu tạm 10 ký tự | Đạt |
+| PQ.2 | Tài khoản mới bị buộc đổi mật khẩu ở lần đăng nhập đầu | `mustChangePassword = True` | Đạt |
+| PQ.3 | Chưa đổi mật khẩu tạm thì mọi endpoint nghiệp vụ đều bị chặn | 403 "Tài khoản phải đổi mật khẩu trước khi sử dụng hệ thống." | Đạt |
+| PQ.4 | Năm nhóm chức năng quản trị hệ thống đều trả 403 cho cán bộ lưu thông (2.3.3) | người dùng, nhóm người dùng, tham số, nhật ký, sao lưu — cả năm 403 | Đạt |
+| PQ.5 | Câu từ chối bằng tiếng Việt và nêu mã quyền còn thiếu (2.3.2) | "Bạn không có quyền thực hiện chức năng này." + "Thiếu quyền: SYSTEM.USER.VIEW" | Đạt |
+| PQ.6 | Đúng quyền thì vào được các chức năng của phân hệ Lưu thông (2.3.4) | phiếu mượn, chính sách, tủ gửi đồ — cả ba 200 | Đạt |
+| PQ.7 | Phạm vi dữ liệu theo kho: chỉ thấy bản in của kho được gán, kể cả khi bỏ bộ lọc | toàn hệ thống 17.903; cán bộ thấy 4.478 = đúng số bản của Kho mở | Đạt |
+| PQ.8 | Hỏi thẳng sang kho không được gán thì trả về rỗng | 200, 0 bản in | Đạt |
+| PQ.9 | Cấp thêm quyền thì dùng được ngay sau khi đăng nhập lại; gỡ quyền thì mất lại (2.3.6) | 403 → cấp quyền → 200 → gỡ quyền → 403 | Đạt |
+| PQ.10 | Nhật ký ghi cả lần đăng nhập thành công lẫn thất bại (2.3.7) | `LoginFailed` (kết quả sai) 1 lần, `Login` (thành công) 4 lần | Đạt |
+| PQ.11 | Thay đổi phân quyền để lại dòng nhật ký trỏ đúng nhóm (2.3.9) | 972 bản ghi thực thể `GroupPermission` | Đạt |
+| PQ.12 | Nhật ký không chứa mật khẩu hay chuỗi băm (2.3.11) | không có `passwordHash`, không có tiền tố `$2a$`/`$2b$` | Đạt |
+| PQ.13 | Gọi API quản trị không kèm thẻ đăng nhập thì 401 kèm câu tiếng Việt | "Phiên đăng nhập không hợp lệ hoặc đã hết hạn." | Đạt |
+| TD.1 | Lưu một biểu ghi tiếng Việt có dấu, dấu câu và gạch ngang dài | 200 "Đã lưu biểu ghi LC00013172." | Đạt |
+| TD.3 | Tệp MARCXML dùng lược đồ MARC21slim và giữ nguyên nhan đề | có `www.loc.gov/MARC21/slim`, nhan đề khớp từng ký tự | Đạt |
+| TD.4 | Xem trước tệp nhập: đọc được biểu ghi và báo trước số trùng, số không hợp lệ | 12.610 biểu ghi, 316 trùng, 118 không hợp lệ | Đạt |
+| TD.5 | Xuất theo lựa chọn: tick biểu ghi, theo bộ lọc, hoặc toàn kho cho ra ba cỡ tệp khác nhau | 2 biểu ghi tick = 1.949 byte; theo bộ lọc = 930 byte; toàn kho = 17.946.394 byte | Đạt |
+| TD.6 | Một biểu ghi hỏng trong tệp không kéo theo biểu ghi lành đứng sau nó | **Trước sửa: lượt nhập 12.610 biểu ghi chết ở trạng thái Thất bại sau 268 dòng, biểu ghi lành ngay sau biểu ghi hỏng bị mất** (L5). Sau sửa: tác vụ chạy hết, biểu ghi lành vào được, biểu ghi hỏng bị từ chối và **không** lọt vào kho | Đạt |
+| TD.7 | Báo cáo lỗi của lượt nhập nói bằng tiếng Việt | **Trước sửa: "An error occurred while saving the entity changes."** (L6). Sau sửa: câu tiếng Việt nêu ba nguyên nhân hay gặp, nguyên văn giữ trong nhật ký máy chủ | Đạt |
+| TD.8 | Danh sách máy chủ Z39.50 / SRU cấu hình được | 2 đích của Thư viện Quốc hội Mỹ | Đạt |
+| TD.10 | Danh sách kho OAI-PMH cấu hình được kèm lịch chạy định kỳ | trả về kèm `scheduleCron` và `lastHarvestAt` | Đạt |
+| TD.11 | Nhật ký thu hoạch OAI-PMH ghi số biểu ghi lấy về và số nhập được | có bản ghi các lần chạy | Đạt |

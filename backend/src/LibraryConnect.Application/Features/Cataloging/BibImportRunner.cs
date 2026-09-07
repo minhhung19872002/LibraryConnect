@@ -137,17 +137,25 @@ public class BibImportRunner : IBibImportRunner
                         default:
                             job.Failed++;
                             Record(errors, number, marc.ControlNumber, outcome.Message ?? "Không nhập được biểu ghi.");
+
+                            // Biểu ghi bị từ chối vì không hợp lệ cũng để lại đúng cái nửa vời ấy: nó
+                            // đã được Add và PrepareAsync trước bước kiểm tra. Nhánh này trả về bình
+                            // thường chứ không ném, nên trước 07/09/2026 không ai dọn — và biểu ghi
+                            // hỏng nằm lại chờ lượt lưu của biểu ghi kế tiếp mang đi. Hai hậu quả đều
+                            // đã xảy ra trên máy chủ thật: biểu ghi ngay sau đó đổ vì ràng buộc của
+                            // biểu ghi hỏng, và cả lượt nhập chết ở lần ghi tiến độ kế tiếp.
+                            DiscardHalfBuiltRecord(job);
                             break;
                     }
                 }
                 catch (Exception exception) when (exception is not OperationCanceledException)
                 {
                     job.Failed++;
-                    Record(errors, number, marc.ControlNumber, exception.Message);
+                    Record(errors, number, marc.ControlNumber, MoTaLoi(exception));
+                    _logger.LogWarning(exception,
+                        "Tác vụ nhập {JobId}: biểu ghi thứ {Row} không nhập được", jobId, number);
 
-                    // The change tracker holds a half-built record after a failure; dropping it keeps
-                    // the next record in the file from inheriting the problem.
-                    _db.ChangeTracker.Clear();
+                    DiscardHalfBuiltRecord(job);
                 }
 
                 if (number % BatchSize == 0)
@@ -392,8 +400,38 @@ public class BibImportRunner : IBibImportRunner
     }
 
     /// <summary>Câu giải thích đọc được của một lỗi, ưu tiên lỗi kiểm tra dữ liệu từng trường.</summary>
-    private static string MoTaLoi(Exception exception) =>
-        exception is Common.Exceptions.ValidationException validation && validation.Errors.Count > 0
-            ? string.Join(" ", validation.Errors.Select(error => error.Message))
-            : exception.Message;
+    /// <summary>
+    /// Bỏ phần biểu ghi dựng dở còn nằm trong bộ theo dõi sau một lượt hỏng, rồi gắn lại dòng nhật ký
+    /// tác vụ.
+    ///
+    /// Gắn lại là phần không được quên: <c>ChangeTracker.Clear()</c> tháo luôn dòng nhật ký ra, và
+    /// từ đó mọi lần ghi tiến độ lặng lẽ không ghi được gì — thanh tiến độ đứng im cho tới khi tác vụ
+    /// kết thúc.
+    /// </summary>
+    private void DiscardHalfBuiltRecord(Domain.Entities.Ill.ImportExportJob job)
+    {
+        _db.ChangeTracker.Clear();
+        _db.ImportExportJobs.Update(job);
+    }
+
+    /// <summary>
+    /// Câu giải thích cho danh sách lỗi mà cán bộ thư viện đọc.
+    ///
+    /// Lỗi kiểm tra dữ liệu mang câu giải thích ở danh sách lỗi từng trường, còn <c>Message</c> chỉ
+    /// là "Dữ liệu không hợp lệ.". Lỗi ghi cơ sở dữ liệu thì Entity Framework trả nguyên văn tiếng
+    /// Anh — "An error occurred while saving the entity changes." — thứ đã lọt vào báo cáo lỗi của
+    /// một lượt nhập trên máy chủ thật ngày 07/09/2026. Nguyên văn giữ trong nhật ký máy chủ, còn
+    /// người dùng đọc tiếng Việt.
+    /// </summary>
+    private static string MoTaLoi(Exception exception) => exception switch
+    {
+        Common.Exceptions.ValidationException validation when validation.Errors.Count > 0 =>
+            string.Join(" ", validation.Errors.Select(error => error.Message)),
+
+        DbUpdateException =>
+            "Không ghi được biểu ghi vào cơ sở dữ liệu. Biểu ghi có thể trùng số kiểm soát, trùng mã "
+            + "vạch hoặc trùng một giá trị danh mục đã có. Xem nhật ký máy chủ để biết chi tiết.",
+
+        _ => exception.Message
+    };
 }

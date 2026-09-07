@@ -297,6 +297,9 @@ public partial class DatabaseSeeder
     /// <summary>Ghi trên mọi tài liệu số minh họa, dùng để nhận ra chúng ở những lần chạy sau.</summary>
     private const string DemoDigitalNote = "Tài liệu minh họa đi kèm bản cài đặt.";
 
+    /// <summary>Số tài liệu nhiều nhất dựng lại ảnh bìa trong một lần khởi động.</summary>
+    private const int MaxDigitalRepairPerStart = 20;
+
     /// <summary>
     /// Dựng lại phần dẫn xuất còn thiếu của tài liệu số minh họa: ảnh bìa và phần chữ dùng để tìm
     /// toàn văn.
@@ -305,13 +308,21 @@ public partial class DatabaseSeeder
     /// gốc và số trang nhưng không có ảnh bìa — endpoint ảnh bìa trả 404 cho cả sáu trên máy chủ
     /// nghiệm thu ngày 06/09/2026. Sửa bộ gieo thôi thì không cứu được những bản đã cài: chúng đã có
     /// tài liệu số nên nhánh gieo ở trên không chạy nữa. Vì thế phần vá này đứng riêng, chỉ đụng tới
-    /// tài liệu mang đúng ghi chú của bộ minh họa và chỉ khi thiếu ảnh bìa.
+    /// tài liệu PDF còn thiếu ảnh bìa, và mỗi lần khởi động dựng nhiều nhất
+    /// <see cref="MaxDigitalRepairPerStart"/> tài liệu để không biến bước khởi động thành một lượt
+    /// xử lý cả kho.
+    ///
+    /// Không lọc theo ghi chú của bộ minh họa nữa: <c>PUT</c> thay toàn bộ tài nguyên, nên một lượt
+    /// sửa tài liệu từ máy khách khác đã xoá trắng ghi chú của đúng một trong sáu tài liệu ấy — và
+    /// nó là tài liệu duy nhất không được dựng lại ảnh bìa ở lượt triển khai ngày 07/09/2026.
     /// </summary>
     private async Task EnsureDemoDigitalDerivativesAsync(CancellationToken ct)
     {
         var missing = await _db.DigitalDocuments
-            .Where(document => document.Description == DemoDigitalNote)
+            .Where(document => document.MimeType == "application/pdf")
             .Where(document => !document.Files.Any(file => file.Type == DigitalFileType.Thumbnail))
+            .OrderBy(document => document.CreatedAt)
+            .Take(MaxDigitalRepairPerStart)
             .Select(document => document.Id)
             .ToListAsync(ct);
 

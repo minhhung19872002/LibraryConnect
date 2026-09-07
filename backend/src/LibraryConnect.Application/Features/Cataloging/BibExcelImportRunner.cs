@@ -129,7 +129,11 @@ public class BibExcelImportRunner : IBibExcelImportRunner
                 {
                     job.Failed++;
                     Record(errors, row.RowNumber, null, exception.Message);
+
+                    // Dọn phần dòng dựng dở, rồi gắn lại dòng nhật ký tác vụ: ChangeTracker.Clear()
+                    // tháo luôn nó ra, và từ đó mọi lần ghi tiến độ ở dưới lặng lẽ không ghi được gì.
                     _db.ChangeTracker.Clear();
+                    _db.ImportExportJobs.Update(job);
                 }
 
                 if (processed % BatchSize == 0)
