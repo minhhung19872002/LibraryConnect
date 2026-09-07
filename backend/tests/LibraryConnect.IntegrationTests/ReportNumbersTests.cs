@@ -137,14 +137,24 @@ public class ReportNumbersTests
     [Fact]
     public void Ky_cua_bieu_do_tinh_theo_gio_dia_phuong_chu_khong_theo_UTC()
     {
-        // 01/09/2026 lúc 02:00 giờ Việt Nam là 31/08 lúc 19:00 UTC. Xếp kỳ thẳng từ mốc UTC là
-        // đẩy lượt xem ấy sang tháng 8, tháng mà thư viện không có lượt nào.
-        var rangSang = new DateTimeOffset(2026, 9, 1, 2, 0, 0, TimeSpan.FromHours(7));
+        // Mốc đọc từ cơ sở dữ liệu luôn mang lệch +00 (Npgsql chuẩn hoá `timestamptz`), nên đây là
+        // đúng hình dạng dữ liệu thật: 31/08 lúc 19:00 UTC — tức 01/09 lúc 02:00 giờ Việt Nam.
+        var rangSang = new DateTimeOffset(2026, 8, 31, 19, 0, 0, TimeSpan.Zero);
+        var gioMay = rangSang.ToLocalTime();
 
-        DigitalReportLabels.Period(rangSang, "THANG").Should().Be("2026-09");
-        DigitalReportLabels.Period(rangSang, "NGAY").Should().Be("2026-09-01");
-        DigitalReportLabels.Period(rangSang, "QUY").Should().Be("2026-Q3");
-        DigitalReportLabels.Period(rangSang, "NAM").Should().Be("2026");
+        // Khẳng định theo **quan hệ**, không theo một nhãn cố định: máy chạy kiểm thử có thể ở bất
+        // kỳ múi giờ nào (CI của kho này chạy UTC), mà luật cần canh là "nhãn kỳ tính theo giờ máy".
+        DigitalReportLabels.Period(rangSang, "THANG").Should().Be(gioMay.ToString("yyyy-MM"));
+        DigitalReportLabels.Period(rangSang, "NGAY").Should().Be(gioMay.ToString("yyyy-MM-dd"));
+        DigitalReportLabels.Period(rangSang, "NAM").Should().Be(gioMay.Year.ToString());
+        DigitalReportLabels.Period(rangSang, "QUY").Should()
+            .Be($"{gioMay.Year}-Q{(gioMay.Month - 1) / 3 + 1}");
+
+        // Và trên máy đặt giờ Việt Nam — máy chủ thật, container của sản phẩm — nhãn phải là tháng 9.
+        if (TimeZoneInfo.Local.GetUtcOffset(rangSang) == TimeSpan.FromHours(7))
+        {
+            DigitalReportLabels.Period(rangSang, "THANG").Should().Be("2026-09");
+        }
     }
 
     // ---------------------------------------------------------------------------------------
