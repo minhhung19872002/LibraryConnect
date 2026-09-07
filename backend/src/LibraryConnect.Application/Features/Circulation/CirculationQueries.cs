@@ -14,8 +14,33 @@ namespace LibraryConnect.Application.Features.Circulation;
 /// </summary>
 internal static class LoanQuery
 {
-    public static IQueryable<Loan> Base(IApplicationDbContext db) =>
-        db.Loans.AsNoTracking();
+/// <summary>
+/// Nền của mọi danh sách lưu thông.
+///
+/// Phải bỏ bộ lọc toàn cục rồi tự lọc theo <c>DeletedAt</c> của chính dòng ấy. Phép chiếu bên dưới
+/// đi qua các điều hướng bắt buộc (bạn đọc, ĐKCB, biểu ghi, kho); bộ lọc xoá mềm của những bảng ấy
+/// biến JOIN thành INNER, nên bạn đọc bị xoá hồ sơ là mọi phiếu mượn, khoản phạt, đặt giữ và lượt
+/// vào thư viện của họ **biến mất khỏi danh sách** — trong khi <c>CountAsync</c> lược bỏ chính những
+/// JOIN ấy nên vẫn đếm đủ. Trên máy chủ thật ngày 07/09/2026: 3.122 phiếu đếm được, 3.116 lấy ra
+/// được; 134 đặt giữ đếm được, 128 lấy ra được; kỳ kiểm kê đếm 2 mà lấy ra 0. Đây đúng là bài học
+/// 57 (bộ lọc xoá mềm lan từ cha sang con), lần này ở chiều đọc danh sách.
+/// </summary>
+    public static IQueryable<Loan> Base(IApplicationDbContext db, IDataScopeContext? scope = null)
+    {
+        var loans = db.Loans.IgnoreQueryFilters().AsNoTracking().Where(loan => loan.DeletedAt == null);
+
+        // Bỏ bộ lọc toàn cục là bỏ luôn phạm vi dữ liệu theo kho, thứ trước đây được cưỡng chế một
+        // cách tình cờ vì phép chiếu nối sang ĐKCB đã lọc. Tình cờ thì đếm sai: cán bộ chỉ có "Kho
+        // mở" thấy tổng 3.122 phiếu mà chỉ lấy ra được 302 dòng, các trang sau rỗng trơn. Nay lọc
+        // thẳng trên phiếu nên bộ đếm và danh sách nói cùng một con số.
+        if (scope is { WarehouseRestricted: true })
+        {
+            var warehouseIds = scope.WarehouseIds.ToList();
+            loans = loans.Where(loan => warehouseIds.Contains(loan.Item!.WarehouseId));
+        }
+
+        return loans;
+    }
 
     public static readonly Expression<Func<Loan, LoanRowDto>> Projection = loan => new LoanRowDto
     {
@@ -51,8 +76,9 @@ internal static class LoanQuery
 
 internal static class HoldQuery
 {
+    /// <summary>Xem chú thích ở <see cref="LoanQuery.Base"/>.</summary>
     public static IQueryable<Hold> Base(IApplicationDbContext db) =>
-        db.Holds.AsNoTracking();
+        db.Holds.IgnoreQueryFilters().AsNoTracking().Where(hold => hold.DeletedAt == null);
 
     public static readonly Expression<Func<Hold, HoldRowDto>> Projection = hold => new HoldRowDto
     {
@@ -78,8 +104,9 @@ internal static class HoldQuery
 
 internal static class FineQuery
 {
+    /// <summary>Xem chú thích ở <see cref="LoanQuery.Base"/>.</summary>
     public static IQueryable<Fine> Base(IApplicationDbContext db) =>
-        db.Fines.AsNoTracking();
+        db.Fines.IgnoreQueryFilters().AsNoTracking().Where(fine => fine.DeletedAt == null);
 
     public static readonly Expression<Func<Fine, FineRowDto>> Projection = fine => new FineRowDto
     {
@@ -107,8 +134,9 @@ internal static class FineQuery
 
 internal static class VisitQuery
 {
+    /// <summary>Xem chú thích ở <see cref="LoanQuery.Base"/>.</summary>
     public static IQueryable<LibraryVisit> Base(IApplicationDbContext db) =>
-        db.LibraryVisits.AsNoTracking();
+        db.LibraryVisits.IgnoreQueryFilters().AsNoTracking().Where(visit => visit.DeletedAt == null);
 
     public static readonly Expression<Func<LibraryVisit, VisitRowDto>> Projection =
         visit => new VisitRowDto

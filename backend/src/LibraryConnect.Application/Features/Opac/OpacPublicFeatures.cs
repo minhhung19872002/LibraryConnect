@@ -80,6 +80,7 @@ public class GetOpacHomeQueryHandler : IRequestHandler<GetOpacHomeQuery, OpacHom
                              && (banner.StartDate == null || banner.StartDate <= today)
                              && (banner.EndDate == null || banner.EndDate >= today))
             .OrderBy(banner => banner.SortOrder)
+            .ThenBy(banner => banner.Id)
             .Select(banner => new OpacHomeBannerDto(
                 banner.Id, banner.Title, banner.ImageUrl, banner.Link))
             .ToListAsync(ct);
@@ -188,6 +189,7 @@ public class GetPublicNewsQueryHandler
             .WhereIf(request.CategoryId is not null, item => item.CategoryId == request.CategoryId)
             .WhereIf(request.UpdatedSince is not null, item => (item.UpdatedAt ?? item.CreatedAt) >= request.UpdatedSince)
             .OrderByDescending(item => item.PublishedAt)
+            .ThenBy(item => item.Id)
             .Select(item => new OpacHomeNewsDto(
                 item.Id,
                 item.Title,
@@ -311,6 +313,7 @@ public class GetPublicNewsCategoriesQueryHandler
             .Where(category => category.IsActive)
             .OrderBy(category => category.SortOrder)
             .ThenBy(category => category.Name)
+            .ThenBy(category => category.Id)
             .Select(category => new { category.Id, category.Code, category.Name })
             .ToListAsync(ct);
 
@@ -375,6 +378,7 @@ public class GetPublicPagesQueryHandler
             .Where(page => page.IsPublished)
             .OrderBy(page => page.SortOrder)
             .ThenBy(page => page.Title)
+            .ThenBy(page => page.Id)
             .Select(page => new CmsPageRowDto(
                 page.Id,
                 page.Slug,

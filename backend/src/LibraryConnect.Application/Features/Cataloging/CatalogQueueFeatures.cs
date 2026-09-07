@@ -118,6 +118,7 @@ public class GetCatalogQueueQueryHandler
             // through a queue, so it is the order the screen shows by default.
             .OrderBy(item => item.Priority)
             .ThenBy(item => item.CreatedAt)
+            .ThenBy(item => item.Id)
             .Select(item => new CatalogQueueItemDto
             {
                 Id = item.Id,

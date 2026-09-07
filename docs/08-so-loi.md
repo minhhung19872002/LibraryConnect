@@ -697,6 +697,39 @@ trên chính kho thật** (38 phép đo SQL), và **việc chạy nền theo l�
 - **Nhập bạn đọc**: tệp Excel mẫu tải được, hồ sơ ánh xạ cột lưu lại được, nhập ảnh hàng loạt từ ZIP
   báo đúng ảnh nào không khớp bạn đọc nào, và có đầu mối đồng bộ từ hệ thống quản lý đào tạo.
 
+## M. Đợt rà thứ mười ba — phân trang và bộ đếm của mọi danh sách (07/09/2026)
+
+Mười hai đợt trước đi theo đặc tả, theo luồng nghiệp vụ, theo lớp kỹ thuật và theo bất biến dữ liệu.
+Đợt này hỏi một câu duy nhất, hỏi cho **tất cả 48 danh sách có phân trang** của sản phẩm:
+
+> Con số màn hình báo có bằng số dòng lấy ra được không, và đi hết các trang có gặp đúng từng ấy
+> dòng khác nhau không?
+
+Câu hỏi nghe như chuyện kỹ thuật, nhưng nó là câu hỏi nghiệp vụ: cán bộ đối chiếu sổ sách theo con
+số ở góc bảng, và bạn đọc tìm phiếu mượn của mình theo danh sách. **66 phép đo, 11 danh sách sai**,
+quy về ba lỗi gốc — tất cả đều nằm ngoài tầm với của 1.157 phép thử đang có, vì phép thử nào cũng
+dựng vài dòng dữ liệu rồi đọc trang đầu.
+
+| # | Màn hình | Mô tả lỗi | Cách tái hiện | Mức độ | Loại | Trạng thái |
+|---|---|---|---|---|---|---|
+| M1 | Chín danh sách: phiếu mượn, đặt giữ, tiền phạt, lượt vào thư viện, lượt gửi tủ, kỳ kiểm kê, số báo, yêu cầu và nhật ký tài liệu số, lịch sử lưu thông của biểu ghi | **Bộ đếm đếm những dòng mà danh sách không hiện nổi.** Phép chiếu của mỗi danh sách lấy tên bạn đọc, tên kho, tên đầu báo qua **điều hướng bắt buộc**; bảng cha mang bộ lọc xóa mềm nên EF nối INNER JOIN và đánh rơi cả dòng con khi cha bị xóa. Cùng lúc, `CountAsync` **lược bỏ đúng những JOIN ấy** vì phép đếm không cần chúng — nên hai con số không bao giờ gặp nhau, trang cuối rỗng, và dòng bị rơi thì không trang nào hiện. Viết `hold.Reader != null ? … : …` trong phép chiếu **không cứu được**: khóa ngoại bắt buộc thì EF vẫn nối INNER. Đây là bài học 57 lần thứ năm, lần này ở chiều đọc danh sách chứ không ở một truy vấn lẻ. | Trên máy chủ thật, đối chiếu id lấy qua API với id trong CSDL: đặt giữ 134 dòng — API lấy được 128; kỳ kiểm kê 2 — lấy được **0**; lượt gửi tủ 1 — lấy được **0**; số báo 115 — lấy được 113; yêu cầu tài liệu số 3 — lấy được 2; nhật ký tài liệu số 40 — lấy được 36; lịch sử lưu thông của một biểu ghi 11 — lấy được 6. | **Nặng** | Nghiệp vụ | Đã sửa — chín truy vấn nền bỏ bộ lọc toàn cục rồi tự lọc theo `DeletedAt` của **chính dòng ấy**, đúng lời bài học 57. `PagedListIntegrityTests.Xoa_ho_so_ban_doc_khong_lam_bien_mat_phieu_muon…` (đỏ trước khi sửa) |
+| M2 | Toàn bộ 48 danh sách có phân trang | **Sắp xếp theo cột không duy nhất nên trang sau lặp dòng của trang trước** — và đúng bấy nhiêu dòng khác không bao giờ hiện ra ở trang nào. Mỗi trang là một câu truy vấn `LIMIT/OFFSET` riêng; các dòng bằng nhau ở cột sắp xếp thì PostgreSQL được phép xếp khác đi giữa hai câu. Chú thích của `ApplySort` viết "keeps paging deterministic", nhưng nó chỉ chốt **cột** sắp xếp chứ không chốt thứ tự trong nhóm bằng nhau. | Đi hết các trang trên máy chủ thật: tiền phạt lấy 396 dòng mà chỉ **316 dòng khác nhau**; lượt vào thư viện 291 dòng — 290 khác nhau; bạn đọc 400 dòng — 399 khác nhau (hai bạn đọc trùng họ tên "Phan Bá Hiếu"). | **Nặng** | Nghiệp vụ | Đã sửa — `ApplySort` tự gắn khóa phụ là khóa chính của bảng; 37 chuỗi sắp xếp tự viết gắn thêm `ThenBy(x => x.Id)`. Phép thử quét mã nguồn `StablePagingOrderTests` (đỏ với 24 chỗ trước khi sửa) |
+| M3 | Lưu thông → Danh sách phiếu mượn, với cán bộ có phạm vi dữ liệu theo kho | **Phạm vi dữ liệu ở chiều đọc chỉ được cưỡng chế một cách tình cờ, và phép đếm không đi qua chỗ tình cờ ấy.** Phiếu mượn cố ý không mang bộ lọc phạm vi (chú thích trong `LibraryConnectDbContext` giải thích lý do); thứ chặn cán bộ khỏi phiếu của kho khác là chính cái INNER JOIN sang ĐKCB đã lọc ở M1 — mà `CountAsync` bỏ JOIN ấy đi. Kết quả: cán bộ được cấp đúng một kho nhìn thấy tổng của **cả thư viện**, còn danh sách thì chỉ tới kho mình; các trang sau rỗng trơn. Đây là yêu cầu 6.1 và mục kiểm thử 2.3 của E-HSMT. | Lập một cán bộ lưu thông chỉ được gán "Kho mở" trên máy chủ thật: `GET /api/circulation/loans` báo `totalCount = 3.122` (toàn kho) trong khi đi hết 12 trang chỉ lấy được **302** dòng. | **Nặng** | Bảo mật | Đã sửa — lọc phạm vi kho **thẳng trên phiếu mượn** trong truy vấn nền dùng chung, nên bộ đếm và danh sách nói cùng một con số; kỳ kiểm kê cũng tự áp lại phạm vi sau khi bỏ bộ lọc toàn cục |
+| M4 | Bổ sung → Quản lý kho → Xóa kho | **Xóa được kho vẫn còn kỳ kiểm kê.** Lối xóa chỉ đếm ấn phẩm và giá; kỳ kiểm kê không ai hỏi. Xóa xong thì hồ sơ kiểm kê — thứ E-HSMT đòi giữ vĩnh viễn và là căn cứ lập quyết định mất — biến khỏi màn hình mà bộ đếm vẫn tính (đúng cơ chế M1). Cùng một lớp lỗi với L16. | Trên máy chủ thật có hai kho đã xóa còn mang kỳ kiểm kê đã chốt; `GET /api/inventory/periods` báo 2 kỳ và trả về 0 dòng. | Vừa | Nghiệp vụ | Đã sửa — chặn xóa kho còn kỳ kiểm kê, câu chặn chỉ sang cách "ngừng sử dụng kho"; `PagedListIntegrityTests.Xoa_kho_khong_lam_bien_mat_ky_kiem_ke…` (đỏ trước khi sửa) |
+
+### Đã kiểm trong đợt này và vẫn tốt
+
+- **37/48 danh sách** đạt cả hai luật ngay từ đầu, kể cả những danh sách lớn nhất: biểu ghi (12.609),
+  ĐKCB (17.900), tác giả (14.299), từ khóa (13.170), hàng đợi biên mục (936), nhật ký đăng nhập (353).
+- **30/30 bất biến dữ liệu** trên kho thật sạch sau khi dọn dữ liệu thử của các đợt trước (phiếu mượn
+  mồ côi, kết quả kiểm kê trỏ tới ĐKCB đã xóa). Bốn câu trong bộ bất biến tự nó sai — đếm cả dòng đã
+  xóa mềm, so `loan_date > current_date` thay vì `> now()`, và gọi sai tên cột `received_qty` — đã sửa
+  chính bộ đo trước khi kết luận sản phẩm sai.
+- **12/12 phép đo kết quả việc chạy nền** sạch.
+- **Migration `CloseCatalogQueueOfDeletedRecords` đã chạy thật trên máy chủ**: 48 dòng việc mồ côi
+  của L15 nay đã đóng, hàng đợi báo 936 và trả về đúng 936 dòng, trang cuối có 136 dòng.
+- **L14, L15, L16 đã kiểm lại trên bản chạy thật** sau khi triển khai — 6/6 phép đo đạt.
+
 ## Đ. Những chỗ đã thử phá nhưng hệ thống chịu được
 
 Ghi lại để biết chỗ nào đã kiểm và không phải kiểm lại — kèm bằng chứng, không ghi suông.
@@ -804,7 +837,7 @@ dạng quét mã nguồn chặn cả lớp lỗi quay lại thay vì chỉ chặ
 
 Cộng cả ba đợt, đợt áp thiết kế, đợt triển khai và ba đợt rà hoàn thiện ngày 04/09/2026:
 **147 lỗi, đã sửa 145**; thêm **23 lỗi của đợt nghiệm thu thử, test sâu, ba đợt test kỹ thuật ngày
-05/09/2026 và ba đợt soi nghiệp vụ – giao thức – bảo mật ngày 06/09/2026 (mục K), đã sửa cả 23** — tổng **170 lỗi, đã sửa 170**. Hai mục H3 và H9 đã làm xong ngày 03/09/2026 và ghi ở cột cuối
+05/09/2026 và ba đợt soi nghiệp vụ – giao thức – bảo mật ngày 06/09/2026 (mục K), đã sửa cả 23** — tổng **170 lỗi, đã sửa 170**; cộng **16 lỗi mục L** và **4 lỗi mục M** của bốn đợt rà sâu ngày 06–07/09/2026 — tổng **190 lỗi, đã sửa 190**. Hai mục H3 và H9 đã làm xong ngày 03/09/2026 và ghi ở cột cuối
 của chính hai dòng ấy — con số 134 giữ nguyên cách đếm cũ để đối chiếu được với các bản trước.
 Mỗi lỗi đã sửa đều có phép thử chạy đỏ trước khi sửa và xanh sau khi sửa, kể cả H7: phép thử giả
 tiêu đề đỏ trước khi sửa `CurrentUser.Ip`.

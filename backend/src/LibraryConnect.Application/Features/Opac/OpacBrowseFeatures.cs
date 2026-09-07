@@ -67,6 +67,7 @@ public class OpacBrowseQueryHandler
             .Where(subject => subject.IsActive && subject.ParentId == query.ParentId)
             .OrderBy(subject => subject.SortOrder)
             .ThenBy(subject => subject.Name)
+            .ThenBy(subject => subject.Id)
             .Select(subject => new
             {
                 subject.Id,
@@ -118,6 +119,7 @@ public class OpacBrowseQueryHandler
 
         var rows = await authors
             .OrderBy(author => author.Name)
+            .ThenBy(author => author.Id)
             .Select(author => new { author.Id, author.Code, author.Name })
             .Take(500)
             .ToListAsync(ct);
@@ -164,6 +166,7 @@ public class OpacBrowseQueryHandler
         return Filter(nodes
             .Where(node => node.ParentId == query.ParentId)
             .OrderBy(node => node.Code)
+            .ThenBy(node => node.Id)
             .Select(node => new OpacBrowseEntryDto(
                 node.Id,
                 node.Code,
@@ -204,6 +207,7 @@ public class OpacBrowseQueryHandler
             .Where(collection => collection.IsActive)
             .OrderBy(collection => collection.SortOrder)
             .ThenBy(collection => collection.Name)
+            .ThenBy(collection => collection.Id)
             .Select(collection => new { collection.Id, collection.Code, collection.Name })
             .ToListAsync(ct);
 
@@ -218,6 +222,7 @@ public class OpacBrowseQueryHandler
             .Where(major => major.IsActive)
             .OrderBy(major => major.SortOrder)
             .ThenBy(major => major.Name)
+            .ThenBy(major => major.Id)
             .Select(major => new
             {
                 major.Id,
@@ -258,6 +263,7 @@ public class OpacBrowseQueryHandler
         var rows = await courses
             .OrderBy(course => course.Code)
             .ThenBy(course => course.Name)
+            .ThenBy(course => course.Id)
             .Select(course => new
             {
                 course.Id,
@@ -344,6 +350,7 @@ public class OpacCourseDocumentsQueryHandler
             // Giáo trình chính lên trước, rồi tài liệu bắt buộc, cuối cùng là đọc thêm.
             .OrderBy(link => link.RelationType)
             .ThenBy(link => link.Bib!.Title)
+            .ThenBy(link => link.Id)
             .Select(link => new
             {
                 link.RelationType,
@@ -480,6 +487,7 @@ public class OpacSerialsQueryHandler
 
         var rows = await serials
             .OrderBy(serial => serial.Title)
+            .ThenBy(serial => serial.Id)
             .Select(serial => new
             {
                 serial.Id,
@@ -494,6 +502,7 @@ public class OpacSerialsQueryHandler
                 Latest = serial.Issues
                     .Where(issue => issue.Status == SerialIssueStatus.Received)
                     .OrderByDescending(issue => issue.ReceivedDate ?? issue.ExpectedDate)
+                    .ThenBy(issue => issue.Id)
                     .Select(issue => new
                     {
                         IssueDate = issue.ReceivedDate ?? issue.ExpectedDate,

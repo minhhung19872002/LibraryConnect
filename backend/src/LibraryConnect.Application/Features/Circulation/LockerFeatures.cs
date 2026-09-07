@@ -57,6 +57,7 @@ public class GetLockerMapQueryHandler : IRequestHandler<GetLockerMapQuery, Locke
             .ThenBy(locker => locker.MapRow)
             .ThenBy(locker => locker.MapColumn)
             .ThenBy(locker => locker.Code)
+            .ThenBy(locker => locker.Id)
             .Select(locker => new LockerRowDto
             {
                 Id = locker.Id,
@@ -430,7 +431,9 @@ public class SearchLockerUsagesQueryHandler
         var request = query.Request;
 
         var usages = _db.LockerUsages
+            .IgnoreQueryFilters()
             .AsNoTracking()
+            .Where(usage => usage.DeletedAt == null)
             .WhereIf(request.LockerId is not null, usage => usage.LockerId == request.LockerId)
             .WhereIf(request.ReaderId is not null, usage => usage.ReaderId == request.ReaderId)
             .WhereIf(request.OpenOnly == true, usage => usage.CheckoutAt == null)
@@ -441,6 +444,7 @@ public class SearchLockerUsagesQueryHandler
 
         var page = await usages
             .OrderByDescending(usage => usage.CheckinAt)
+            .ThenBy(usage => usage.Id)
             .Select(ReleaseLockerCommandHandler.LockerUsageProjection)
             .ToPagedResultAsync(request, ct);
 

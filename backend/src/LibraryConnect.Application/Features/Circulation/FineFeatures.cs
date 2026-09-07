@@ -49,6 +49,7 @@ public class SearchFinesQueryHandler : IRequestHandler<SearchFinesQuery, PagedRe
 
         return fines
             .OrderByDescending(fine => fine.CreatedAt)
+            .ThenBy(fine => fine.Id)
             .Select(FineQuery.Projection)
             .ToPagedResultAsync(request, ct);
     }
@@ -88,6 +89,7 @@ public class GetReaderFineSummaryQueryHandler
         var fines = await FineQuery.Base(_db)
             .Where(fine => fine.ReaderId == query.ReaderId)
             .OrderByDescending(fine => fine.CreatedAt)
+            .ThenBy(fine => fine.Id)
             .Select(FineQuery.Projection)
             .ToListAsync(ct);
 

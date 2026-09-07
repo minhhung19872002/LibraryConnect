@@ -46,6 +46,7 @@ public class GetCmsNewsListQueryHandler
             .WhereIf(request.IsPublished is not null, item => item.IsPublished == request.IsPublished)
             .WhereIf(request.IsFeatured is not null, item => item.IsFeatured == request.IsFeatured)
             .OrderByDescending(item => item.PublishedAt ?? item.CreatedAt)
+            .ThenBy(item => item.Id)
             .Select(item => new CmsNewsRowDto(
                 item.Id,
                 item.Title,

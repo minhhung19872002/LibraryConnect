@@ -79,7 +79,9 @@ public class SearchDigitalRequestsQueryHandler
         var filter = request.Filter;
 
         var source = _db.DigitalAccessRequests
+            .IgnoreQueryFilters()
             .AsNoTracking()
+            .Where(row => row.DeletedAt == null)
             .Include(row => row.Document)
             .AsQueryable();
 
@@ -360,7 +362,9 @@ public class SearchDigitalLogsQueryHandler
         var filter = request.Filter;
 
         var source = _db.DigitalAccessLogs
+            .IgnoreQueryFilters()
             .AsNoTracking()
+            .Where(log => log.DeletedAt == null)
             .Include(log => log.Document)
             .AsQueryable();
 

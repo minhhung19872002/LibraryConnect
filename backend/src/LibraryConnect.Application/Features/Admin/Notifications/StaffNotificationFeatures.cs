@@ -50,6 +50,7 @@ public class GetStaffNotificationsQueryHandler
         var page = await mine
             .WhereIf(query.UnreadOnly, notification => !notification.IsRead)
             .OrderByDescending(notification => notification.CreatedAt)
+            .ThenBy(notification => notification.Id)
             .Select(notification => new StaffNotificationDto(
                 notification.Id,
                 notification.Type,

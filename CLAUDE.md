@@ -110,7 +110,15 @@ thành công, 0 hỏng; 26/29 bất biến sạch ngay. Ba lỗi nữa: **thẻ 
 việc còn phần lấy dòng phải nối sang biểu ghi; và **xoá một bản sách đã trả xong làm mất luôn lượt mượn ấy khỏi lịch sử bạn đọc** —
 bài học 57 lần thứ tư, lần này kèm hậu quả tiền bạc vì khoản phạt gắn phiếu cũng biến khỏi danh sách mà vẫn tính vào công nợ. Cả 14
 đã sửa, tổng **184 lỗi, đã sửa 184**.
-Phụ lục cuối `docs/06` ghi kết quả từng kịch bản (hơn 590 dòng).
+
+Đợt thứ mười ba hỏi đúng một câu, hỏi cho **cả 48 danh sách có phân trang**: con số ở góc bảng có bằng số
+dòng lấy ra được không, và đi hết các trang có gặp đúng từng ấy dòng khác nhau không. **11 danh sách sai**,
+quy về bốn lỗi: chín danh sách đếm cả dòng mà chúng không hiện nổi (bài học 70/71 còn nguyên ở chín chỗ nữa —
+kỳ kiểm kê và lượt gửi tủ hiện **0 dòng** trên con số 2 và 1); mọi danh sách sắp theo cột không duy nhất nên
+trang sau lặp dòng của trang trước (396 dòng tiền phạt chỉ có 316 dòng khác nhau); **phạm vi dữ liệu theo kho
+của danh sách phiếu mượn chỉ được cưỡng chế bằng tác dụng phụ**, nên cán bộ một kho thấy tổng 3.122 phiếu của
+cả thư viện mà chỉ lấy được 302; và xoá được kho vẫn còn kỳ kiểm kê. Cả 4 đã sửa, tổng **190 lỗi, đã sửa 190**.
+Phụ lục cuối `docs/06` ghi kết quả từng kịch bản (hơn 660 dòng).
 
 Đọc thẳng hồ sơ gốc còn tìm ra thứ không phải lỗi mã: **bốn hồ sơ bàn giao** mà Chương V mục III và
 mục 5 đòi — kế hoạch triển khai, kế hoạch đào tạo, cam kết bảo hành, hồ sơ nghiệm thu — nay là
@@ -147,7 +155,7 @@ huống lỗi; phải tự tay dựng đúng bối cảnh ấy trong phép thử
 **Lệnh chạy đúng:**
 
 ```bash
-cd backend  && dotnet test                 # 644 unit + 510 integration
+cd backend  && dotnet test                 # 646 unit + 513 integration
 cd frontend-admin && npx tsc -b && npx vitest run    # 347 test
 cd frontend-opac  && npx tsc -b && npx vitest run    # 102 test
 cd mobile   && flutter analyze && flutter test       # 124 test
@@ -190,6 +198,7 @@ vướng — mỗi cái sinh ra từ một lỗi đã xảy ra thật:
 | `backend/.../ConcurrencyTests.cs` | Hai luật "một … một" phải có ràng buộc duy nhất ở CSDL: một bạn đọc một thẻ hiệu lực, một kho một kỳ kiểm kê chưa chốt. Phép thử gửi ba yêu cầu **thật sự song song**; gọi tuần tự thì cả hai vẫn xanh |
 | `backend/.../Infrastructure/VietnameseFontStackTests.cs` | Không nơi nào gọi tên Georgia trong danh sách phông — Georgia thiếu glyph dựng sẵn của ố, ề, ắ, ữ nên trình duyệt tách dấu ra đứng cạnh nguyên âm. Quét cả ảnh SVG của bộ dữ liệu trình diễn lẫn `styles.css`/`theme.ts` của hai giao diện |
 | `backend/.../Infrastructure/DeployScriptTests.cs` | `gh-deploy.sh` phải có bước `don_anh_cu` giữ bản mới và bản trước, xoá ảnh `libraryconnect-*` còn lại — 20 bộ ảnh cũ từng làm đầy ổ 96 GB và chặn mọi lượt triển khai |
+| `backend/.../Infrastructure/StablePagingOrderTests.cs` | Mọi lượt `ToPagedResultAsync` phải kết thúc chuỗi sắp xếp bằng một khóa duy nhất — qua `ApplySort` (tự gắn) hoặc tự viết `ThenBy(x => x.Id)`. Sắp theo cột không duy nhất là trang sau lặp dòng của trang trước và đúng bấy nhiêu dòng khác không bao giờ hiện ra: 396 dòng tiền phạt chỉ có 316 dòng khác nhau |
 
 > Một phép thử quét mã nguồn chỉ chặn đúng thư mục nó quét. Thêm luật mới thì hỏi ngay: gói kia có
 > vi phạm cùng luật ấy không? Lỗi D8 sửa cho `frontend-admin` rồi ghi là "cả sản phẩm", nhưng
@@ -475,6 +484,24 @@ docker compose run --rm -d --name lc-api-kiem -e LC_DB_NAME=lc_kiem -e LC_SEED_D
     phiếu khỏi danh sách quầy, và mất khoản phạt khỏi danh sách phạt trong khi vẫn tính vào công nợ.
     Trước khi cho xóa một thứ, hỏi "cái gì đang trỏ tới nó" — rồi hoặc chặn xóa và chỉ sang chức năng
     giữ được lịch sử (thanh lý), hoặc dọn luôn thứ trỏ tới nó (dòng việc hàng đợi).
+
+72. **Viết được bài học không có nghĩa là đã sửa xong lớp lỗi.** Bài học 70 và 71 ra đời ngày
+    06/09/2026 từ hai chỗ; hôm sau đo **cả 48 danh sách có phân trang** thì còn nguyên **chín chỗ
+    nữa** cùng đúng một lỗi ấy — đặt giữ, tiền phạt, số báo, kỳ kiểm kê, lượt gửi tủ, yêu cầu và
+    nhật ký tài liệu số. Sửa một chỗ rồi ghi vào sổ là xong một chỗ. Muốn xong cả lớp thì phải có
+    **một phép đo quét hết mọi chỗ cùng loại** — ở đây là một kịch bản đi hết các trang của từng
+    danh sách và so `totalCount` với số dòng lấy được. Và `x.Cha != null ? … : …` trong phép chiếu
+    **không cứu được dòng**: khóa ngoại bắt buộc thì EF vẫn nối INNER JOIN.
+73. **Phân trang mà sắp theo cột không duy nhất là mất dòng, không phải "thứ tự hơi lạ".** Mỗi trang
+    là một câu `LIMIT/OFFSET` riêng; các dòng bằng nhau ở cột sắp xếp thì PostgreSQL được phép xếp
+    khác đi giữa hai câu, nên một dòng hiện hai lần ở trang sau đồng nghĩa **một dòng khác không bao
+    giờ hiện ra**. Đo được: danh sách tiền phạt lấy 396 dòng chỉ có 316 dòng khác nhau; danh sách bạn
+    đọc mất một người vì hai bạn đọc trùng họ tên. Mọi chuỗi sắp xếp phải kết thúc bằng khóa chính.
+74. **Cưỡng chế bằng tác dụng phụ thì có chỗ không đi qua tác dụng phụ ấy.** Phạm vi dữ liệu theo kho
+    của danh sách phiếu mượn không do bộ lọc nào cưỡng chế — nó dựa vào việc phép chiếu nối sang ĐKCB
+    đã lọc. Mà `CountAsync` lược bỏ đúng cái JOIN ấy, nên cán bộ được cấp một kho nhìn thấy tổng của
+    cả thư viện: 3.122 phiếu, trong khi đi hết các trang chỉ lấy được 302. Luật bảo mật phải viết
+    thành một `Where` trên chính bảng, ở chỗ cả phép đếm lẫn phép lấy dòng đều đi qua.
 
 ### A.4. Cơ chế dùng chung — dùng lại, đừng viết chỗ mới
 

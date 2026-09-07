@@ -79,8 +79,14 @@ public class GetBibLoansQueryHandler : IRequestHandler<GetBibLoansQuery, PagedRe
         // Lọc theo BibId chép sẵn trên phiếu mượn chứ không theo biểu ghi hiện tại của bản in: cột
         // ấy được chép lúc ghi mượn đúng để lịch sử còn nguyên sau khi bản in được biên mục lại
         // sang biểu ghi khác. Đi vòng qua bảng ấn phẩm là gán lịch sử cũ cho biểu ghi mới.
+        // `loan.Reader != null ? ... : ...` trong phép chiếu KHÔNG cứu được dòng: ReaderId là khóa
+        // ngoại bắt buộc nên EF vẫn nối INNER JOIN, và bộ lọc xoá mềm của bảng bạn đọc cắt mất dòng
+        // trước khi phép chiếu chạy. Đo trên máy chủ thật ngày 07/09/2026: biểu ghi có 11 lượt mượn,
+        // màn hình báo 11 mà chỉ hiện 6 — đúng 5 lượt của những bạn đọc đã xoá hồ sơ.
         var loans = _db.Loans
+            .IgnoreQueryFilters()
             .AsNoTracking()
+            .Where(loan => loan.DeletedAt == null)
             .Where(loan => loan.BibId == query.BibId)
             .WhereIf(request.OpenOnly == true, loan => loan.ReturnDate == null);
 

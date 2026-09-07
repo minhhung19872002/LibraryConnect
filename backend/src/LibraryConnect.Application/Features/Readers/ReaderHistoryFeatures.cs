@@ -103,7 +103,8 @@ public class GetReaderLoansQueryHandler : IRequestHandler<GetReaderLoansQuery, P
             .Where(loan => loan.ReaderId == query.ReaderId)
             .WhereIf(query.CurrentOnly,
                 loan => loan.Status == LoanStatus.Active || loan.Status == LoanStatus.Overdue)
-            .OrderByDescending(loan => loan.LoanDate);
+            .OrderByDescending(loan => loan.LoanDate)
+            .ThenBy(loan => loan.Id);
 
         var result = await loans
             .Select(loan => new ReaderLoanDto
@@ -161,6 +162,7 @@ public class GetReaderFinesQueryHandler : IRequestHandler<GetReaderFinesQuery, P
             .Where(fine => fine.ReaderId == query.ReaderId)
             .WhereIf(query.OutstandingOnly, fine => !fine.Waived && fine.Amount > fine.PaidAmount)
             .OrderByDescending(fine => fine.CreatedAt)
+            .ThenBy(fine => fine.Id)
             .Select(fine => new ReaderFineDto
             {
                 Id = fine.Id,
@@ -193,6 +195,7 @@ public class GetReaderVisitsQueryHandler : IRequestHandler<GetReaderVisitsQuery,
             .AsNoTracking()
             .Where(visit => visit.ReaderId == query.ReaderId)
             .OrderByDescending(visit => visit.CheckinAt)
+            .ThenBy(visit => visit.Id)
             .Select(visit => new ReaderVisitDto
             {
                 Id = visit.Id,
@@ -231,6 +234,7 @@ public class GetReaderDigitalAccessQueryHandler
             .AsNoTracking()
             .Where(log => log.ReaderId == query.ReaderId)
             .OrderByDescending(log => log.OccurredAt)
+            .ThenBy(log => log.Id)
             .Select(log => new ReaderDigitalAccessDto
             {
                 Id = log.Id,
@@ -264,6 +268,7 @@ public class GetReaderViolationsQueryHandler
             .AsNoTracking()
             .Where(violation => violation.ReaderId == query.ReaderId)
             .OrderByDescending(violation => violation.OccurredAt)
+            .ThenBy(violation => violation.Id)
             .Select(violation => new ReaderViolationDto
             {
                 Id = violation.Id,

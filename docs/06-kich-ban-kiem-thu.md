@@ -1743,3 +1743,31 @@ lịch có để lại đúng dấu vết của nó không.
 | VN.HF | Chín việc chạy nền đăng ký đủ, chạy đúng lịch, không lượt nào hỏng | `hangfire.hash` có đủ 9 việc kèm `Cron`, `LastExecution`, `NextExecution`; `hangfire.job` 15 lượt, **tất cả Succeeded**, 0 Failed | Đạt |
 | L15 | Hàng đợi biên mục: bộ đếm và danh sách nói cùng một con số | **Trước sửa: đếm 981, trang 200 dòng trả 155, trang cuối rỗng**. Sau sửa: xoá biểu ghi thì việc của nó rời hàng đợi, số đếm và số dòng khớp | Đạt |
 | L16 | Xoá bản sách đã lưu thông bị chặn, lịch sử mượn của bạn đọc vẫn đủ | **Trước sửa: xoá được, và bạn đọc TV2026000489 có 5 phiếu mà API chỉ trả 4**. Sau sửa: 409 chỉ sang chức năng thanh lý; bộ đếm và danh sách khớp | Đạt |
+
+### Đợt mười ba — phân trang và bộ đếm của mọi danh sách (07/09/2026)
+
+Một câu hỏi, hỏi cho cả 48 danh sách có phân trang: **con số ở góc bảng có bằng số dòng lấy ra được
+không, và đi hết các trang có gặp đúng từng ấy dòng khác nhau không?** Chạy trên
+`thuvien.bluestar.com.vn` bằng tài khoản quản trị, cộng một cán bộ lưu thông được cấp đúng một kho.
+Chỗ nào lệch thì đối chiếu thẳng danh sách id lấy qua API với danh sách id trong `psql`.
+
+| Mã | Kịch bản | Kết quả thực tế | Đạt |
+|---|---|---|---|
+| PT.1 | Ba mươi bảy danh sách đạt cả hai luật ngay từ đầu | biểu ghi 12.609, ĐKCB 17.900, tác giả 14.299, từ khóa 13.170, chủ đề 3.477, nhà xuất bản 1.870, hàng đợi biên mục 936, tra cứu OPAC, tra cứu nâng cao, nhật ký đăng nhập 353, nhật ký thu hoạch OAI 62, nhật ký tra cứu liên thư viện 18, tin tức, trang tĩnh, môn học, yêu cầu và đơn đặt và biên bản bàn giao, tài liệu số, sao lưu, lịch sử tham số, nhóm người dùng, người dùng… — mọi trang lấy đủ số dòng, không dòng nào lặp, trang cuối không rỗng | Đạt |
+| PT.2 | Danh sách đặt giữ: bộ đếm bằng số dòng | **Trước sửa: đếm 134, lấy được 128** — thiếu 6 đặt giữ của những bạn đọc đã xoá hồ sơ. Sau sửa: 134/134 | Đạt |
+| PT.3 | Danh sách kỳ kiểm kê | **Trước sửa: đếm 2, lấy được 0** — cả hai kỳ thuộc kho đã xoá. Sau sửa: hiện đủ, và không xoá được kho còn kỳ kiểm kê nữa | Đạt |
+| PT.4 | Danh sách lượt gửi tủ | **Trước sửa: đếm 1, lấy được 0** | Đạt |
+| PT.5 | Danh sách số báo | **Trước sửa: đếm 115, lấy được 113** — hai số thuộc đầu báo đã xoá | Đạt |
+| PT.6 | Yêu cầu đọc tài liệu hạn chế | **Trước sửa: đếm 3, lấy được 2** | Đạt |
+| PT.7 | Nhật ký truy cập tài liệu số | **Trước sửa: đếm 40, lấy được 36** — tài liệu đã xoá, hoặc lượt xem không gắn bạn đọc | Đạt |
+| PT.8 | Lịch sử lưu thông của một biểu ghi | **Trước sửa: đếm 11, lấy được 6** — đúng 5 phiếu của bạn đọc đã xoá hồ sơ. Viết `loan.Reader != null ? … : …` trong phép chiếu không cứu được, vì khóa ngoại bắt buộc thì EF vẫn nối INNER JOIN | Đạt |
+| PT.9 | Danh sách tiền phạt: đi hết các trang không gặp dòng lặp | **Trước sửa: lấy 396 dòng chỉ có 316 dòng khác nhau** — 80 dòng lặp nghĩa là 80 dòng khác không hiện ở trang nào. Nguyên nhân: sắp theo ngày lập, mà bộ dữ liệu trình diễn lập hàng loạt trong cùng một khoảnh khắc | Đạt |
+| PT.10 | Danh sách lượt vào thư viện | **Trước sửa: 291 dòng, 290 khác nhau** | Đạt |
+| PT.11 | Danh sách bạn đọc | **Trước sửa: 400 dòng, 399 khác nhau** — hai bạn đọc trùng tuyệt đối họ tên "Phan Bá Hiếu", mà cột sắp xếp mặc định là họ tên | Đạt |
+| PT.12 | Cán bộ được cấp đúng một kho: bộ đếm của danh sách phiếu mượn có tôn trọng phạm vi dữ liệu không | **Trước sửa: `totalCount` = 3.122 (toàn thư viện) trong khi đi hết 12 trang chỉ lấy được 302 dòng.** Sau sửa: hai con số bằng nhau, và cán bộ chỉ thấy phiếu của kho mình. Yêu cầu 6.1 và mục kiểm thử 2.3 | Đạt |
+| PT.13 | Cán bộ ấy đọc danh sách ĐKCB | 4.475 đếm, 4.475 lấy được — phạm vi kho đã đúng từ trước vì ĐKCB là thực thể có bộ lọc phạm vi thật | Đạt |
+| PT.14 | Cán bộ ấy mở màn hình kiểm kê | 403 kèm câu tiếng Việt — nhóm Lưu thông không có quyền kiểm kê | Đạt |
+| PT.15 | Ba mươi bất biến dữ liệu chạy lại sau khi dọn dữ liệu thử | 30/30 sạch: 0 phiếu mượn mồ côi, 0 kết quả kiểm kê trỏ ĐKCB đã xoá, 0 việc hàng đợi của biểu ghi đã xoá, 0 ĐKCB trỏ biểu ghi đã xoá | Đạt |
+| PT.16 | Mười hai phép đo kết quả việc chạy nền | 12/12 sạch | Đạt |
+| PT.17 | Kiểm lại L14, L15, L16 trên bản chạy thật sau triển khai | thẻ bạn đọc gọi `/staff/options` → 403; hàng đợi đếm 936 và trả đủ 936 dòng, trang cuối 136 dòng; xoá bản sách đã có 9 lượt mượn → 409 chỉ sang chức năng thanh lý | Đạt |
+| PT.18 | Migration `CloseCatalogQueueOfDeletedRecords` chạy thật trên máy chủ | nhật ký `lc-api`: `Applying migration '20260907034820_CloseCatalogQueueOfDeletedRecords'`; 48 dòng việc mồ côi đã đóng, 0 dòng còn sống | Đạt |

@@ -89,16 +89,30 @@ public class SearchInventoryPeriodsQueryHandler
     : IRequestHandler<SearchInventoryPeriodsQuery, PagedResult<InventoryPeriodDto>>
 {
     private readonly IApplicationDbContext _db;
+    private readonly IDataScopeContext _scope;
 
-    public SearchInventoryPeriodsQueryHandler(IApplicationDbContext db) => _db = db;
+    public SearchInventoryPeriodsQueryHandler(IApplicationDbContext db, IDataScopeContext scope)
+    {
+        _db = db;
+        _scope = scope;
+    }
 
     public async Task<PagedResult<InventoryPeriodDto>> Handle(
         SearchInventoryPeriodsQuery query, CancellationToken ct)
     {
         var request = query.Request;
 
+        // Bỏ bộ lọc toàn cục vì phép chiếu lấy tên kho qua điều hướng bắt buộc: kho bị xoá là kỳ
+        // kiểm kê biến mất khỏi danh sách mà bộ đếm vẫn tính. Trên máy chủ thật ngày 07/09/2026
+        // màn hình kiểm kê báo "2 kỳ" và không hiện dòng nào. Bỏ bộ lọc thì phải tự áp lại cả xoá
+        // mềm lẫn phạm vi kho — kỳ kiểm kê là một trong năm thực thể có phạm vi dữ liệu (mục 6.1).
+        var warehouseIds = _scope.WarehouseIds.ToList();
+
         var periods = _db.InventoryPeriods
+            .IgnoreQueryFilters()
             .AsNoTracking()
+            .Where(period => period.DeletedAt == null)
+            .WhereIf(_scope.WarehouseRestricted, period => warehouseIds.Contains(period.WarehouseId))
             .WhereIf(request.WarehouseId is not null, period => period.WarehouseId == request.WarehouseId)
             .WhereIf(request.Status is not null, period => period.Status == request.Status);
 

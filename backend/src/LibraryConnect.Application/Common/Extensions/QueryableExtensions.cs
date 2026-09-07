@@ -67,12 +67,36 @@ public static class QueryableExtensions
         if (!string.IsNullOrWhiteSpace(request.SortBy)
             && allowedSorts.TryGetValue(request.SortBy.Trim(), out var selector))
         {
-            return request.SortDescending
+            return WithStableTieBreak(request.SortDescending
                 ? query.OrderByDescending(selector)
-                : query.OrderBy(selector);
+                : query.OrderBy(selector));
         }
 
-        return defaultDescending ? query.OrderByDescending(defaultSort) : query.OrderBy(defaultSort);
+        return WithStableTieBreak(
+            defaultDescending ? query.OrderByDescending(defaultSort) : query.OrderBy(defaultSort));
+    }
+
+    /// <summary>
+    /// Khóa phụ cho mọi lần sắp xếp: khóa chính của bảng.
+    ///
+    /// Sắp theo một cột không duy nhất rồi phân trang bằng LIMIT/OFFSET là giao thứ tự của các dòng
+    /// bằng nhau cho PostgreSQL quyết định, mà mỗi trang là một câu truy vấn riêng nên nó được phép
+    /// trả lời khác nhau. Hậu quả không phải là "thứ tự hơi lạ": một dòng hiện hai lần ở trang 2 thì
+    /// có đúng một dòng khác **không bao giờ hiện ra ở trang nào**. Đo trên máy chủ thật ngày
+    /// 07/09/2026: danh sách tiền phạt lấy 396 dòng thì chỉ có 316 dòng khác nhau, danh sách bạn đọc
+    /// lặp một dòng vì hai bạn đọc trùng họ tên.
+    /// </summary>
+    private static IQueryable<T> WithStableTieBreak<T>(IOrderedQueryable<T> ordered)
+    {
+        if (!typeof(Domain.Common.BaseEntity).IsAssignableFrom(typeof(T)))
+        {
+            return ordered;
+        }
+
+        var parameter = Expression.Parameter(typeof(T), "entity");
+        var key = Expression.Property(parameter, nameof(Domain.Common.BaseEntity.Id));
+
+        return ordered.ThenBy(Expression.Lambda<Func<T, Guid>>(key, parameter));
     }
 
     /// <summary>Applies a predicate only when the condition holds, keeping filter chains readable.</summary>

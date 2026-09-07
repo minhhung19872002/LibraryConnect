@@ -170,6 +170,7 @@ public class GetUserLoginHistoryQueryHandler : IRequestHandler<GetUserLoginHisto
             .AsNoTracking()
             .Where(h => h.UserId == request.UserId)
             .OrderByDescending(h => h.OccurredAt)
+            .ThenBy(h => h.Id)
             .Select(h => new LoginHistoryDto
             {
                 Id = h.Id,

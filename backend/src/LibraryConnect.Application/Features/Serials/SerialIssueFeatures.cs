@@ -78,7 +78,9 @@ public class SearchSerialIssuesQueryHandler
         var today = _clock.Today;
 
         var issues = _db.SerialIssues
+            .IgnoreQueryFilters()
             .AsNoTracking()
+            .Where(issue => issue.DeletedAt == null)
             .WhereIf(request.SerialId is not null, issue => issue.SerialId == request.SerialId)
             .WhereIf(request.Year is not null, issue => issue.Year == request.Year)
             .WhereIf(request.Status is not null, issue => issue.Status == request.Status)

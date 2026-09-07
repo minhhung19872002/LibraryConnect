@@ -33,6 +33,7 @@ public class GetCmsReviewsQueryHandler
             .WhereIf(request.IsApproved is not null,
                 review => review.IsApproved == request.IsApproved)
             .OrderByDescending(review => review.CreatedAt)
+            .ThenBy(review => review.Id)
             .Select(review => new CmsReviewRowDto(
                 review.Id,
                 review.BibId,

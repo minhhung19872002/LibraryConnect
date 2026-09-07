@@ -340,6 +340,19 @@ public class DeleteWarehouseCommandHandler : IRequestHandler<DeleteWarehouseComm
                 "Hãy chuyển các ấn phẩm sang kho khác trước.");
         }
 
+        // Kỳ kiểm kê giữ nguyên tên kho qua điều hướng bắt buộc, nên xoá kho là cả kỳ kiểm kê biến
+        // mất khỏi màn hình trong khi bộ đếm vẫn tính — mà hồ sơ kiểm kê là thứ E-HSMT đòi giữ vĩnh
+        // viễn. Đóng kho xong vẫn phải xem lại được kỳ đã kiểm.
+        var periods = await _db.InventoryPeriods.CountAsync(
+            period => period.WarehouseId == warehouse.Id, ct);
+
+        if (periods > 0)
+        {
+            throw new ConflictException(
+                $"Kho '{warehouse.Name}' còn {periods} kỳ kiểm kê nên chưa xóa được. Hồ sơ kiểm kê "
+                + "phải giữ lại; hãy ngừng sử dụng kho thay vì xóa.");
+        }
+
         var shelves = await _db.Shelves.Where(shelf => shelf.WarehouseId == warehouse.Id).ToListAsync(ct);
 
         // Giá rỗng trong kho rỗng thì xóa cùng — giữ lại chỉ tạo rác trong ô chọn vị trí.

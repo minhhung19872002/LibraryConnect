@@ -159,6 +159,7 @@ public class SearchVisitsQueryHandler : IRequestHandler<SearchVisitsQuery, Paged
 
         var page = await visits
             .OrderByDescending(visit => visit.CheckinAt)
+            .ThenBy(visit => visit.Id)
             .Select(VisitQuery.Projection)
             .ToPagedResultAsync(request, ct);
 

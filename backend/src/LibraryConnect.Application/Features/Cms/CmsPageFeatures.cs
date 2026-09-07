@@ -40,6 +40,7 @@ public class GetCmsPagesQueryHandler : IRequestHandler<GetCmsPagesQuery, PagedRe
             .WhereIf(request.IsPublished is not null, page => page.IsPublished == request.IsPublished)
             .OrderBy(page => page.SortOrder)
             .ThenBy(page => page.Title)
+            .ThenBy(page => page.Id)
             .Select(page => new CmsPageRowDto(
                 page.Id,
                 page.Slug,

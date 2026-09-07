@@ -66,6 +66,7 @@ public class GetParametersQueryHandler : IRequestHandler<GetParametersQuery, IRe
         return parameters
             .GroupBy(p => new { p.GroupCode, p.GroupName })
             .OrderBy(g => g.Min(p => p.SortOrder))
+            .ThenBy(g => g.Key.GroupCode)
             .Select(g => new ParameterGroupDto
             {
                 GroupCode = g.Key.GroupCode,
@@ -112,6 +113,7 @@ public class GetParameterHistoryQueryHandler
             .AsNoTracking()
             .WhereIf(!string.IsNullOrWhiteSpace(request.Key), h => h.Key == request.Key)
             .OrderByDescending(h => h.ChangedAt)
+            .ThenBy(h => h.Id)
             .Select(h => new ParameterHistoryDto
             {
                 Id = h.Id,

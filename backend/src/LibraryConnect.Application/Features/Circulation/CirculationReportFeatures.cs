@@ -632,8 +632,8 @@ public class GetTopItemsReportQueryHandler
 internal static class CirculationReportQueries
 {
     public static IQueryable<Domain.Entities.Cir.Loan> Loans(
-        IApplicationDbContext db, CirculationReportFilter filter) =>
-        LoanQuery.Base(db)
+        IApplicationDbContext db, CirculationReportFilter filter, IDataScopeContext? scope = null) =>
+        LoanQuery.Base(db, scope)
             .WhereIf(filter.ReaderId is not null, loan => loan.ReaderId == filter.ReaderId)
             .WhereIf(filter.ReaderTypeId is not null,
                 loan => loan.Reader!.ReaderTypeId == filter.ReaderTypeId)
@@ -648,8 +648,8 @@ internal static class CirculationReportQueries
 
     /// <summary>Các lượt chưa trả — không lọc theo ngày mượn vì "đang mượn" là trạng thái hôm nay.</summary>
     public static IQueryable<Domain.Entities.Cir.Loan> ActiveLoans(
-        IApplicationDbContext db, CirculationReportFilter filter) =>
-        LoanQuery.Base(db)
+        IApplicationDbContext db, CirculationReportFilter filter, IDataScopeContext? scope = null) =>
+        LoanQuery.Base(db, scope)
             .Where(loan => loan.Status == LoanStatus.Active || loan.Status == LoanStatus.Overdue)
             .WhereIf(filter.ReaderId is not null, loan => loan.ReaderId == filter.ReaderId)
             .WhereIf(filter.ReaderTypeId is not null,

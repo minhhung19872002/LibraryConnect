@@ -92,6 +92,7 @@ public class GetBackupsQueryHandler : IRequestHandler<GetBackupsQuery, PagedResu
         var page = await _db.BackupJobs
             .AsNoTracking()
             .OrderByDescending(job => job.StartedAt)
+            .ThenBy(job => job.Id)
             .Select(job => new BackupJobDto
             {
                 Id = job.Id,

@@ -169,6 +169,7 @@ public class GetAuditLogsQueryHandler : IRequestHandler<GetAuditLogsQuery, Paged
                 (log.Message != null && log.Message.ToLower().Contains(keyword)) ||
                 (log.Username != null && log.Username.ToLower().Contains(keyword)))
             .OrderByDescending(log => log.OccurredAt)
+            .ThenBy(log => log.Id)
             .Select(log => new AuditLogListItemDto
             {
                 Id = log.Id,

@@ -251,6 +251,7 @@ public class SearchHoldsQueryHandler : IRequestHandler<SearchHoldsQuery, PagedRe
             .OrderBy(hold => hold.Status == HoldStatus.Ready ? 0 : 1)
             .ThenBy(hold => hold.QueuePosition)
             .ThenByDescending(hold => hold.HoldDate)
+            .ThenBy(hold => hold.Id)
             .Select(HoldQuery.Projection)
             .ToPagedResultAsync(request, ct);
 
@@ -275,6 +276,7 @@ public class GetHoldQueueQueryHandler : IRequestHandler<GetHoldQueueQuery, IRead
                            && (hold.Status == HoldStatus.Waiting || hold.Status == HoldStatus.Ready))
             .OrderBy(hold => hold.Status == HoldStatus.Ready ? 0 : 1)
             .ThenBy(hold => hold.QueuePosition)
+            .ThenBy(hold => hold.Id)
             .Select(HoldQuery.Projection)
             .ToListAsync(ct);
 

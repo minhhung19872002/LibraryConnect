@@ -53,6 +53,7 @@ public class GetCoursesQueryHandler : IRequestHandler<GetCoursesQuery, PagedResu
         var page = await courses
             .OrderBy(course => course.Code)
             .ThenBy(course => course.Name)
+            .ThenBy(course => course.Id)
             .Select(course => new
             {
                 course.Id,
@@ -180,6 +181,7 @@ public class GetCourseDocumentsQueryHandler
             .Where(link => link.CourseId == query.CourseId)
             .OrderBy(link => link.RelationType)
             .ThenBy(link => link.Bib!.Title)
+            .ThenBy(link => link.Id)
             .Select(link => new
             {
                 link.Id,

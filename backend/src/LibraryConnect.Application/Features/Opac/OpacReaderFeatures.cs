@@ -277,6 +277,7 @@ public class GetMyNotificationsQueryHandler
             .WhereIf(query.UnreadOnly, notification => !notification.IsRead)
             .WhereIf(query.Request.UpdatedSince is not null, notification => notification.CreatedAt >= query.Request.UpdatedSince)
             .OrderByDescending(notification => notification.CreatedAt)
+            .ThenBy(notification => notification.Id)
             .Select(notification => new ReaderNotificationDto(
                 notification.Id,
                 notification.Type,
@@ -455,6 +456,7 @@ public class GetMyFavoritesQueryHandler
         return await _db.OpacFavorites.AsNoTracking()
             .Where(favorite => favorite.ReaderId == readerId)
             .OrderByDescending(favorite => favorite.CreatedAt)
+            .ThenBy(favorite => favorite.Id)
             .Select(favorite => favorite.Bib!)
             .Select(OpacQueryBuilder.ToResult())
             .ToPagedResultAsync(query.Request, ct);
@@ -530,6 +532,7 @@ public class GetMySavedSearchesQueryHandler
         return await _db.OpacSavedSearches.AsNoTracking()
             .Where(search => search.ReaderId == readerId)
             .OrderByDescending(search => search.CreatedAt)
+            .ThenBy(search => search.Id)
             .Select(search => new SavedSearchDto(
                 search.Id, search.Name, search.Query, search.AlertEnabled, search.CreatedAt))
             .ToListAsync(ct);
@@ -769,6 +772,7 @@ public class EmailBibListCommandHandler : IRequestHandler<EmailBibListCommand, s
         var bibs = await OpacQueryBuilder.Published(_db.BibRecords.AsNoTracking())
             .Where(bib => ids.Contains(bib.Id))
             .OrderBy(bib => bib.Title)
+            .ThenBy(bib => bib.Id)
             .Select(bib => new
             {
                 bib.Title,

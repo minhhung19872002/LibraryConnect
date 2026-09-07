@@ -294,17 +294,20 @@ public class SearchLoansQueryHandler : IRequestHandler<SearchLoansQuery, PagedRe
     private readonly ICirculationPolicyResolver _policies;
     private readonly ICirculationCalendarProvider _calendars;
     private readonly IDateTimeProvider _clock;
+    private readonly IDataScopeContext _scope;
 
     public SearchLoansQueryHandler(
         IApplicationDbContext db,
         ICirculationPolicyResolver policies,
         ICirculationCalendarProvider calendars,
-        IDateTimeProvider clock)
+        IDateTimeProvider clock,
+        IDataScopeContext scope)
     {
         _db = db;
         _policies = policies;
         _calendars = calendars;
         _clock = clock;
+        _scope = scope;
     }
 
     public async Task<PagedResult<LoanRowDto>> Handle(SearchLoansQuery query, CancellationToken ct)
@@ -312,7 +315,7 @@ public class SearchLoansQueryHandler : IRequestHandler<SearchLoansQuery, PagedRe
         var today = _clock.Today;
         var request = query.Request;
 
-        var loans = LoanQuery.Base(_db)
+        var loans = LoanQuery.Base(_db, _scope)
             .WhereIf(request.ReaderId is not null, loan => loan.ReaderId == request.ReaderId)
             .WhereIf(request.ItemId is not null, loan => loan.ItemId == request.ItemId)
             .WhereIf(request.UpdatedSince is not null, loan => (loan.UpdatedAt ?? loan.CreatedAt) >= request.UpdatedSince)
