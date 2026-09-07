@@ -1831,3 +1831,4 @@ sắc hơn của cùng mặt tiếp xúc.
 | D4.4 | Xóa hồ sơ bạn đọc rồi gọi bằng thẻ cũ | 404, vốn đã đúng | Đạt |
 | KT.CB | Khóa tài khoản cán bộ: thẻ đang cầm, thẻ làm mới, đăng nhập lại | **Trước sửa: thẻ đang cầm còn sống tới 60 phút.** Sau sửa: 401 ngay; thẻ làm mới và đăng nhập lại vốn đã bị chặn đúng | Đạt |
 | MK | Mở khóa xong thì bạn đọc dùng lại được ngay | 200 | Đạt |
+| CN.1 | Lập khoản phạt tại quầy rồi đọc công nợ trên hồ sơ | **Trước sửa: quầy cộng ra 12.000 đ mà cột chép sẵn — thứ ứng dụng di động đọc — vẫn 0.** Sau sửa: cả hai đều 12.000 đ; migration tính lại 3 hồ sơ lệch trên máy chủ | Đạt |

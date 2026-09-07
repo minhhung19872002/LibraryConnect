@@ -275,6 +275,10 @@ public class CloseLoanAsLostCommandHandler : IRequestHandler<CloseLoanAsLostComm
 
         await _db.SaveChangesAsync(ct);
 
+        // Công nợ chép sẵn phải theo kịp khoản phạt vừa lập; tính sau khi lưu.
+        await PayFineCommandHandler.SyncReaderDebtAsync(_db, fine.ReaderId, ct);
+        await _db.SaveChangesAsync(ct);
+
         return await FineQuery.Base(_db)
             .Where(entity => entity.Id == fine.Id)
             .Select(FineQuery.Projection)

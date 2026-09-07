@@ -572,6 +572,9 @@ public class CirculationDeskService : ICirculationDeskService
 
         var result = new ReturnResultDto();
 
+        // Bạn đọc vừa nhận thêm khoản phạt quá hạn — công nợ chép sẵn của họ phải tính lại sau khi lưu.
+        var canDongBoNo = new List<Guid>();
+
         // Cùng lý do như ở lối ghi mượn: lọc null trước rồi mới cắt khoảng trắng.
         var scanned = barcodes
             .Where(value => !string.IsNullOrWhiteSpace(value))
@@ -661,6 +664,7 @@ public class CirculationDeskService : ICirculationDeskService
                 };
 
                 _db.Fines.Add(fineRow);
+                canDongBoNo.Add(fineRow.ReaderId);
                 row.FineCode = fineRow.Code;
                 result.TotalFine += fine;
             }
@@ -730,6 +734,7 @@ public class CirculationDeskService : ICirculationDeskService
         }
 
         await _db.SaveChangesAsync(ct);
+        await DongBoCongNoAsync(canDongBoNo, ct);
 
         result.SlipCode = result.Items[0].LoanCode;
         return result;
@@ -902,4 +907,26 @@ public class CirculationDeskService : ICirculationDeskService
             ? CirculationRules.OverdueFine(row.DueDate, today, policy, calendar)
             : row.FineAmount;
     }
+    /// <summary>
+    /// Đồng bộ lại cột công nợ chép sẵn cho những bạn đọc vừa nhận thêm khoản phạt.
+    ///
+    /// Gọi sau lượt lưu: phép cộng chạy trên cơ sở dữ liệu nên trước đó nó chưa thấy khoản phạt mới.
+    /// </summary>
+    private async Task DongBoCongNoAsync(IEnumerable<Guid> readerIds, CancellationToken ct)
+    {
+        var danhSach = readerIds.Distinct().ToList();
+
+        if (danhSach.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var readerId in danhSach)
+        {
+            await PayFineCommandHandler.SyncReaderDebtAsync(_db, readerId, ct);
+        }
+
+        await _db.SaveChangesAsync(ct);
+    }
+
 }

@@ -813,13 +813,15 @@ tôi" có lẫn dòng người khác không, và khách chưa đăng nhập đi 
 sửa hồ sơ có tự nâng cấp được mình không, xác thực vị trí của mượn tự phục vụ có chặn được lượt
 mượn từ nhà không, gói đọc ngoại tuyến có bị lấy chéo không, và **vòng đời thẻ đăng nhập**.
 
-**59 phép đo, 2 lỗi** — nhưng hai lỗi ấy cùng một gốc và làm hỏng đúng một lệnh nghiệp vụ: "tạm
-khóa thẻ bạn đọc" của mục VI.1.
+**59 phép đo, 3 lỗi**. Hai lỗi đầu cùng một gốc và làm hỏng đúng một lệnh nghiệp vụ — "tạm khóa
+thẻ bạn đọc" của mục VI.1; lỗi thứ ba lộ ra lúc dọn dữ liệu thử, từ một bất biến đếm được 3 hồ sơ
+lệch công nợ.
 
 | # | Màn hình | Mô tả lỗi | Cách tái hiện | Mức độ | Loại | Trạng thái |
 |---|---|---|---|---|---|---|
 | P1 | Bạn đọc → Tạm khóa thẻ (VI.1) · toàn bộ ứng dụng di động | **Khóa thẻ không dừng được phiên đang mở.** Thẻ đăng nhập là JWT nên máy chủ không giữ trạng thái của nó; lệnh khóa chỉ đổi cột `status` trong kho, mà tầng xác thực không bao giờ đọc lại cột ấy. Hai lối tự hỏi trạng thái thẻ (đặt giữ, mượn tự phục vụ) thì chặn đúng — **chín lối còn lại thì không**, kể cả đọc tài liệu số nội bộ và tự cấp cho mình một gói đọc ngoại tuyến còn hạn bảy ngày. Nghĩa là bạn đọc vừa báo mất thẻ, vừa bị kỷ luật, vẫn mang được nội dung về máy. | Trên máy chủ thật: khóa thẻ một bạn đọc (`POST /api/readers/lock`, trả "Đã tạm khóa 1 thẻ"), rồi gọi lại bằng thẻ đăng nhập cũ — **9 trong 11 việc vẫn trả 200**: xem thẻ điện tử, xem hồ sơ, xem sách đang mượn, xem tiền phạt, gửi yêu cầu gia hạn thẻ, sửa liên hệ, lưu tìm kiếm, đọc tài liệu số nội bộ, tạo gói ngoại tuyến "dùng được tới 14/09/2026". | **Nặng** | Bảo mật | Đã sửa — `ISessionValidator` hỏi trạng thái thật ngay sau khi thẻ được xác thực (`OnTokenValidated`), có đệm 30 giây và lệnh khóa xóa đệm nên tác dụng là tức thì; `SessionRevocationTests` |
 | P2 | Bạn đọc → Tạm khóa thẻ · làm mới phiên | **Và phiên ấy không bao giờ kết thúc**: thẻ làm mới của bạn đọc không bị thu hồi khi khóa thẻ, nên ứng dụng cứ tự làm mới và giữ quyền vô thời hạn. Lối khóa tài khoản **cán bộ** đã thu hồi thẻ làm mới từ trước — chỉ lối bạn đọc thiếu. Cán bộ thì còn một khe hở nhỏ hơn: thẻ đang cầm sống nốt tới 60 phút. | Máy chủ thật: sau khi khóa, `POST /api/reader/auth/refresh` với thẻ làm mới cũ trả **200** kèm thẻ mới. Với cán bộ: `POST /auth/refresh` trả 401 đúng, nhưng `GET /circulation/loans` bằng thẻ cũ vẫn 200. | **Nặng** | Bảo mật | Đã sửa — khóa thẻ bạn đọc thu hồi mọi thẻ làm mới đang mở, ngang với lối cán bộ; và cả hai lối xóa đệm trạng thái để thẻ đang cầm hết giá trị ngay |
+| P3 | Lưu thông → Lập khoản phạt · trang cá nhân của bạn đọc | **Công nợ trên hồ sơ không theo kịp khoản phạt vừa lập.** Cột `debt_amount` là bản chép sẵn của tổng phạt chưa thu; quầy thì cộng thẳng từ bảng phạt nên luôn đúng, còn **trang cá nhân trên ứng dụng di động và trang tra cứu đọc cột chép sẵn**. Hàm đồng bộ có sẵn nhưng chỉ được gọi khi **thu** và khi **miễn** phạt — không gọi ở cả ba lối **lập**: tại quầy, phạt quá hạn lúc ghi trả, và đóng phiếu vì mất sách. Bạn đọc bị phạt xong mở ứng dụng ra thấy "còn nợ 0 đ". | Trên máy chủ thật, bất biến BB16 đếm được 3 hồ sơ lệch: `debt_amount` = 0 trong khi tổng phạt chưa thu = 12.000 đ. `POST /api/circulation/fines` rồi đọc lại cột trong kho: vẫn 0. | Vừa | Nghiệp vụ | Đã sửa — cả ba lối lập phạt gọi `SyncReaderDebtAsync` **sau** lượt lưu (gọi trước thì phép cộng chạy trên kho chưa có dòng mới), kèm migration tính lại cột cho bản đã cài; `SessionRevocationTests.Lap_khoan_phat_thi_cong_no_tren_ho_so_theo_kip` |
 
 ### Đã kiểm trong đợt này và vẫn tốt
 
@@ -947,7 +949,7 @@ dạng quét mã nguồn chặn cả lớp lỗi quay lại thay vì chỉ chặ
 
 Cộng cả ba đợt, đợt áp thiết kế, đợt triển khai và ba đợt rà hoàn thiện ngày 04/09/2026:
 **147 lỗi, đã sửa 145**; thêm **23 lỗi của đợt nghiệm thu thử, test sâu, ba đợt test kỹ thuật ngày
-05/09/2026 và ba đợt soi nghiệp vụ – giao thức – bảo mật ngày 06/09/2026 (mục K), đã sửa cả 23** — tổng **170 lỗi, đã sửa 170**; cộng **16 lỗi mục L**, **4 lỗi mục M**, **4 lỗi mục N**, **5 lỗi mục O** và **2 lỗi mục P** của bảy đợt rà sâu ngày 06–07/09/2026 — tổng **201 lỗi, đã sửa 201**. Hai mục H3 và H9 đã làm xong ngày 03/09/2026 và ghi ở cột cuối
+05/09/2026 và ba đợt soi nghiệp vụ – giao thức – bảo mật ngày 06/09/2026 (mục K), đã sửa cả 23** — tổng **170 lỗi, đã sửa 170**; cộng **16 lỗi mục L**, **4 lỗi mục M**, **4 lỗi mục N**, **5 lỗi mục O** và **3 lỗi mục P** của bảy đợt rà sâu ngày 06–07/09/2026 — tổng **202 lỗi, đã sửa 202**. Hai mục H3 và H9 đã làm xong ngày 03/09/2026 và ghi ở cột cuối
 của chính hai dòng ấy — con số 134 giữ nguyên cách đếm cũ để đối chiếu được với các bản trước.
 Mỗi lỗi đã sửa đều có phép thử chạy đỏ trước khi sửa và xanh sau khi sửa, kể cả H7: phép thử giả
 tiêu đề đỏ trước khi sửa `CurrentUser.Ip`.

@@ -156,6 +156,14 @@ public class CreateFineCommandHandler : IRequestHandler<CreateFineCommand, FineR
         _db.Fines.Add(fine);
         await _db.SaveChangesAsync(ct);
 
+        // Cột công nợ trên hồ sơ là bản chép sẵn của tổng phạt chưa thu, và trang cá nhân của bạn
+        // đọc trên ứng dụng di động đọc đúng cột ấy. Trước 07/09/2026 nó chỉ được đồng bộ khi
+        // **thu** và khi **miễn** phạt, không khi **lập**: quầy nói "còn nợ 12.000 đ" mà bạn đọc mở
+        // ứng dụng ra thấy "còn nợ 0 đ". Ba lối lập phạt — tại quầy, phạt quá hạn lúc ghi trả, và
+        // đóng phiếu vì mất sách — nay đều đồng bộ lại, sau khi lưu.
+        await PayFineCommandHandler.SyncReaderDebtAsync(_db, fine.ReaderId, ct);
+        await _db.SaveChangesAsync(ct);
+
         return await FineQuery.Base(_db)
             .Where(entity => entity.Id == fine.Id)
             .Select(FineQuery.Projection)
@@ -248,6 +256,12 @@ public class PayFineCommandHandler : IRequestHandler<PayFineCommand, FineRowDto>
             .FirstAsync(ct);
     }
 
+    /// <summary>
+    /// Tính lại cột công nợ chép sẵn trên hồ sơ bạn đọc.
+    ///
+    /// Phép cộng chạy **trên cơ sở dữ liệu**, nên phải gọi **sau** khi khoản phạt vừa lập đã được
+    /// lưu — gọi trước thì nó cộng cái kho đang có và bỏ qua dòng còn nằm trong bộ theo dõi.
+    /// </summary>
     internal static async Task SyncReaderDebtAsync(
         IApplicationDbContext db, Guid readerId, CancellationToken ct)
     {

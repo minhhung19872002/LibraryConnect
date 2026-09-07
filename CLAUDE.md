@@ -141,7 +141,9 @@ bạn đọc, danh sách "của tôi", lối cho khách, sửa hồ sơ, xác th
 tuyến, và vòng đời thẻ đăng nhập. **59 phép đo, 2 lỗi** — truy cập chéo sạch hoàn toàn, nhưng cả hai lỗi
 cùng làm hỏng đúng một lệnh nghiệp vụ: **"tạm khoá thẻ bạn đọc" không dừng được phiên đang mở**. Chín trong
 mười một việc vẫn làm được sau khi khoá, kể cả tự cấp gói đọc ngoại tuyến còn hạn bảy ngày, và thẻ làm mới
-không bị thu hồi nên phiên ấy không bao giờ kết thúc. Cả 2 đã sửa, tổng **201 lỗi, đã sửa 201**.
+không bị thu hồi nên phiên ấy không bao giờ kết thúc. Lỗi thứ ba lộ ra lúc dọn dữ liệu thử: **lập một khoản
+phạt không cập nhật cột công nợ chép sẵn trên hồ sơ** — quầy nói "còn nợ 12.000 đ" mà bạn đọc mở ứng dụng
+thấy "còn nợ 0 đ", vì hàm đồng bộ chỉ được gọi khi thu và khi miễn phạt. Cả 3 đã sửa, tổng **202 lỗi, đã sửa 202**.
 Phụ lục cuối `docs/06` ghi kết quả từng kịch bản (hơn 660 dòng).
 
 Đọc thẳng hồ sơ gốc còn tìm ra thứ không phải lỗi mã: **bốn hồ sơ bàn giao** mà Chương V mục III và
@@ -179,7 +181,7 @@ huống lỗi; phải tự tay dựng đúng bối cảnh ấy trong phép thử
 **Lệnh chạy đúng:**
 
 ```bash
-cd backend  && dotnet test                 # 647 unit + 526 integration
+cd backend  && dotnet test                 # 647 unit + 527 integration
 cd frontend-admin && npx tsc -b && npx vitest run    # 347 test
 cd frontend-opac  && npx tsc -b && npx vitest run    # 102 test
 cd mobile   && flutter analyze && flutter test       # 124 test
@@ -580,6 +582,14 @@ docker compose run --rm -d --name lc-api-kiem -e LC_DB_NAME=lc_kiem -e LC_SEED_D
     khoá thẻ bạn đọc thì không — cùng một lệnh nghiệp vụ, hai lối cài, một lối thiếu. Mỗi khi thấy
     một cặp "bản cán bộ / bản bạn đọc", "bản web / bản di động", "bản nhập / bản xuất", hãy đọc
     chúng cạnh nhau: chỗ lệch chính là chỗ hỏng.
+
+85. **Một cột chép sẵn phải được cập nhật ở **mọi** lối làm nó đổi, và cập nhật **sau** khi lưu.**
+    `readers.debt_amount` là bản chép của tổng phạt chưa thu; hàm đồng bộ có sẵn nhưng chỉ được gọi
+    ở hai lối làm giảm nợ (thu, miễn), không ở ba lối làm tăng (lập phạt tại quầy, phạt quá hạn lúc
+    ghi trả, đóng phiếu vì mất sách). Quầy cộng thẳng từ bảng nên luôn đúng; ứng dụng di động đọc
+    cột chép sẵn nên luôn sai. Và phép cộng chạy trên cơ sở dữ liệu, nên gọi **trước** `SaveChanges`
+    là cộng cái kho đang có, bỏ qua dòng còn nằm trong bộ theo dõi — phép thử đầu tiên viết ra đã
+    bắt đúng chỗ ấy.
 
 ### A.4. Cơ chế dùng chung — dùng lại, đừng viết chỗ mới
 

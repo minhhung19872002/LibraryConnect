@@ -7,6 +7,8 @@ using LibraryConnect.Application.Features.Catalogs;
 using LibraryConnect.Application.Features.Admin.UserGroups;
 using LibraryConnect.Application.Features.Admin.Users;
 using LibraryConnect.Application.Features.Auth;
+using LibraryConnect.Application.Features.Circulation;
+using Microsoft.EntityFrameworkCore;
 using LibraryConnect.Application.Features.Readers;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -195,6 +197,48 @@ public class SessionRevocationTests
             .Should().Be(
                 HttpStatusCode.Unauthorized,
                 "thẻ đang cầm còn sống thêm một giờ là một giờ người vừa nghỉ việc vẫn vào được hệ thống");
+    }
+
+
+    /// <summary>
+    /// Công nợ trên hồ sơ phải theo kịp khoản phạt vừa lập.
+    ///
+    /// Cột `debt_amount` là bản chép sẵn của tổng phạt chưa thu; trang cá nhân của bạn đọc trên ứng
+    /// dụng di động đọc đúng cột ấy, còn quầy thì cộng thẳng từ bảng phạt. Trước 07/09/2026 cột này
+    /// chỉ được đồng bộ khi **thu** và khi **miễn** phạt: quầy nói "còn nợ 12.000 đ" mà bạn đọc mở
+    /// ứng dụng ra thấy "còn nợ 0 đ".
+    /// </summary>
+    [Fact]
+    public async Task Lap_khoan_phat_thi_cong_no_tren_ho_so_theo_kip()
+    {
+        var admin = await AdminAsync();
+        var (readerId, _) = await NewReaderCardAsync(admin);
+
+        await ReadAsync<FineRowDto>(await admin.PostAsJsonAsync("/api/circulation/fines", new
+        {
+            readerId,
+            type = "Other",
+            amount = 12_000m,
+            note = $"Kiểm công nợ {Unique()}"
+        }));
+
+        var reader = await ReadAsync<ReaderDetailDto>(await admin.GetAsync($"/api/readers/{readerId}"));
+
+        reader.DebtAmount.Should().Be(
+            12_000m,
+            "quầy cộng thẳng từ bảng phạt còn ứng dụng di động đọc cột chép sẵn; hai con số lệch "
+            + "nhau thì bạn đọc tin con số nào cũng sai");
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider
+            .GetRequiredService<Application.Common.Interfaces.IApplicationDbContext>();
+
+        var luuTrongKho = await db.Readers
+            .Where(entity => entity.Id == readerId)
+            .Select(entity => entity.DebtAmount)
+            .FirstAsync();
+
+        luuTrongKho.Should().Be(12_000m, "cột chép sẵn trong kho mới là thứ ứng dụng di động đọc");
     }
 
     // ---------------------------------------------------------------------------------------
