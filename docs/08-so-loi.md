@@ -612,8 +612,8 @@ kế biểu mẫu, đường ống xử lý tài liệu số, và quy trình duy
 `thuvien.bluestar.com.vn` — ảnh `128fe02`, cùng mã với `main` vì ba commit sau đó chỉ sửa tài liệu.
 
 Cách làm: kịch bản Python gọi API bằng tài khoản đúng vai, ghi dữ liệu thật rồi dọn; chỗ nào con số
-đáng ngờ thì đối chiếu thẳng bằng `psql` trong container. **191 phép đo, 7 lỗi mã nguồn** (L1–L7)
-cộng hai việc phải làm trên chính máy chủ (L8, L9). Kết quả từng phép đo ở phụ lục cuối
+đáng ngờ thì đối chiếu thẳng bằng `psql` trong container. **213 phép đo, 8 lỗi mã nguồn** (L1–L8)
+cộng hai việc phải làm trên chính máy chủ (L9, L10). Kết quả từng phép đo ở phụ lục cuối
 `06-kich-ban-kiem-thu.md`.
 
 | # | Màn hình | Mô tả lỗi | Cách tái hiện | Mức độ | Loại | Trạng thái |
@@ -627,13 +627,15 @@ cộng hai việc phải làm trên chính máy chủ (L8, L9). Kết quả từ
 
 | L7 | Trang chủ tra cứu → banner · Thư viện ảnh | **Chữ tiếng Việt hai dấu trên ảnh minh họa hiện dấu rời.** Ảnh banner và ảnh album của bộ dữ liệu trình diễn là SVG nhúng thẳng vào địa chỉ, và dòng nhan đề khai `font-family='Georgia,serif'`. Georgia có sẵn trên mọi máy Windows nên trình duyệt dùng thật — mà Georgia **thiếu glyph dựng sẵn của ố, ề, ắ, ữ**: nó tách thành nguyên âm một dấu cộng dấu thanh rời lấy từ bộ chữ khác, đặt cạnh nhau chứ không chồng lên. Hai tệp giao diện cũng xếp Georgia ngay sau `'Lora'`, nên chỉ cần một lần phông web không tải được là mọi tiêu đề rơi vào đúng cái bẫy ấy. | Mở `https://thuvien.bluestar.com.vn/` bằng trình duyệt: banner đầu trang hiện **"Tài liệu sô ́ mới cập nhật"**. Đo bằng canvas ngay trên trang ấy: `measureText('ố')` ở Georgia = 60,27 px trong khi `measureText('ô')` = 31,27 px — gần gấp đôi; ở `'Lora'`, ở `'Times New Roman'` và ở `serif` mặc định thì hai số bằng nhau. | Vừa | Ngôn ngữ | Đã sửa — ảnh minh họa dùng `Times New Roman,Times,serif`; hai tệp giao diện bỏ Georgia khỏi danh sách dự phòng; và vì ảnh chỉ được gieo một lần nên có thêm bước đổi bộ chữ ngay trong chuỗi SVG của những dòng đã nằm sẵn trong cơ sở dữ liệu. Hai phép thử: `VietnameseFontStackTests` cấm gọi tên Georgia ở cả ba nơi, `AcceptanceRehearsalTests.Anh_minh_hoa_da_gieo…` canh bước vá dữ liệu |
 
+| L8 | Lưu thông → Quầy ghi mượn · ghi trả | Mảng mã vạch có phần tử `null` làm cả hai lối của quầy trả **500 "Đã xảy ra lỗi hệ thống"**: cả hai gọi `Trim()` trước khi lọc rỗng, nên `null` ném `NullReferenceException` ngay giữa tầng nghiệp vụ. Mục 3 Chương V đòi "không phát sinh lỗi làm chức năng không thể sử dụng"; dữ liệu vào sai phải nhận câu nói rõ mình sai gì. | `POST /api/circulation/desk/return` với `{"barcodes":[null]}` → 500; cùng thân ấy ở `desk/checkout` → 500. Nhật ký máy chủ: `NullReferenceException at CirculationDeskService.ReturnAsync line 572`. Mảng rỗng và chuỗi rỗng thì đã trả 400/409 đúng — chỉ `null` lọt lưới. | Vừa | Nghiệp vụ | Đã sửa — lọc null trước rồi mới cắt khoảng trắng ở cả hai lối; `CirculationTests.Ma_vach_null_trong_mang_bi_tu_choi_bang_cau_ro_nghia_chu_khong_do_500` |
+
 
 ### Hai việc phải làm trên chính máy chủ, không phải lỗi mã
 
 | # | Việc | Tình trạng |
 |---|---|---|
-| L8 | **Dữ liệu thử của các đợt rà trước còn nằm trên máy chủ nghiệm thu**: 5 nhà cung cấp `Nhà cung cấp NTx… (ngừng dùng)`, 9 yêu cầu đặt mua và 3 đơn đặt mang lý do "Nghiệm thu sâu" / "Nhập từ tệp Excel", 2 biểu ghi tạp chí thử, một chủ đề thử. Chúng nằm lẫn trong màn hình Bổ sung và trong Báo cáo duyệt mua — hội đồng mở ra là thấy. | Đã dọn bằng xóa mềm, đúng lối mà thư viện xóa trên màn hình, nên vẫn lần lại được nếu cần |
-| L9 | **Nhánh III.1 trên máy chủ rỗng sau khi dọn**: bộ dữ liệu trình diễn không sinh yêu cầu đặt mua, đơn đặt hay biên bản bàn giao — mục 8 của đặc tả không đòi những thứ này, nên đây không phải lỗi mã và cũng không thêm mã. Nhưng bảy màn hình của III.1 mở ra là bảng rỗng và Báo cáo duyệt mua toàn số 0. | Đã dựng bộ dữ liệu trình diễn bằng chính API: 4 yêu cầu ở đủ bốn trạng thái (Nháp, Chờ duyệt, Đã duyệt, Từ chối kèm lý do), 1 đơn đặt đã nhận đủ kèm số hợp đồng, 1 biên bản bàn giao. Báo cáo duyệt mua nay có số thật: 4 yêu cầu, 10.394.000 đ đề nghị, 2.320.000 đ đã duyệt, tỷ lệ duyệt 50% |
+| L9 | **Dữ liệu thử của các đợt rà trước còn nằm trên máy chủ nghiệm thu**: 5 nhà cung cấp `Nhà cung cấp NTx… (ngừng dùng)`, 9 yêu cầu đặt mua và 3 đơn đặt mang lý do "Nghiệm thu sâu" / "Nhập từ tệp Excel", 2 biểu ghi tạp chí thử, một chủ đề thử. Chúng nằm lẫn trong màn hình Bổ sung và trong Báo cáo duyệt mua — hội đồng mở ra là thấy. | Đã dọn bằng xóa mềm, đúng lối mà thư viện xóa trên màn hình, nên vẫn lần lại được nếu cần |
+| L10 | **Nhánh III.1 trên máy chủ rỗng sau khi dọn**: bộ dữ liệu trình diễn không sinh yêu cầu đặt mua, đơn đặt hay biên bản bàn giao — mục 8 của đặc tả không đòi những thứ này, nên đây không phải lỗi mã và cũng không thêm mã. Nhưng bảy màn hình của III.1 mở ra là bảng rỗng và Báo cáo duyệt mua toàn số 0. | Đã dựng bộ dữ liệu trình diễn bằng chính API: 4 yêu cầu ở đủ bốn trạng thái (Nháp, Chờ duyệt, Đã duyệt, Từ chối kèm lý do), 1 đơn đặt đã nhận đủ kèm số hợp đồng, 1 biên bản bàn giao. Báo cáo duyệt mua nay có số thật: 4 yêu cầu, 10.394.000 đ đề nghị, 2.320.000 đ đã duyệt, tỷ lệ duyệt 50% |
 
 ### Đã kiểm trong đợt này và vẫn tốt
 

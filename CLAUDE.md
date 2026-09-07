@@ -87,14 +87,14 @@ tổng **170 lỗi, đã sửa 170**.
 
 Ngày 06–07/09/2026 chạy tiếp **đợt rà sâu theo phân hệ trên máy chủ thật** (mục L sổ lỗi), lần này chọn đúng những vùng chín đợt
 trước chạm ít nhất: quản trị nội dung, tủ gửi đồ và cổng ra vào, mục lục bài trích, danh mục tự tạo từ trường MARC, kiểm kê nạp
-tệp từ máy đọc rời, năm trình thiết kế biểu mẫu, đường ống xử lý tài liệu số, quy trình duyệt mua nhiều cấp, cộng phân quyền (mục 2.3) và trao đổi dữ liệu (mục 2.4). **191 phép đo, 7 lỗi**:
+tệp từ máy đọc rời, năm trình thiết kế biểu mẫu, đường ống xử lý tài liệu số, quy trình duyệt mua nhiều cấp, cộng phân quyền (mục 2.3) và trao đổi dữ liệu (mục 2.4). **213 phép đo, 8 lỗi**:
 nội dung trình diễn của phân hệ VIII (banner trang chủ, album ảnh) nằm sau rào "chỉ nạp khi kho biểu ghi còn trống" nên máy chủ
 nghiệm thu không có banner nào; xoá biểu ghi bài trích ở Biên mục xong vẫn không gỡ được bài khỏi mục lục dù câu báo lỗi bảo làm
 đúng như vậy; sáu tài liệu số minh hoạ không đi qua đường ống xử lý nên endpoint ảnh bìa trả 404 cho cả sáu; hạ số cấp duyệt từ 2
 xuống 1 làm yêu cầu đặt mua đã qua cấp 1 kẹt vĩnh viễn. Lỗi nặng nhất lộ ra lúc nhập một tệp ISO 2709 lớn lên máy chủ: **một biểu ghi
 hỏng kéo theo biểu ghi lành đứng ngay sau nó**, vì biểu ghi bị từ chối vẫn nằm lại trong bộ theo dõi của EF rồi đi theo lượt lưu kế
 tiếp — lượt nhập 12.610 biểu ghi chết hẳn sau 268 dòng, và báo cáo lỗi hiện nguyên văn tiếng Anh của khung nền. Lỗi cuối tìm ra bằng
-cách mở trang chủ máy chủ thật trên trình duyệt: banner của bản trình diễn hiện **"Tài liệu sô ́ mới cập nhật"** — ảnh SVG khai `font-family='Georgia,serif'`, mà Georgia thiếu glyph dựng sẵn của nguyên âm tiếng Việt hai dấu nên trình duyệt tách dấu ra đứng cạnh. Cộng thêm hai việc trên chính máy chủ, không phải lỗi mã: dọn dữ liệu thử còn sót của các đợt trước, và dựng bộ dữ liệu trình diễn cho nhánh III.1 vốn rỗng. Cả 7 đã sửa, tổng **177 lỗi, đã sửa 177**.
+cách mở trang chủ máy chủ thật trên trình duyệt: banner của bản trình diễn hiện **"Tài liệu sô ́ mới cập nhật"** — ảnh SVG khai `font-family='Georgia,serif'`, mà Georgia thiếu glyph dựng sẵn của nguyên âm tiếng Việt hai dấu nên trình duyệt tách dấu ra đứng cạnh. Cộng thêm hai việc trên chính máy chủ, không phải lỗi mã: dọn dữ liệu thử còn sót của các đợt trước, và dựng bộ dữ liệu trình diễn cho nhánh III.1 vốn rỗng. Lỗi thứ tám: mảng mã vạch có phần tử `null` làm cả hai lối của quầy đổ 500 vì gọi `Trim()` trước khi lọc rỗng. Cả 8 đã sửa, tổng **178 lỗi, đã sửa 178**.
 Phụ lục cuối `docs/06` ghi kết quả từng kịch bản (hơn 590 dòng).
 
 Đọc thẳng hồ sơ gốc còn tìm ra thứ không phải lỗi mã: **bốn hồ sơ bàn giao** mà Chương V mục III và
@@ -103,7 +103,7 @@ mục 5 đòi — kế hoạch triển khai, kế hoạch đào tạo, cam kết
 
 | Tài liệu | Nội dung |
 |---|---|
-| `docs/08-so-loi.md` | Sổ lỗi chín đợt: 37 lỗi hai đợt đầu, 5 lỗi đợt rà thứ hai (mục E), 9 lỗi đợt áp bản thiết kế (mục G), 7 lỗi đợt rà thứ ba (mục H), 8 lỗi đợt triển khai (mục I), **88 lỗi năm đợt rà theo đặc tả ngày 04–05/09/2026 (mục J và các mục con)**, 23 lỗi nghiệm thu thử và soi số học (mục K), **7 lỗi đợt rà sâu theo phân hệ ngày 06–07/09/2026 (mục L)** |
+| `docs/08-so-loi.md` | Sổ lỗi chín đợt: 37 lỗi hai đợt đầu, 5 lỗi đợt rà thứ hai (mục E), 9 lỗi đợt áp bản thiết kế (mục G), 7 lỗi đợt rà thứ ba (mục H), 8 lỗi đợt triển khai (mục I), **88 lỗi năm đợt rà theo đặc tả ngày 04–05/09/2026 (mục J và các mục con)**, 23 lỗi nghiệm thu thử và soi số học (mục K), **8 lỗi đợt rà sâu theo phân hệ ngày 06–07/09/2026 (mục L)** |
 | `docs/09-nguon-du-lieu.md` | Khảo sát 16 nguồn dữ liệu thư mục, giấy phép từng nguồn, kết quả nạp |
 | `docs/10-ke-hoach-trien-khai.md` | Kế hoạch triển khai, chạy thử và chuyển đổi dữ liệu (Chương V mục III.1) |
 | `docs/11-ke-hoach-dao-tao.md` | Kế hoạch đào tạo 16 buổi cho 7 nhóm học viên (Chương V mục III.2) |
@@ -132,10 +132,10 @@ huống lỗi; phải tự tay dựng đúng bối cảnh ấy trong phép thử
 **Lệnh chạy đúng:**
 
 ```bash
-cd backend  && dotnet test                 # 643 unit + 494 integration
+cd backend  && dotnet test                 # 643 unit + 496 integration
 cd frontend-admin && npx tsc -b && npx vitest run    # 347 test
 cd frontend-opac  && npx tsc -b && npx vitest run    # 102 test
-cd mobile   && flutter analyze && flutter test       # 118 test
+cd mobile   && flutter analyze && flutter test       # 124 test
 ```
 
 > `npx tsc --noEmit` **không kiểm gì cả** ở hai thư mục frontend: `tsconfig.json` là tệp solution
@@ -427,6 +427,11 @@ docker compose run --rm -d --name lc-api-kiem -e LC_DB_NAME=lc_kiem -e LC_SEED_D
     liệu sô ́ mới cập nhật" suốt buổi. Cách đo dứt điểm: `canvas.measureText('ố')` so với
     `measureText('ô')` — bằng nhau là phông có chữ, gần gấp đôi là dấu đứng rời. Ảnh SVG nhúng thẳng
     vào địa chỉ là chỗ nguy nhất vì nó không tải được phông web nào.
+66. **Cắt khoảng trắng trước khi lọc rỗng là để `null` lọt vào.** `barcodes.Select(v => v.Trim())`
+    ném NullReferenceException ngay giữa tầng nghiệp vụ khi mảng JSON có một phần tử `null`, và
+    người dùng nhận về 500 "Đã xảy ra lỗi hệ thống" thay vì câu nói mình gửi sai gì. Mảng rỗng và
+    chuỗi rỗng đều đã được canh — chỉ `null` lọt, vì nó đi qua đúng chỗ không ai nghĩ tới. Lọc
+    `IsNullOrWhiteSpace` trước, cắt sau.
 
 ### A.4. Cơ chế dùng chung — dùng lại, đừng viết chỗ mới
 

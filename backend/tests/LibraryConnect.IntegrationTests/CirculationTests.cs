@@ -1656,4 +1656,40 @@ public class CirculationTests
     {
         public string TemporaryPassword { get; set; } = string.Empty;
     }
+
+    /// <summary>
+    /// Mảng mã vạch có phần tử null: máy khách gửi sai thì phải nhận câu nói rõ mình sai gì, không
+    /// phải "Đã xảy ra lỗi hệ thống".
+    ///
+    /// Ngày 07/09/2026, hai lối của quầy — ghi mượn và ghi trả — đều trả **500** cho
+    /// <c>barcodes: [null]</c>: cả hai gọi <c>Trim()</c> trước khi lọc, nên một phần tử null ném
+    /// NullReferenceException ngay giữa tầng nghiệp vụ. Mục 3 Chương V đòi "không phát sinh lỗi làm
+    /// chức năng không thể sử dụng"; một lỗi 500 vì dữ liệu vào sai còn để lộ là chỗ ấy chưa lọc.
+    /// </summary>
+    [Fact]
+    public async Task Ma_vach_null_trong_mang_bi_tu_choi_bang_cau_ro_nghia_chu_khong_do_500()
+    {
+        var client = await ClientAsync();
+        var reader = await NewReaderAsync(client, "Bạn đọc mã vạch null");
+
+        var muon = await client.PostAsJsonAsync(
+            "/api/circulation/desk/checkout",
+            new { readerId = reader, barcodes = new string?[] { null } });
+
+        muon.StatusCode.Should().Be(HttpStatusCode.BadRequest,
+            "phần tử null là dữ liệu vào sai, không phải lỗi máy chủ: {0}",
+            await muon.Content.ReadAsStringAsync());
+
+        var tra = await client.PostAsJsonAsync(
+            "/api/circulation/desk/return",
+            new { barcodes = new string?[] { null } });
+
+        tra.StatusCode.Should().Be(HttpStatusCode.BadRequest,
+            "lối ghi trả cũng vậy: {0}", await tra.Content.ReadAsStringAsync());
+
+        var payload = await tra.Content.ReadFromJsonAsync<ApiResponse>(LibraryConnectFactory.JsonOptions);
+
+        payload!.Message.Should().NotContain("lỗi hệ thống",
+            "câu trả lời phải nói về dữ liệu người dùng gửi, không phải về máy chủ");
+    }
 }

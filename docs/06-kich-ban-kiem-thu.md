@@ -1411,8 +1411,8 @@ từ MARC · `KK.*` kiểm kê · `BC.*` báo cáo · `PH.* TH.* MV.* BM.*` năm
 `QT.*` quản trị hệ thống · `MH.*` tài liệu môn học · `PQ.*` phân quyền và phạm vi dữ liệu (mục 2.3) ·
 `TD.*` trao đổi dữ liệu (mục 2.4).
 
-Tổng: **191 phép đo**. Bảy lỗi mã nguồn tìm ra (L1–L7 ở `08-so-loi.md`) đã sửa và có phép thử tự động
-đi kèm; hai việc dữ liệu trên chính máy chủ (L8, L9) đã xử lý.
+Tổng: **213 phép đo**. Tám lỗi mã nguồn tìm ra (L1–L8 ở `08-so-loi.md`) đã sửa và có phép thử tự động
+đi kèm; hai việc dữ liệu trên chính máy chủ (L9, L10) đã xử lý.
 
 Nhóm `PQ.*` chạy trọn mục 2.3 của E-HSMT trên máy chủ thật bằng một tài khoản *Cán bộ lưu thông* lập
 riêng cho đợt này, gán phạm vi dữ liệu đúng một kho: 13/13 đạt, và đã xóa tài khoản ấy sau khi xong.
@@ -1657,3 +1657,17 @@ riêng cho đợt này, gán phạm vi dữ liệu đúng một kho: 13/13 đạ
 | TS.13 | Danh sách gói "xuất toàn bộ dữ liệu hệ thống" đã tạo (điều 4 E-HSMT) | 1 gói ở trạng thái Hoàn thành | Đạt |
 | HN.1 | Tra cứu trên kho 12.609 biểu ghi trả kết quả dưới 1 giây (yêu cầu 6.3) | năm từ khóa: 575 / 344 / 356 / 208 / 251 ms, số kết quả 408 / 450 / 4.315 / 1.154 / 1.948 | Đạt |
 | HN.2 | Trang chủ trả về nhanh | 279 ms | Đạt |
+| QU.1 | Quét thẻ ở quầy hiện hồ sơ, số sách đang mượn và cảnh báo | 200, đúng tên bạn đọc, danh sách cảnh báo rỗng vì thẻ còn hạn | Đạt |
+| QU.2 | Quét mã vạch ấn phẩm: kiểm chính sách và trả lời ngay | 200, `allowed: true`, kèm nhan đề, tác giả và ký hiệu xếp giá | Đạt |
+| QU.3 | Ghi mượn sinh phiếu kèm hạn trả tính theo chính sách | 200 "Đã ghi mượn 1 tài liệu.", phiếu PM00003125, hạn 14/09/2026 | Đạt |
+| QU.4 | Bản in đang có người mượn thì không ghi mượn lần hai | 409 "LC00000001: Ấn phẩm đang có người mượn, chưa ghi trả." | Đạt |
+| QU.5 | Gia hạn: hạn trả mới dài hơn hạn cũ | 200 "Đã gia hạn tới ngày 21/09/2026.": 14/09 → 21/09 | Đạt |
+| QU.6 | In phiếu mượn ra PDF theo mẫu | 46.858 byte `%PDF-1.7` | Đạt |
+| QU.7 | Ghi trả đóng phiếu mượn và tính phạt nếu quá hạn | 200 "Đã ghi trả 1 tài liệu." | Đạt |
+| QU.8 | Bản in về trạng thái Trong kho sau khi ghi trả | `InStock` | Đạt |
+| QU.9 | Lập khoản phạt thủ công | 200 "Đã lập khoản phạt BL001037." | Đạt |
+| QU.10 | Thu tiền phạt, ghi nhận đã thu | 200 "Đã thu đủ tiền phạt." | Đạt |
+| QU.11 | In biên lai thu tiền phạt theo mẫu | 48.100 byte PDF | Đạt |
+| QU.12 | Mảng mã vạch có phần tử null bị từ chối bằng câu rõ nghĩa, không đổ 500 | **Trước sửa: cả `desk/checkout` lẫn `desk/return` trả 500 "Đã xảy ra lỗi hệ thống"** (L8). Sau sửa: 400 kèm câu nói về dữ liệu người dùng gửi. Mảng rỗng và chuỗi rỗng thì vốn đã đúng | Đạt |
+| WEB.1 | Mười một đường của trang tra cứu mở được bằng trình duyệt thật | tất cả 200; nhật ký console chỉ có một dòng 401 của lượt làm mới thẻ đăng nhập, ngay sau đó `auth/refresh` 200 rồi gọi lại 200 — đúng vòng đời thẻ | Đạt |
+| MB.1 | Bộ kiểm thử ứng dụng di động chạy lại sau đợt sửa | `flutter analyze` sạch, `flutter test` 124/124 đạt | Đạt |

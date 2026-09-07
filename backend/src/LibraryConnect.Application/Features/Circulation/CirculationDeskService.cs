@@ -406,8 +406,11 @@ public class CirculationDeskService : ICirculationDeskService
         }
 
         var barcodes = request.Barcodes
-            .Select(value => value.Trim())
-            .Where(value => value.Length > 0)
+            // Bỏ ô rỗng **và** ô null trước khi cắt khoảng trắng: một phần tử null trong mảng JSON
+            // làm Trim() ném NullReferenceException, và người dùng nhận về 500 "lỗi hệ thống" thay
+            // vì câu nói rõ mình gửi sai gì.
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Select(value => value!.Trim())
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
 
@@ -569,7 +572,18 @@ public class CirculationDeskService : ICirculationDeskService
 
         var result = new ReturnResultDto();
 
-        foreach (var raw in barcodes.Select(value => value.Trim()).Where(value => value.Length > 0))
+        // Cùng lý do như ở lối ghi mượn: lọc null trước rồi mới cắt khoảng trắng.
+        var scanned = barcodes
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Select(value => value!.Trim())
+            .ToList();
+
+        if (scanned.Count == 0)
+        {
+            throw new Common.Exceptions.ValidationException("barcodes", "Chưa quét mã vạch nào.");
+        }
+
+        foreach (var raw in scanned)
         {
             var item = await _db.Items
                 .Include(entity => entity.Bib)
