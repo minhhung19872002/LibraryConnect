@@ -87,15 +87,14 @@ tổng **170 lỗi, đã sửa 170**.
 
 Ngày 06–07/09/2026 chạy tiếp **đợt rà sâu theo phân hệ trên máy chủ thật** (mục L sổ lỗi), lần này chọn đúng những vùng chín đợt
 trước chạm ít nhất: quản trị nội dung, tủ gửi đồ và cổng ra vào, mục lục bài trích, danh mục tự tạo từ trường MARC, kiểm kê nạp
-tệp từ máy đọc rời, năm trình thiết kế biểu mẫu, đường ống xử lý tài liệu số, quy trình duyệt mua nhiều cấp, cộng phân quyền (mục 2.3) và trao đổi dữ liệu (mục 2.4). **173 phép đo, 6 lỗi**:
+tệp từ máy đọc rời, năm trình thiết kế biểu mẫu, đường ống xử lý tài liệu số, quy trình duyệt mua nhiều cấp, cộng phân quyền (mục 2.3) và trao đổi dữ liệu (mục 2.4). **191 phép đo, 7 lỗi**:
 nội dung trình diễn của phân hệ VIII (banner trang chủ, album ảnh) nằm sau rào "chỉ nạp khi kho biểu ghi còn trống" nên máy chủ
 nghiệm thu không có banner nào; xoá biểu ghi bài trích ở Biên mục xong vẫn không gỡ được bài khỏi mục lục dù câu báo lỗi bảo làm
 đúng như vậy; sáu tài liệu số minh hoạ không đi qua đường ống xử lý nên endpoint ảnh bìa trả 404 cho cả sáu; hạ số cấp duyệt từ 2
 xuống 1 làm yêu cầu đặt mua đã qua cấp 1 kẹt vĩnh viễn. Lỗi nặng nhất lộ ra lúc nhập một tệp ISO 2709 lớn lên máy chủ: **một biểu ghi
 hỏng kéo theo biểu ghi lành đứng ngay sau nó**, vì biểu ghi bị từ chối vẫn nằm lại trong bộ theo dõi của EF rồi đi theo lượt lưu kế
-tiếp — lượt nhập 12.610 biểu ghi chết hẳn sau 268 dòng, và báo cáo lỗi hiện nguyên văn tiếng Anh của khung nền. Cộng thêm hai việc
-trên chính máy chủ, không phải lỗi mã: dọn dữ liệu thử còn sót của các đợt trước, và dựng bộ dữ liệu trình diễn cho nhánh III.1 vốn
-rỗng. Cả 6 đã sửa, tổng **176 lỗi, đã sửa 176**.
+tiếp — lượt nhập 12.610 biểu ghi chết hẳn sau 268 dòng, và báo cáo lỗi hiện nguyên văn tiếng Anh của khung nền. Lỗi cuối tìm ra bằng
+cách mở trang chủ máy chủ thật trên trình duyệt: banner của bản trình diễn hiện **"Tài liệu sô ́ mới cập nhật"** — ảnh SVG khai `font-family='Georgia,serif'`, mà Georgia thiếu glyph dựng sẵn của nguyên âm tiếng Việt hai dấu nên trình duyệt tách dấu ra đứng cạnh. Cộng thêm hai việc trên chính máy chủ, không phải lỗi mã: dọn dữ liệu thử còn sót của các đợt trước, và dựng bộ dữ liệu trình diễn cho nhánh III.1 vốn rỗng. Cả 7 đã sửa, tổng **177 lỗi, đã sửa 177**.
 Phụ lục cuối `docs/06` ghi kết quả từng kịch bản (hơn 590 dòng).
 
 Đọc thẳng hồ sơ gốc còn tìm ra thứ không phải lỗi mã: **bốn hồ sơ bàn giao** mà Chương V mục III và
@@ -104,7 +103,7 @@ mục 5 đòi — kế hoạch triển khai, kế hoạch đào tạo, cam kết
 
 | Tài liệu | Nội dung |
 |---|---|
-| `docs/08-so-loi.md` | Sổ lỗi chín đợt: 37 lỗi hai đợt đầu, 5 lỗi đợt rà thứ hai (mục E), 9 lỗi đợt áp bản thiết kế (mục G), 7 lỗi đợt rà thứ ba (mục H), 8 lỗi đợt triển khai (mục I), **88 lỗi năm đợt rà theo đặc tả ngày 04–05/09/2026 (mục J và các mục con)**, 23 lỗi nghiệm thu thử và soi số học (mục K), **6 lỗi đợt rà sâu theo phân hệ ngày 06–07/09/2026 (mục L)** |
+| `docs/08-so-loi.md` | Sổ lỗi chín đợt: 37 lỗi hai đợt đầu, 5 lỗi đợt rà thứ hai (mục E), 9 lỗi đợt áp bản thiết kế (mục G), 7 lỗi đợt rà thứ ba (mục H), 8 lỗi đợt triển khai (mục I), **88 lỗi năm đợt rà theo đặc tả ngày 04–05/09/2026 (mục J và các mục con)**, 23 lỗi nghiệm thu thử và soi số học (mục K), **7 lỗi đợt rà sâu theo phân hệ ngày 06–07/09/2026 (mục L)** |
 | `docs/09-nguon-du-lieu.md` | Khảo sát 16 nguồn dữ liệu thư mục, giấy phép từng nguồn, kết quả nạp |
 | `docs/10-ke-hoach-trien-khai.md` | Kế hoạch triển khai, chạy thử và chuyển đổi dữ liệu (Chương V mục III.1) |
 | `docs/11-ke-hoach-dao-tao.md` | Kế hoạch đào tạo 16 buổi cho 7 nhóm học viên (Chương V mục III.2) |
@@ -133,7 +132,7 @@ huống lỗi; phải tự tay dựng đúng bối cảnh ấy trong phép thử
 **Lệnh chạy đúng:**
 
 ```bash
-cd backend  && dotnet test                 # 641 unit + 493 integration
+cd backend  && dotnet test                 # 643 unit + 494 integration
 cd frontend-admin && npx tsc -b && npx vitest run    # 347 test
 cd frontend-opac  && npx tsc -b && npx vitest run    # 102 test
 cd mobile   && flutter analyze && flutter test       # 118 test
@@ -171,6 +170,7 @@ vướng — mỗi cái sinh ra từ một lỗi đã xảy ra thật:
 | `backend/.../Security/LocalTimeInMessagesTests.cs` | Mọi mốc giờ hiện cho người dùng phải qua `ToLocalTime()` hoặc lấy từ đồng hồ hệ thống — quét cả `{…:HH:mm}` lẫn `.ToString("…HH…")`. Câu "tạm khóa tới 02:44" từng hiện giờ UTC cho một mốc thật ra là 09:44 |
 | `backend/.../Infrastructure/MigrationRegistrationTests.cs` | Mỗi tệp trong thư mục Migrations phải có lớp mang đúng `[Migration("<mã>")]`, và không lớp `Migration` nào được thiếu thuộc tính — thiếu là EF Core bỏ qua trong im lặng, bản sửa dữ liệu triển khai xong mà không chạy |
 | `backend/.../Infrastructure/DemoLoanDatesTests.cs` | Không lượt mượn nào của bộ dữ liệu trình diễn rơi vào tương lai, ở mọi cỡ bộ dữ liệu và mọi chính sách — 94 phiếu "mượn 29/11, trả 02/09" từng sống trên cả máy chủ thật |
+| `backend/.../Infrastructure/VietnameseFontStackTests.cs` | Không nơi nào gọi tên Georgia trong danh sách phông — Georgia thiếu glyph dựng sẵn của ố, ề, ắ, ữ nên trình duyệt tách dấu ra đứng cạnh nguyên âm. Quét cả ảnh SVG của bộ dữ liệu trình diễn lẫn `styles.css`/`theme.ts` của hai giao diện |
 | `backend/.../Infrastructure/DeployScriptTests.cs` | `gh-deploy.sh` phải có bước `don_anh_cu` giữ bản mới và bản trước, xoá ảnh `libraryconnect-*` còn lại — 20 bộ ảnh cũ từng làm đầy ổ 96 GB và chặn mọi lượt triển khai |
 
 > Một phép thử quét mã nguồn chỉ chặn đúng thư mục nó quét. Thêm luật mới thì hỏi ngay: gói kia có
@@ -421,6 +421,12 @@ docker compose run --rm -d --name lc-api-kiem -e LC_DB_NAME=lc_kiem -e LC_SEED_D
     phần lớn biểu ghi thu hoạch không có ISBN). Đã dọn bằng xoá mềm và đối chiếu lại đúng con số cũ,
     nhưng phép thử loại này phải chạy trên kho riêng. Đổi lại nó lộ ra L5 và L6 — ghi vào đây để lần
     sau dựng đúng bối cảnh ấy ở chỗ an toàn.
+65. **Georgia không có chữ tiếng Việt hai dấu.** Nó có sẵn trên mọi máy Windows nên hay được xếp vào
+    danh sách phông dự phòng, và trình duyệt dùng nó thật — rồi tách ố thành ô cộng dấu sắc rời lấy
+    từ phông khác, đặt cạnh nhau chứ không chồng lên. Banner trang chủ máy chủ nghiệm thu hiện "Tài
+    liệu sô ́ mới cập nhật" suốt buổi. Cách đo dứt điểm: `canvas.measureText('ố')` so với
+    `measureText('ô')` — bằng nhau là phông có chữ, gần gấp đôi là dấu đứng rời. Ảnh SVG nhúng thẳng
+    vào địa chỉ là chỗ nguy nhất vì nó không tải được phông web nào.
 
 ### A.4. Cơ chế dùng chung — dùng lại, đừng viết chỗ mới
 

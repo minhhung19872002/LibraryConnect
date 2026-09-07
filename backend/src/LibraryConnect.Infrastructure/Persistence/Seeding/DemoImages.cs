@@ -23,6 +23,18 @@ public static class DemoImages
     public const int MaxUrlLength = 1000;
 
     /// <summary>
+    /// Bộ chữ có chân dùng cho dòng nhan đề của ảnh minh họa.
+    ///
+    /// Không được gọi tên Georgia ở đây, dù nó là bộ chữ có chân đẹp và có sẵn trên mọi máy Windows:
+    /// Georgia **thiếu glyph dựng sẵn của nguyên âm tiếng Việt hai dấu** (ố, ề, ắ, ữ…). Trình duyệt
+    /// gặp chữ thiếu thì tách ra thành nguyên âm cộng dấu rời lấy từ bộ chữ khác, và hai phần nằm
+    /// cạnh nhau chứ không chồng lên nhau. Ngày 07/09/2026, banner trang chủ của máy chủ nghiệm thu
+    /// hiện đúng như thế: "Tài liệu sô ́ mới cập nhật". Đo bằng canvas: ở Georgia chữ "ố" rộng
+    /// 60,27 px trong khi "ô" rộng 31,27 px — gần gấp đôi, đúng dấu hiệu của một dấu rời đứng cạnh.
+    /// </summary>
+    private const string SerifStack = "Times New Roman,Times,serif";
+
+    /// <summary>
     /// Một ảnh SVG dạng data URI: nền màu <paramref name="fill"/> (mã màu thường, ví dụ
     /// <c>#35523f</c>), nhan đề chữ có chân và một dòng phụ nhỏ hơn.
     /// </summary>
@@ -36,7 +48,7 @@ public static class DemoImages
         var svg =
             $"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 {width} {height}'>"
             + $"<rect width='{width}' height='{height}' fill='{fill}'/>"
-            + $"<text x='56' y='{titleY}' font-family='Georgia,serif' font-size='{titleSize}' fill='#fffdf8'>{Xml(title)}</text>"
+            + $"<text x='56' y='{titleY}' font-family='{SerifStack}' font-size='{titleSize}' fill='#fffdf8'>{Xml(title)}</text>"
             + $"<text x='56' y='{subtitleY}' font-family='sans-serif' font-size='{subtitleSize}' fill='#f2ecdd'>{Xml(subtitle)}</text>"
             + "</svg>";
 

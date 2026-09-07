@@ -13,7 +13,7 @@ import type { ThemeConfig } from 'antd';
  */
 
 /** Chữ có chân, dành cho tên thư viện, nhan đề tài liệu và con số. */
-export const CHU_TRINH_BAY = "'Lora', Georgia, 'Times New Roman', serif";
+export const CHU_TRINH_BAY = "'Lora', 'Times New Roman', Times, serif";
 
 /** Chữ không chân của toàn bộ phần còn lại. */
 export const CHU_NOI_DUNG =

@@ -1411,8 +1411,8 @@ từ MARC · `KK.*` kiểm kê · `BC.*` báo cáo · `PH.* TH.* MV.* BM.*` năm
 `QT.*` quản trị hệ thống · `MH.*` tài liệu môn học · `PQ.*` phân quyền và phạm vi dữ liệu (mục 2.3) ·
 `TD.*` trao đổi dữ liệu (mục 2.4).
 
-Tổng: **173 phép đo**. Sáu lỗi mã nguồn tìm ra (L1–L6 ở `08-so-loi.md`) đã sửa và có phép thử tự động
-đi kèm; hai việc dữ liệu trên chính máy chủ (L7, L8) đã xử lý.
+Tổng: **191 phép đo**. Bảy lỗi mã nguồn tìm ra (L1–L7 ở `08-so-loi.md`) đã sửa và có phép thử tự động
+đi kèm; hai việc dữ liệu trên chính máy chủ (L8, L9) đã xử lý.
 
 Nhóm `PQ.*` chạy trọn mục 2.3 của E-HSMT trên máy chủ thật bằng một tài khoản *Cán bộ lưu thông* lập
 riêng cho đợt này, gán phạm vi dữ liệu đúng một kho: 13/13 đạt, và đã xóa tài khoản ấy sau khi xong.
@@ -1639,3 +1639,21 @@ riêng cho đợt này, gán phạm vi dữ liệu đúng một kho: 13/13 đạ
 | TD.8 | Danh sách máy chủ Z39.50 / SRU cấu hình được | 2 đích của Thư viện Quốc hội Mỹ | Đạt |
 | TD.10 | Danh sách kho OAI-PMH cấu hình được kèm lịch chạy định kỳ | trả về kèm `scheduleCron` và `lastHarvestAt` | Đạt |
 | TD.11 | Nhật ký thu hoạch OAI-PMH ghi số biểu ghi lấy về và số nhập được | có bản ghi các lần chạy | Đạt |
+| GD.1 | Trang chủ tra cứu mở bằng trình duyệt thật trên máy chủ: banner của bộ dữ liệu trình diễn hiện ra | Sau khi triển khai bản sửa L1: hai banner "Chào mừng năm học mới" và "Tài liệu số mới cập nhật" chạy trên trang chủ; trang Thư viện ảnh có album "Ngày hội đọc sách" 4 ảnh | Đạt |
+| GD.2 | Chữ tiếng Việt hai dấu trên ảnh banner hiện đúng, không tách dấu | **Trước sửa: "Tài liệu sô ́ mới cập nhật"** — đo bằng canvas trên chính trang ấy, `measureText('ố')` ở Georgia = 60,27 px so với `measureText('ô')` = 31,27 px (L7). Sau sửa: dùng `Times New Roman,Times,serif`, hai số bằng nhau | Đạt |
+| GD.3 | Phông chữ của giao diện tải được và phủ đủ chữ tiếng Việt | `document.fonts` cho thấy Be Vietnam Pro và Lora đều `loaded`; ở Lora `measureText('ố')` = `measureText('ô')` = 33,58 px | Đạt |
+| DK.1 | Chọn nhiều đầu báo một lượt để sinh số hàng loạt (IV.3) | 3 đầu báo cùng lúc | Đạt |
+| DK.2 | Xem trước danh sách số dự kiến trước khi chốt | 366 số dự kiến cho cả năm, số 1 rơi đúng 01/01 | Đạt |
+| DK.3 | Sinh số hàng loạt cho nhiều đầu báo cùng lúc | 200 "Đã sinh 107 số dự kiến." kèm nhãn từng số | Đạt |
+| DK.4 | Số sinh ra mang trạng thái Dự kiến, chưa nhận | 91 số, tất cả `Expected` | Đạt |
+| DK.5 | Ghi nhận hàng loạt các số đến hạn, mỗi số sinh ĐKCB riêng | 200 "Đã ghi nhận 2 số và tạo 4 ĐKCB." | Đạt |
+| DK.6 | Đánh dấu số thiếu để lập phiếu khiếu nại | 200 "Đã đánh dấu 1 số là thiếu." | Đạt |
+| DK.7 | Lập phiếu khiếu nại gửi nhà cung cấp | 200 "Đã lập 1 phiếu khiếu nại." | Đạt |
+| DK.9 | Lưới tình trạng nhận số theo năm | năm 2028: dự kiến 88, đã nhận 2, thiếu 1, đã đóng tập 0, kèm từng ô số | Đạt |
+| DK.10 | Bảng tổng hợp tình hình nhận số của đầu báo theo năm | 2026: kế hoạch 60, nhận 52, thiếu 8, đạt 86,7% | Đạt |
+| DK.11 | Bốn báo cáo ấn phẩm định kỳ: Tổng hợp, Môn loại, Mức định kỳ, Ngôn ngữ | cả bốn trả số liệu; Tổng hợp: 5 đầu báo, 91 số đã nhận, 182 bản, 2.660.000 đ | Đạt |
+| TS.11 | Tải tệp Excel mẫu nhập tài liệu số hàng loạt (V.3) | 10.190 byte `PK` | Đạt |
+| TS.12 | Xuất siêu dữ liệu tài liệu số | 8.349 byte `PK` | Đạt |
+| TS.13 | Danh sách gói "xuất toàn bộ dữ liệu hệ thống" đã tạo (điều 4 E-HSMT) | 1 gói ở trạng thái Hoàn thành | Đạt |
+| HN.1 | Tra cứu trên kho 12.609 biểu ghi trả kết quả dưới 1 giây (yêu cầu 6.3) | năm từ khóa: 575 / 344 / 356 / 208 / 251 ms, số kết quả 408 / 450 / 4.315 / 1.154 / 1.948 | Đạt |
+| HN.2 | Trang chủ trả về nhanh | 279 ms | Đạt |
