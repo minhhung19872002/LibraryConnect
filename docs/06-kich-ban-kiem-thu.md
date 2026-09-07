@@ -1771,3 +1771,23 @@ Chỗ nào lệch thì đối chiếu thẳng danh sách id lấy qua API với 
 | PT.16 | Mười hai phép đo kết quả việc chạy nền | 12/12 sạch | Đạt |
 | PT.17 | Kiểm lại L14, L15, L16 trên bản chạy thật sau triển khai | thẻ bạn đọc gọi `/staff/options` → 403; hàng đợi đếm 936 và trả đủ 936 dòng, trang cuối 136 dòng; xoá bản sách đã có 9 lượt mượn → 409 chỉ sang chức năng thanh lý | Đạt |
 | PT.18 | Migration `CloseCatalogQueueOfDeletedRecords` chạy thật trên máy chủ | nhật ký `lc-api`: `Applying migration '20260907034820_CloseCatalogQueueOfDeletedRecords'`; 48 dòng việc mồ côi đã đóng, 0 dòng còn sống | Đạt |
+
+### Đợt mười bốn — mỗi ô lọc, mỗi cột sắp xếp (07/09/2026)
+
+Rút thẳng từ mã nguồn ra danh sách phải đo: ~130 ô lọc khai trong các lớp yêu cầu, 51 cột sắp xếp
+trong các bảng trắng, ô tìm kiếm của 26 màn hình. Đo bằng giá trị **không thể khớp gì cả** rồi đòi
+kết quả bằng 0 — ô lọc chết trả về đúng tổng gốc.
+
+| Mã | Kịch bản | Kết quả thực tế | Đạt |
+|---|---|---|---|
+| BL.1 | 129/130 ô lọc trên 26 màn hình thật sự lọc | GUID ngẫu nhiên, chuỗi bịa, mốc 2999/1900 đều ra 0 dòng; mọi ô lọc enum có ít nhất một giá trị cho kết quả khác tổng gốc và tổng các giá trị không vượt tổng gốc; mọi ô lọc bool cho hai con số khác nhau | Đạt |
+| BL.2 | Lọc nhóm định dạng tài liệu số bằng một nhóm không có thật | **Trước sửa: trả về đủ 6 tài liệu, đúng bằng tổng khi không lọc.** Sau sửa: 400 kèm câu nêu sáu nhóm hợp lệ | Đạt |
+| TK.1 | 26/26 ô tìm kiếm trả 0 dòng cho từ khoá bịa | biểu ghi, ĐKCB, bạn đọc, phiếu mượn, tiền phạt, tác giả 14.299, chủ đề 3.477, nhật ký hệ thống… | Đạt |
+| SX.1 | Mọi cột sắp xếp ở chiều tăng dần | 5 màn hình có bảng trắng sắp xếp, 25 cột, thứ tự đúng theo đối chiếu ICU của PostgreSQL | Đạt |
+| SX.2 | Sắp giảm dần theo cột có thể bỏ trống | **Trước sửa: 10 dòng đầu của "Năm xuất bản, mới nhất trước" đều trống năm** — kho có 7.465/12.609 biểu ghi không mang năm, nên phải lật 150 trang mới tới cuốn 2026. Cùng vậy với DDC, tác giả, mã sinh viên, ngày trả. Sau sửa: ô trống dồn về cuối, phần có giá trị giảm dần đúng | Đạt |
+| SX.3 | Cột sắp xếp không có thật | quay về thứ tự mặc định, HTTP 200 | Đạt |
+| XG.1 | Kho mẫu có giá để xếp sách (III.3) | **Trước sửa: 0 giá trên cả 4 kho**, 17.900/17.900 bản "chưa xếp giá". Sau sửa: 12 giá mỗi kho, mọi bản đã có giá | Đạt |
+| XG.2 | Bản đồ kho trực quan (III.2) | **Trước sửa: 0 ô.** Sau sửa: lưới 3×4 kèm số bản trên từng giá | Đạt |
+| XG.3–XG.9 | Chức năng xếp giá chạy từng bước | lập giá, xếp bản, sinh lại ký hiệu xếp giá (`005.74 LE`), lọc lại theo giá đúng số bản, chi tiết ĐKCB hiện tên giá, trang tra cứu hiện vị trí kho/giá cho bạn đọc (IX.2), bản đồ kho hiện giá mới | Đạt |
+| FC.1 | Bộ đếm facet khớp kết quả lọc thật, câu hỏi dưới ngưỡng đếm | 36/36 phép đo khớp tuyệt đối trên hai câu hỏi có từ khoá | Đạt |
+| FC.2 | Bộ đếm facet với câu hỏi vượt ngưỡng đếm | **Trước sửa: "Sách (4.453)" bấm vào ra 4.544; Tiếng Việt 4.739 → 6.026 — con số xấp xỉ hiện như số đúng.** Sau sửa: hiện "4.453+" kèm chú giải, đúng cách con số tổng vẫn báo "Tìm thấy hơn…" | Đạt |

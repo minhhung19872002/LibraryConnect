@@ -67,13 +67,62 @@ public static class QueryableExtensions
         if (!string.IsNullOrWhiteSpace(request.SortBy)
             && allowedSorts.TryGetValue(request.SortBy.Trim(), out var selector))
         {
-            return WithStableTieBreak(request.SortDescending
-                ? query.OrderByDescending(selector)
-                : query.OrderBy(selector));
+            return WithStableTieBreak(Sort(query, selector, request.SortDescending));
         }
 
-        return WithStableTieBreak(
-            defaultDescending ? query.OrderByDescending(defaultSort) : query.OrderBy(defaultSort));
+        return WithStableTieBreak(Sort(query, defaultSort, defaultDescending));
+    }
+
+    /// <summary>
+    /// Sắp theo một cột, ô trống luôn nằm cuối.
+    ///
+    /// PostgreSQL mặc định xếp NULL <b>lên đầu</b> khi sắp giảm dần. Nghĩa là "Năm xuất bản, mới
+    /// nhất trước" — thao tác tự nhiên nhất của cán bộ biên mục — mở ra là một trang trắng: trên
+    /// máy chủ thật ngày 07/09/2026 có 7.465 trong 12.609 biểu ghi không có năm xuất bản, nên phải
+    /// lật 150 trang mới tới cuốn năm 2026. Cùng chuyện ấy với chỉ số DDC, tác giả, mã sinh viên và
+    /// ngày trả. Sắp tăng dần thì mặc định của PostgreSQL đã đúng (NULL nằm cuối), nên chỉ chiều
+    /// giảm cần chỉnh — và chỉ với cột thật sự có thể rỗng.
+    /// </summary>
+    private static IOrderedQueryable<T> Sort<T>(
+        IQueryable<T> query, Expression<Func<T, object?>> selector, bool descending)
+    {
+        if (!descending)
+        {
+            return query.OrderBy(selector);
+        }
+
+        var coTheRong = NullableSelector(selector);
+
+        return coTheRong is null
+            ? query.OrderByDescending(selector)
+            : query.OrderBy(coTheRong).ThenByDescending(selector);
+    }
+
+    /// <summary>
+    /// Biến bộ chọn cột thành vị từ "ô này có rỗng không", hoặc <c>null</c> khi cột không thể rỗng.
+    ///
+    /// Bộ chọn khai kiểu <c>object?</c> nên cột nào cũng được bọc trong một phép ép kiểu; phải nhìn
+    /// vào kiểu <b>bên trong</b> phép ép ấy mới biết cột có rỗng được không. Thêm điều kiện "rỗng
+    /// hay không" cho một cột không rỗng được là thêm một hằng số vào ORDER BY, vô ích và làm
+    /// PostgreSQL mất chỉ mục.
+    /// </summary>
+    private static Expression<Func<T, bool>>? NullableSelector<T>(Expression<Func<T, object?>> selector)
+    {
+        var than = selector.Body is UnaryExpression { NodeType: ExpressionType.Convert } convert
+            ? convert.Operand
+            : selector.Body;
+
+        var kieu = than.Type;
+        var coTheRong = !kieu.IsValueType || Nullable.GetUnderlyingType(kieu) is not null;
+
+        if (!coTheRong)
+        {
+            return null;
+        }
+
+        return Expression.Lambda<Func<T, bool>>(
+            Expression.Equal(than, Expression.Constant(null, kieu)),
+            selector.Parameters);
     }
 
     /// <summary>

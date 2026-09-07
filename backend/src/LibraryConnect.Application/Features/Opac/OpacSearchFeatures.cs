@@ -269,6 +269,11 @@ public class OpacFacetsQueryHandler
         // số tổng ở danh sách kết quả. Trên kho lớn, một câu hỏi rộng khớp hàng trăm nghìn biểu ghi
         // và việc gom nhóm hết chỗ ấy mất vài giây — trong khi bảy con số hiện ở cột lọc chỉ để
         // người tra cứu chọn hướng thu hẹp, chứ không ai đối chiếu sổ sách bằng chúng.
+        // Lấy dư một dòng để biết câu hỏi có vượt ngưỡng đếm hay không, đúng cách bộ phân trang
+        // của danh sách kết quả vẫn làm.
+        var xapXi = await records.Take(OpacQueryBuilder.CountLimit + 1).CountAsync(ct)
+                    > OpacQueryBuilder.CountLimit;
+
         records = records.Take(OpacQueryBuilder.CountLimit);
 
         // Đếm theo mã rồi mới lấy tên ở một truy vấn khác.
@@ -346,7 +351,9 @@ public class OpacFacetsQueryHandler
 
         groups.AddRange(await CustomIndexGroupsAsync(records, ct));
 
-        return groups;
+        return xapXi
+            ? groups.Select(nhom => nhom with { Approximate = true }).ToList()
+            : groups;
     }
 
     /// <summary>

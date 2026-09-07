@@ -7,6 +7,7 @@ import { opacApi, readerApi, type SearchParams } from '@/api/opac';
 import { Hero } from '@/components/Hero';
 import { ResultList } from '@/components/ResultList';
 import { SCOPE_OPTIONS } from '@/components/searchScopes';
+import { describeFacetCount } from '@/labels';
 import { useAuthStore } from '@/stores/authStore';
 import type { FacetGroup, PagedResult, SearchResult, SearchScope, SortOrder } from '@/types/api';
 
@@ -196,8 +197,15 @@ export function SearchPage() {
                         }}
                       >
                         <span>{value.label}</span>
-                        <span className="lc-facets__count">
-                          {value.count.toLocaleString('vi-VN')}
+                        <span
+                          className="lc-facets__count"
+                          title={
+                            group.approximate
+                              ? 'Câu hỏi khớp nhiều kết quả hơn mức máy chủ đếm hết, nên đây là số tối thiểu.'
+                              : undefined
+                          }
+                        >
+                          {describeFacetCount(value.count, group.approximate)}
                         </span>
                       </span>
                     );

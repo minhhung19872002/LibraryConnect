@@ -67,7 +67,50 @@ public partial class DatabaseSeeder
         _db.Warehouses.AddRange(warehouses);
         await _db.SaveChangesAsync(ct);
 
-        _logger.LogInformation("Đã nạp 2 thư viện và {Count} kho mẫu", warehouses.Length);
+        var shelves = warehouses.SelectMany(Shelves).ToList();
+        _db.Shelves.AddRange(shelves);
+        await _db.SaveChangesAsync(ct);
+
+        _logger.LogInformation(
+            "Đã nạp 2 thư viện, {Warehouses} kho mẫu và {Shelves} giá",
+            warehouses.Length, shelves.Count);
+    }
+
+    /// <summary>Số giá dựng sẵn cho mỗi kho: 3 dãy × 4 giá, vừa một màn hình bản đồ kho.</summary>
+    private const int ShelfRows = 3;
+    private const int ShelfColumns = 4;
+
+    /// <summary>
+    /// Giá của một kho (III.3).
+    ///
+    /// Kho không có giá thì bốn thứ của đặc tả cùng rỗng: bảng giá ở "Quản lý kho", bản đồ kho
+    /// trực quan của III.2, ô "Giá" trên màn hình xếp giá, và dòng vị trí kho/giá mà IX.2 bắt trang
+    /// tra cứu phải hiện cho bạn đọc. Bộ gieo dựng kho từ phase 6 mà chưa bao giờ dựng giá, nên
+    /// trên máy chủ nghiệm thu 17.900/17.900 bản đều ở trạng thái "chưa xếp giá" — chức năng xếp
+    /// giá chạy đúng, chỉ là không có chỗ nào để xếp vào.
+    /// </summary>
+    private IEnumerable<Shelf> Shelves(Warehouse warehouse)
+    {
+        for (var row = 1; row <= ShelfRows; row++)
+        {
+            for (var column = 1; column <= ShelfColumns; column++)
+            {
+                var order = (row - 1) * ShelfColumns + column;
+
+                yield return new Shelf
+                {
+                    WarehouseId = warehouse.Id,
+                    Code = $"{warehouse.Code}-{(char)('A' + row - 1)}{column}",
+                    Name = $"Dãy {(char)('A' + row - 1)} – Giá {column}",
+                    Capacity = 400,
+                    MapRow = row,
+                    MapColumn = column,
+                    SortOrder = order,
+                    IsActive = true,
+                    CreatedAt = _clock.Now
+                };
+            }
+        }
     }
 
     private Warehouse Warehouse(

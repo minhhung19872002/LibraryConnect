@@ -247,7 +247,13 @@ internal static class DigitalDocumentFilters
             "OFFICE" => source.Where(document =>
                 document.MimeType.Contains("word") || document.MimeType.Contains("excel")
                 || document.MimeType.Contains("powerpoint") || document.MimeType.Contains("officedocument")),
-            _ => source,
+
+            // Nhóm lạ thì nói ngay là lạ, đừng lặng lẽ trả về cả kho: người lọc "chỉ xem video" mà
+            // nhận đủ mọi tài liệu sẽ tin rằng thư viện có bấy nhiêu video (bài học 56).
+            _ => throw new Common.Exceptions.ValidationException(
+                "formatGroup",
+                $"Không có nhóm định dạng \"{group}\". Chọn một trong: PDF, EPUB, OFFICE, IMAGE, "
+                + "AUDIO, VIDEO."),
         };
 }
 

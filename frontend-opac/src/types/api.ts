@@ -171,6 +171,8 @@ export interface FacetGroup {
   code: string;
   name: string;
   values: FacetValue[];
+  /** Câu hỏi khớp nhiều hơn ngưỡng đếm, nên các con số là mức tối thiểu. */
+  approximate?: boolean;
 }
 
 export interface Suggestion {

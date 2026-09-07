@@ -117,7 +117,17 @@ quy về bốn lỗi: chín danh sách đếm cả dòng mà chúng không hiệ
 kỳ kiểm kê và lượt gửi tủ hiện **0 dòng** trên con số 2 và 1); mọi danh sách sắp theo cột không duy nhất nên
 trang sau lặp dòng của trang trước (396 dòng tiền phạt chỉ có 316 dòng khác nhau); **phạm vi dữ liệu theo kho
 của danh sách phiếu mượn chỉ được cưỡng chế bằng tác dụng phụ**, nên cán bộ một kho thấy tổng 3.122 phiếu của
-cả thư viện mà chỉ lấy được 302; và xoá được kho vẫn còn kỳ kiểm kê. Cả 4 đã sửa, tổng **190 lỗi, đã sửa 190**.
+cả thư viện mà chỉ lấy được 302; và xoá được kho vẫn còn kỳ kiểm kê. Cả 4 đã sửa.
+
+Đợt thứ mười bốn làm lại đúng cách ấy với hai luật khác, rút danh sách phải đo thẳng từ mã nguồn: **~130 ô
+lọc** khai trong các lớp yêu cầu, **51 cột sắp xếp**, ô tìm kiếm của **26 màn hình**. Đo bằng giá trị không
+thể khớp gì cả rồi đòi kết quả bằng 0. **233 phép đo, 4 lỗi** — và ba con số đáng mừng: 129/130 ô lọc,
+26/26 ô tìm kiếm, mọi cột sắp xếp chiều tăng dần đều đúng. Bốn lỗi nằm chỗ khác: **không kho nào có giá**
+(bộ gieo dựng kho từ phase 6 mà chưa bao giờ dựng giá, nên 17.900/17.900 bản "chưa xếp giá", bản đồ kho
+rỗng, bạn đọc không thấy vị trí giá — chức năng xếp giá thì chạy đúng từng bước); **sắp giảm dần đẩy ô
+trống lên đầu** (7.465/12.609 biểu ghi không có năm xuất bản, nên "mới nhất trước" là 150 trang trắng);
+nhóm định dạng lạ lặng lẽ trả về cả kho; và con số facet xấp xỉ hiện ra như số đúng. Cả 4 đã sửa, tổng
+**194 lỗi, đã sửa 194**.
 Phụ lục cuối `docs/06` ghi kết quả từng kịch bản (hơn 660 dòng).
 
 Đọc thẳng hồ sơ gốc còn tìm ra thứ không phải lỗi mã: **bốn hồ sơ bàn giao** mà Chương V mục III và
@@ -155,7 +165,7 @@ huống lỗi; phải tự tay dựng đúng bối cảnh ấy trong phép thử
 **Lệnh chạy đúng:**
 
 ```bash
-cd backend  && dotnet test                 # 646 unit + 513 integration
+cd backend  && dotnet test                 # 646 unit + 518 integration
 cd frontend-admin && npx tsc -b && npx vitest run    # 347 test
 cd frontend-opac  && npx tsc -b && npx vitest run    # 102 test
 cd mobile   && flutter analyze && flutter test       # 124 test
@@ -502,6 +512,23 @@ docker compose run --rm -d --name lc-api-kiem -e LC_DB_NAME=lc_kiem -e LC_SEED_D
     đã lọc. Mà `CountAsync` lược bỏ đúng cái JOIN ấy, nên cán bộ được cấp một kho nhìn thấy tổng của
     cả thư viện: 3.122 phiếu, trong khi đi hết các trang chỉ lấy được 302. Luật bảo mật phải viết
     thành một `Where` trên chính bảng, ở chỗ cả phép đếm lẫn phép lấy dòng đều đi qua.
+
+75. **Cách đo một ô lọc mà không cần biết dữ liệu: đưa vào giá trị không thể khớp gì cả.** GUID
+    ngẫu nhiên cho ô lọc theo khoá, chuỗi bịa cho ô lọc chữ, mốc "từ ngày" 2999 và "đến ngày" 1900
+    cho khoảng thời gian — rồi đòi kết quả bằng 0. Ô lọc chết trả về **đúng tổng gốc**, và đó là dấu
+    hiệu duy nhất cần tìm. Rút danh sách phải đo bằng cách quét chính các lớp `*Request` / `*Filter`
+    trong tầng Application: 130 ô lọc, 233 phép đo, chạy trong một buổi.
+76. **PostgreSQL xếp ô trống lên đầu khi sắp giảm dần.** "Năm xuất bản, mới nhất trước" — thao tác
+    tự nhiên nhất của cán bộ biên mục — mở ra là trang trắng, vì 7.465 trong 12.609 biểu ghi thu
+    hoạch không mang năm nào; phải lật 150 trang mới tới cuốn 2026. Chiều tăng dần thì mặc định đã
+    đúng. Sắp giảm thì phải "ô trống sau cùng" rồi mới giảm dần theo giá trị, và chỉ thêm điều kiện
+    ấy cho cột thật sự có thể rỗng — thêm cho cột không rỗng là bỏ phí chỉ mục.
+77. **Một danh mục rỗng làm chết bốn màn hình cùng lúc, không kêu tiếng nào.** Bộ gieo dựng kho từ
+    phase 6 mà chưa bao giờ dựng **giá**; hai bộ gieo dữ liệu trình diễn đều đọc `_db.Shelves` để
+    gán giá cho từng bản, đọc ra danh sách rỗng rồi bỏ qua trong im lặng. Kết quả trên máy chủ
+    nghiệm thu: bảng giá rỗng, bản đồ kho không có ô nào, 17.900/17.900 bản "chưa xếp giá", và bạn
+    đọc không bao giờ thấy vị trí giá mà IX.2 hứa. Chức năng thì chạy đúng từng bước — thiếu mỗi
+    chỗ để xếp vào. Đọc `_db.X` ra rỗng trong bộ gieo thì phải hỏi ngay: **ai lẽ ra phải gieo X?**
 
 ### A.4. Cơ chế dùng chung — dùng lại, đừng viết chỗ mới
 

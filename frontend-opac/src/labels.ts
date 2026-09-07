@@ -90,3 +90,15 @@ export function describeDigitalRequest(
       return { label: 'Chờ duyệt', color: 'blue' };
   }
 }
+
+/**
+ * Con số trong ngoặc của một dòng bộ lọc.
+ *
+ * Khi câu hỏi khớp nhiều hơn ngưỡng đếm của máy chủ, con số chỉ tính trên phần đầu tập kết quả nên
+ * nó là mức tối thiểu. Hiện thẳng con số ấy là hứa sai: bạn đọc bấm vào "Sách (4.453)" rồi nhận
+ * 4.544 kết quả. Dấu cộng nói đúng thứ máy chủ biết.
+ */
+export function describeFacetCount(count: number, approximate?: boolean): string {
+  const number = count.toLocaleString('vi-VN');
+  return approximate ? `${number}+` : number;
+}

@@ -129,7 +129,17 @@ public record OpacResultDto(
 /// <summary>Một giá trị trong bộ lọc bên trái kèm số lượng tài liệu.</summary>
 public record OpacFacetValueDto(string? Id, string Label, int Count);
 
-public record OpacFacetGroupDto(string Code, string Name, IReadOnlyList<OpacFacetValueDto> Values);
+/// <summary>
+/// Một nhóm bộ lọc bên trái trang tra cứu.
+///
+/// <paramref name="Approximate"/> bật khi câu hỏi khớp nhiều hơn ngưỡng đếm (quyết định 14): bộ đếm
+/// chỉ chạy trên <c>CountLimit</c> biểu ghi đầu, nên con số là mức tối thiểu chứ không phải con số
+/// đúng. Không nói ra thì bạn đọc thấy "Sách (4.453)", bấm vào và nhận 4.544 kết quả — đúng cái
+/// cách làm mất lòng tin vào cả trang tra cứu. Con số tổng ở danh sách kết quả đã có cờ tương
+/// đương từ trước (<c>TotalCountCapped</c>); đây là cùng một sự thật, nói ở chỗ còn thiếu.
+/// </summary>
+public record OpacFacetGroupDto(
+    string Code, string Name, IReadOnlyList<OpacFacetValueDto> Values, bool Approximate = false);
 
 public record OpacSuggestionDto(string Text, string Type, int Count);
 

@@ -730,6 +730,43 @@ dựng vài dòng dữ liệu rồi đọc trang đầu.
   của L15 nay đã đóng, hàng đợi báo 936 và trả về đúng 936 dòng, trang cuối có 136 dòng.
 - **L14, L15, L16 đã kiểm lại trên bản chạy thật** sau khi triển khai — 6/6 phép đo đạt.
 
+## N. Đợt rà thứ mười bốn — mỗi ô lọc, mỗi cột sắp xếp (07/09/2026)
+
+Đợt 13 quét ngang một luật qua mọi màn hình và cho nhiều lỗi nhất trên mỗi giờ bỏ ra, nên đợt này
+làm lại đúng cách ấy với hai luật khác, rút thẳng từ mã nguồn ra danh sách cần đo: **~130 ô lọc**
+khai trong các lớp yêu cầu, **51 cột sắp xếp** trong các bảng trắng danh sách, và ô tìm kiếm của
+**26 màn hình**.
+
+Cách đo không cần biết dữ liệu: đưa vào một giá trị **không thể khớp gì cả** — một GUID ngẫu nhiên,
+một chuỗi bịa, mốc "từ ngày" 2999, mốc "đến ngày" 1900 — rồi đòi kết quả phải là 0. Ô lọc chết trả
+về đúng tổng gốc, và đó là dấu hiệu duy nhất cần tìm.
+
+**233 phép đo, 4 lỗi.** Bốn ô lọc "chết" thật ra không có: 129/130 ô lọc, 26/26 ô tìm kiếm và mọi
+cột sắp xếp ở chiều tăng dần đều đúng. Cái lộ ra nằm ở chỗ khác — chiều **giảm** dần, và một kho
+chưa bao giờ có giá.
+
+| # | Màn hình | Mô tả lỗi | Cách tái hiện | Mức độ | Loại | Trạng thái |
+|---|---|---|---|---|---|---|
+| N1 | Bổ sung → Xếp giá · Quản lý kho · trang tra cứu | **Không kho nào có giá, nên không bản nào xếp giá được.** Bộ gieo dựng 2 thư viện và 4 kho từ phase 6 mà chưa bao giờ dựng giá; hai bộ gieo dữ liệu trình diễn đều đọc `_db.Shelves` để gán giá cho từng bản, đọc ra danh sách rỗng rồi bỏ qua trong im lặng. Hậu quả kéo bốn chỗ của đặc tả: bảng giá ở "Quản lý kho" (III.3) rỗng, **bản đồ kho trực quan** của III.2 không có ô nào, ô chọn giá trên màn hình xếp giá không có gì để chọn, và dòng **vị trí kho/giá** mà IX.2 bắt trang tra cứu hiện cho bạn đọc chỉ còn tên kho. Chức năng xếp giá thì chạy đúng — chỉ là không có chỗ nào để xếp vào. | Trên máy chủ thật: `select count(*) from acq.shelves` = **0** trên cả 4 kho; `POST /api/stock/items/search` với `unshelved: true` trả **17.900/17.900**. Dựng tay một giá rồi xếp thử thì mọi bước chạy đúng: sinh ký hiệu `005.74 LE`, lọc theo giá tìm lại được, bản đồ kho hiện ô, chi tiết ĐKCB và trang tra cứu đều hiện tên giá. | **Nặng** | Dữ liệu | Đã sửa — bộ gieo dựng 3 dãy × 4 giá cho mỗi kho (12 giá/kho, vừa một màn hình bản đồ), kèm migration dựng giá và rải 17.900 bản đã có vào giá của chính kho nó, theo số ĐKCB để hai bản liền số nằm cạnh nhau; `ListFilterAndSortTests.Moi_kho_mau_deu_co_gia_de_xep_sach`, `.Ban_do_kho_hien_duoc_o_gia…` |
+| N2 | Mọi danh sách — mọi cột có thể bỏ trống | **Sắp giảm dần thì ô trống lên đầu.** PostgreSQL mặc định xếp NULL trước khi `ORDER BY … DESC`, nên "Năm xuất bản, mới nhất trước" — thao tác tự nhiên nhất của cán bộ biên mục — mở ra là một trang trắng, và phải lật **150 trang** mới tới cuốn năm 2026. Cùng chuyện ấy với chỉ số DDC, tác giả, mã sinh viên và ngày trả (danh sách phiếu mượn "ngày trả mới nhất trước" hiện toàn phiếu chưa trả). Chiều tăng dần thì mặc định của PostgreSQL đã đúng. | Trên máy chủ thật: `GET /api/cataloging/bibs?sortBy=publishYear&sortDescending=true` trả 10 dòng đầu đều `publishYear: null`, trong khi chiều ngược lại trả 1486, 1491, 1637… Kho có **7.465/12.609** biểu ghi không mang năm xuất bản. | **Nặng** | Nghiệp vụ | Đã sửa — `ApplySort` sắp chiều giảm bằng "ô trống sau cùng" rồi mới giảm dần theo giá trị, và chỉ thêm điều kiện ấy cho cột thật sự có thể rỗng (thêm cho cột không rỗng là bỏ phí chỉ mục); `ListFilterAndSortTests.Sap_giam_dan_theo_cot_co_the_rong…` |
+| N3 | Tài liệu số → lọc theo nhóm định dạng | Nhóm định dạng không nhận ra thì bộ lọc **lặng lẽ trả về cả kho** (`_ => source`). Người lọc "chỉ xem video" nhận đủ mọi tài liệu và tin rằng thư viện có bấy nhiêu video — đúng bài học 56 ở một chỗ khác. | `POST /api/digital/documents/search` với `filter.formatGroup = "KhongCoThatNTT99"` trả về đủ 6 tài liệu, đúng bằng tổng khi không lọc gì. | Vừa | Nghiệp vụ | Đã sửa — nhóm lạ bị từ chối kèm câu nêu đủ sáu nhóm hợp lệ; `ListFilterAndSortTests.Nhom_dinh_dang_khong_co_that…` |
+| N4 | Trang tra cứu → cột bộ lọc bên trái | **Con số trong ngoặc của bộ lọc là số xấp xỉ nhưng hiện ra như số đúng.** Quyết định 14 chốt bộ đếm facet chỉ chạy trên 10.000 biểu ghi đầu; con số tổng ở danh sách kết quả đã có cờ báo ("Tìm thấy hơn 10.000 tài liệu") còn các con số facet thì không. Bạn đọc thấy "Sách (4.453)", bấm vào và nhận 4.544 kết quả. | Trên máy chủ thật, tra cứu không từ khoá: facet `documentType` = "Sách" ghi 4.453, lọc theo chính nó ra 4.544; ngôn ngữ Tiếng Việt 4.739 → 6.026. Với câu hỏi có từ khoá (dưới ngưỡng) thì 36/36 phép đo khớp tuyệt đối. | Nhẹ | Giao diện | Đã sửa — nhóm facet mang thêm cờ `approximate` khi câu hỏi vượt ngưỡng, trang tra cứu hiện "4.453+" kèm chú giải; cùng một sự thật với cờ `TotalCountCapped` đã có từ trước |
+
+### Đã kiểm trong đợt này và vẫn tốt
+
+- **129/130 ô lọc** trên 26 màn hình danh sách: mọi ô lọc theo khoá, theo enum, theo bool và theo
+  khoảng ngày đều thật sự lọc. Không ô nào là "công tắc chết" (bài học 30).
+- **26/26 ô tìm kiếm** trả 0 dòng cho từ khoá bịa.
+- **51 phép đo cột sắp xếp**: chiều tăng dần đúng ở mọi cột của 5 màn hình có bảng trắng sắp xếp;
+  cột sắp xếp không có thật thì quay về thứ tự mặc định chứ không đổ lỗi.
+- **Chức năng xếp giá (III.2) chạy đúng từng bước** khi có giá: sinh ký hiệu xếp giá theo quy tắc
+  (`005.74 LE`), lọc lại theo giá, bản đồ kho tô đúng ô, chi tiết ĐKCB và trang tra cứu đều hiện
+  tên giá cho bạn đọc.
+- **Bộ đếm facet khớp tuyệt đối** với kết quả lọc thật ở mọi câu hỏi dưới ngưỡng đếm (36/36).
+- Hai con số nghi ngờ hoá ra là dữ liệu thật, không phải lỗi: `publishYearTo=1500` ra 2 biểu ghi là
+  hai cuốn in năm 1486 và 1491 thu hoạch từ Thư viện Quốc hội Mỹ; `subscribedOnly` ra đủ 5 đầu báo
+  vì cả 5 đều còn hạn đặt.
+
 ## Đ. Những chỗ đã thử phá nhưng hệ thống chịu được
 
 Ghi lại để biết chỗ nào đã kiểm và không phải kiểm lại — kèm bằng chứng, không ghi suông.
@@ -837,7 +874,7 @@ dạng quét mã nguồn chặn cả lớp lỗi quay lại thay vì chỉ chặ
 
 Cộng cả ba đợt, đợt áp thiết kế, đợt triển khai và ba đợt rà hoàn thiện ngày 04/09/2026:
 **147 lỗi, đã sửa 145**; thêm **23 lỗi của đợt nghiệm thu thử, test sâu, ba đợt test kỹ thuật ngày
-05/09/2026 và ba đợt soi nghiệp vụ – giao thức – bảo mật ngày 06/09/2026 (mục K), đã sửa cả 23** — tổng **170 lỗi, đã sửa 170**; cộng **16 lỗi mục L** và **4 lỗi mục M** của bốn đợt rà sâu ngày 06–07/09/2026 — tổng **190 lỗi, đã sửa 190**. Hai mục H3 và H9 đã làm xong ngày 03/09/2026 và ghi ở cột cuối
+05/09/2026 và ba đợt soi nghiệp vụ – giao thức – bảo mật ngày 06/09/2026 (mục K), đã sửa cả 23** — tổng **170 lỗi, đã sửa 170**; cộng **16 lỗi mục L**, **4 lỗi mục M** và **4 lỗi mục N** của năm đợt rà sâu ngày 06–07/09/2026 — tổng **194 lỗi, đã sửa 194**. Hai mục H3 và H9 đã làm xong ngày 03/09/2026 và ghi ở cột cuối
 của chính hai dòng ấy — con số 134 giữ nguyên cách đếm cũ để đối chiếu được với các bản trước.
 Mỗi lỗi đã sửa đều có phép thử chạy đỏ trước khi sửa và xanh sau khi sửa, kể cả H7: phép thử giả
 tiêu đề đỏ trước khi sửa `CurrentUser.Ip`.
