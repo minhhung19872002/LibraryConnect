@@ -219,6 +219,19 @@ public class DeleteBibRecordCommandHandler : IRequestHandler<DeleteBibRecordComm
                 $"Biểu ghi này còn {digital:N0} tài liệu số đính kèm. Hãy xóa các tài liệu số đó trước.");
         }
 
+        // Xóa biểu ghi thì việc biên mục của nó cũng hết lý do tồn tại. Trước 07/09/2026 dòng việc
+        // nằm lại trong hàng đợi: trên máy chủ thật có 45 việc "Chờ xử lý" trỏ tới biểu ghi đã xóa,
+        // và vì màn hình hàng đợi đọc bảng công việc chứ không đọc cột trạng thái của biểu ghi
+        // (mục A.3 số 2), cán bộ nhìn thấy đủ 45 việc ấy trong bộ đếm mà mở ra thì không có gì.
+        var congViec = await _db.CatalogQueue
+            .Where(task => task.BibId == bib.Id)
+            .ToListAsync(ct);
+
+        if (congViec.Count > 0)
+        {
+            _db.CatalogQueue.RemoveRange(congViec);
+        }
+
         bib.DeleteReason = request.Reason.Trim();
         _db.BibRecords.Remove(bib);
 

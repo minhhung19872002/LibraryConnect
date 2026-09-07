@@ -13,6 +13,11 @@ namespace LibraryConnect.Application.Features.Admin.Users;
 /// người dùng: cán bộ biên mục phân việc cho đồng nghiệp mà không được xem hồ sơ tài khoản ai cả.
 /// Hai, câu trả lời ở đây chỉ có tên và tên đăng nhập, không có email, không có trạng thái khóa,
 /// không có nhóm quyền — vừa đủ để hiện lên một ô chọn.
+///
+/// Nhưng "tách khỏi màn hình quản trị người dùng" không có nghĩa là ai đăng nhập cũng gọi được.
+/// Thẻ đăng nhập của **bạn đọc** cũng qua được `[Authorize]`, nên tới 07/09/2026 bất kỳ ai có thẻ
+/// thư viện đều đọc được danh sách cán bộ kèm **tên đăng nhập** — đúng thứ cần có trước khi đi dò
+/// mật khẩu. Chuông thông báo bên cạnh đã chặn đúng cách từ đầu; chỗ này thì quên.
 /// </summary>
 public record GetStaffOptionsQuery(string? Keyword = null) : IRequest<IReadOnlyList<StaffOptionDto>>;
 
@@ -25,12 +30,23 @@ public class GetStaffOptionsQueryHandler
     private const int Limit = 200;
 
     private readonly IApplicationDbContext _db;
+    private readonly ICurrentUser _currentUser;
 
-    public GetStaffOptionsQueryHandler(IApplicationDbContext db) => _db = db;
+    public GetStaffOptionsQueryHandler(IApplicationDbContext db, ICurrentUser currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task<IReadOnlyList<StaffOptionDto>> Handle(
         GetStaffOptionsQuery query, CancellationToken ct)
     {
+        // Tài khoản bạn đọc không mang UserId — cùng cách mà chuông thông báo của cán bộ đang chặn.
+        if (_currentUser.UserId is null)
+        {
+            throw new Common.Exceptions.ForbiddenException("Chức năng này dành cho tài khoản cán bộ.");
+        }
+
         var users = _db.Users.AsNoTracking().Where(user => user.IsActive);
 
         if (!string.IsNullOrWhiteSpace(query.Keyword))

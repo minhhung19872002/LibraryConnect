@@ -111,7 +111,18 @@ public class GetReaderLoansQueryHandler : IRequestHandler<GetReaderLoansQuery, P
                 Id = loan.Id,
                 Code = loan.Code,
                 Barcode = loan.Barcode,
-                Title = loan.BibTitle ?? loan.Item!.Bib!.Title,
+
+                // Lấy nhan đề bằng câu hỏi phụ, không đi qua navigation bắt buộc.
+                //
+                // `loan.Item!.Bib!.Title` buộc EF nối INNER JOIN sang ĐKCB và biểu ghi, mà cả hai
+                // đều mang bộ lọc xóa mềm — nên chỉ cần ĐKCB bị xóa là **cả dòng phiếu mượn biến mất**
+                // khỏi lịch sử, kể cả khi cột nhan đề chép sẵn có đủ dữ liệu. Trên máy chủ thật ngày
+                // 07/09/2026, một bạn đọc có 5 phiếu trong sổ: bộ đếm nói 5, danh sách trả về 4.
+                // Câu hỏi phụ thì chỉ trả về null khi không tìm thấy, không cắt dòng ngoài (bài học 57).
+                Title = loan.BibTitle
+                        ?? _db.Items.Where(item => item.Id == loan.ItemId)
+                            .Select(item => item.Bib!.Title)
+                            .FirstOrDefault(),
                 LoanDate = loan.LoanDate,
                 DueDate = loan.DueDate,
                 ReturnDate = loan.ReturnDate,

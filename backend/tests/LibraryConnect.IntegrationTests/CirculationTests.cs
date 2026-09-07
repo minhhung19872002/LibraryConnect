@@ -1692,4 +1692,57 @@ public class CirculationTests
         payload!.Message.Should().NotContain("lỗi hệ thống",
             "câu trả lời phải nói về dữ liệu người dùng gửi, không phải về máy chủ");
     }
+
+    /// <summary>
+    /// Bản sách đã từng lưu thông thì không xóa được, vì xóa đi là mất luôn lượt mượn khỏi lịch sử.
+    ///
+    /// Phiếu mượn nối sang ĐKCB bằng điều hướng bắt buộc, nên xóa mềm bản sách làm mọi phép chiếu có
+    /// nhan đề rơi cả dòng phiếu. Trên máy chủ thật ngày 07/09/2026 có một bạn đọc 5 phiếu trong sổ
+    /// mà API trả về 4 — bộ đếm vẫn nói 5 (bài học 57, lần thứ tư).
+    /// </summary>
+    [Fact]
+    public async Task Ban_sach_da_tung_luu_thong_thi_khong_xoa_duoc_va_lich_su_van_du()
+    {
+        var client = await ClientAsync();
+        var readerId = await NewReaderAsync(client, "Bạn đọc giữ lịch sử");
+        var barcodes = await NewCirculatableItemsAsync(client, "Sách có lịch sử mượn");
+        var barcode = barcodes[0];
+
+        var bibId = await BibIdOfAsync(client, barcode);
+
+        var itemsCuaBib = await ReadAsync<IReadOnlyList<LibraryConnect.Application.Features.Cataloging.ItemDto>>(
+            await client.GetAsync($"/api/cataloging/bibs/{bibId}/items"));
+
+        var itemId = itemsCuaBib.First(row => row.Barcode == barcode).Id;
+
+        (await client.PostAsJsonAsync("/api/circulation/desk/checkout",
+            new { readerId, barcodes = new[] { barcode } })).EnsureSuccessStatusCode();
+
+        (await client.PostAsJsonAsync("/api/circulation/desk/return",
+            new { barcodes = new[] { barcode } })).EnsureSuccessStatusCode();
+
+        var xoa = await client.SendAsync(new HttpRequestMessage(
+            HttpMethod.Delete, $"/api/cataloging/items/{itemId}")
+        {
+            Content = JsonContent.Create(new { reason = "Nhập nhầm" })
+        });
+
+        xoa.StatusCode.Should().Be(HttpStatusCode.Conflict,
+            "bản đã trả rồi nhưng vẫn có lịch sử mượn: {0}", await xoa.Content.ReadAsStringAsync());
+
+        var loi = await xoa.Content.ReadFromJsonAsync<ApiResponse>(LibraryConnectFactory.JsonOptions);
+
+        loi!.Message.Should().Contain("thanh lý",
+            "câu chặn phải chỉ ra lối đi đúng, không để cán bộ mắc kẹt");
+
+        // Và lịch sử của bạn đọc vẫn đủ: số đếm bằng đúng số dòng lấy về.
+        var lichSu = await client.GetFromJsonAsync<ApiResponse<PagedResult<
+            LibraryConnect.Application.Features.Readers.ReaderLoanDto>>>(
+            $"/api/readers/{readerId}/loans?pageSize=100", LibraryConnectFactory.JsonOptions);
+
+        lichSu!.Data!.Items.Count.Should().Be(lichSu.Data.TotalCount,
+            "bộ đếm và danh sách phải nói cùng một con số");
+
+        lichSu.Data.Items.Should().Contain(row => row.Barcode == barcode);
+    }
 }

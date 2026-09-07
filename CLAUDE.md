@@ -101,8 +101,15 @@ chuyển trạng thái phi pháp, xoá khi còn ràng buộc, và tranh chấp �
 ràng buộc xoá đều đạt sạch (6/6, 9/9, 5/5); ba lỗi nữa lộ ra: **một ký tự rỗng U+0000 làm bảy endpoint đổ 500**, ba trong đó là lối
 công khai ai cũng gọi được; **ba lượt cấp lại thẻ song song để lại ba thẻ cùng hiệu lực**, nghĩa là thẻ vừa báo mất vẫn quét được;
 và **ba lượt mở kỳ kiểm kê cùng một kho song song đều thành công**, mỗi kỳ chốt một danh sách kỳ vọng riêng. Hai lỗi sau là bài học 1
-và 45 lặp lại ở hai chỗ nữa: luật "một … một" chỉ kiểm ở tầng nghiệp vụ thì không chặn được hai lượt cùng lúc. Cả 11 đã sửa, tổng
-**181 lỗi, đã sửa 181**.
+và 45 lặp lại ở hai chỗ nữa: luật "một … một" chỉ kiểm ở tầng nghiệp vụ thì không chặn được hai lượt cùng lúc. Cả 11 đã sửa.
+
+Đợt thứ mười hai hỏi ba câu nữa: **endpoint nào chưa được canh quyền**, **bất biến dữ liệu trên chính kho thật** (38 phép đo SQL,
+thứ không API nào nhìn ra), và **việc chạy nền theo lịch có để lại đúng dấu vết của nó không**. Chín việc nền chạy đúng giờ, 15 lượt
+thành công, 0 hỏng; 26/29 bất biến sạch ngay. Ba lỗi nữa: **thẻ đăng nhập của bạn đọc đọc được danh sách cán bộ kèm tên đăng nhập**
+(endpoint chỉ có `[Authorize]`); **hàng đợi biên mục đếm 981 việc mà một trang 200 dòng chỉ trả 155** vì phần đếm chạy trên bảng công
+việc còn phần lấy dòng phải nối sang biểu ghi; và **xoá một bản sách đã trả xong làm mất luôn lượt mượn ấy khỏi lịch sử bạn đọc** —
+bài học 57 lần thứ tư, lần này kèm hậu quả tiền bạc vì khoản phạt gắn phiếu cũng biến khỏi danh sách mà vẫn tính vào công nợ. Cả 14
+đã sửa, tổng **184 lỗi, đã sửa 184**.
 Phụ lục cuối `docs/06` ghi kết quả từng kịch bản (hơn 590 dòng).
 
 Đọc thẳng hồ sơ gốc còn tìm ra thứ không phải lỗi mã: **bốn hồ sơ bàn giao** mà Chương V mục III và
@@ -111,7 +118,7 @@ mục 5 đòi — kế hoạch triển khai, kế hoạch đào tạo, cam kết
 
 | Tài liệu | Nội dung |
 |---|---|
-| `docs/08-so-loi.md` | Sổ lỗi chín đợt: 37 lỗi hai đợt đầu, 5 lỗi đợt rà thứ hai (mục E), 9 lỗi đợt áp bản thiết kế (mục G), 7 lỗi đợt rà thứ ba (mục H), 8 lỗi đợt triển khai (mục I), **88 lỗi năm đợt rà theo đặc tả ngày 04–05/09/2026 (mục J và các mục con)**, 23 lỗi nghiệm thu thử và soi số học (mục K), **11 lỗi hai đợt rà ngày 06–07/09/2026 (mục L)** |
+| `docs/08-so-loi.md` | Sổ lỗi chín đợt: 37 lỗi hai đợt đầu, 5 lỗi đợt rà thứ hai (mục E), 9 lỗi đợt áp bản thiết kế (mục G), 7 lỗi đợt rà thứ ba (mục H), 8 lỗi đợt triển khai (mục I), **88 lỗi năm đợt rà theo đặc tả ngày 04–05/09/2026 (mục J và các mục con)**, 23 lỗi nghiệm thu thử và soi số học (mục K), **14 lỗi ba đợt rà ngày 06–07/09/2026 (mục L)** |
 | `docs/09-nguon-du-lieu.md` | Khảo sát 16 nguồn dữ liệu thư mục, giấy phép từng nguồn, kết quả nạp |
 | `docs/10-ke-hoach-trien-khai.md` | Kế hoạch triển khai, chạy thử và chuyển đổi dữ liệu (Chương V mục III.1) |
 | `docs/11-ke-hoach-dao-tao.md` | Kế hoạch đào tạo 16 buổi cho 7 nhóm học viên (Chương V mục III.2) |
@@ -140,7 +147,7 @@ huống lỗi; phải tự tay dựng đúng bối cảnh ấy trong phép thử
 **Lệnh chạy đúng:**
 
 ```bash
-cd backend  && dotnet test                 # 643 unit + 507 integration
+cd backend  && dotnet test                 # 644 unit + 510 integration
 cd frontend-admin && npx tsc -b && npx vitest run    # 347 test
 cd frontend-opac  && npx tsc -b && npx vitest run    # 102 test
 cd mobile   && flutter analyze && flutter test       # 124 test
@@ -178,6 +185,7 @@ vướng — mỗi cái sinh ra từ một lỗi đã xảy ra thật:
 | `backend/.../Security/LocalTimeInMessagesTests.cs` | Mọi mốc giờ hiện cho người dùng phải qua `ToLocalTime()` hoặc lấy từ đồng hồ hệ thống — quét cả `{…:HH:mm}` lẫn `.ToString("…HH…")`. Câu "tạm khóa tới 02:44" từng hiện giờ UTC cho một mốc thật ra là 09:44 |
 | `backend/.../Infrastructure/MigrationRegistrationTests.cs` | Mỗi tệp trong thư mục Migrations phải có lớp mang đúng `[Migration("<mã>")]`, và không lớp `Migration` nào được thiếu thuộc tính — thiếu là EF Core bỏ qua trong im lặng, bản sửa dữ liệu triển khai xong mà không chạy |
 | `backend/.../Infrastructure/DemoLoanDatesTests.cs` | Không lượt mượn nào của bộ dữ liệu trình diễn rơi vào tương lai, ở mọi cỡ bộ dữ liệu và mọi chính sách — 94 phiếu "mượn 29/11, trả 02/09" từng sống trên cả máy chủ thật |
+| `backend/.../Security/EndpointAuthorisationTests.cs` | Mọi endpoint quản trị phải khai `[RequirePermission]`, khai `[AllowAnonymous]`, hoặc có tên trong danh sách "tự canh trong bộ xử lý" kèm lý do — `[Authorize]` một mình cho thẻ bạn đọc đi qua |
 | `backend/.../UnstorableTextTests.cs` | Ký tự PostgreSQL không lưu được (U+0000 và họ) bị bỏ ở **cả hai** cửa vào — chuỗi truy vấn và thân JSON. Một ký tự rỗng từng làm bảy endpoint đổ 500, ba trong đó công khai |
 | `backend/.../ConcurrencyTests.cs` | Hai luật "một … một" phải có ràng buộc duy nhất ở CSDL: một bạn đọc một thẻ hiệu lực, một kho một kỳ kiểm kê chưa chốt. Phép thử gửi ba yêu cầu **thật sự song song**; gọi tuần tự thì cả hai vẫn xanh |
 | `backend/.../Infrastructure/VietnameseFontStackTests.cs` | Không nơi nào gọi tên Georgia trong danh sách phông — Georgia thiếu glyph dựng sẵn của ố, ề, ắ, ữ nên trình duyệt tách dấu ra đứng cạnh nguyên âm. Quét cả ảnh SVG của bộ dữ liệu trình diễn lẫn `styles.css`/`theme.ts` của hai giao diện |
@@ -452,6 +460,21 @@ docker compose run --rm -d --name lc-api-kiem -e LC_DB_NAME=lc_kiem -e LC_SEED_D
     đọc-rồi-ghi: một bạn đọc một thẻ hiệu lực, một kho một kỳ kiểm kê chưa chốt. Ba lượt bấm song
     song để lại ba thẻ và ba kỳ. Cách rà: liệt kê **mọi** câu trong đặc tả có dạng "chỉ một", rồi
     hỏi từng câu "chỉ mục duy nhất tương ứng ở đâu" — đừng đợi gặp lỗi mới đi tìm.
+69. **`[Authorize]` không phải là canh quyền.** Thẻ đăng nhập của bạn đọc cũng qua được nó, nên
+    endpoint nào quên `[RequirePermission]` là ai có thẻ thư viện cũng gọi được. Lời chú của lớp
+    viết "chỉ đòi tài khoản cán bộ" mà không có gì bắt điều đó — và danh sách cán bộ kèm **tên đăng
+    nhập** ra ngoài suốt. Cách rà rẻ: quét mã nguồn, mọi endpoint phải chọn một trong ba lối —
+    `[RequirePermission]`, `[AllowAnonymous]`, hoặc ghi tên vào danh sách tự canh kèm lý do.
+70. **Bộ đếm và danh sách phải chạy trên cùng một tập dòng.** Đếm trên bảng gốc rồi lấy dòng qua một
+    phép chiếu có nối bảng là hai câu hỏi khác nhau: mọi navigation bắt buộc trong `Select` biến
+    thành INNER JOIN, và bộ lọc xóa mềm ở bảng bên kia lặng lẽ cắt bớt dòng. Hàng đợi biên mục báo
+    981 việc mà một trang 200 dòng trả về 155; lịch sử bạn đọc báo 5 phiếu mà trả về 4. Thấy `totalCount`
+    lớn hơn số dòng lấy về là thấy đúng cái bẫy này.
+71. **Xóa mềm một thực thể là xóa mọi dòng trỏ tới nó khỏi mọi danh sách.** Không phải "ẩn nó đi" mà
+    là **cắt cả dòng cha**. Xóa một bản sách đã trả xong là mất lượt mượn khỏi lịch sử bạn đọc, mất
+    phiếu khỏi danh sách quầy, và mất khoản phạt khỏi danh sách phạt trong khi vẫn tính vào công nợ.
+    Trước khi cho xóa một thứ, hỏi "cái gì đang trỏ tới nó" — rồi hoặc chặn xóa và chỉ sang chức năng
+    giữ được lịch sử (thanh lý), hoặc dọn luôn thứ trỏ tới nó (dòng việc hàng đợi).
 
 ### A.4. Cơ chế dùng chung — dùng lại, đừng viết chỗ mới
 

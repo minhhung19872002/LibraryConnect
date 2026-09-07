@@ -89,6 +89,12 @@ public class GetCatalogQueueQueryHandler
 
         var items = _db.CatalogQueue
             .AsNoTracking()
+            // Chỉ việc của biểu ghi còn sống. Bỏ dòng này thì bộ đếm và danh sách nói hai con số khác
+            // nhau: phần đếm chạy trên bảng công việc, còn phần lấy dòng phải nối sang biểu ghi để
+            // lấy nhan đề nên bị bộ lọc xóa mềm gạt bớt. Trên máy chủ thật ngày 07/09/2026, hàng đợi
+            // báo 981 việc mà một trang 200 dòng chỉ trả về 155 — thiếu đúng 45 việc của biểu ghi đã
+            // xóa, và trang cuối rỗng trơn.
+            .Where(item => _db.BibRecords.Any(bib => bib.Id == item.BibId))
             .WhereIf(request.Status is not null, item => item.Status == request.Status)
             .WhereIf(request.AssignedTo is not null, item => item.AssignedTo == request.AssignedTo)
             .WhereIf(request.Unassigned == true, item => item.AssignedTo == null)
@@ -160,11 +166,14 @@ public class GetCatalogQueueSummaryQueryHandler
 
         var counts = await _db.CatalogQueue
             .AsNoTracking()
+            .Where(item => _db.BibRecords.Any(bib => bib.Id == item.BibId))
             .GroupBy(item => item.Status)
             .Select(group => new { Status = group.Key, Count = group.Count() })
             .ToListAsync(ct);
 
-        var overdue = await _db.CatalogQueue.CountAsync(
+        var overdue = await _db.CatalogQueue
+            .Where(item => _db.BibRecords.Any(bib => bib.Id == item.BibId))
+            .CountAsync(
             item => item.Deadline != null
                     && item.Deadline < today
                     && item.Status != CatalogQueueStatus.Completed, ct);

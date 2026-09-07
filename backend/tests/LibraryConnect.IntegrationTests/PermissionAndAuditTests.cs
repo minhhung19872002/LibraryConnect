@@ -517,4 +517,58 @@ public class PermissionAndAuditTests
         text.Should().NotContain("is invalid");
         text.Should().NotContain("JSON value");
     }
+
+    /// <summary>
+    /// Thẻ đăng nhập của bạn đọc cũng qua được <c>[Authorize]</c>, nên endpoint nào chỉ có thuộc tính
+    /// ấy là mọi người có thẻ thư viện đều gọi được.
+    ///
+    /// Ngày 07/09/2026, <c>GET /api/staff/options</c> trả về danh sách cán bộ kèm **tên đăng nhập**
+    /// cho một tài khoản bạn đọc vừa lập xong — đúng thứ cần có trước khi đi dò mật khẩu. Chuông
+    /// thông báo ngay bên cạnh thì chặn đúng từ đầu, vì bộ xử lý của nó tự hỏi tài khoản đang gọi có
+    /// phải cán bộ không.
+    /// </summary>
+    [Fact]
+    public async Task The_dang_nhap_cua_ban_doc_khong_doc_duoc_danh_sach_can_bo()
+    {
+        var admin = await AdminClientAsync();
+
+        var types = (await admin.GetFromJsonAsync<ApiResponse<PagedResult<
+            LibraryConnect.Application.Features.Catalogs.CatalogItemDto>>>(
+            "/api/catalogs/reader-types/items?pageSize=50", LibraryConnectFactory.JsonOptions))!.Data!;
+
+        var taoBanDoc = await admin.PostAsJsonAsync("/api/readers", new
+        {
+            fullName = "Bạn đọc dò danh sách cán bộ",
+            studentCode = $"SV{Guid.NewGuid():N}"[..10],
+            readerTypeId = types.Items.First(item => item.Code == "SV").Id
+        });
+
+        taoBanDoc.IsSuccessStatusCode.Should().BeTrue(await taoBanDoc.Content.ReadAsStringAsync());
+
+        var readerId = (await taoBanDoc.Content.ReadFromJsonAsync<ApiResponse<Guid>>(
+            LibraryConnectFactory.JsonOptions))!.Data;
+
+        var reader = (await admin.GetFromJsonAsync<ApiResponse<
+            LibraryConnect.Application.Features.Readers.ReaderDetailDto>>(
+            $"/api/readers/{readerId}", LibraryConnectFactory.JsonOptions))!.Data!;
+
+        const string password = "BanDoc@2026";
+
+        (await admin.PostAsJsonAsync($"/api/readers/{readerId}/reset-password", new { newPassword = password }))
+            .IsSuccessStatusCode.Should().BeTrue();
+
+        var banDoc = await _factory.CreateReaderClientAsync(reader.CardNumber, password);
+
+        var response = await banDoc.GetAsync("/api/staff/options");
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden,
+            "tên đăng nhập của cán bộ không được lộ cho người chỉ có thẻ thư viện: {0}",
+            await response.Content.ReadAsStringAsync());
+
+        // Và cán bộ thì vẫn dùng được — ô chọn người nhận việc sống nhờ endpoint này.
+        var cuaCanBo = await admin.GetAsync("/api/staff/options");
+
+        cuaCanBo.IsSuccessStatusCode.Should().BeTrue(
+            "cán bộ vẫn phải chọn được người nhận việc: {0}", await cuaCanBo.Content.ReadAsStringAsync());
+    }
 }

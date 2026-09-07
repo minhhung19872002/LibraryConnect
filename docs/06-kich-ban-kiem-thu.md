@@ -1411,8 +1411,8 @@ từ MARC · `KK.*` kiểm kê · `BC.*` báo cáo · `PH.* TH.* MV.* BM.*` năm
 `QT.*` quản trị hệ thống · `MH.*` tài liệu môn học · `PQ.*` phân quyền và phạm vi dữ liệu (mục 2.3) ·
 `TD.*` trao đổi dữ liệu (mục 2.4).
 
-Tổng: **285 phép đo**. Mười một lỗi mã nguồn tìm ra (L1–L11 ở `08-so-loi.md`) đã sửa và có phép thử tự
-động đi kèm; hai việc dữ liệu trên chính máy chủ (L12, L13) đã xử lý.
+Tổng: **335 phép đo**. Mười bốn lỗi mã nguồn tìm ra (L1–L16 ở `08-so-loi.md`) đã sửa và có phép thử tự
+động đi kèm; hai việc dữ liệu trên chính máy chủ (L17, L18) đã xử lý.
 
 Ba mươi ba phép đo cuối (`TS.*`, `PV.*`, `TT.*`, `XR.*`, `DT.*`) thuộc một đợt rà đi theo **lớp** chứ
 không theo phân hệ: tham số truy vấn thù địch, phạm vi dữ liệu ở chiều **ghi** (đợt trước chỉ kiểm
@@ -1711,3 +1711,35 @@ riêng cho đợt này, gán phạm vi dữ liệu đúng một kho: 13/13 đạ
 | DT.3 | Ba lượt cấp lại thẻ cùng lúc | **Trước sửa: cả ba trả 200 và hồ sơ có 3 thẻ cùng hiệu lực** (L10). Sau sửa: đúng một thẻ hiệu lực, trùng số thẻ ghi trên hồ sơ | Đạt |
 | DT.4 | Ba lượt ghi nhận giao hàng cùng lúc trên một dòng đơn đặt | đã nhận 5 / đã đặt 5 — không vượt số đặt | Đạt |
 | DT.5 | Ba lượt mở kỳ kiểm kê cùng một kho cùng lúc | **Trước sửa: cả ba trả 200, kho có 3 kỳ đang mở** (L11). Sau sửa: đúng một lượt thành công, hai lượt nhận câu của nghiệp vụ | Đạt |
+
+### Đợt mười hai — canh quyền, bất biến dữ liệu và việc chạy nền (07/09/2026)
+
+Ba câu hỏi nữa, không câu nào đi theo phân hệ. `QT.*` quét quyền của endpoint; `BB.*` là **38 bất biến
+dữ liệu chạy thẳng bằng SQL trên kho thật** — thứ không API nào nhìn ra; `VN.*` hỏi việc chạy nền theo
+lịch có để lại đúng dấu vết của nó không.
+
+| Mã | Luật nghiệp vụ | Kết quả thực tế | Đạt |
+|---|---|---|---|
+| QT.1 | Thẻ đăng nhập của bạn đọc không đọc được chuông thông báo của cán bộ | 403 "Chức năng này dành cho tài khoản cán bộ." | Đạt |
+| QT.2 | Thẻ bạn đọc không đọc được danh sách cán bộ | **Trước sửa: 200 kèm tên đăng nhập `admin`** (L14). Sau sửa: 403 | Đạt |
+| QT.3 | Bạn đọc gọi `/auth/me` thì chỉ thấy hồ sơ của chính mình | 200, `isReader: true`, `permissions: []`, `dataScopes: []` | Đạt |
+| QT.4 | Cán bộ vẫn dùng được chuông thông báo và ô chọn người nhận việc | 34 thông báo; danh sách cán bộ trả về bình thường | Đạt |
+| QT.6 | Thẻ cán bộ gọi API dành riêng cho bạn đọc thì bị chặn | 403 "Chức năng này dành cho tài khoản bạn đọc." | Đạt |
+| QT.7 | Bạn đọc không đánh dấu đã đọc được thông báo của cán bộ | 403 | Đạt |
+| QT.8 | Mọi endpoint quản trị đều khai rõ ai gọi được | phép thử quét: 7 endpoint tự canh trong bộ xử lý, đều có lý do ghi kèm; số còn lại khai `[RequirePermission]` hoặc `[AllowAnonymous]` | Đạt |
+| BB01–BB30 | Ba mươi bất biến dữ liệu trên kho thật: phiếu mượn mồ côi, trạng thái ĐKCB lệch sổ, tiền phạt thu quá, đặt giữ trỏ biểu ghi đã xoá, mã vạch/số ĐKCB/số thẻ/số kiểm soát trùng, hai phiếu mở cùng một bản, công nợ lệch tổng phạt… | **26/29 sạch ngay**. Ba cờ đỏ: phiếu mượn trỏ tới ĐKCB đã xoá (3 dòng → L16), việc hàng đợi của biểu ghi đã xoá (45 dòng → L15), kết quả kiểm kê trỏ ĐKCB đã xoá (3 dòng, cùng gốc L16) | Đạt sau sửa |
+| BB20–BB25 | Không có mã vạch, số ĐKCB, số thẻ, số kiểm soát nào trùng; không có hai phiếu mở cho cùng một bản; không có hai đặt giữ chờ của cùng bạn đọc cho cùng biểu ghi | cả sáu đều 0 trên 17.903 ĐKCB và 3.124 phiếu mượn | Đạt |
+| VN01 | Phiếu quá hạn đều đã được việc nền đổi sang trạng thái Quá hạn | 0 dòng sai | Đạt |
+| VN02 | Không phiếu nào bị đánh dấu Quá hạn oan | 0 | Đạt |
+| VN03 | Đặt giữ Sẵn sàng quá hạn giữ đều đã được thu lại | 0 | Đạt |
+| VN04 | Thẻ hết hạn đều đã chuyển khỏi trạng thái Hoạt động | 0 | Đạt |
+| VN05 | Phiên tải tệp hết hạn được dọn | 0 | Đạt |
+| VN06 | Không lượt sao lưu nào kẹt "Đang chạy" quá 6 giờ | 0 | Đạt |
+| VN07 | Không lượt thu hoạch OAI nào kẹt quá 6 giờ | 0 | Đạt |
+| VN08 | Không đơn đặt nào nhận quá số đã đặt | 0 | Đạt |
+| VN10 | Số báo ghi Đã nhận đều có ngày nhận | 0 | Đạt |
+| VN11 | Khoản phạt thu đủ đều có ngày thu | 0 | Đạt |
+| VN12 | ĐKCB ghi Mất thì không còn phiếu mượn mở | 0 | Đạt |
+| VN.HF | Chín việc chạy nền đăng ký đủ, chạy đúng lịch, không lượt nào hỏng | `hangfire.hash` có đủ 9 việc kèm `Cron`, `LastExecution`, `NextExecution`; `hangfire.job` 15 lượt, **tất cả Succeeded**, 0 Failed | Đạt |
+| L15 | Hàng đợi biên mục: bộ đếm và danh sách nói cùng một con số | **Trước sửa: đếm 981, trang 200 dòng trả 155, trang cuối rỗng**. Sau sửa: xoá biểu ghi thì việc của nó rời hàng đợi, số đếm và số dòng khớp | Đạt |
+| L16 | Xoá bản sách đã lưu thông bị chặn, lịch sử mượn của bạn đọc vẫn đủ | **Trước sửa: xoá được, và bạn đọc TV2026000489 có 5 phiếu mà API chỉ trả 4**. Sau sửa: 409 chỉ sang chức năng thanh lý; bộ đếm và danh sách khớp | Đạt |

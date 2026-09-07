@@ -380,4 +380,56 @@ public class CatalogQueueTests
 
         item.Note.Should().Be("Ưu tiên bổ sung đề mục chủ đề");
     }
+
+    /// <summary>
+    /// Xóa biểu ghi thì việc biên mục của nó phải biến khỏi hàng đợi — cả trong danh sách lẫn trong
+    /// bộ đếm.
+    ///
+    /// Trước 07/09/2026, dòng việc nằm lại: màn hình hàng đợi trên máy chủ thật báo 981 việc "Chờ xử
+    /// lý" mà một trang 200 dòng chỉ trả về 155, thiếu đúng 45 việc của biểu ghi đã xóa, và trang
+    /// cuối rỗng trơn. Phần đếm chạy thẳng trên bảng công việc, còn phần lấy dòng phải nối sang biểu
+    /// ghi để lấy nhan đề nên bị bộ lọc xóa mềm gạt bớt — hai con số không bao giờ gặp nhau.
+    /// </summary>
+    [Fact]
+    public async Task Xoa_bieu_ghi_thi_viec_bien_muc_cua_no_ra_khoi_ca_danh_sach_lan_bo_dem()
+    {
+        var client = await ClientAsync();
+        var dau = Guid.NewGuid().ToString("N")[..8].ToUpperInvariant();
+
+        var bibId = await CreateRecordAsync(client, $"Sách rồi sẽ xóa {dau}");
+        var queueId = await EnqueueAsync(client, bibId);
+
+        var truoc = await client.GetFromJsonAsync<ApiResponse<CatalogQueueSummaryDto>>(
+            "/api/cataloging/queue/summary", LibraryConnectFactory.JsonOptions);
+
+        var danhSachTruoc = await client.GetFromJsonAsync<ApiResponse<PagedResult<CatalogQueueItemDto>>>(
+            "/api/cataloging/queue?status=Pending&pageSize=200", LibraryConnectFactory.JsonOptions);
+
+        danhSachTruoc!.Data!.Items.Should().Contain(item => item.Id == queueId,
+            "việc vừa tạo phải nằm trong danh sách");
+
+        var xoa = await client.SendAsync(new HttpRequestMessage(
+            HttpMethod.Delete, $"/api/cataloging/bibs/{bibId}")
+        {
+            Content = JsonContent.Create(new { reason = "Nhập trùng, xóa đi" })
+        });
+
+        xoa.IsSuccessStatusCode.Should().BeTrue(await xoa.Content.ReadAsStringAsync());
+
+        var sau = await client.GetFromJsonAsync<ApiResponse<CatalogQueueSummaryDto>>(
+            "/api/cataloging/queue/summary", LibraryConnectFactory.JsonOptions);
+
+        sau!.Data!.Pending.Should().Be(truoc!.Data!.Pending - 1,
+            "bộ đếm phải giảm đúng một việc khi biểu ghi của nó bị xóa");
+
+        var danhSachSau = await client.GetFromJsonAsync<ApiResponse<PagedResult<CatalogQueueItemDto>>>(
+            "/api/cataloging/queue?status=Pending&pageSize=200", LibraryConnectFactory.JsonOptions);
+
+        danhSachSau!.Data!.Items.Should().NotContain(item => item.Id == queueId);
+
+        // Điều quan trọng nhất: con số bộ đếm và số dòng lấy về phải nói cùng một chuyện.
+        danhSachSau.Data.Items.Count.Should().Be(
+            Math.Min(danhSachSau.Data.TotalCount, 200),
+            "một trang phải trả về đủ số dòng mà bộ đếm hứa; thiếu là có việc đếm được mà không hiện được");
+    }
 }

@@ -363,6 +363,25 @@ public class DeleteItemCommandHandler : IRequestHandler<DeleteItemCommand>
                 $"Bản sách {item.Barcode} đang có bạn đọc mượn nên chưa xóa được. Hãy ghi nhận trả sách trước.");
         }
 
+        // Bản đã từng lưu thông thì không xóa được nữa, dù đã trả hết.
+        //
+        // Phiếu mượn nối sang ĐKCB bằng một điều hướng bắt buộc, nên xóa mềm bản sách là mọi phép
+        // chiếu có nhan đề, ký hiệu xếp giá hay tên kho **rơi luôn cả dòng phiếu**: lịch sử mượn của
+        // bạn đọc mất dòng, danh sách phiếu ở quầy mất dòng, và khoản phạt gắn phiếu ấy biến khỏi
+        // danh sách phạt trong khi vẫn tính vào công nợ. Trên máy chủ thật ngày 07/09/2026, một bạn
+        // đọc có 5 phiếu trong sổ mà màn hình chỉ hiện 4 — bộ đếm vẫn nói 5 (bài học 57).
+        //
+        // Muốn đưa một bản ra khỏi kho mà giữ lịch sử thì dùng thanh lý, đó là việc của nó.
+        var soLuotMuon = await _db.Loans.CountAsync(loan => loan.ItemId == item.Id, ct);
+
+        if (soLuotMuon > 0)
+        {
+            throw new ConflictException(
+                $"Bản sách {item.Barcode} đã có {soLuotMuon:N0} lượt mượn nên không xóa được — xóa đi là "
+                + "mất luôn những lượt mượn ấy khỏi lịch sử của bạn đọc. Hãy dùng chức năng thanh lý để "
+                + "đưa bản này ra khỏi kho mà vẫn giữ lịch sử.");
+        }
+
         item.Note = string.IsNullOrWhiteSpace(item.Note)
             ? $"Lý do xóa: {request.Reason.Trim()}"
             : $"{item.Note}\nLý do xóa: {request.Reason.Trim()}";
