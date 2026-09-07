@@ -397,7 +397,8 @@ public class SendOverdueRemindersCommandHandler : IRequestHandler<SendOverdueRem
                        $"{group.Count()} tài liệu:\n{string.Join("\n", lines)}\n" +
                        $"Đề nghị mang tài liệu tới thư viện để trả hoặc gia hạn.";
 
-            await _notifications.SendAsync(group.Key, "Nhắc trả tài liệu quá hạn", body, ct: ct);
+            await _notifications.SendAsync(
+                group.Key, NotificationKinds.Overdue, "Nhắc trả tài liệu quá hạn", body, null, null, ct);
             sent++;
         }
 

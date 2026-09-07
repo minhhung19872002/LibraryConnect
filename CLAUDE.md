@@ -143,7 +143,14 @@ cùng làm hỏng đúng một lệnh nghiệp vụ: **"tạm khoá thẻ bạn 
 mười một việc vẫn làm được sau khi khoá, kể cả tự cấp gói đọc ngoại tuyến còn hạn bảy ngày, và thẻ làm mới
 không bị thu hồi nên phiên ấy không bao giờ kết thúc. Lỗi thứ ba lộ ra lúc dọn dữ liệu thử: **lập một khoản
 phạt không cập nhật cột công nợ chép sẵn trên hồ sơ** — quầy nói "còn nợ 12.000 đ" mà bạn đọc mở ứng dụng
-thấy "còn nợ 0 đ", vì hàm đồng bộ chỉ được gọi khi thu và khi miễn phạt. Cả 3 đã sửa, tổng **202 lỗi, đã sửa 202**.
+thấy "còn nợ 0 đ", vì hàm đồng bộ chỉ được gọi khi thu và khi miễn phạt. Cả 3 đã sửa.
+
+Đợt thứ mười bảy soi **chiều ghi**: rút từ mã nguồn ra 86 lối ghi có thân JSON rồi gửi thân rỗng, chuỗi
+5.000 ký tự và số âm khổng lồ — **258 phép đo, 258 đạt**, không lối nào đổ 500. Hai hình dạng nữa thì lộ
+**3 lỗi**: nút "Gửi nhắc hàng loạt" bấm ba lần sinh **1.083 thông báo cho 361 bạn đọc**; hai lối của quầy
+không có trần số mã vạch nên 2.000 mã mất 8,9 giây và 50.000 mã thì proxy cắt ngang; và khoảng ngày ngược
+trả bảng rỗng im lặng ở mười sáu bộ lọc trong khi bảng Tổng quan lại tự đổi thầm hai mốc. Cả 3 đã sửa, tổng
+**205 lỗi, đã sửa 205**.
 Phụ lục cuối `docs/06` ghi kết quả từng kịch bản (hơn 660 dòng).
 
 Đọc thẳng hồ sơ gốc còn tìm ra thứ không phải lỗi mã: **bốn hồ sơ bàn giao** mà Chương V mục III và
@@ -181,7 +188,7 @@ huống lỗi; phải tự tay dựng đúng bối cảnh ấy trong phép thử
 **Lệnh chạy đúng:**
 
 ```bash
-cd backend  && dotnet test                 # 647 unit + 527 integration
+cd backend  && dotnet test                 # 647 unit + 540 integration
 cd frontend-admin && npx tsc -b && npx vitest run    # 347 test
 cd frontend-opac  && npx tsc -b && npx vitest run    # 102 test
 cd mobile   && flutter analyze && flutter test       # 124 test
@@ -591,9 +598,24 @@ docker compose run --rm -d --name lc-api-kiem -e LC_DB_NAME=lc_kiem -e LC_SEED_D
     là cộng cái kho đang có, bỏ qua dòng còn nằm trong bộ theo dõi — phép thử đầu tiên viết ra đã
     bắt đúng chỗ ấy.
 
+86. **Thư tổng hợp thì một ngày một lần.** Nút "Gửi nhắc hàng loạt" bấm ba lần sinh 1.083 thông báo
+    cho 361 bạn đọc trong 18 giây — mỗi người ba lá thư giống hệt nhau, vì nội dung thư là danh
+    sách mọi tài liệu quá hạn của người ấy gộp làm một. Loại thông báo nào mang bản chất "tổng hợp
+    theo ngày" thì phải khai ra và bộ gửi tự bỏ qua lượt trùng; loại theo từng sự việc (sách đặt
+    giữ đã về) thì không.
+87. **Lệnh hàng loạt nào cũng phải có trần, kể cả lệnh trông có vẻ nhỏ.** Mười hai lệnh hàng loạt
+    của sản phẩm đã có trần từ lâu; đúng hai lối bận nhất trong ngày — ghi mượn và ghi trả ở quầy —
+    thì không. Mỗi mã vạch là một lượt tra cộng một lượt kiểm chính sách: 2.000 mã mất 8,9 giây,
+    50.000 mã thì proxy cắt ngang. Cách rà rẻ: gửi mảng 50.000 phần tử vào **mọi** lệnh nhận mảng
+    và xem cái nào không trả lời trong một giây.
+88. **Cùng một sai sót của người dùng thì cả sản phẩm phải trả lời một kiểu.** Khoảng ngày ngược:
+    mười sáu bộ lọc trả bảng rỗng im lặng, riêng bảng Tổng quan tự đổi thầm hai mốc. Cả hai đều
+    không nói cho người dùng biết họ vừa hỏi sai. Chọn một lối — nói ra — rồi đặt nó ở **đường
+    ống**, không ở từng bộ lọc, vì mỗi bộ lọc thêm vào ngày mai là một cơ hội quên.
+
 ### A.4. Cơ chế dùng chung — dùng lại, đừng viết chỗ mới
 
-Năm thứ dưới đây sinh ra để chặn "chỗ thứ tám quên gọi". Thêm chức năng cùng loại thì cắm vào đây,
+Sáu thứ dưới đây sinh ra để chặn "chỗ thứ tám quên gọi". Thêm chức năng cùng loại thì cắm vào đây,
 đừng chép logic sang handler mới:
 
 | Cơ chế | Dùng khi | Ghi chú |
@@ -601,6 +623,7 @@ Năm thứ dưới đây sinh ra để chặn "chỗ thứ tám quên gọi". Th
 | `[AuditRead("Reader")]` (`Api/Security/AuditReadAttribute.cs`) | Endpoint xem chi tiết dữ liệu cá nhân hoặc dữ liệu hạn chế | Chỉ ghi khi `audit_settings` bật `Read` cho thực thể ấy |
 | `ExportAuditBehaviour` (đường ống MediatR) | Mọi lượt trả về tệp | Nhận diện theo **kiểu trả về** (`ExportedFile`…), không theo tên lệnh; handler đã tự ghi dòng riêng thì bộ dùng chung im lặng |
 | `IStaffNotifier` (`NotifyUsersAsync` / `NotifyGroupAsync` / `NotifyPermissionAsync`) | Việc cần cán bộ biết: chờ duyệt, quá hạn, việc nền hỏng | Người nhận là `Expression<Func<User,bool>>` đẩy xuống SQL; gửi thư hỏng thì ghi nhật ký, không ném |
+| `DateRangeBehaviour` (đường ống MediatR) | Mọi yêu cầu có cặp ô ngày | Soi bảy cặp tên (`FromDate`/`ToDate`, `From`/`To`, `CreatedFrom`/`CreatedTo`…) trên chính yêu cầu và trên `Filter` của nó; thêm cặp tên mới thì khai vào đây, đừng kiểm ở handler |
 | `ISessionValidator` (`OnTokenValidated` trong `Program.cs`) | Mọi câu hỏi "chủ thẻ đăng nhập này còn được vào không" | Khoá tài khoản / khoá thẻ / xoá hồ sơ phải gọi `ForgetUserAsync` hay `ForgetReaderAsync` ngay sau khi lưu, nếu không đệm 30 giây giữ trạng thái cũ |
 | `IBibRecordWriter.ApplyAsync` | Mọi lượt sửa dữ liệu rút từ MARC | Nhớ `.Include(Authors/Subjects/Keywords/Classifications)`, thiếu là bộ ghi thêm lại liên kết và đổ ở `ux_bib_classifications` |
 

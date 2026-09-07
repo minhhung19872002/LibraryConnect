@@ -1832,3 +1832,17 @@ sắc hơn của cùng mặt tiếp xúc.
 | KT.CB | Khóa tài khoản cán bộ: thẻ đang cầm, thẻ làm mới, đăng nhập lại | **Trước sửa: thẻ đang cầm còn sống tới 60 phút.** Sau sửa: 401 ngay; thẻ làm mới và đăng nhập lại vốn đã bị chặn đúng | Đạt |
 | MK | Mở khóa xong thì bạn đọc dùng lại được ngay | 200 | Đạt |
 | CN.1 | Lập khoản phạt tại quầy rồi đọc công nợ trên hồ sơ | **Trước sửa: quầy cộng ra 12.000 đ mà cột chép sẵn — thứ ứng dụng di động đọc — vẫn 0.** Sau sửa: cả hai đều 12.000 đ; migration tính lại 3 hồ sơ lệch trên máy chủ | Đạt |
+
+### Đợt mười bảy — chiều ghi và dữ liệu vào thù địch (07/09/2026)
+
+Rút từ mã nguồn ra 86 lối ghi có thân JSON rồi gửi năm hình dạng dữ liệu vào. Chạy trên **máy phát
+triển** (dựng lại từ mã hiện tại) vì đợt này ghi dữ liệu.
+
+| Mã | Kịch bản | Kết quả thực tế | Đạt |
+|---|---|---|---|
+| V1 | 86 lối ghi với thân rỗng `{}` | 400 kèm danh sách trường bắt buộc bằng tiếng Việt; không lối nào 500 | Đạt |
+| V2 | 86 lối ghi với chuỗi 5.000 ký tự ở 19 tên trường hay gặp | 400 kèm câu nêu đúng giới hạn ("Mã nhóm tối đa 50 ký tự"); không lối nào 500, không chỗ nào lặng lẽ cắt cụt | Đạt |
+| V3 | 86 lối ghi với số âm khổng lồ | 400; không lối nào 500 | Đạt |
+| M1 | 14 lệnh hàng loạt nhận mảng 50.000 phần tử | 12 lệnh chặn ngay trong 0,1 giây kèm câu nêu trần. **Trước sửa: ghi trả treo 90 giây rồi máy khách bỏ cuộc; 2.000 mã mất 8,9 giây.** Sau sửa: trần 100 mã một lượt cho cả ba lối của quầy | Đạt |
+| M2 | 8 màn hình nhận khoảng ngày ngược | **Trước sửa: cả tám trả 200 với 0 dòng, không một lời nào; riêng bảng Tổng quan tự đổi thầm hai mốc.** Sau sửa: cả sản phẩm trả 400 kèm "Khoảng thời gian không hợp lệ: ngày đầu 31/12/2026 đứng sau ngày cuối 01/01/2026" | Đạt |
+| NH.1 | Bấm "Gửi nhắc hàng loạt" ba lần liên tiếp | **Trước sửa: 1.083 thông báo cho 361 bạn đọc trong 18 giây — mỗi người ba lần.** Sau sửa: một người một thư mỗi ngày; thư không phải bản tổng hợp (sách đặt giữ đã sẵn sàng) vẫn gửi được nhiều lần trong ngày | Đạt |

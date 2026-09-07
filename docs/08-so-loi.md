@@ -842,6 +842,37 @@ lệch công nợ.
   thực vị trí giả bị chặn kèm câu "Phiếu xác thực vị trí không hợp lệ. Hãy xác thực lại."
 - **Xóa hồ sơ bạn đọc** thì thẻ đăng nhập cũ hết dùng được ngay (404) — lối này vốn đã đúng.
 
+## Q. Đợt rà thứ mười bảy — chiều ghi và dữ liệu vào thù địch (07/09/2026)
+
+Vùng chưa quét ngang: **mọi lối ghi**. Câu hỏi lấy từ mục 3 của Chương V ("không phát sinh lỗi làm
+chức năng không thể sử dụng") và mục 6.6 ("thông báo lỗi tiếng Việt rõ nghĩa"): dữ liệu vào sai thì
+nhận câu rõ nghĩa hay đổ 500?
+
+Rút từ mã nguồn ra **86 lối ghi có thân JSON**, mỗi lối gửi ba hình dạng — thân rỗng, chuỗi 5.000 ký
+tự ở mọi tên trường hay gặp, và số âm khổng lồ. **258 phép đo, 258 đạt**: không lối nào đổ 500,
+không câu nào lọt tiếng Anh của khung nền. Đợt này chạy trên **máy phát triển** vì nó ghi dữ liệu
+(bài học 64).
+
+Ba hình dạng ấy không đủ. Hai hình dạng nữa — **mảng khổng lồ** và **khoảng ngày ngược** — cho
+**22 phép đo, 3 lỗi**.
+
+| # | Màn hình | Mô tả lỗi | Cách tái hiện | Mức độ | Loại | Trạng thái |
+|---|---|---|---|---|---|---|
+| Q1 | Lưu thông → Báo cáo quá hạn → "Gửi nhắc hàng loạt" (VII.5) | **Nút gửi nhắc không chống được lượt bấm lặp.** Ba lượt bấm liên tiếp sinh ba lá thư giống hệt nhau cho mỗi bạn đọc — mà thư nhắc quá hạn vốn là **bản tổng hợp theo ngày**: nội dung của nó là danh sách mọi tài liệu đang quá hạn của người ấy, gộp làm một. Gửi lần thứ hai chỉ là gửi lại đúng bức thư vừa gửi. Việc chạy nền "nhắc sắp đến hạn" cũng cùng hình dạng, nên một lượt chạy lại của Hangfire là một lượt gửi trùng. | Trên máy phát triển: gọi `POST /api/circulation/reports/overdue/remind` với thân rỗng ba lần trong 18 giây → `select count(*) from sys.notifications where title='Nhắc trả tài liệu quá hạn'` = **1.083 dòng cho 361 bạn đọc**, tức mỗi người ba lần. | Vừa | Nghiệp vụ | Đã sửa — khai hai loại thư là bản tổng hợp theo ngày (`NotificationKinds.DailyDigests`), bộ gửi bỏ qua lượt trùng trong ngày và ghi nhật ký lý do; `OverdueReminderTests` |
+| Q2 | Lưu thông → Quầy ghi mượn · ghi trả | **Hai lối của quầy không có trần số mã vạch mỗi lượt.** Mỗi mã là một lượt tra cơ sở dữ liệu cộng một lượt kiểm chính sách, nên thời gian tăng tuyến tính. Mọi lệnh hàng loạt khác của sản phẩm đều đã có trần ("tối đa 5.000 bạn đọc", "tối đa 5.000 tem"); đúng hai lối bận nhất trong ngày thì không. | Máy phát triển: ghi trả 2.000 mã vạch mất **8,9 giây**; 50.000 mã thì máy khách bỏ cuộc sau **90 giây**, và proxy của bản chạy thật cắt ở 300 giây (bài học A.3 số 4). | Vừa | Hiệu năng | Đã sửa — trần 100 mã vạch một lượt cho cả ghi mượn, ghi trả và mượn tự phục vụ, kèm câu chỉ cách chia lượt; `HostileInputTests.Quay_tu_choi_mot_luot_quet_qua_nhieu_ma_vach` |
+| Q3 | Mười sáu bộ lọc có cặp ô ngày, và bảng Tổng quan | **Khoảng ngày ngược trả bảng rỗng, mã 200, không một lời nào.** Chọn nhầm hai ô lịch là chuyện thường; cán bộ nhận về bảng trắng và đọc ra "kỳ này thư viện không có dữ liệu". Riêng bảng Tổng quan thì **tự đổi thầm hai mốc** — cùng một sai sót của người dùng, hai lối xử lý khác nhau trong cùng một sản phẩm (bài học 84). | Tám màn hình đo được đều trả 200 với 0 dòng cho `từ 31/12/2026 đến 01/01/2026`: báo cáo quá hạn, ra vào, lịch sử mượn, danh sách phiếu mượn, yêu cầu đặt mua, nhật ký hệ thống, danh sách bổ sung, nhật ký tài liệu số. | Vừa | Nghiệp vụ | Đã sửa — một bộ chặn ở đường ống MediatR (`DateRangeBehaviour`) soi bảy cặp tên ô ngày trên chính yêu cầu và trên `Filter` của nó, trả 400 kèm câu nêu đúng hai mốc; bảng Tổng quan bỏ lối tự đổi thầm để cả sản phẩm trả lời một kiểu |
+
+### Đã kiểm trong đợt này và vẫn tốt
+
+- **258/258 phép đo dữ liệu vào thù địch trên 86 lối ghi**: thân rỗng trả 400 kèm danh sách trường
+  thiếu bằng tiếng Việt; chuỗi 5.000 ký tự gặp đúng bộ kiểm độ dài ("Mã nhóm tối đa 50 ký tự"); số
+  âm bị chặn. Không một lượt nào đổ 500, không một câu nào lọt tiếng Anh của khung nền.
+- **Mười hai lệnh hàng loạt khác đã có trần từ trước** và trả lời trong một phần mười giây: gia hạn
+  thẻ, khóa thẻ, cho ra trường, in thẻ, in mã vạch, kiểm nhận, khóa ĐKCB, chuyển kho, thanh lý, xếp
+  giá, xuất biểu ghi, xếp việc biên mục.
+- **Bộ lọc ký tự không lưu được (U+0000) vẫn chặn đúng** ở cả chuỗi truy vấn lẫn thân JSON — luật của
+  đợt 11 còn nguyên tác dụng sau bảy đợt sửa.
+
 ## Đ. Những chỗ đã thử phá nhưng hệ thống chịu được
 
 Ghi lại để biết chỗ nào đã kiểm và không phải kiểm lại — kèm bằng chứng, không ghi suông.
@@ -949,7 +980,7 @@ dạng quét mã nguồn chặn cả lớp lỗi quay lại thay vì chỉ chặ
 
 Cộng cả ba đợt, đợt áp thiết kế, đợt triển khai và ba đợt rà hoàn thiện ngày 04/09/2026:
 **147 lỗi, đã sửa 145**; thêm **23 lỗi của đợt nghiệm thu thử, test sâu, ba đợt test kỹ thuật ngày
-05/09/2026 và ba đợt soi nghiệp vụ – giao thức – bảo mật ngày 06/09/2026 (mục K), đã sửa cả 23** — tổng **170 lỗi, đã sửa 170**; cộng **16 lỗi mục L**, **4 lỗi mục M**, **4 lỗi mục N**, **5 lỗi mục O** và **3 lỗi mục P** của bảy đợt rà sâu ngày 06–07/09/2026 — tổng **202 lỗi, đã sửa 202**. Hai mục H3 và H9 đã làm xong ngày 03/09/2026 và ghi ở cột cuối
+05/09/2026 và ba đợt soi nghiệp vụ – giao thức – bảo mật ngày 06/09/2026 (mục K), đã sửa cả 23** — tổng **170 lỗi, đã sửa 170**; cộng **16 lỗi mục L**, **4 lỗi mục M**, **4 lỗi mục N**, **5 lỗi mục O**, **3 lỗi mục P** và **3 lỗi mục Q** của tám đợt rà sâu ngày 06–07/09/2026 — tổng **205 lỗi, đã sửa 205**. Hai mục H3 và H9 đã làm xong ngày 03/09/2026 và ghi ở cột cuối
 của chính hai dòng ấy — con số 134 giữ nguyên cách đếm cũ để đối chiếu được với các bản trước.
 Mỗi lỗi đã sửa đều có phép thử chạy đỏ trước khi sửa và xanh sau khi sửa, kể cả H7: phép thử giả
 tiêu đề đỏ trước khi sửa `CurrentUser.Ip`.

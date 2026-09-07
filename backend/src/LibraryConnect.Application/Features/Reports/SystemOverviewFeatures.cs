@@ -65,10 +65,9 @@ public class GetSystemOverviewQueryHandler : IRequestHandler<GetSystemOverviewQu
         var to = query.To ?? today;
         var from = query.From ?? new DateOnly(today.Year, 1, 1);
 
-        if (to < from)
-        {
-            (from, to) = (to, from);
-        }
+// Kỳ đảo ngược không tự sắp lại nữa: đổi thầm hai mốc là trả lời một câu hỏi khác câu người
+        // dùng hỏi mà không nói gì. Bộ chặn dùng chung (DateRangeBehaviour) đã từ chối từ đường ống,
+        // kèm câu nêu đúng hai mốc — cùng một cách trả lời với mười sáu bộ lọc còn lại của sản phẩm.
 
         // Mốc thời gian có múi giờ để so với các cột lưu kiểu thời điểm; cuối kỳ lấy hết ngày.
         var offset = _clock.Now.Offset;

@@ -85,15 +85,27 @@ public class SystemReportTests
         report.Trend.Last().Period.Should().Be($"{DateTime.Now.Month:00}/{DateTime.Now.Year}");
     }
 
+    /// <summary>
+    /// Kỳ báo cáo đảo ngược bị từ chối kèm câu nêu đúng hai mốc.
+    ///
+    /// Trước 07/09/2026 riêng bảng tổng quan tự sắp lại hai mốc trong im lặng, còn mười sáu bộ lọc
+    /// khác trả bảng rỗng kèm mã 200 — hai lối xử lý khác nhau cho cùng một sai sót của người dùng.
+    /// Nay cả sản phẩm trả lời một kiểu: nói ra là khoảng ngày sai (bài học 56 và 84).
+    /// </summary>
     [Fact]
-    public async Task Ky_bao_cao_dao_nguoc_thi_tu_sap_lai_thay_vi_tra_ve_rong()
+    public async Task Ky_bao_cao_dao_nguoc_bi_tu_choi_kem_cau_neu_ro_hai_moc()
     {
         var staff = await StaffAsync();
 
-        var report = await ReadAsync<SystemOverviewDto>(
-            await staff.GetAsync("/api/reports/overview?from=2026-12-31&to=2026-01-01"));
+        var response = await staff.GetAsync("/api/reports/overview?from=2026-12-31&to=2026-01-01");
 
-        report.From.Should().BeBefore(report.To);
+        response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
+
+        var payload = await response.Content.ReadFromJsonAsync<ApiResponse>(LibraryConnectFactory.JsonOptions);
+
+        ((payload?.Message ?? string.Empty)
+         + string.Join(" ", payload?.Errors?.Select(error => error.Message) ?? []))
+            .Should().Contain("Khoảng thời gian không hợp lệ");
     }
 
     [Fact]

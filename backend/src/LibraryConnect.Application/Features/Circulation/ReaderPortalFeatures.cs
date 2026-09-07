@@ -100,6 +100,9 @@ public class SelfCheckoutCommandValidator : AbstractValidator<SelfCheckoutComman
     {
         RuleFor(command => command.Barcodes)
             .NotEmpty().WithMessage("Chưa quét mã vạch tài liệu nào.");
+        RuleFor(command => command.Barcodes.Count)
+            .LessThanOrEqualTo(DeskLimits.BarcodesPerScan)
+            .WithMessage($"Một lượt mượn tối đa {DeskLimits.BarcodesPerScan} tài liệu.");
     }
 }
 

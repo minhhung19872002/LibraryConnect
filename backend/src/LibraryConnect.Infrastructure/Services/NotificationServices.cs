@@ -172,6 +172,19 @@ public class ReaderNotificationSender : INotificationSender
 
     public string Channel => _push.IsConfigured ? "EMAIL+PUSH" : "EMAIL";
 
+    /// <summary>Bạn đọc này đã nhận thư tổng hợp loại ấy trong ngày hôm nay chưa.</summary>
+    private async Task<bool> DaNhacHomNayAsync(Guid readerId, string kind, CancellationToken ct)
+    {
+        var dauNgay = new DateTimeOffset(
+            _clock.Now.ToLocalTime().Date, _clock.Now.ToLocalTime().Offset);
+
+        return await _db.Notifications.AnyAsync(
+            entity => entity.ReaderId == readerId
+                      && entity.Type == kind
+                      && entity.CreatedAt >= dauNgay,
+            ct);
+    }
+
     public Task SendAsync(Guid readerId, string title, string body, string? link = null, CancellationToken ct = default) =>
         SendAsync(readerId, NotificationKinds.System, title, body, link, null, ct);
 
@@ -184,6 +197,16 @@ public class ReaderNotificationSender : INotificationSender
         IReadOnlyDictionary<string, string>? data,
         CancellationToken ct = default)
     {
+        // Thư tổng hợp theo ngày thì một ngày một lần. Xem chú thích của
+        // NotificationKinds.DailyDigests: gửi lần thứ hai chỉ là gửi lại đúng bức thư vừa gửi, mà
+        // bạn đọc thì nhận thêm một lá thư nữa.
+        if (NotificationKinds.IsDailyDigest(kind) && await DaNhacHomNayAsync(readerId, kind, ct))
+        {
+            _logger.LogInformation(
+                "Bỏ qua thông báo {Kind} cho bạn đọc {ReaderId}: hôm nay đã nhắc rồi", kind, readerId);
+            return;
+        }
+
         var notification = new Notification
         {
             ReaderId = readerId,

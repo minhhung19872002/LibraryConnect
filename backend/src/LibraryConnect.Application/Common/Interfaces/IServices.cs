@@ -124,6 +124,21 @@ public static class NotificationKinds
         DueSoon, Overdue, HoldReady, DigitalRequest, CardRenewal, News, System,
     };
 
+    /// <summary>
+    /// Hai loại thư **tổng hợp theo ngày**: nội dung của chúng là danh sách mọi tài liệu đang sắp
+    /// đến hạn hoặc đang quá hạn của bạn đọc ấy, gộp thành một thư — nên gửi lần thứ hai trong cùng
+    /// một ngày chỉ là gửi lại đúng bức thư vừa gửi.
+    ///
+    /// Nút "Gửi nhắc hàng loạt" của VII.5 không chống lượt bấm lặp: bấm ba lần trên máy phát triển
+    /// ngày 07/09/2026 sinh **1.083 thông báo cho 361 bạn đọc trong 18 giây** — mỗi người nhận cùng
+    /// một lời nhắc ba lần, cộng ba lá thư nếu bộ gửi thư đang bật. Việc chạy nền cũng vậy nếu
+    /// Hangfire chạy lại một lượt hỏng.
+    /// </summary>
+    public static readonly IReadOnlyList<string> DailyDigests = new[] { DueSoon, Overdue };
+
+    /// <summary>True khi loại thông báo này chỉ nên tới tay bạn đọc một lần mỗi ngày.</summary>
+    public static bool IsDailyDigest(string kind) => DailyDigests.Contains(kind);
+
     public static string Label(string kind) => kind switch
     {
         DueSoon => "Sắp đến hạn trả",

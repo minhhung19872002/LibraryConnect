@@ -91,8 +91,26 @@ public class CheckoutCommandValidator : AbstractValidator<CheckoutCommand>
         RuleFor(command => command.ReaderId).NotEmpty().WithMessage("Chưa chọn bạn đọc.");
         RuleFor(command => command.Barcodes)
             .NotEmpty().WithMessage("Chưa quét mã vạch nào.");
+        RuleFor(command => command.Barcodes.Count)
+            .LessThanOrEqualTo(DeskLimits.BarcodesPerScan)
+            .WithMessage($"Một lượt ghi mượn tối đa {DeskLimits.BarcodesPerScan} mã vạch. "
+                         + "Hãy chia làm nhiều lượt.");
         RuleFor(command => command.Note).MaximumLength(1000);
     }
+}
+
+/// <summary>
+/// Trần số mã vạch của một lượt quét ở quầy.
+///
+/// Mỗi mã vạch là một lượt tra cơ sở dữ liệu cộng một lượt kiểm chính sách, nên thời gian tăng
+/// tuyến tính: đo trên máy phát triển ngày 07/09/2026 là 4,5 ms một mã — 2.000 mã mất 8,9 giây,
+/// 50.000 mã thì máy khách bỏ cuộc sau 90 giây và proxy sẽ cắt ở 300 giây (bài học A.3 số 4). Mọi
+/// lệnh hàng loạt khác của sản phẩm đều đã có trần ("tối đa 5.000 bạn đọc", "tối đa 5.000 tem");
+/// hai lối của quầy là chỗ còn thiếu. Một khay sách ở quầy không quá vài chục cuốn.
+/// </summary>
+public static class DeskLimits
+{
+    public const int BarcodesPerScan = 100;
 }
 
 public class CheckoutCommandHandler : IRequestHandler<CheckoutCommand, CheckoutResultDto>
@@ -124,6 +142,10 @@ public class ReturnCommandValidator : AbstractValidator<ReturnCommand>
     public ReturnCommandValidator()
     {
         RuleFor(command => command.Barcodes).NotEmpty().WithMessage("Chưa quét mã vạch nào.");
+        RuleFor(command => command.Barcodes.Count)
+            .LessThanOrEqualTo(DeskLimits.BarcodesPerScan)
+            .WithMessage($"Một lượt ghi trả tối đa {DeskLimits.BarcodesPerScan} mã vạch. "
+                         + "Hãy chia làm nhiều lượt.");
         RuleFor(command => command.Note).MaximumLength(1000);
     }
 }
