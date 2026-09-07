@@ -805,6 +805,41 @@ Vùng chưa bao giờ quét ngang: **26 báo cáo** của bảy phân hệ. Hai 
 - **Trần số dòng có ở đủ 6 chỗ** và áp cả cho tệp xuất, đúng tinh thần mục 6.3; chỗ thiếu chỉ là
   lời nói ra.
 
+## P. Đợt rà thứ mười sáu — mặt tiếp xúc của bạn đọc (07/09/2026)
+
+Vùng chưa quét ngang: **nhóm `/api/reader/*`** — hợp đồng API của ứng dụng di động (XI.4) và cũng
+là thứ trang tra cứu dùng. Ba câu hỏi: bạn đọc A có chạm được dữ liệu của B không, danh sách "của
+tôi" có lẫn dòng người khác không, và khách chưa đăng nhập đi được tới đâu. Rồi bốn chỗ sắc hơn:
+sửa hồ sơ có tự nâng cấp được mình không, xác thực vị trí của mượn tự phục vụ có chặn được lượt
+mượn từ nhà không, gói đọc ngoại tuyến có bị lấy chéo không, và **vòng đời thẻ đăng nhập**.
+
+**59 phép đo, 2 lỗi** — nhưng hai lỗi ấy cùng một gốc và làm hỏng đúng một lệnh nghiệp vụ: "tạm
+khóa thẻ bạn đọc" của mục VI.1.
+
+| # | Màn hình | Mô tả lỗi | Cách tái hiện | Mức độ | Loại | Trạng thái |
+|---|---|---|---|---|---|---|
+| P1 | Bạn đọc → Tạm khóa thẻ (VI.1) · toàn bộ ứng dụng di động | **Khóa thẻ không dừng được phiên đang mở.** Thẻ đăng nhập là JWT nên máy chủ không giữ trạng thái của nó; lệnh khóa chỉ đổi cột `status` trong kho, mà tầng xác thực không bao giờ đọc lại cột ấy. Hai lối tự hỏi trạng thái thẻ (đặt giữ, mượn tự phục vụ) thì chặn đúng — **chín lối còn lại thì không**, kể cả đọc tài liệu số nội bộ và tự cấp cho mình một gói đọc ngoại tuyến còn hạn bảy ngày. Nghĩa là bạn đọc vừa báo mất thẻ, vừa bị kỷ luật, vẫn mang được nội dung về máy. | Trên máy chủ thật: khóa thẻ một bạn đọc (`POST /api/readers/lock`, trả "Đã tạm khóa 1 thẻ"), rồi gọi lại bằng thẻ đăng nhập cũ — **9 trong 11 việc vẫn trả 200**: xem thẻ điện tử, xem hồ sơ, xem sách đang mượn, xem tiền phạt, gửi yêu cầu gia hạn thẻ, sửa liên hệ, lưu tìm kiếm, đọc tài liệu số nội bộ, tạo gói ngoại tuyến "dùng được tới 14/09/2026". | **Nặng** | Bảo mật | Đã sửa — `ISessionValidator` hỏi trạng thái thật ngay sau khi thẻ được xác thực (`OnTokenValidated`), có đệm 30 giây và lệnh khóa xóa đệm nên tác dụng là tức thì; `SessionRevocationTests` |
+| P2 | Bạn đọc → Tạm khóa thẻ · làm mới phiên | **Và phiên ấy không bao giờ kết thúc**: thẻ làm mới của bạn đọc không bị thu hồi khi khóa thẻ, nên ứng dụng cứ tự làm mới và giữ quyền vô thời hạn. Lối khóa tài khoản **cán bộ** đã thu hồi thẻ làm mới từ trước — chỉ lối bạn đọc thiếu. Cán bộ thì còn một khe hở nhỏ hơn: thẻ đang cầm sống nốt tới 60 phút. | Máy chủ thật: sau khi khóa, `POST /api/reader/auth/refresh` với thẻ làm mới cũ trả **200** kèm thẻ mới. Với cán bộ: `POST /auth/refresh` trả 401 đúng, nhưng `GET /circulation/loans` bằng thẻ cũ vẫn 200. | **Nặng** | Bảo mật | Đã sửa — khóa thẻ bạn đọc thu hồi mọi thẻ làm mới đang mở, ngang với lối cán bộ; và cả hai lối xóa đệm trạng thái để thẻ đang cầm hết giá trị ngay |
+
+### Đã kiểm trong đợt này và vẫn tốt
+
+- **Truy cập chéo giữa hai bạn đọc: sạch.** A không gia hạn được phiếu mượn của B (403 "Lượt mượn
+  này không thuộc về bạn đọc đang đăng nhập"), không hủy được đặt giữ của B, không xóa được tìm
+  kiếm đã lưu của B, không tải được gói đọc ngoại tuyến của B.
+- **Chín danh sách "của tôi"** — sách đang mượn, lịch sử, đặt giữ, tiền phạt, yêu thích, thông báo,
+  tìm kiếm đã lưu, yêu cầu và lịch sử tài liệu số — không lẫn một dòng nào của người khác; thẻ điện
+  tử và hồ sơ trả về đúng người đang đăng nhập.
+- **Mười bốn lối dữ liệu cá nhân đều đòi đăng nhập**, không lối nào lọt.
+- **Sửa hồ sơ không nâng cấp được mình**: gửi kèm `cardNumber`, `readerTypeId`, `cardExpireDate`,
+  `depositAmount`, `status` thì máy chủ nhận đúng ba trường liên hệ và bỏ hết phần còn lại — số thẻ,
+  loại bạn đọc, hạn thẻ và tiền ký quỹ giữ nguyên.
+- **Trang xem thử của tài liệu hạn chế được canh đúng**: khách đọc được trang 1–3 kèm câu chỉ đường
+  ("Tài liệu hạn chế — đăng nhập rồi gửi yêu cầu"), **trang 4 trở đi 403**; tải về và gói ngoại tuyến
+  đều bị chặn. Mức "Nội bộ" cho mọi người đã đăng nhập, đúng như V.1 định nghĩa.
+- **Mượn tự phục vụ (XI.2)**: không kèm chứng cứ vị trí thì bị chặn; mã QR bịa ra bị chặn; phiếu xác
+  thực vị trí giả bị chặn kèm câu "Phiếu xác thực vị trí không hợp lệ. Hãy xác thực lại."
+- **Xóa hồ sơ bạn đọc** thì thẻ đăng nhập cũ hết dùng được ngay (404) — lối này vốn đã đúng.
+
 ## Đ. Những chỗ đã thử phá nhưng hệ thống chịu được
 
 Ghi lại để biết chỗ nào đã kiểm và không phải kiểm lại — kèm bằng chứng, không ghi suông.
@@ -912,7 +947,7 @@ dạng quét mã nguồn chặn cả lớp lỗi quay lại thay vì chỉ chặ
 
 Cộng cả ba đợt, đợt áp thiết kế, đợt triển khai và ba đợt rà hoàn thiện ngày 04/09/2026:
 **147 lỗi, đã sửa 145**; thêm **23 lỗi của đợt nghiệm thu thử, test sâu, ba đợt test kỹ thuật ngày
-05/09/2026 và ba đợt soi nghiệp vụ – giao thức – bảo mật ngày 06/09/2026 (mục K), đã sửa cả 23** — tổng **170 lỗi, đã sửa 170**; cộng **16 lỗi mục L**, **4 lỗi mục M**, **4 lỗi mục N** và **5 lỗi mục O** của sáu đợt rà sâu ngày 06–07/09/2026 — tổng **199 lỗi, đã sửa 199**. Hai mục H3 và H9 đã làm xong ngày 03/09/2026 và ghi ở cột cuối
+05/09/2026 và ba đợt soi nghiệp vụ – giao thức – bảo mật ngày 06/09/2026 (mục K), đã sửa cả 23** — tổng **170 lỗi, đã sửa 170**; cộng **16 lỗi mục L**, **4 lỗi mục M**, **4 lỗi mục N**, **5 lỗi mục O** và **2 lỗi mục P** của bảy đợt rà sâu ngày 06–07/09/2026 — tổng **201 lỗi, đã sửa 201**. Hai mục H3 và H9 đã làm xong ngày 03/09/2026 và ghi ở cột cuối
 của chính hai dòng ấy — con số 134 giữ nguyên cách đếm cũ để đối chiếu được với các bản trước.
 Mỗi lỗi đã sửa đều có phép thử chạy đỏ trước khi sửa và xanh sau khi sửa, kể cả H7: phép thử giả
 tiêu đề đỏ trước khi sửa `CurrentUser.Ip`.

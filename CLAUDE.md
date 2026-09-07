@@ -134,7 +134,14 @@ ra) và mục kiểm thử 2.8 (số liệu khớp truy vấn kiểm chứng đ�
 đo số liệu: 5 lỗi**, tất cả ở tầng báo cáo mà năm đợt trước không chạm: **báo cáo ĐKCB hủy bỏ trả 0 dòng**
 trên 3 quyết định thanh lý (bài học 57 lần thứ sáu), báo cáo lượt xem tài liệu số đếm 13 trên 14, nhãn kỳ của
 biểu đồ dựng từ giờ UTC nên có cột "tháng 8" trong tháng không có lượt nào, báo cáo dung lượng có tổng và biểu
-đồ chênh nhau 50 lần, và danh sách chạm trần bị cắt trong im lặng. Cả 5 đã sửa, tổng **199 lỗi, đã sửa 199**.
+đồ chênh nhau 50 lần, và danh sách chạm trần bị cắt trong im lặng. Cả 5 đã sửa.
+
+Đợt thứ mười sáu soi **nhóm `/api/reader/*`** — hợp đồng API của ứng dụng di động: truy cập chéo giữa hai
+bạn đọc, danh sách "của tôi", lối cho khách, sửa hồ sơ, xác thực vị trí khi mượn tự phục vụ, gói đọc ngoại
+tuyến, và vòng đời thẻ đăng nhập. **59 phép đo, 2 lỗi** — truy cập chéo sạch hoàn toàn, nhưng cả hai lỗi
+cùng làm hỏng đúng một lệnh nghiệp vụ: **"tạm khoá thẻ bạn đọc" không dừng được phiên đang mở**. Chín trong
+mười một việc vẫn làm được sau khi khoá, kể cả tự cấp gói đọc ngoại tuyến còn hạn bảy ngày, và thẻ làm mới
+không bị thu hồi nên phiên ấy không bao giờ kết thúc. Cả 2 đã sửa, tổng **201 lỗi, đã sửa 201**.
 Phụ lục cuối `docs/06` ghi kết quả từng kịch bản (hơn 660 dòng).
 
 Đọc thẳng hồ sơ gốc còn tìm ra thứ không phải lỗi mã: **bốn hồ sơ bàn giao** mà Chương V mục III và
@@ -172,7 +179,7 @@ huống lỗi; phải tự tay dựng đúng bối cảnh ấy trong phép thử
 **Lệnh chạy đúng:**
 
 ```bash
-cd backend  && dotnet test                 # 647 unit + 522 integration
+cd backend  && dotnet test                 # 647 unit + 526 integration
 cd frontend-admin && npx tsc -b && npx vitest run    # 347 test
 cd frontend-opac  && npx tsc -b && npx vitest run    # 102 test
 cd mobile   && flutter analyze && flutter test       # 124 test
@@ -562,9 +569,21 @@ docker compose run --rm -d --name lc-api-kiem -e LC_DB_NAME=lc_kiem -e LC_SEED_D
     nào cần định dạng cho máy đọc (MARC, ISO 2709, khoá cache) vốn đã khai `InvariantCulture` tại
     chỗ nên không bị kéo theo.
 
+83. **Khoá một tài khoản không khoá được cái thẻ đang cầm.** JWT không có trạng thái ở máy chủ, nên
+    lệnh "tạm khoá thẻ" chỉ đổi một cột trong kho mà tầng xác thực không bao giờ đọc lại. Đo trên
+    máy chủ thật: khoá thẻ một bạn đọc xong, phiên đang mở vẫn làm được 9 trong 11 việc — trong đó
+    có tự cấp cho mình một gói đọc ngoại tuyến còn hạn bảy ngày — và làm mới thẻ được vô thời hạn.
+    Câu "chủ thẻ này còn được vào không" thuộc **tầng xác thực** (`OnTokenValidated`), không thuộc
+    từng bộ xử lý: đặt ở handler thì chỗ thứ mười lại quên. Đệm ngắn 30 giây cho rẻ, và lệnh khoá
+    xoá đệm để tác dụng là tức thì.
+84. **Hai lối làm cùng một việc thì so chúng với nhau.** Khoá tài khoản cán bộ thu hồi thẻ làm mới;
+    khoá thẻ bạn đọc thì không — cùng một lệnh nghiệp vụ, hai lối cài, một lối thiếu. Mỗi khi thấy
+    một cặp "bản cán bộ / bản bạn đọc", "bản web / bản di động", "bản nhập / bản xuất", hãy đọc
+    chúng cạnh nhau: chỗ lệch chính là chỗ hỏng.
+
 ### A.4. Cơ chế dùng chung — dùng lại, đừng viết chỗ mới
 
-Bốn thứ dưới đây sinh ra để chặn "chỗ thứ tám quên gọi". Thêm chức năng cùng loại thì cắm vào đây,
+Năm thứ dưới đây sinh ra để chặn "chỗ thứ tám quên gọi". Thêm chức năng cùng loại thì cắm vào đây,
 đừng chép logic sang handler mới:
 
 | Cơ chế | Dùng khi | Ghi chú |
@@ -572,6 +591,7 @@ Bốn thứ dưới đây sinh ra để chặn "chỗ thứ tám quên gọi". T
 | `[AuditRead("Reader")]` (`Api/Security/AuditReadAttribute.cs`) | Endpoint xem chi tiết dữ liệu cá nhân hoặc dữ liệu hạn chế | Chỉ ghi khi `audit_settings` bật `Read` cho thực thể ấy |
 | `ExportAuditBehaviour` (đường ống MediatR) | Mọi lượt trả về tệp | Nhận diện theo **kiểu trả về** (`ExportedFile`…), không theo tên lệnh; handler đã tự ghi dòng riêng thì bộ dùng chung im lặng |
 | `IStaffNotifier` (`NotifyUsersAsync` / `NotifyGroupAsync` / `NotifyPermissionAsync`) | Việc cần cán bộ biết: chờ duyệt, quá hạn, việc nền hỏng | Người nhận là `Expression<Func<User,bool>>` đẩy xuống SQL; gửi thư hỏng thì ghi nhật ký, không ném |
+| `ISessionValidator` (`OnTokenValidated` trong `Program.cs`) | Mọi câu hỏi "chủ thẻ đăng nhập này còn được vào không" | Khoá tài khoản / khoá thẻ / xoá hồ sơ phải gọi `ForgetUserAsync` hay `ForgetReaderAsync` ngay sau khi lưu, nếu không đệm 30 giây giữ trạng thái cũ |
 | `IBibRecordWriter.ApplyAsync` | Mọi lượt sửa dữ liệu rút từ MARC | Nhớ `.Include(Authors/Subjects/Keywords/Classifications)`, thiếu là bộ ghi thêm lại liên kết và đổ ở `ux_bib_classifications` |
 
 Lệnh sinh migration chạy đúng trong kho này (dự án hạ tầng vừa là dự án khởi động):

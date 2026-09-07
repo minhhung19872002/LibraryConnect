@@ -1810,3 +1810,24 @@ thử 2.8 (số liệu khớp truy vấn kiểm chứng độc lập). Chạy tr
 | MH.1 | Môn học chưa có tài liệu | 1, khớp SQL | Đạt |
 | GH.1 | Danh sách chạm trần thì tệp xuất nói ra | **Trước sửa: cắt trong im lặng ở 6 chỗ.** Sau sửa: dòng "Lưu ý: danh sách đã đạt trần 20.000 dòng…" in ngay dưới phần tiêu chí | Đạt |
 | GH.2 | Số trong câu tiếng Việt viết theo lối Việt | **Trước sửa: "2,320,000 đ".** Sau sửa: "2.320.000 đ" — đặt văn hoá mặc định `vi-VN`, 16 câu thông báo và mọi cột tiền đổi theo | Đạt |
+
+### Đợt mười sáu — mặt tiếp xúc của bạn đọc và vòng đời phiên đăng nhập (07/09/2026)
+
+Nhóm `/api/reader/*` là hợp đồng API của ứng dụng di động (XI.4). Dựng hai bạn đọc A và B trên máy
+chủ thật, mỗi người một bộ dữ liệu, rồi hỏi A có chạm được dữ liệu của B không; sau đó soi bốn chỗ
+sắc hơn của cùng mặt tiếp xúc.
+
+| Mã | Kịch bản | Kết quả thực tế | Đạt |
+|---|---|---|---|
+| C1 | A gọi vào định danh của B: gia hạn phiếu mượn, hủy đặt giữ, xóa tìm kiếm đã lưu, đánh dấu thông báo | tất cả 403/404 kèm câu tiếng Việt nêu đúng lý do; A gia hạn phiếu của chính mình thì 200 | Đạt |
+| C2 | Chín danh sách "của tôi" chỉ có dòng của mình; thẻ điện tử và hồ sơ đúng người | 0 dòng lẫn trên cả chín danh sách | Đạt |
+| C3 | Mười bốn lối dữ liệu cá nhân khi chưa đăng nhập | 401/403 cả mười bốn | Đạt |
+| C3.b | Khách đọc tài liệu hạn chế | xem được đúng 3 trang xem thử kèm câu chỉ đường, trang 4 trở đi 403; tải về và gói ngoại tuyến bị chặn | Đạt |
+| D1 | Bạn đọc gửi kèm những trường chỉ cán bộ được đặt khi sửa hồ sơ | số thẻ, loại bạn đọc, hạn thẻ, tiền ký quỹ đều giữ nguyên; chỉ email/điện thoại/địa chỉ đổi | Đạt |
+| D2 | Mượn tự phục vụ: thiếu chứng cứ vị trí, mã QR bịa, phiếu xác thực giả | cả ba bị chặn kèm câu nói rõ phải làm gì | Đạt |
+| D3 | Gói đọc ngoại tuyến: tài liệu hạn chế chưa được duyệt; A lấy gói của B; khách lấy gói | 403 / 404 / 401; B lấy gói của chính mình thì 200, tệp 40 KB | Đạt |
+| D4.1 | Khóa thẻ bạn đọc rồi gọi lại bằng thẻ đăng nhập cũ | **Trước sửa: 9 trong 11 việc vẫn trả 200**, kể cả đọc tài liệu số nội bộ và tạo gói đọc ngoại tuyến còn hạn bảy ngày. Sau sửa: 401 kèm "Thẻ bạn đọc đang bị tạm khóa. Vui lòng liên hệ thư viện." | Đạt |
+| D4.3 | Khóa thẻ rồi làm mới phiên bằng thẻ làm mới cũ | **Trước sửa: 200, cấp thẻ mới — phiên kéo dài vô thời hạn.** Sau sửa: 401 | Đạt |
+| D4.4 | Xóa hồ sơ bạn đọc rồi gọi bằng thẻ cũ | 404, vốn đã đúng | Đạt |
+| KT.CB | Khóa tài khoản cán bộ: thẻ đang cầm, thẻ làm mới, đăng nhập lại | **Trước sửa: thẻ đang cầm còn sống tới 60 phút.** Sau sửa: 401 ngay; thẻ làm mới và đăng nhập lại vốn đã bị chặn đúng | Đạt |
+| MK | Mở khóa xong thì bạn đọc dùng lại được ngay | 200 | Đạt |

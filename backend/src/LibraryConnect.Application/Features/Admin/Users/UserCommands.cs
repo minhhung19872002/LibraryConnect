@@ -388,14 +388,20 @@ public class SetUserLockCommandHandler : IRequestHandler<SetUserLockCommand, Uni
     private readonly ICurrentUser _currentUser;
     private readonly IDateTimeProvider _clock;
     private readonly IAuditService _audit;
+    private readonly ISessionValidator _sessions;
 
     public SetUserLockCommandHandler(
-        IApplicationDbContext db, ICurrentUser currentUser, IDateTimeProvider clock, IAuditService audit)
+        IApplicationDbContext db,
+        ICurrentUser currentUser,
+        IDateTimeProvider clock,
+        IAuditService audit,
+        ISessionValidator sessions)
     {
         _db = db;
         _currentUser = currentUser;
         _clock = clock;
         _audit = audit;
+        _sessions = sessions;
     }
 
     public async Task<Unit> Handle(SetUserLockCommand request, CancellationToken ct)
@@ -427,6 +433,10 @@ public class SetUserLockCommandHandler : IRequestHandler<SetUserLockCommand, Uni
         }
 
         await _db.SaveChangesAsync(ct);
+
+        // Thẻ làm mới đã thu hồi ở trên, nhưng thẻ đăng nhập đang cầm còn sống tới một giờ nữa.
+        // Bỏ đệm trạng thái để lượt gọi kế tiếp của tài khoản ấy bị chặn ngay.
+        await _sessions.ForgetUserAsync(user.Id, ct);
 
         await _audit.LogAsync(AuditAction.Update, nameof(User), user.Id.ToString(), user.Username,
             message: request.Locked

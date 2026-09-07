@@ -313,6 +313,39 @@ static void AddAuthentication(WebApplicationBuilder builder)
 
             options.Events = new JwtBearerEvents
             {
+                // Thẻ đăng nhập là JWT nên máy chủ không giữ trạng thái của nó: khoá một tài khoản
+                // hay một thẻ bạn đọc không tự làm thẻ đang cầm hết giá trị. Đo trên máy chủ thật
+                // ngày 07/09/2026: khoá thẻ một bạn đọc xong, phiên đang mở vẫn làm được 9 trong
+                // 11 việc và làm mới thẻ được vô thời hạn. Hỏi một câu ở đây thì mọi endpoint đều
+                // được canh, thay vì trông vào chỗ nào nhớ ra thì hỏi.
+                OnTokenValidated = async context =>
+                {
+                    var validator = context.HttpContext.RequestServices
+                        .GetRequiredService<LibraryConnect.Application.Common.Interfaces.ISessionValidator>();
+
+                    var laBanDoc = context.Principal?.FindFirst(
+                        LibraryConnect.Infrastructure.Services.JwtTokenService.ReaderClaimType)?.Value == "1";
+
+                    var raw = context.Principal?.FindFirst(
+                                  System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value
+                              ?? context.Principal?.FindFirst(
+                                  System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+                    if (!Guid.TryParse(raw, out var subject))
+                    {
+                        return;
+                    }
+
+                    var lyDo = await validator.RejectionReasonAsync(
+                        laBanDoc ? null : subject,
+                        laBanDoc ? subject : null,
+                        context.HttpContext.RequestAborted);
+
+                    if (lyDo is not null)
+                    {
+                        context.Fail(lyDo);
+                    }
+                },
                 OnMessageReceived = context =>
                 {
                     // The Hangfire dashboard is a plain browser navigation and cannot set headers.
@@ -329,8 +362,15 @@ static void AddAuthentication(WebApplicationBuilder builder)
                     context.HandleResponse();
                     context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                     context.Response.ContentType = "application/json; charset=utf-8";
-                    await context.Response.WriteAsJsonAsync(
-                        ApiResponse.Fail("Phiên đăng nhập không hợp lệ hoặc đã hết hạn."));
+
+                    // Thẻ bị từ chối vì tài khoản đã khoá thì nói đúng chuyện ấy: "phiên đăng nhập
+                    // hết hạn" khiến người dùng đăng nhập lại mãi mà không hiểu vì sao (bài học 52).
+                    var lyDo = context.AuthenticateFailure?.Message;
+
+                    await context.Response.WriteAsJsonAsync(ApiResponse.Fail(
+                        string.IsNullOrWhiteSpace(lyDo)
+                            ? "Phiên đăng nhập không hợp lệ hoặc đã hết hạn."
+                            : lyDo));
                 },
                 OnForbidden = async context =>
                 {

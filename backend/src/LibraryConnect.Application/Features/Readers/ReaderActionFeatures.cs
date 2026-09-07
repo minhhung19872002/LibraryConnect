@@ -214,11 +214,14 @@ public class SetReaderLockCommandHandler : IRequestHandler<SetReaderLockCommand,
 {
     private readonly IApplicationDbContext _db;
     private readonly IDateTimeProvider _clock;
+    private readonly ISessionValidator _sessions;
 
-    public SetReaderLockCommandHandler(IApplicationDbContext db, IDateTimeProvider clock)
+    public SetReaderLockCommandHandler(
+        IApplicationDbContext db, IDateTimeProvider clock, ISessionValidator sessions)
     {
         _db = db;
         _clock = clock;
+        _sessions = sessions;
     }
 
     public async Task<BulkResultDto> Handle(SetReaderLockCommand command, CancellationToken ct)
@@ -254,7 +257,35 @@ public class SetReaderLockCommandHandler : IRequestHandler<SetReaderLockCommand,
             result.Succeeded++;
         }
 
+        // Khoá thẻ mà phiên đang mở vẫn chạy thì lệnh khoá không có tác dụng nào lên ứng dụng di
+        // động: bạn đọc vừa báo mất thẻ vẫn đọc được tài liệu số và tự cấp cho mình gói đọc ngoại
+        // tuyến. Thu hồi thẻ làm mới để phiên không kéo dài được nữa, và bỏ đệm để thẻ đang cầm
+        // hết giá trị ngay ở lượt gọi kế tiếp. Lối khoá tài khoản cán bộ đã thu hồi từ trước; đây
+        // là chỗ còn thiếu.
+        var doiTuong = readers.Select(reader => reader.Id).ToList();
+
+        if (command.Locked && doiTuong.Count > 0)
+        {
+            var dangMo = await _db.RefreshTokens
+                .Where(token => token.ReaderId != null
+                                && doiTuong.Contains(token.ReaderId!.Value)
+                                && token.RevokedAt == null)
+                .ToListAsync(ct);
+
+            foreach (var token in dangMo)
+            {
+                token.RevokedAt = _clock.Now;
+                token.RevokedReason = "Thẻ bạn đọc bị khóa";
+            }
+        }
+
         await _db.SaveChangesAsync(ct);
+
+        foreach (var readerId in doiTuong)
+        {
+            await _sessions.ForgetReaderAsync(readerId, ct);
+        }
+
         return result;
     }
 }
