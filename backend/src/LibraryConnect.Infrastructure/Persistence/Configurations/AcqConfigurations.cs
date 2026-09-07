@@ -252,6 +252,19 @@ public class InventoryPeriodConfiguration : IEntityTypeConfiguration<InventoryPe
             .OnDelete(DeleteBehavior.Restrict);
         builder.HasIndex(x => x.Code).IsUnique().HasFilter("deleted_at IS NULL")
             .HasDatabaseName("ux_inventory_periods_code");
+
+        // Một kho chỉ có đúng một kỳ kiểm kê chưa chốt (III.4). Bộ xử lý đã hỏi "kho này còn kỳ nào
+        // chưa chốt không" rồi mới ghi, nhưng đọc-rồi-ghi không chặn được ba lượt bấm cùng lúc: trên
+        // máy chủ thật ngày 07/09/2026, ba lượt mở kỳ song song trên cùng một kho đều thành công và
+        // kho có ba kỳ đang mở, mỗi kỳ giữ một danh sách kỳ vọng khác nhau. Bài học 1 và 45.
+        // Giữ chỉ mục thường của khóa ngoại: danh sách kỳ kiểm kê lọc theo kho gồm cả kỳ đã chốt.
+        builder.HasIndex(x => x.WarehouseId, "ix_inventory_periods_warehouse_id")
+            .HasDatabaseName("ix_inventory_periods_warehouse_id");
+
+        builder.HasIndex(x => x.WarehouseId, "ux_inventory_periods_kho_chua_chot")
+            .IsUnique()
+            .HasFilter("status <> 'Closed' AND deleted_at IS NULL")
+            .HasDatabaseName("ux_inventory_periods_kho_chua_chot");
     }
 }
 

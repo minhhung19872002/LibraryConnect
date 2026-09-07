@@ -197,6 +197,21 @@ public class ReaderCardConfiguration : IEntityTypeConfiguration<ReaderCard>
         builder.HasOne(x => x.Reader).WithMany(r => r.Cards).HasForeignKey(x => x.ReaderId)
             .OnDelete(DeleteBehavior.Cascade);
         builder.HasIndex(x => x.CardNumber).HasDatabaseName("ix_reader_cards_number");
+
+        // Một bạn đọc chỉ có đúng một thẻ đang hiệu lực (VI.1: "cấp lại thẻ, giữ lịch sử thẻ cũ").
+        // Tầng nghiệp vụ đã hạ cờ thẻ cũ rồi mới dựng thẻ mới, nhưng đó là đọc-rồi-ghi: ba lượt cấp
+        // lại bấm cùng lúc trên máy chủ thật ngày 07/09/2026 để lại **ba thẻ cùng hiệu lực**, nghĩa
+        // là thẻ đã báo mất vẫn quét được ở cổng. Bài học 1 và 45: luật "một … một" phải có ràng
+        // buộc duy nhất ở cơ sở dữ liệu.
+        // Giữ chỉ mục thường của khóa ngoại: màn hình hồ sơ đọc **mọi** thẻ của bạn đọc, mà chỉ mục
+        // riêng phần ở dưới chỉ phủ thẻ đang hiệu lực.
+        builder.HasIndex(x => x.ReaderId, "ix_reader_cards_reader_id")
+            .HasDatabaseName("ix_reader_cards_reader_id");
+
+        builder.HasIndex(x => x.ReaderId, "ux_reader_cards_hien_hanh")
+            .IsUnique()
+            .HasFilter("is_current AND deleted_at IS NULL")
+            .HasDatabaseName("ux_reader_cards_hien_hanh");
     }
 }
 

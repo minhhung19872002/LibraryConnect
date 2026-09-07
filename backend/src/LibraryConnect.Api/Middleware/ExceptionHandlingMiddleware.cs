@@ -124,6 +124,15 @@ public class ExceptionHandlingMiddleware
             "ux_loans_item_dang_muon" =>
                 "Bản in này vừa được ghi mượn ở một quầy khác. Hãy quét lại mã vạch để xem tình "
                 + "trạng mới nhất.",
+
+            "ux_reader_cards_hien_hanh" =>
+                "Thẻ của bạn đọc này vừa được cấp lại ở một máy khác. Hãy mở lại hồ sơ để xem số "
+                + "thẻ mới nhất.",
+
+            "ux_inventory_periods_kho_chua_chot" =>
+                "Kho này vừa được mở một kỳ kiểm kê ở một máy khác. Hãy mở lại danh sách kỳ kiểm kê; "
+                + "một kho chỉ có một kỳ chưa chốt.",
+
             _ => null
         };
 

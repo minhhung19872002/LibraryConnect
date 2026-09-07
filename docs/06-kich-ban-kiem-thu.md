@@ -1411,8 +1411,13 @@ từ MARC · `KK.*` kiểm kê · `BC.*` báo cáo · `PH.* TH.* MV.* BM.*` năm
 `QT.*` quản trị hệ thống · `MH.*` tài liệu môn học · `PQ.*` phân quyền và phạm vi dữ liệu (mục 2.3) ·
 `TD.*` trao đổi dữ liệu (mục 2.4).
 
-Tổng: **252 phép đo**. Tám lỗi mã nguồn tìm ra (L1–L8 ở `08-so-loi.md`) đã sửa và có phép thử tự động
-đi kèm; hai việc dữ liệu trên chính máy chủ (L9, L10) đã xử lý.
+Tổng: **293 phép đo**. Mười một lỗi mã nguồn tìm ra (L1–L11 ở `08-so-loi.md`) đã sửa và có phép thử tự
+động đi kèm; hai việc dữ liệu trên chính máy chủ (L12, L13) đã xử lý.
+
+Bốn mươi mốt phép đo cuối (`TS.*`, `PV.*`, `TT.*`, `XR.*`, `DT.*`) thuộc một đợt rà đi theo **lớp** chứ
+không theo phân hệ: tham số truy vấn thù địch, phạm vi dữ liệu ở chiều **ghi** (đợt trước chỉ kiểm
+chiều đọc), chuyển trạng thái phi pháp, xoá khi còn ràng buộc, và tranh chấp đồng thời ở những lối
+chưa đua bao giờ.
 
 Nhóm `PQ.*` chạy trọn mục 2.3 của E-HSMT trên máy chủ thật bằng một tài khoản *Cán bộ lưu thông* lập
 riêng cho đợt này, gán phạm vi dữ liệu đúng một kho: 13/13 đạt, và đã xóa tài khoản ấy sau khi xong.
@@ -1671,3 +1676,38 @@ riêng cho đợt này, gán phạm vi dữ liệu đúng một kho: 13/13 đạ
 | QU.12 | Mảng mã vạch có phần tử null bị từ chối bằng câu rõ nghĩa, không đổ 500 | **Trước sửa: cả `desk/checkout` lẫn `desk/return` trả 500 "Đã xảy ra lỗi hệ thống"** (L8). Sau sửa: 400 kèm câu nói về dữ liệu người dùng gửi. Mảng rỗng và chuỗi rỗng thì vốn đã đúng | Đạt |
 | WEB.1 | Mười một đường của trang tra cứu mở được bằng trình duyệt thật | tất cả 200; nhật ký console chỉ có một dòng 401 của lượt làm mới thẻ đăng nhập, ngay sau đó `auth/refresh` 200 rồi gọi lại 200 — đúng vòng đời thẻ | Đạt |
 | MB.1 | Bộ kiểm thử ứng dụng di động chạy lại sau đợt sửa | `flutter analyze` sạch, `flutter test` 124/124 đạt | Đạt |
+| TS.1 | Tham số phân trang biên (0, âm, rất lớn, chữ) trên bảy endpoint không làm cái nào đổ 500 | 56 lượt gọi, 0 lần 500 | Đạt |
+| TS.2 | Tra cứu chịu được từ khóa thù địch: nháy đơn, `' OR 1=1 --`, `%`, `_`, `(((`, `.*`, 5.000 ký tự, emoji, xuống dòng, tab, Unicode lạ | 14 từ khóa, chỉ **ký tự rỗng U+0000** đổ 500 (L9); 13 từ còn lại đều 200 | Đạt sau sửa |
+| TS.3 | Enum, năm và GUID sai cú pháp bị từ chối chứ không đổ 500 | 5 dạng sai, 0 lần 500 | Đạt |
+| TS.4 | Chín endpoint chi tiết trả 404 kèm câu tiếng Việt khi định danh không có thật | cả chín trả 404 | Đạt |
+| TS.5 | Thân JSON hỏng bị từ chối bằng 400 | 400, nêu đúng vị trí ký tự hỏng | Đạt |
+| TS.6 | Chuỗi MARC không phải JSON bị từ chối bằng câu rõ nghĩa | 400 "Không đọc được JSON của biểu ghi…" | Đạt |
+| TS.7 | Khoản phạt số âm bị từ chối | 400 | Đạt |
+| L9.a | Ký tự rỗng U+0000 trong chuỗi truy vấn không làm đổ máy chủ | **Trước sửa: 7 endpoint trả 500, gồm `/search`, `/search/suggest`, `/search/facets`, `/public/news` (công khai) và `/cataloging/bibs`, `/readers`, `/admin/audit-logs`**. Sau sửa: cả bảy trả 200 | Đạt |
+| L9.b | Ký tự rỗng trong thân JSON bị bỏ trước khi lưu, phần còn lại giữ nguyên | lưu được, chuỗi đọc lại không còn ký tự rỗng; dấu tiếng Việt và gạch ngang dài giữ nguyên từng ký tự | Đạt |
+| PV.1 | Đọc chi tiết bản in ngoài phạm vi dữ liệu bị chặn | 404 | Đạt |
+| PV.2 | Khóa lưu thông bản in của kho không được gán: không đổi được dòng nào | 0 bản bị khóa | Đạt |
+| PV.3 | Chuyển kho bản in ngoài phạm vi | 409 "Không có bản nào chuyển được." | Đạt |
+| PV.4 | Thanh lý bản in ngoài phạm vi | 409 "Không có bản nào xử lý được." | Đạt |
+| PV.5 | Xếp giá bản in ngoài phạm vi | "Đã xếp giá 0 bản." — không đổi dòng nào | Đạt |
+| PV.6 | Kiểm nhận bản in ngoài phạm vi | "Đã kiểm nhận 0 bản." — không đổi dòng nào | Đạt |
+| PV.7 | Cùng lệnh ấy trên bản in **trong** phạm vi thì làm được (chứng minh không phải thiếu quyền) | "Đã mở khóa 1 bản." | Đạt |
+| PV.8 | Mở kỳ kiểm kê trên kho không được gán | 404 "Không tìm thấy kho…" | Đạt |
+| TT.1 | Duyệt một yêu cầu chưa gửi duyệt | 409 "…không ở trạng thái chờ duyệt nên không duyệt được." | Đạt |
+| TT.2 | Gửi duyệt lần hai | 409 "…đã gửi duyệt rồi." | Đạt |
+| TT.3 | Duyệt lại một yêu cầu đã duyệt xong | 409 | Đạt |
+| TT.4 | Từ chối một yêu cầu đã duyệt | 409 | Đạt |
+| TT.5 | Sửa nội dung một yêu cầu đã duyệt | 409 "Yêu cầu đã gửi duyệt nên không sửa được nữa." | Đạt |
+| TT.6 | Ghi trả lần hai cho cùng một bản in | 409 "…không có lượt mượn nào đang mở." | Đạt |
+| TT.7 | Gia hạn một phiếu đã trả | 409 "Lượt mượn đã kết thúc nên không gia hạn được." | Đạt |
+| TT.8 | Ghi mất một phiếu đã trả | 409 "Lượt mượn đã ghi trả nên không ghi nhận mất hay hỏng được." | Đạt |
+| TT.9 | Hủy một phiếu đặt giữ đã hủy | 409 "Phiếu đặt giữ này đã kết thúc." | Đạt |
+| XR.1 | Xóa kho đang chứa bản in | 409 "Kho 'Kho Cơ sở 2' còn 4.475 ấn phẩm nên chưa xóa được. Hãy chuyển các ấn phẩm sang kho khác trước." | Đạt |
+| XR.2 | Xóa loại bạn đọc đang có người dùng | 409, nêu đúng 458 bản ghi và cách xử lý | Đạt |
+| XR.3 | Xóa dạng tài liệu đang được biểu ghi dùng | 409, nêu đúng 4.545 bản ghi | Đạt |
+| XR.4 | Xóa bạn đọc đã trả hết sách và không còn nợ | 200 | Đạt |
+| XR.5 | Xóa bạn đọc đang còn sách chưa trả | 409 "…còn giữ 1 tài liệu chưa trả nên chưa xóa được hồ sơ." | Đạt |
+| DT.1 | Ba quầy ghi mượn cùng một bản in cùng lúc | mã trả về `[200, 409, 409]`, đúng một phiếu mở — ràng buộc `ux_loans_item_dang_muon` giữ | Đạt |
+| DT.3 | Ba lượt cấp lại thẻ cùng lúc | **Trước sửa: cả ba trả 200 và hồ sơ có 3 thẻ cùng hiệu lực** (L10). Sau sửa: đúng một thẻ hiệu lực, trùng số thẻ ghi trên hồ sơ | Đạt |
+| DT.4 | Ba lượt ghi nhận giao hàng cùng lúc trên một dòng đơn đặt | đã nhận 5 / đã đặt 5 — không vượt số đặt | Đạt |
+| DT.5 | Ba lượt mở kỳ kiểm kê cùng một kho cùng lúc | **Trước sửa: cả ba trả 200, kho có 3 kỳ đang mở** (L11). Sau sửa: đúng một lượt thành công, hai lượt nhận câu của nghiệp vụ | Đạt |

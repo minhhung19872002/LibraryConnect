@@ -142,6 +142,10 @@ builder.Services
     {
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
         options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+
+        // Mọi chuỗi trong thân JSON đi qua bộ lọc ký tự PostgreSQL không lưu được — xem
+        // UnstorableTextMiddleware về lý do và về bảy endpoint từng đổ 500 vì một ký tự rỗng.
+        options.JsonSerializerOptions.Converters.Add(new UnstorableTextJsonConverter());
     });
 
 // Model-binding failures must use the same envelope as everything else.
@@ -190,6 +194,10 @@ app.UseSerilogRequestLogging(options =>
 });
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseMiddleware<SecurityHeadersMiddleware>();
+
+// Trước mọi thứ đọc chuỗi truy vấn: bỏ ký tự PostgreSQL không lưu được. Đứng sau bộ xử lý ngoại lệ
+// để lỗi của chính nó cũng ra đúng khuôn ApiResponse.
+app.UseMiddleware<UnstorableTextMiddleware>();
 
 app.UseResponseCompression();
 

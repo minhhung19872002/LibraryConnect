@@ -94,7 +94,15 @@ nghiệm thu không có banner nào; xoá biểu ghi bài trích ở Biên mục
 xuống 1 làm yêu cầu đặt mua đã qua cấp 1 kẹt vĩnh viễn. Lỗi nặng nhất lộ ra lúc nhập một tệp ISO 2709 lớn lên máy chủ: **một biểu ghi
 hỏng kéo theo biểu ghi lành đứng ngay sau nó**, vì biểu ghi bị từ chối vẫn nằm lại trong bộ theo dõi của EF rồi đi theo lượt lưu kế
 tiếp — lượt nhập 12.610 biểu ghi chết hẳn sau 268 dòng, và báo cáo lỗi hiện nguyên văn tiếng Anh của khung nền. Lỗi cuối tìm ra bằng
-cách mở trang chủ máy chủ thật trên trình duyệt: banner của bản trình diễn hiện **"Tài liệu sô ́ mới cập nhật"** — ảnh SVG khai `font-family='Georgia,serif'`, mà Georgia thiếu glyph dựng sẵn của nguyên âm tiếng Việt hai dấu nên trình duyệt tách dấu ra đứng cạnh. Cộng thêm hai việc trên chính máy chủ, không phải lỗi mã: dọn dữ liệu thử còn sót của các đợt trước, và dựng bộ dữ liệu trình diễn cho nhánh III.1 vốn rỗng. Lỗi thứ tám: mảng mã vạch có phần tử `null` làm cả hai lối của quầy đổ 500 vì gọi `Trim()` trước khi lọc rỗng. Cả 8 đã sửa, tổng **178 lỗi, đã sửa 178**.
+cách mở trang chủ máy chủ thật trên trình duyệt: banner của bản trình diễn hiện **"Tài liệu sô ́ mới cập nhật"** — ảnh SVG khai `font-family='Georgia,serif'`, mà Georgia thiếu glyph dựng sẵn của nguyên âm tiếng Việt hai dấu nên trình duyệt tách dấu ra đứng cạnh. Cộng thêm hai việc trên chính máy chủ, không phải lỗi mã: dọn dữ liệu thử còn sót của các đợt trước, và dựng bộ dữ liệu trình diễn cho nhánh III.1 vốn rỗng. Lỗi thứ tám: mảng mã vạch có phần tử `null` làm cả hai lối của quầy đổ 500 vì gọi `Trim()` trước khi lọc rỗng.
+
+Đợt rà thứ mười một (07/09/2026) đi theo **lớp** chứ không theo phân hệ — tham số truy vấn thù địch, phạm vi dữ liệu ở chiều **ghi**,
+chuyển trạng thái phi pháp, xoá khi còn ràng buộc, và tranh chấp đồng thời ở những lối chưa đua bao giờ. Phạm vi ghi, trạng thái và
+ràng buộc xoá đều đạt sạch (6/6, 9/9, 5/5); ba lỗi nữa lộ ra: **một ký tự rỗng U+0000 làm bảy endpoint đổ 500**, ba trong đó là lối
+công khai ai cũng gọi được; **ba lượt cấp lại thẻ song song để lại ba thẻ cùng hiệu lực**, nghĩa là thẻ vừa báo mất vẫn quét được;
+và **ba lượt mở kỳ kiểm kê cùng một kho song song đều thành công**, mỗi kỳ chốt một danh sách kỳ vọng riêng. Hai lỗi sau là bài học 1
+và 45 lặp lại ở hai chỗ nữa: luật "một … một" chỉ kiểm ở tầng nghiệp vụ thì không chặn được hai lượt cùng lúc. Cả 11 đã sửa, tổng
+**181 lỗi, đã sửa 181**.
 Phụ lục cuối `docs/06` ghi kết quả từng kịch bản (hơn 590 dòng).
 
 Đọc thẳng hồ sơ gốc còn tìm ra thứ không phải lỗi mã: **bốn hồ sơ bàn giao** mà Chương V mục III và
@@ -103,7 +111,7 @@ mục 5 đòi — kế hoạch triển khai, kế hoạch đào tạo, cam kết
 
 | Tài liệu | Nội dung |
 |---|---|
-| `docs/08-so-loi.md` | Sổ lỗi chín đợt: 37 lỗi hai đợt đầu, 5 lỗi đợt rà thứ hai (mục E), 9 lỗi đợt áp bản thiết kế (mục G), 7 lỗi đợt rà thứ ba (mục H), 8 lỗi đợt triển khai (mục I), **88 lỗi năm đợt rà theo đặc tả ngày 04–05/09/2026 (mục J và các mục con)**, 23 lỗi nghiệm thu thử và soi số học (mục K), **8 lỗi đợt rà sâu theo phân hệ ngày 06–07/09/2026 (mục L)** |
+| `docs/08-so-loi.md` | Sổ lỗi chín đợt: 37 lỗi hai đợt đầu, 5 lỗi đợt rà thứ hai (mục E), 9 lỗi đợt áp bản thiết kế (mục G), 7 lỗi đợt rà thứ ba (mục H), 8 lỗi đợt triển khai (mục I), **88 lỗi năm đợt rà theo đặc tả ngày 04–05/09/2026 (mục J và các mục con)**, 23 lỗi nghiệm thu thử và soi số học (mục K), **11 lỗi hai đợt rà ngày 06–07/09/2026 (mục L)** |
 | `docs/09-nguon-du-lieu.md` | Khảo sát 16 nguồn dữ liệu thư mục, giấy phép từng nguồn, kết quả nạp |
 | `docs/10-ke-hoach-trien-khai.md` | Kế hoạch triển khai, chạy thử và chuyển đổi dữ liệu (Chương V mục III.1) |
 | `docs/11-ke-hoach-dao-tao.md` | Kế hoạch đào tạo 16 buổi cho 7 nhóm học viên (Chương V mục III.2) |
@@ -132,7 +140,7 @@ huống lỗi; phải tự tay dựng đúng bối cảnh ấy trong phép thử
 **Lệnh chạy đúng:**
 
 ```bash
-cd backend  && dotnet test                 # 643 unit + 496 integration
+cd backend  && dotnet test                 # 643 unit + 507 integration
 cd frontend-admin && npx tsc -b && npx vitest run    # 347 test
 cd frontend-opac  && npx tsc -b && npx vitest run    # 102 test
 cd mobile   && flutter analyze && flutter test       # 124 test
@@ -170,6 +178,8 @@ vướng — mỗi cái sinh ra từ một lỗi đã xảy ra thật:
 | `backend/.../Security/LocalTimeInMessagesTests.cs` | Mọi mốc giờ hiện cho người dùng phải qua `ToLocalTime()` hoặc lấy từ đồng hồ hệ thống — quét cả `{…:HH:mm}` lẫn `.ToString("…HH…")`. Câu "tạm khóa tới 02:44" từng hiện giờ UTC cho một mốc thật ra là 09:44 |
 | `backend/.../Infrastructure/MigrationRegistrationTests.cs` | Mỗi tệp trong thư mục Migrations phải có lớp mang đúng `[Migration("<mã>")]`, và không lớp `Migration` nào được thiếu thuộc tính — thiếu là EF Core bỏ qua trong im lặng, bản sửa dữ liệu triển khai xong mà không chạy |
 | `backend/.../Infrastructure/DemoLoanDatesTests.cs` | Không lượt mượn nào của bộ dữ liệu trình diễn rơi vào tương lai, ở mọi cỡ bộ dữ liệu và mọi chính sách — 94 phiếu "mượn 29/11, trả 02/09" từng sống trên cả máy chủ thật |
+| `backend/.../UnstorableTextTests.cs` | Ký tự PostgreSQL không lưu được (U+0000 và họ) bị bỏ ở **cả hai** cửa vào — chuỗi truy vấn và thân JSON. Một ký tự rỗng từng làm bảy endpoint đổ 500, ba trong đó công khai |
+| `backend/.../ConcurrencyTests.cs` | Hai luật "một … một" phải có ràng buộc duy nhất ở CSDL: một bạn đọc một thẻ hiệu lực, một kho một kỳ kiểm kê chưa chốt. Phép thử gửi ba yêu cầu **thật sự song song**; gọi tuần tự thì cả hai vẫn xanh |
 | `backend/.../Infrastructure/VietnameseFontStackTests.cs` | Không nơi nào gọi tên Georgia trong danh sách phông — Georgia thiếu glyph dựng sẵn của ố, ề, ắ, ữ nên trình duyệt tách dấu ra đứng cạnh nguyên âm. Quét cả ảnh SVG của bộ dữ liệu trình diễn lẫn `styles.css`/`theme.ts` của hai giao diện |
 | `backend/.../Infrastructure/DeployScriptTests.cs` | `gh-deploy.sh` phải có bước `don_anh_cu` giữ bản mới và bản trước, xoá ảnh `libraryconnect-*` còn lại — 20 bộ ảnh cũ từng làm đầy ổ 96 GB và chặn mọi lượt triển khai |
 
@@ -432,6 +442,16 @@ docker compose run --rm -d --name lc-api-kiem -e LC_DB_NAME=lc_kiem -e LC_SEED_D
     người dùng nhận về 500 "Đã xảy ra lỗi hệ thống" thay vì câu nói mình gửi sai gì. Mảng rỗng và
     chuỗi rỗng đều đã được canh — chỉ `null` lọt, vì nó đi qua đúng chỗ không ai nghĩ tới. Lọc
     `IsNullOrWhiteSpace` trước, cắt sau.
+67. **Ký tự rỗng U+0000 là đầu vào mà tầng nghiệp vụ không chặn nổi.** Cột text của PostgreSQL không
+    chứa được nó, và lỗi nổ ở tầng trình điều khiển — sau khi câu truy vấn đã gửi đi — nên mọi bộ
+    kiểm tra phía trên đều vô can. Một ký tự ấy làm bảy endpoint đổ 500, ba trong đó công khai. Bộ
+    lọc `PlainText.RemoveUnstorableCharacters` đã có sẵn từ lâu mà chỉ được gọi ở một đường: lọc
+    phải đặt ở **cửa vào** — lớp trung gian cho chuỗi truy vấn, bộ chuyển đổi JSON cho thân yêu cầu
+    — chứ không phải ở từng chỗ nhớ ra.
+68. **Bài học 1 không chỉ áp cho phiếu mượn và đặt giữ.** Hai luật "một … một" nữa vẫn đang là
+    đọc-rồi-ghi: một bạn đọc một thẻ hiệu lực, một kho một kỳ kiểm kê chưa chốt. Ba lượt bấm song
+    song để lại ba thẻ và ba kỳ. Cách rà: liệt kê **mọi** câu trong đặc tả có dạng "chỉ một", rồi
+    hỏi từng câu "chỉ mục duy nhất tương ứng ở đâu" — đừng đợi gặp lỗi mới đi tìm.
 
 ### A.4. Cơ chế dùng chung — dùng lại, đừng viết chỗ mới
 
