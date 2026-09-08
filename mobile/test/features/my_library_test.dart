@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:libraryconnect_mobile/core/api/api_exception.dart';
-import 'package:libraryconnect_mobile/core/theme/app_theme.dart';
 import 'package:libraryconnect_mobile/features/my_library/presentation/card_screen.dart';
 import 'package:libraryconnect_mobile/features/my_library/presentation/my_library_screen.dart';
 import 'package:libraryconnect_mobile/l10n/app_localizations.dart';
 import 'package:libraryconnect_mobile/shared/models/reader_models.dart';
+import 'package:libraryconnect_mobile/shared/widgets/status_pill.dart';
 
 /// Sách của tôi và thẻ điện tử: màu theo hạn trả là trình bày, số liệu là của máy chủ; thẻ đọc
 /// được khi mất mạng nhưng không được che lỗi thật bằng bản cũ.

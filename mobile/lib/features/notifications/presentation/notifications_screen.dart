@@ -231,7 +231,9 @@ class _ListTabState extends ConsumerState<_ListTab> {
             child: Text(
               l10n.pushDisabledNote,
               key: const Key('push-note'),
-              style: theme.textTheme.bodySmall?.copyWith(color: context.lc.muted),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: context.lc.muted,
+              ),
             ),
           ),
         Expanded(
@@ -260,7 +262,9 @@ class _ListTabState extends ConsumerState<_ListTab> {
                         tileColor: item.isRead ? null : context.lc.greenSoft,
                         leading: Icon(
                           notificationIcon(item.type),
-                          color: item.isRead ? context.lc.muted : context.lc.green,
+                          color: item.isRead
+                              ? context.lc.muted
+                              : context.lc.green,
                         ),
                         title: Text(
                           item.title,

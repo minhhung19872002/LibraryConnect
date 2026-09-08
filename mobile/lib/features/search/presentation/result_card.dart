@@ -11,6 +11,7 @@ import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/models/catalog_models.dart';
+import '../../../shared/widgets/status_pill.dart';
 
 /// Byte ảnh bìa, đệm trên đĩa qua `flutter_cache_manager` (máy chủ đặt ETag + giữ một tuần).
 final coverBytesProvider = FutureProvider.family<Uint8List, String>((

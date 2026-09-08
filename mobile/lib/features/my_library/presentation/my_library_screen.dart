@@ -12,6 +12,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../../shared/models/catalog_models.dart';
 import '../../../shared/models/reader_models.dart';
 import '../data/reader_api.dart';
+import '../../../shared/widgets/status_pill.dart';
 
 /// Sắc thái dòng phiếu mượn theo hạn trả: quá hạn → đỏ, còn ≤ 3 ngày → vàng, còn lại → xanh.
 /// Chỉ là màu; số ngày quá hạn và tiền phạt vẫn lấy của máy chủ.
@@ -646,7 +647,9 @@ class _FinesTab extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(vertical: 10),
             child: Text(
               l10n.finePaymentGuide,
-              style: theme.textTheme.bodySmall?.copyWith(color: context.lc.muted),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: context.lc.muted,
+              ),
             ),
           ),
           if (summary.fines.isEmpty) _Empty(l10n.noFines),
@@ -672,7 +675,9 @@ class _FinesTab extends ConsumerWidget {
                     fine.outstanding > 0 ? fine.outstanding : fine.amount,
                   ),
                   style: theme.textTheme.titleMedium?.copyWith(
-                    color: fine.outstanding > 0 ? context.lc.bad : context.lc.muted,
+                    color: fine.outstanding > 0
+                        ? context.lc.bad
+                        : context.lc.muted,
                   ),
                 ),
               ),

@@ -52,7 +52,8 @@ void main() {
           id: 'l1',
           code: 'PM00000001',
           dueDate: '2026-09-20',
-          title: 'Nghiên cứu thực trạng ô nhiễm môi trường khu du lịch biển '
+          title:
+              'Nghiên cứu thực trạng ô nhiễm môi trường khu du lịch biển '
               'Sầm Sơn - Thanh Hóa và đề xuất các biện pháp quản lý, bảo vệ',
           barcode: 'LC00011441',
           warehouseName: 'Kho Cơ sở 2',

@@ -44,9 +44,14 @@ void main() {
 
   test('màn hình không gọi thẳng hằng số màu của chế độ sáng', () {
     final pham = <String>[];
-    final mau = RegExp('LcColors[.](${chiSang.join('|')})' r'\b');
+    final mau = RegExp(
+      'LcColors[.](${chiSang.join('|')})'
+      r'\b',
+    );
 
-    for (final tep in Directory('lib').listSync(recursive: true).whereType<File>()) {
+    for (final tep in Directory(
+      'lib',
+    ).listSync(recursive: true).whereType<File>()) {
       final duongDan = tep.path.replaceAll(r'\', '/');
       if (!duongDan.endsWith('.dart')) continue;
       if (duongDan.contains('core/theme/')) continue;
@@ -77,7 +82,11 @@ void main() {
         isTrue,
         reason: 'ngoại lệ trỏ tới tệp không còn: $duongDan',
       );
-      expect(lyDo.length, greaterThan(20), reason: 'lý do quá sơ sài: $duongDan');
+      expect(
+        lyDo.length,
+        greaterThan(20),
+        reason: 'lý do quá sơ sài: $duongDan',
+      );
     });
   });
 }

@@ -383,7 +383,9 @@ class _IdleView extends ConsumerWidget {
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
           child: Text(
             l10n.searchHintNoAccent,
-            style: theme.textTheme.bodyMedium?.copyWith(color: context.lc.muted),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: context.lc.muted,
+            ),
           ),
         ),
         Padding(
@@ -540,11 +542,7 @@ class _ResultsView extends ConsumerWidget {
             padding: const EdgeInsets.all(32),
             child: Column(
               children: [
-                Icon(
-                  Icons.search_off,
-                  size: 48,
-                  color: context.lc.mutedLight,
-                ),
+                Icon(Icons.search_off, size: 48, color: context.lc.mutedLight),
                 const SizedBox(height: 12),
                 Text(
                   l10n.noResults,

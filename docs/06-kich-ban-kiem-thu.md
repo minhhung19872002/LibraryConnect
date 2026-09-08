@@ -1882,3 +1882,5 @@ cây widget đọc màu chữ đã phân giải và màu nền đục gần nh�
 | MB.46 | Mọi màn hình có danh sách canh danh sách rỗng | 13/13 | Đạt |
 | MB.47 | Phông vẫn đóng gói, không tải lúc chạy (bài học 27) | `GoogleFonts.config.allowRuntimeFetching = false` còn trong `main.dart` | Đạt |
 | MB.48 | Quét mã nguồn: màn hình không gọi thẳng hằng số màu của chế độ sáng | **Trước sửa: 82 chỗ ở 16 tệp.** Sau sửa: 0, ngoại lệ chỉ còn hai tệp có nền tối/sáng cố định, khai kèm lý do; hoàn một chỗ về cũ là phép thử đỏ ngay | Đạt |
+| MB.49 | Cài APK phát hành lên máy ảo Android, chế độ tối + cỡ chữ 200%, đi năm màn hình | Trang chủ, Đăng nhập, Sách của tôi, Thông báo, Thẻ thư viện đều đọc được và không tràn khung; thông báo chưa đọc nay là nền xanh sẫm chữ sáng, tấm thẻ là giấy trắng chữ sẫm. **Lượt nhìn này tìm ra S4**: viên nhãn "Quá hạn 48 ngày" còn là mảng hồng nhạt giữa màn hình tối, vì `StatusPill` nằm trong tệp mà phép thử quét bỏ qua. Sau sửa: nền đỏ sẫm chữ sáng | Đạt |
+| MB.50 | Lật lại chế độ sáng, giữ cỡ chữ 200% | Năm màn hình ấy vẫn đúng — lượt sẫm màu của MB.44 không phá chiều ngược lại | Đạt |

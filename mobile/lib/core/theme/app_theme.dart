@@ -19,6 +19,7 @@ class LcColors {
   // nền giấy (đo trên chính màn hình Thẻ thư viện), dưới ngưỡng 4,5 của WCAG AA cho chữ nhỏ.
   static const muted = Color(0xFF665C4E);
   static const mutedLight = Color(0xFF706654);
+
   /// Vàng đồng cho biểu tượng và đường viền — đạt 3 : 1 của WCAG cho hình đồ hoạ.
   static const gold = Color(0xFFA87826);
 
@@ -88,8 +89,7 @@ class LcScheme {
 
 extension LcSchemeOf on BuildContext {
   /// Bảng màu đúng theo chế độ đang bật.
-  LcScheme get lc =>
-      LcScheme(Theme.of(this).brightness == Brightness.dark);
+  LcScheme get lc => LcScheme(Theme.of(this).brightness == Brightness.dark);
 }
 
 class AppTheme {
@@ -292,37 +292,3 @@ class AppTheme {
 }
 
 /// Viên trạng thái: còn / cần để ý / hỏng / trung tính — đúng ba cặp màu của bản thiết kế.
-enum PillTone { good, warn, bad, neutral }
-
-class StatusPill extends StatelessWidget {
-  const StatusPill(this.text, {super.key, this.tone = PillTone.neutral});
-
-  final String text;
-  final PillTone tone;
-
-  @override
-  Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final (bg, fg) = switch (tone) {
-      PillTone.good => (LcColors.goodSoft, LcColors.good),
-      PillTone.warn => (LcColors.warnSoft, LcColors.warn),
-      PillTone.bad => (LcColors.badSoft, LcColors.bad),
-      PillTone.neutral => (
-        dark ? LcColors.darkBorder : LcColors.panel,
-        dark ? LcColors.darkMuted : LcColors.muted,
-      ),
-    };
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(color: fg, fontSize: 12, fontWeight: FontWeight.w500),
-      ),
-    );
-  }
-}

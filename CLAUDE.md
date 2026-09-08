@@ -172,7 +172,9 @@ chữ phụ còn **3,23 : 1** trên nền tối, tấm nền nhạt giữ màu s
 Thẻ thư viện điện tử ghim nền giấy trắng mà không ghim chữ, nên ở chế độ tối họ tên bạn đọc là chữ
 sáng trên giấy trắng — **1,21 : 1**, trên đúng tấm thẻ chìa ra ở quầy. Và bảng màu có **20 cặp trượt
 ngưỡng ngay ở chế độ sáng**, đúng bài học 19 của phía web lặp lại ở di động. Cỡ chữ thì đạt 9/9 tới
-200%. Cả 3 đã sửa, tổng **212 lỗi, đã sửa 212**.
+200%. Lỗi thứ tư lộ ra lúc **cài APK lên máy ảo và nhìn bằng mắt**: viên nhãn trạng thái ghim màu
+sáng, và nó sống sót vì `StatusPill` nằm trong `core/theme/` — đúng thư mục mà phép thử quét cố ý bỏ
+qua. Cả 4 đã sửa, tổng **213 lỗi, đã sửa 213**.
 Phụ lục cuối `docs/06` ghi kết quả từng kịch bản (hơn 700 dòng).
 
 Đọc thẳng hồ sơ gốc còn tìm ra thứ không phải lỗi mã: **bốn hồ sơ bàn giao** mà Chương V mục III và
@@ -668,6 +670,13 @@ docker compose run --rm -d --name lc-api-kiem -e LC_DB_NAME=lc_kiem -e LC_SEED_D
     tấm nền sáng gặp chữ của chế độ tối — cặp ấy không có trong bảng nào cả, nó chỉ sinh ra lúc
     dựng. Phép đo đáng tin là: dựng màn hình thật, với mỗi `Text` lấy màu đã phân giải và màu nền
     đục gần nhất phía trên nó, rồi tính. Ba lỗi của đợt 19 đều lộ ra theo đúng đường ấy.
+
+95. **Phép thử quét có vùng loại trừ, và lỗi trốn ở đấy.** Luật "không gọi thẳng hằng số màu chế
+    độ sáng" bỏ qua `core/theme/` vì giả định trong ấy cái gì cũng đã theo chủ đề. `StatusPill` là
+    một **widget** nằm trong tệp chủ đề, nên ba trong bốn sắc thái của nó ghim màu sáng suốt từ
+    phase 15. Cặp màu tự nó đọc được nên cả phép đo tương phản cũng không bắt. Cách chữa không phải
+    là thêm ngoại lệ mà là **dời widget ra khỏi vùng loại trừ** — luật chạm tới được thì thôi trốn.
+    Và hễ khai một vùng loại trừ, hỏi ngay: trong ấy có thứ gì thuộc loại luật đang canh không?
 
 ### A.4. Cơ chế dùng chung — dùng lại, đừng viết chỗ mới
 

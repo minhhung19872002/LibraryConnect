@@ -18,6 +18,7 @@ import '../../search/data/search_api.dart';
 import '../../search/data/search_params.dart';
 import '../../search/presentation/result_card.dart';
 import '../data/marc_table.dart';
+import '../../../shared/widgets/status_pill.dart';
 
 final bibDetailProvider = FutureProvider.autoDispose.family<BibDetail, String>(
   (ref, id) => ref.watch(searchApiProvider).bib(id),
@@ -734,7 +735,9 @@ class _MarcRow extends StatelessWidget {
             width: 28,
             child: Text(
               indicators.replaceAll(' ', '#'),
-              style: theme.textTheme.bodySmall?.copyWith(color: context.lc.muted),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: context.lc.muted,
+              ),
             ),
           ),
           Expanded(

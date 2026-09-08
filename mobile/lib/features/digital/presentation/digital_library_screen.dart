@@ -14,6 +14,7 @@ import '../../../shared/models/catalog_models.dart';
 import '../../../shared/models/digital_models.dart';
 import '../data/digital_api.dart';
 import '../data/offline_store.dart';
+import '../../../shared/widgets/status_pill.dart';
 
 final _date = DateFormat('dd/MM/yyyy');
 final _dateTime = DateFormat('HH:mm dd/MM/yyyy');
@@ -302,10 +303,7 @@ class DigitalTile extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
-        leading: Icon(
-          Icons.picture_as_pdf_outlined,
-          color: context.lc.green,
-        ),
+        leading: Icon(Icons.picture_as_pdf_outlined, color: context.lc.green),
         title: Text(item.title, maxLines: 2, overflow: TextOverflow.ellipsis),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -579,10 +577,7 @@ class _OfflineTab extends ConsumerWidget {
                   margin: const EdgeInsets.only(bottom: 8),
                   child: ListTile(
                     key: Key('offline-${e.documentId}'),
-                    leading: Icon(
-                      Icons.offline_pin,
-                      color: context.lc.good,
-                    ),
+                    leading: Icon(Icons.offline_pin, color: context.lc.good),
                     title: Text(e.title),
                     subtitle: Text(
                       '${formatSize(e.sizeBytes)} · ${l10n.offlineExpires(_date.format(e.expiresAt.toLocal()))}',

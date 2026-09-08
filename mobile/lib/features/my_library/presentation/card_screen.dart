@@ -10,6 +10,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/models/reader_models.dart';
 import '../data/reader_api.dart';
+import '../../../shared/widgets/status_pill.dart';
 
 /// Thẻ đang hiện: từ máy chủ, hay bản lưu trên máy khi không có mạng (kèm giờ lưu).
 class CardView {
