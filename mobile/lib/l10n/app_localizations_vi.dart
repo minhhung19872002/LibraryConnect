@@ -529,6 +529,9 @@ class L10nVi extends L10n {
   String get popularBooks => 'Được mượn nhiều';
 
   @override
+  String get libraryAnnouncements => 'Thông báo của thư viện';
+
+  @override
   String get latestNews => 'Tin tức';
 
   @override

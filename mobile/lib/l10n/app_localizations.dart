@@ -1057,6 +1057,12 @@ abstract class L10n {
   /// **'Được mượn nhiều'**
   String get popularBooks;
 
+  /// No description provided for @libraryAnnouncements.
+  ///
+  /// In vi, this message translates to:
+  /// **'Thông báo của thư viện'**
+  String get libraryAnnouncements;
+
   /// No description provided for @latestNews.
   ///
   /// In vi, this message translates to:

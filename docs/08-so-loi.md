@@ -933,7 +933,7 @@ canh quyền. **Ứng dụng di động thì chưa lần nào**: nó mới đư�
 
 Cách đo: dựng thật từng màn hình trong phép thử widget, rồi **đi khắp cây widget đọc màu chữ đã
 phân giải và màu nền đục gần nhất phía trên nó, tính tỉ lệ tương phản WCAG** — không nhìn ảnh chụp
-(bài học 13). **116 phép đo, 3 lỗi** — 9 phép đo cỡ chữ, 4 lượt đo tương phản trên màn hình dựng
+(bài học 13). **116 phép đo, 5 lỗi** — 9 phép đo cỡ chữ, 4 lượt đo tương phản trên màn hình dựng
 thật (mỗi lượt đo mọi dòng chữ đang hiện), 71 cặp màu tính theo bảng ở cả hai chế độ, 19 chỗ đọc dữ
 liệu bất đồng bộ và 13 màn hình có danh sách. Lỗi thứ tư lộ ra lúc **cài APK lên máy ảo và nhìn bằng mắt** — nó nằm ở đúng chỗ phép thử quét cố ý bỏ qua.
 
@@ -944,6 +944,8 @@ liệu bất đồng bộ và 13 màn hình có danh sách. Lỗi thứ tư lộ
 | S3 | Bảng màu nền giấy — chữ phụ, chữ mờ, vàng đồng | **Ba màu trượt ngưỡng tương phản ngay ở chế độ sáng.** Chọn màu trên nền trắng thì đủ, nhưng sản phẩm dùng nền giấy ngà nên mọi cặp tối đi một chút — đúng bài học 19 của phía web, lần này ở bảng màu của ứng dụng di động, vốn chưa từng có phép thử tương phản nào. | Tính cho 8 màu chữ × 7 tấm nền: **20 cặp dưới ngưỡng**. `muted` đạt 4,84 trên giấy trắng nhưng chỉ **4,13–4,37** trên sáu tấm nền còn lại; `mutedLight` **2,67–3,13**; `gold` **2,73–3,20**, mà nó còn dùng làm chữ (mã trường con trong khung MARC). | Vừa | Giao diện | Đã sửa — `muted` `#7A6F5F`→`#665C4E` (thấp nhất 5,50), `mutedLight` `#9A8F7C`→`#706654` (4,74), `gold` `#B9852F`→`#A87826` (3,28 cho biểu tượng) và thêm `goldInk` `#865D12` (4,91) cho chỗ vàng đồng làm chữ |
 
 | S4 | Viên nhãn trạng thái — hạn trả, tình trạng thẻ, tình trạng bản in (9 màn hình) | **Widget ghim màu sáng, và nó sống sót vì nằm trong đúng tệp mà phép thử quét bỏ qua.** `StatusPill` được đặt trong `core/theme/app_theme.dart` — thư mục mà luật của S1 loại trừ, với giả định "trong ấy cái gì cũng đã theo chủ đề". Ba trong bốn sắc thái ghim cặp màu sáng; riêng sắc thái thứ tư thì chính tác giả đã rẽ theo `brightness`, tức là biết luật mà chỉ áp cho một chỗ. Cặp màu tự nó đọc được (chữ sẫm trên nền nhạt) nên phép đo tương phản không bắt được — chỉ nhìn mới thấy. | Cài APK lên máy ảo Android, bật chế độ tối: viên **"Quá hạn 48 ngày"** và **"Phạt dự kiến 96.000 đ"** là hai mảng hồng nhạt giữa màn hình tối. | Nhẹ | Giao diện | Đã sửa — `StatusPill` chuyển sang `lib/shared/widgets/status_pill.dart` để luật quét chạm tới được, cả bốn sắc thái đi qua `context.lc`; chụp lại trên máy ảo thì viên nhãn đã là nền đỏ sẫm chữ sáng |
+
+| S5 | Trang chủ ứng dụng — khối tin tức (XI.1) | **Máy chủ tách thông báo ra khối riêng, ứng dụng không đọc khối ấy nên mất sạch trong im lặng.** Ngày 04/09/2026 máy chủ thêm trường `announcements` vào `/api/public/home` (lịch nghỉ, giờ mở cửa — trang tra cứu dựng thành khối riêng). `HomePayload` của ứng dụng di động **không khai trường ấy**, nên mọi thông báo bị bỏ. Trên máy chủ nghiệm thu, nơi **cả hai** bản tin đã đăng đều thuộc chuyên mục Thông báo, trang chủ của ứng dụng vì thế **không hiện tin nào**. Cùng hình dạng với bài học 30, lật ngược: ở đấy là công tắc lưu mà không ai đọc, ở đây là dữ liệu máy chủ gửi mà không màn hình nào dựng. | `GET /api/public/home` trên máy chủ thật trả `news: []` và `announcements: [2]`; `HomePayload` của Flutter chỉ có `news`. Phép thử iOS trên Simulator đi tìm bản tin ấy ở trang chủ và **đỏ** — đó là cách lỗi lộ ra. | Vừa | Nghiệp vụ | Đã sửa — thêm `announcements` vào mô hình và một khối "Thông báo của thư viện" đứng **trước** khối tin tức; `home_announcements_test.dart` dựng trang chủ với payload chỉ có thông báo (đỏ trước khi sửa). Kiểm lại bằng APK trỏ vào máy chủ thật: khối hiện đúng hai bản tin |
 
 ### Đã kiểm trong đợt này và vẫn tốt
 
@@ -961,7 +963,9 @@ liệu bất đồng bộ và 13 màn hình có danh sách. Lỗi thứ tư lộ
 - **Kiểm bằng mắt trên máy ảo Android**, APK phát hành cài thật, chế độ tối và cỡ chữ 200%: trang
   chủ, đăng nhập, Sách của tôi, Thông báo và Thẻ thư viện đều đọc được, không màn hình nào tràn
   khung. Lật lại chế độ sáng thì cả năm vẫn đúng. Chính lượt nhìn này tìm ra S4 — thứ mà cả phép đo
-  tương phản lẫn phép thử quét đều không bắt được.
+  tương phản lẫn phép thử quét đều không bắt được. (Lượt kiểm màu này dựng APK không kèm
+  `--dart-define`, nên nó nói chuyện với **máy dev** — không ảnh hưởng kết luận về màu, nhưng chính
+  chỗ ấy suýt làm đọc sai S5; xem bài học 97.)
 
 ## Đ. Những chỗ đã thử phá nhưng hệ thống chịu được
 
@@ -1070,7 +1074,7 @@ dạng quét mã nguồn chặn cả lớp lỗi quay lại thay vì chỉ chặ
 
 Cộng cả ba đợt, đợt áp thiết kế, đợt triển khai và ba đợt rà hoàn thiện ngày 04/09/2026:
 **147 lỗi, đã sửa 145**; thêm **23 lỗi của đợt nghiệm thu thử, test sâu, ba đợt test kỹ thuật ngày
-05/09/2026 và ba đợt soi nghiệp vụ – giao thức – bảo mật ngày 06/09/2026 (mục K), đã sửa cả 23** — tổng **170 lỗi, đã sửa 170**; cộng **16 lỗi mục L**, **4 lỗi mục M**, **4 lỗi mục N**, **5 lỗi mục O**, **3 lỗi mục P**, **3 lỗi mục Q** của tám đợt rà sâu ngày 06–07/09/2026, **4 lỗi mục R** của đợt rà tầng tệp xuất và **4 lỗi mục S** của đợt rà ứng dụng di động ngày 08/09/2026 — tổng **213 lỗi, đã sửa 213**. Hai mục H3 và H9 đã làm xong ngày 03/09/2026 và ghi ở cột cuối
+05/09/2026 và ba đợt soi nghiệp vụ – giao thức – bảo mật ngày 06/09/2026 (mục K), đã sửa cả 23** — tổng **170 lỗi, đã sửa 170**; cộng **16 lỗi mục L**, **4 lỗi mục M**, **4 lỗi mục N**, **5 lỗi mục O**, **3 lỗi mục P**, **3 lỗi mục Q** của tám đợt rà sâu ngày 06–07/09/2026, **4 lỗi mục R** của đợt rà tầng tệp xuất và **5 lỗi mục S** của đợt rà ứng dụng di động ngày 08/09/2026 — tổng **214 lỗi, đã sửa 214**. Hai mục H3 và H9 đã làm xong ngày 03/09/2026 và ghi ở cột cuối
 của chính hai dòng ấy — con số 134 giữ nguyên cách đếm cũ để đối chiếu được với các bản trước.
 Mỗi lỗi đã sửa đều có phép thử chạy đỏ trước khi sửa và xanh sau khi sửa, kể cả H7: phép thử giả
 tiêu đề đỏ trước khi sửa `CurrentUser.Ip`.

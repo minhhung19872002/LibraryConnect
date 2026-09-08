@@ -180,6 +180,11 @@ _HomePayload _$HomePayloadFromJson(Map<String, dynamic> json) => _HomePayload(
           ?.map((e) => NewsSummary.fromJson(e as Map<String, dynamic>))
           .toList() ??
       const [],
+  announcements:
+      (json['announcements'] as List<dynamic>?)
+          ?.map((e) => NewsSummary.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      const [],
   banners:
       (json['banners'] as List<dynamic>?)
           ?.map((e) => HomeBanner.fromJson(e as Map<String, dynamic>))
@@ -200,6 +205,7 @@ Map<String, dynamic> _$HomePayloadToJson(_HomePayload instance) =>
       'newBooks': instance.newBooks,
       'popularBooks': instance.popularBooks,
       'news': instance.news,
+      'announcements': instance.announcements,
       'banners': instance.banners,
       'links': instance.links,
       'statistics': instance.statistics,

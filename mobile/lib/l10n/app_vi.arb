@@ -176,6 +176,7 @@
   "@filteringBy": {"placeholders": {"label": {"type": "String"}}},
   "newBooks": "Sách mới bổ sung",
   "popularBooks": "Được mượn nhiều",
+  "libraryAnnouncements": "Thông báo của thư viện",
   "latestNews": "Tin tức",
   "viewAll": "Xem tất cả",
   "quickLinks": "Liên kết hữu ích",

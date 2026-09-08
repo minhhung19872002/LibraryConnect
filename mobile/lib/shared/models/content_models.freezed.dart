@@ -2038,7 +2038,9 @@ as int,
 /// @nodoc
 mixin _$HomePayload {
 
- List<SearchResult> get newBooks; List<SearchResult> get popularBooks; List<NewsSummary> get news; List<HomeBanner> get banners; List<HomeLink> get links; HomeStatistics get statistics;
+ List<SearchResult> get newBooks; List<SearchResult> get popularBooks; List<NewsSummary> get news;/// Thông báo của thư viện — khối riêng của máy chủ từ 04/09/2026 (lịch nghỉ, giờ mở cửa).
+/// Trước 08/09/2026 ứng dụng không khai trường này nên mọi thông báo rơi mất trong im lặng.
+ List<NewsSummary> get announcements; List<HomeBanner> get banners; List<HomeLink> get links; HomeStatistics get statistics;
 /// Create a copy of HomePayload
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -2052,20 +2054,20 @@ $HomePayloadCopyWith<HomePayload> get copyWith => _$HomePayloadCopyWithImpl<Home
 @override
 bool operator ==(Object other) {
   final _this = this as HomePayload;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HomePayload&&const DeepCollectionEquality().equals(other.newBooks, _this.newBooks)&&const DeepCollectionEquality().equals(other.popularBooks, _this.popularBooks)&&const DeepCollectionEquality().equals(other.news, _this.news)&&const DeepCollectionEquality().equals(other.banners, _this.banners)&&const DeepCollectionEquality().equals(other.links, _this.links)&&(identical(other.statistics, _this.statistics) || other.statistics == _this.statistics));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is HomePayload&&const DeepCollectionEquality().equals(other.newBooks, _this.newBooks)&&const DeepCollectionEquality().equals(other.popularBooks, _this.popularBooks)&&const DeepCollectionEquality().equals(other.news, _this.news)&&const DeepCollectionEquality().equals(other.announcements, _this.announcements)&&const DeepCollectionEquality().equals(other.banners, _this.banners)&&const DeepCollectionEquality().equals(other.links, _this.links)&&(identical(other.statistics, _this.statistics) || other.statistics == _this.statistics));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as HomePayload;
-  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.newBooks),const DeepCollectionEquality().hash(_this.popularBooks),const DeepCollectionEquality().hash(_this.news),const DeepCollectionEquality().hash(_this.banners),const DeepCollectionEquality().hash(_this.links),_this.statistics);
+  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.newBooks),const DeepCollectionEquality().hash(_this.popularBooks),const DeepCollectionEquality().hash(_this.news),const DeepCollectionEquality().hash(_this.announcements),const DeepCollectionEquality().hash(_this.banners),const DeepCollectionEquality().hash(_this.links),_this.statistics);
 }
 
 @override
 String toString() {
   final _this = this as HomePayload;
-  return 'HomePayload(newBooks: ${_this.newBooks}, popularBooks: ${_this.popularBooks}, news: ${_this.news}, banners: ${_this.banners}, links: ${_this.links}, statistics: ${_this.statistics})';
+  return 'HomePayload(newBooks: ${_this.newBooks}, popularBooks: ${_this.popularBooks}, news: ${_this.news}, announcements: ${_this.announcements}, banners: ${_this.banners}, links: ${_this.links}, statistics: ${_this.statistics})';
 }
 
 
@@ -2076,7 +2078,7 @@ abstract mixin class $HomePayloadCopyWith<$Res>  {
   factory $HomePayloadCopyWith(HomePayload value, $Res Function(HomePayload) _then) = _$HomePayloadCopyWithImpl;
 @useResult
 $Res call({
- List<SearchResult> newBooks, List<SearchResult> popularBooks, List<NewsSummary> news, List<HomeBanner> banners, List<HomeLink> links, HomeStatistics statistics
+ List<SearchResult> newBooks, List<SearchResult> popularBooks, List<NewsSummary> news, List<NewsSummary> announcements, List<HomeBanner> banners, List<HomeLink> links, HomeStatistics statistics
 });
 
 
@@ -2093,11 +2095,12 @@ class _$HomePayloadCopyWithImpl<$Res>
 
 /// Create a copy of HomePayload
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? newBooks = null,Object? popularBooks = null,Object? news = null,Object? banners = null,Object? links = null,Object? statistics = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? newBooks = null,Object? popularBooks = null,Object? news = null,Object? announcements = null,Object? banners = null,Object? links = null,Object? statistics = null,}) {
   return _then(HomePayload(
 newBooks: null == newBooks ? _self.newBooks : newBooks // ignore: cast_nullable_to_non_nullable
 as List<SearchResult>,popularBooks: null == popularBooks ? _self.popularBooks : popularBooks // ignore: cast_nullable_to_non_nullable
 as List<SearchResult>,news: null == news ? _self.news : news // ignore: cast_nullable_to_non_nullable
+as List<NewsSummary>,announcements: null == announcements ? _self.announcements : announcements // ignore: cast_nullable_to_non_nullable
 as List<NewsSummary>,banners: null == banners ? _self.banners : banners // ignore: cast_nullable_to_non_nullable
 as List<HomeBanner>,links: null == links ? _self.links : links // ignore: cast_nullable_to_non_nullable
 as List<HomeLink>,statistics: null == statistics ? _self.statistics : statistics // ignore: cast_nullable_to_non_nullable
@@ -2195,10 +2198,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<SearchResult> newBooks,  List<SearchResult> popularBooks,  List<NewsSummary> news,  List<HomeBanner> banners,  List<HomeLink> links,  HomeStatistics statistics)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<SearchResult> newBooks,  List<SearchResult> popularBooks,  List<NewsSummary> news,  List<NewsSummary> announcements,  List<HomeBanner> banners,  List<HomeLink> links,  HomeStatistics statistics)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _HomePayload() when $default != null:
-return $default(_that.newBooks,_that.popularBooks,_that.news,_that.banners,_that.links,_that.statistics);case _:
+return $default(_that.newBooks,_that.popularBooks,_that.news,_that.announcements,_that.banners,_that.links,_that.statistics);case _:
   return orElse();
 
 }
@@ -2216,10 +2219,10 @@ return $default(_that.newBooks,_that.popularBooks,_that.news,_that.banners,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<SearchResult> newBooks,  List<SearchResult> popularBooks,  List<NewsSummary> news,  List<HomeBanner> banners,  List<HomeLink> links,  HomeStatistics statistics)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<SearchResult> newBooks,  List<SearchResult> popularBooks,  List<NewsSummary> news,  List<NewsSummary> announcements,  List<HomeBanner> banners,  List<HomeLink> links,  HomeStatistics statistics)  $default,) {final _that = this;
 switch (_that) {
 case _HomePayload():
-return $default(_that.newBooks,_that.popularBooks,_that.news,_that.banners,_that.links,_that.statistics);case _:
+return $default(_that.newBooks,_that.popularBooks,_that.news,_that.announcements,_that.banners,_that.links,_that.statistics);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -2236,10 +2239,10 @@ return $default(_that.newBooks,_that.popularBooks,_that.news,_that.banners,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<SearchResult> newBooks,  List<SearchResult> popularBooks,  List<NewsSummary> news,  List<HomeBanner> banners,  List<HomeLink> links,  HomeStatistics statistics)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<SearchResult> newBooks,  List<SearchResult> popularBooks,  List<NewsSummary> news,  List<NewsSummary> announcements,  List<HomeBanner> banners,  List<HomeLink> links,  HomeStatistics statistics)?  $default,) {final _that = this;
 switch (_that) {
 case _HomePayload() when $default != null:
-return $default(_that.newBooks,_that.popularBooks,_that.news,_that.banners,_that.links,_that.statistics);case _:
+return $default(_that.newBooks,_that.popularBooks,_that.news,_that.announcements,_that.banners,_that.links,_that.statistics);case _:
   return null;
 
 }
@@ -2251,7 +2254,7 @@ return $default(_that.newBooks,_that.popularBooks,_that.news,_that.banners,_that
 @JsonSerializable()
 
 class _HomePayload implements HomePayload {
-  const _HomePayload({ List<SearchResult> newBooks = const [],  List<SearchResult> popularBooks = const [],  List<NewsSummary> news = const [],  List<HomeBanner> banners = const [],  List<HomeLink> links = const [], this.statistics = const HomeStatistics()}): _newBooks = newBooks,_popularBooks = popularBooks,_news = news,_banners = banners,_links = links;
+  const _HomePayload({ List<SearchResult> newBooks = const [],  List<SearchResult> popularBooks = const [],  List<NewsSummary> news = const [],  List<NewsSummary> announcements = const [],  List<HomeBanner> banners = const [],  List<HomeLink> links = const [], this.statistics = const HomeStatistics()}): _newBooks = newBooks,_popularBooks = popularBooks,_news = news,_announcements = announcements,_banners = banners,_links = links;
   factory _HomePayload.fromJson(Map<String, dynamic> json) => _$HomePayloadFromJson(json);
 
  final  List<SearchResult> _newBooks;
@@ -2273,6 +2276,17 @@ class _HomePayload implements HomePayload {
   if (_news is EqualUnmodifiableListView) return _news;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_news);
+}
+
+/// Thông báo của thư viện — khối riêng của máy chủ từ 04/09/2026 (lịch nghỉ, giờ mở cửa).
+/// Trước 08/09/2026 ứng dụng không khai trường này nên mọi thông báo rơi mất trong im lặng.
+ final  List<NewsSummary> _announcements;
+/// Thông báo của thư viện — khối riêng của máy chủ từ 04/09/2026 (lịch nghỉ, giờ mở cửa).
+/// Trước 08/09/2026 ứng dụng không khai trường này nên mọi thông báo rơi mất trong im lặng.
+@override@JsonKey() List<NewsSummary> get announcements {
+  if (_announcements is EqualUnmodifiableListView) return _announcements;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_announcements);
 }
 
  final  List<HomeBanner> _banners;
@@ -2304,18 +2318,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _HomePayload&&const DeepCollectionEquality().equals(other.newBooks, _newBooks)&&const DeepCollectionEquality().equals(other.popularBooks, _popularBooks)&&const DeepCollectionEquality().equals(other.news, _news)&&const DeepCollectionEquality().equals(other.banners, _banners)&&const DeepCollectionEquality().equals(other.links, _links)&&(identical(other.statistics, statistics) || other.statistics == statistics));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _HomePayload&&const DeepCollectionEquality().equals(other.newBooks, _newBooks)&&const DeepCollectionEquality().equals(other.popularBooks, _popularBooks)&&const DeepCollectionEquality().equals(other.news, _news)&&const DeepCollectionEquality().equals(other.announcements, _announcements)&&const DeepCollectionEquality().equals(other.banners, _banners)&&const DeepCollectionEquality().equals(other.links, _links)&&(identical(other.statistics, statistics) || other.statistics == statistics));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_newBooks),const DeepCollectionEquality().hash(_popularBooks),const DeepCollectionEquality().hash(_news),const DeepCollectionEquality().hash(_banners),const DeepCollectionEquality().hash(_links),statistics);
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_newBooks),const DeepCollectionEquality().hash(_popularBooks),const DeepCollectionEquality().hash(_news),const DeepCollectionEquality().hash(_announcements),const DeepCollectionEquality().hash(_banners),const DeepCollectionEquality().hash(_links),statistics);
 }
 
 @override
 String toString() {
-    return 'HomePayload(newBooks: $newBooks, popularBooks: $popularBooks, news: $news, banners: $banners, links: $links, statistics: $statistics)';
+    return 'HomePayload(newBooks: $newBooks, popularBooks: $popularBooks, news: $news, announcements: $announcements, banners: $banners, links: $links, statistics: $statistics)';
 }
 
 
@@ -2326,7 +2340,7 @@ abstract mixin class _$HomePayloadCopyWith<$Res> implements $HomePayloadCopyWith
   factory _$HomePayloadCopyWith(_HomePayload value, $Res Function(_HomePayload) _then) = __$HomePayloadCopyWithImpl;
 @override @useResult
 $Res call({
- List<SearchResult> newBooks, List<SearchResult> popularBooks, List<NewsSummary> news, List<HomeBanner> banners, List<HomeLink> links, HomeStatistics statistics
+ List<SearchResult> newBooks, List<SearchResult> popularBooks, List<NewsSummary> news, List<NewsSummary> announcements, List<HomeBanner> banners, List<HomeLink> links, HomeStatistics statistics
 });
 
 
@@ -2343,11 +2357,12 @@ class __$HomePayloadCopyWithImpl<$Res>
 
 /// Create a copy of HomePayload
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? newBooks = null,Object? popularBooks = null,Object? news = null,Object? banners = null,Object? links = null,Object? statistics = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? newBooks = null,Object? popularBooks = null,Object? news = null,Object? announcements = null,Object? banners = null,Object? links = null,Object? statistics = null,}) {
   return _then(_HomePayload(
 newBooks: null == newBooks ? _self._newBooks : newBooks // ignore: cast_nullable_to_non_nullable
 as List<SearchResult>,popularBooks: null == popularBooks ? _self._popularBooks : popularBooks // ignore: cast_nullable_to_non_nullable
 as List<SearchResult>,news: null == news ? _self._news : news // ignore: cast_nullable_to_non_nullable
+as List<NewsSummary>,announcements: null == announcements ? _self._announcements : announcements // ignore: cast_nullable_to_non_nullable
 as List<NewsSummary>,banners: null == banners ? _self._banners : banners // ignore: cast_nullable_to_non_nullable
 as List<HomeBanner>,links: null == links ? _self._links : links // ignore: cast_nullable_to_non_nullable
 as List<HomeLink>,statistics: null == statistics ? _self.statistics : statistics // ignore: cast_nullable_to_non_nullable

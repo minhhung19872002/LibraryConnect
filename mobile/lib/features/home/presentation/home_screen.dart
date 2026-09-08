@@ -94,6 +94,20 @@ class HomeScreen extends ConsumerWidget {
                     ),
                     const BrowseShortcuts(),
                     const SizedBox(height: 16),
+                    // Thông báo đứng trước tin tức: lịch nghỉ và giờ mở cửa là thứ bạn đọc cần
+                    // thấy ngay. Máy chủ tách hai khối từ 04/09/2026; ứng dụng đọc thiếu khối này
+                    // nên trên máy chủ nghiệm thu — nơi cả hai bản tin đều là thông báo — trang chủ
+                    // không hiện tin nào.
+                    if (payload.announcements.isNotEmpty) ...[
+                      _SectionTitle(
+                        l10n.libraryAnnouncements,
+                        onViewAll: () => context.push(Routes.news),
+                        viewAllLabel: l10n.viewAll,
+                      ),
+                      for (final item in payload.announcements.take(4))
+                        NewsTile(item: item),
+                      const SizedBox(height: 16),
+                    ],
                     if (payload.news.isNotEmpty) ...[
                       _SectionTitle(
                         l10n.latestNews,

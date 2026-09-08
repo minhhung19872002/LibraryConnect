@@ -128,6 +128,9 @@ abstract class HomePayload with _$HomePayload {
     @Default([]) List<SearchResult> newBooks,
     @Default([]) List<SearchResult> popularBooks,
     @Default([]) List<NewsSummary> news,
+    /// Thông báo của thư viện — khối riêng của máy chủ từ 04/09/2026 (lịch nghỉ, giờ mở cửa).
+    /// Trước 08/09/2026 ứng dụng không khai trường này nên mọi thông báo rơi mất trong im lặng.
+    @Default([]) List<NewsSummary> announcements,
     @Default([]) List<HomeBanner> banners,
     @Default([]) List<HomeLink> links,
     @Default(HomeStatistics()) HomeStatistics statistics,

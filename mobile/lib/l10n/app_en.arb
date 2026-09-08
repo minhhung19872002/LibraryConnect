@@ -176,6 +176,7 @@
   "@filteringBy": {"placeholders": {"label": {"type": "String"}}},
   "newBooks": "New arrivals",
   "popularBooks": "Most borrowed",
+  "libraryAnnouncements": "Library announcements",
   "latestNews": "News",
   "viewAll": "View all",
   "quickLinks": "Useful links",

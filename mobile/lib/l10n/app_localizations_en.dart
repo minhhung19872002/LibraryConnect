@@ -530,6 +530,9 @@ class L10nEn extends L10n {
   String get popularBooks => 'Most borrowed';
 
   @override
+  String get libraryAnnouncements => 'Library announcements';
+
+  @override
   String get latestNews => 'News';
 
   @override

@@ -174,7 +174,9 @@ sáng trên giấy trắng — **1,21 : 1**, trên đúng tấm thẻ chìa ra �
 ngưỡng ngay ở chế độ sáng**, đúng bài học 19 của phía web lặp lại ở di động. Cỡ chữ thì đạt 9/9 tới
 200%. Lỗi thứ tư lộ ra lúc **cài APK lên máy ảo và nhìn bằng mắt**: viên nhãn trạng thái ghim màu
 sáng, và nó sống sót vì `StatusPill` nằm trong `core/theme/` — đúng thư mục mà phép thử quét cố ý bỏ
-qua. Cả 4 đã sửa, tổng **213 lỗi, đã sửa 213**.
+qua. Lỗi thứ năm thì do **phép thử iOS trên máy Mac của GitHub** bắt: máy chủ tách thông báo ra
+khối riêng từ 04/09/2026, ứng dụng không khai trường ấy nên trên máy chủ nghiệm thu — nơi cả hai bản
+tin đều là thông báo — trang chủ **không hiện tin nào**. Cả 5 đã sửa, tổng **214 lỗi, đã sửa 214**.
 Phụ lục cuối `docs/06` ghi kết quả từng kịch bản (hơn 700 dòng).
 
 Đọc thẳng hồ sơ gốc còn tìm ra thứ không phải lỗi mã: **bốn hồ sơ bàn giao** mà Chương V mục III và
@@ -215,7 +217,7 @@ huống lỗi; phải tự tay dựng đúng bối cảnh ấy trong phép thử
 cd backend  && dotnet test                 # 655 unit + 544 integration
 cd frontend-admin && npx tsc -b && npx vitest run    # 347 test
 cd frontend-opac  && npx tsc -b && npx vitest run    # 102 test
-cd mobile   && flutter analyze && flutter test       # 139 test
+cd mobile   && flutter analyze && flutter test       # 140 test
 ```
 
 > `npx tsc --noEmit` **không kiểm gì cả** ở hai thư mục frontend: `tsconfig.json` là tệp solution
@@ -677,6 +679,17 @@ docker compose run --rm -d --name lc-api-kiem -e LC_DB_NAME=lc_kiem -e LC_SEED_D
     phase 15. Cặp màu tự nó đọc được nên cả phép đo tương phản cũng không bắt. Cách chữa không phải
     là thêm ngoại lệ mà là **dời widget ra khỏi vùng loại trừ** — luật chạm tới được thì thôi trốn.
     Và hễ khai một vùng loại trừ, hỏi ngay: trong ấy có thứ gì thuộc loại luật đang canh không?
+
+96. **Máy chủ thêm một khối dữ liệu, máy khách không đọc thì mất trong im lặng.** `/api/public/home`
+    có thêm `announcements` từ 04/09/2026 cho trang tra cứu; `HomePayload` của Flutter không khai
+    trường ấy nên `fromJson` bỏ qua — không lỗi, không cảnh báo, chỉ là trang chủ thiếu một khối.
+    Bài học 30 lật ngược: ở đấy là công tắc lưu mà không ai đọc, ở đây là dữ liệu gửi mà không ai
+    dựng. Sửa hợp đồng API thì đi hết **mọi** máy khách, kể cả máy khách viết bằng ngôn ngữ khác.
+97. **APK dựng không kèm `--dart-define` là APK trỏ về máy dev.** Mặc định của `LC_API_BASE_URL` là
+    `http://10.0.2.2/api`. Cài bản ấy lên máy ảo rồi kết luận "đã kiểm trên máy chủ thật" là sai —
+    và nguy hơn: dữ liệu hai nơi khác nhau nên lỗi chỉ có ở máy chủ thật sẽ **không hiện ra**. Dấu
+    hiệu rẻ nhất để biết mình đang xem máy nào: đối chiếu bốn con số ở khối thống kê trang chủ với
+    `/api/public/home` của máy chủ định kiểm.
 
 ### A.4. Cơ chế dùng chung — dùng lại, đừng viết chỗ mới
 
