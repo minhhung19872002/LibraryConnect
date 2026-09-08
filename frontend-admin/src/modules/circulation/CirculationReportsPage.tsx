@@ -46,6 +46,7 @@ import { circulationApi } from './api';
 import { bucketLoansByDue, countLoansBy, formatDate, money } from './labels';
 import type { CirculationReportFilter, LoanRowDto, TopItemRowDto, TopReaderRowDto } from './types';
 import { MAU, MAU_BIEU_DO, mauBieuDo } from '@/lib/palette';
+import { nhanTrongLat } from '@/components/PieLabel';
 
 type ReportKind = 'visits' | 'current' | 'history' | 'overdue' | 'lockers' | 'topReaders' | 'topItems';
 
@@ -390,15 +391,15 @@ export function CirculationReportsPage() {
                         dataKey="count"
                         nameKey="label"
                         outerRadius={90}
-                        label={(entry: { label?: string; count?: number }) =>
-                          `${entry.label}: ${entry.count}`
-                        }
+                        label={nhanTrongLat}
+                        labelLine={false}
                       >
                         {(visits.data?.byReaderType ?? []).map((row, index) => (
                           <Cell key={row.key} fill={chartColors[index % chartColors.length]} />
                         ))}
                       </Pie>
                       <Tooltip />
+                      <Legend />
                     </PieChart>
                   </ResponsiveContainer>
                 )}

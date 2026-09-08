@@ -83,6 +83,14 @@ export const MAU_BIEU_DO = [
   '#095a4c', // xanh lục bảo
 ] as const;
 
+/**
+ * Màu chữ đặt **bên trong** một lát biểu đồ.
+ *
+ * Mọi màu của `MAU_BIEU_DO` đều đậm, nên chữ trắng đọc rõ trên tất cả: đo cả mười hai lát, tỉ lệ
+ * tương phản thấp nhất là 7,44 : 1 — trên ngưỡng 4,5 của WCAG AA khá xa.
+ */
+export const MAU_CHU_TREN_LAT = '#ffffff';
+
 /** Màu thứ n của biểu đồ, quay vòng khi hết dải. */
 export function mauBieuDo(chiSo: number): string {
   return MAU_BIEU_DO[chiSo % MAU_BIEU_DO.length]!;

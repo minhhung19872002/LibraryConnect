@@ -17,6 +17,7 @@ import {
 import { money } from './labels';
 import { toChartData, type ChartMeasure } from './chartData';
 import type { AcquisitionStatRowDto } from './types';
+import { nhanTrongLat } from '@/components/PieLabel';
 
 /**
  * Biểu đồ cột hoặc tròn cho một bảng thống kê của Phân hệ III.
@@ -77,7 +78,8 @@ export function StatChart({
               dataKey="value"
               nameKey="name"
               outerRadius={Math.min(110, height / 2 - 30)}
-              label={(entry: { name?: string; value?: number }) => `${entry.name}: ${entry.value}`}
+              label={nhanTrongLat}
+              labelLine={false}
             >
               {data.map((entry) => (
                 <Cell key={entry.name} fill={entry.fill} />

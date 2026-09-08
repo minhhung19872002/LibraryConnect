@@ -42,6 +42,7 @@ import { saveBlob } from '@/modules/marc/api';
 import { digitalApi } from './api';
 import { formatGroupLabels, formatSize } from './labels';
 import { MAU, MAU_BIEU_DO, mauBieuDo } from '@/lib/palette';
+import { nhanTrongLat } from '@/components/PieLabel';
 import type {
   DigitalCollectionDto,
   DigitalCountRowDto,
@@ -277,7 +278,8 @@ export function DigitalReportsPage() {
                             dataKey="count"
                             nameKey="label"
                             outerRadius={90}
-                            label
+                            label={nhanTrongLat}
+                            labelLine={false}
                           >
                             {inventory.data.byAccessLevel.map((row, index) => (
                               <Cell key={row.label} fill={chartColors[index % chartColors.length]} />

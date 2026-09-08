@@ -43,6 +43,7 @@ import { useCatalogOptions, toOptions } from '@/modules/cataloging/useCatalogOpt
 import { readersApi } from './api';
 import { dimensionLabels, formatDate, groupingLabels, readerStatusLabels } from './labels';
 import { MAU, MAU_BIEU_DO, mauBieuDo } from '@/lib/palette';
+import { nhanTrongLat } from '@/components/PieLabel';
 import type {
   ExpiringCardRowDto,
   ReaderActivityRowDto,
@@ -425,15 +426,15 @@ export function ReaderReportsPage() {
                       dataKey="total"
                       nameKey="label"
                       outerRadius={110}
-                      label={(entry: { label?: string; total?: number }) =>
-                        `${entry.label}: ${entry.total}`
-                      }
+                      label={nhanTrongLat}
+                      labelLine={false}
                     >
                       {(count.data ?? []).slice(0, 8).map((row, index) => (
                         <Cell key={row.key} fill={chartColors[index % chartColors.length]} />
                       ))}
                     </Pie>
                     <Tooltip />
+                    <Legend />
                   </PieChart>
                 </ResponsiveContainer>
               )}
