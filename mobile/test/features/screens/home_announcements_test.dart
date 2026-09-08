@@ -26,29 +26,31 @@ void main() {
     publishedAt: DateTime(2026, 9, 5),
   );
 
-  testWidgets('chỉ có thông báo, không có tin tức → trang chủ vẫn hiện thông báo', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      testApp(
-        home: const HomeScreen(),
-        overrides: [
-          homeProvider.overrideWith(
-            (ref) async => HomePayload(announcements: [thongBao]),
-          ),
-          staticPagesProvider.overrideWith((ref) async => const []),
-          unreadCountProvider.overrideWith((ref) async => 0),
-        ],
-      ),
-    );
-    await settle(tester);
+  testWidgets(
+    'chỉ có thông báo, không có tin tức → trang chủ vẫn hiện thông báo',
+    (tester) async {
+      await tester.pumpWidget(
+        testApp(
+          home: const HomeScreen(),
+          overrides: [
+            homeProvider.overrideWith(
+              (ref) async => HomePayload(announcements: [thongBao]),
+            ),
+            staticPagesProvider.overrideWith((ref) async => const []),
+            unreadCountProvider.overrideWith((ref) async => 0),
+          ],
+        ),
+      );
+      await settle(tester);
 
-    expect(
-      find.text('Thư viện mở cửa thứ Bảy từ tháng 9'),
-      findsOneWidget,
-      reason: 'máy chủ gửi thông báo mà trang chủ không dựng thì bạn đọc không '
-          'bao giờ thấy lịch nghỉ hay giờ mở cửa đổi',
-    );
-    expect(find.text(l10nVi.libraryAnnouncements), findsOneWidget);
-  });
+      expect(
+        find.text('Thư viện mở cửa thứ Bảy từ tháng 9'),
+        findsOneWidget,
+        reason:
+            'máy chủ gửi thông báo mà trang chủ không dựng thì bạn đọc không '
+            'bao giờ thấy lịch nghỉ hay giờ mở cửa đổi',
+      );
+      expect(find.text(l10nVi.libraryAnnouncements), findsOneWidget);
+    },
+  );
 }
