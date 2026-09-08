@@ -984,14 +984,20 @@ sản phẩm vốn đã làm và còn có dòng nhắc riêng (lỗi B10) — nh
 nằm dưới cùng, ngoài tầm mắt, và cán bộ mất luôn phần bên phải mà không biết mình mất gì.
 
 Đo trên **máy chủ thật** với dữ liệu thật, đi hết 58 đường dẫn của giao diện quản trị rồi bấm qua
-từng thẻ của những màn hình có thẻ. **137 phép đo, 1 lỗi.**
+từng thẻ của những màn hình có thẻ. **137 phép đo, 2 lỗi** — lỗi thứ hai chỉ lộ ra sau khi sửa lỗi thứ nhất.
 
 | # | Màn hình | Mô tả lỗi | Cách tái hiện | Mức độ | Loại | Trạng thái |
 |---|---|---|---|---|---|---|
 | T1 | Bổ sung → Báo cáo bổ sung, và ba trang báo cáo khác có biểu đồ tròn | **Nhãn biểu đồ tròn vẽ ra ngoài khung, đẩy cả trang cuộn ngang.** Recharts đặt nhãn ngoài ở toạ độ nằm ngoài khung SVG, mà tên chỉ mục tiếng Việt thì dài — "Đề tài nghiên cứu khoa học: 3071". Ba biểu đồ tròn xếp một hàng ba cột nên mỗi cột chỉ còn hơn 300 điểm ảnh, không đủ cho nhãn. Đáng nói: **tên của từng lát đã có sẵn ở `<Legend />` ngay dưới biểu đồ**, nên nhãn ngoài vừa thừa vừa phá bố cục. | Ở **1366×768** trên máy chủ thật: `document.scrollWidth − clientWidth` = **18**, nhãn "Chưa kiểm nhận: 454" chạy tới **x = 1427**. Ở **1440×900** trang **không** cuộn — nhưng hai nhãn vẫn vượt khung (tới 1489) và bị cắt cụt thành `": 3621"`, `":508"`, trông như số liệu chứ không như lỗi. Đó là lý do chín đợt rà chụp ở 1440 đều đi qua. | Vừa | Giao diện | Đã sửa — một hàm dùng chung `nhanTrongLat` vẽ **tỉ lệ phần trăm bên trong lát**, bỏ nhãn khi lát nhỏ hơn 5%; cả bốn biểu đồ tròn đi qua nó, hai chỗ thiếu chú giải được bổ sung. Màu chữ đi qua bảng màu (`MAU_CHU_TREN_LAT`, thấp nhất 7,44 : 1 trên mười hai màu lát). Phép thử quét `pieLabel.test.ts` cấm mọi `<Pie>` tự viết nhãn và đòi mỗi biểu đồ có chú giải (đỏ khi hoàn một chỗ về cũ) |
 
+| T2 | Bổ sung → Báo cáo bổ sung, ba bảng số liệu dưới ba biểu đồ | **Ba cột cố định cộng lại rộng hơn ô chứa nó.** Mỗi bảng khai `width` 160 + 90 + 120 = **370 px**, nằm trong một `Col span={8}` chỉ rộng khoảng 330 px ở khổ 1366×768 — bảng đẩy cả trang. Lỗi này **nằm dưới T1**: chỉ lộ ra sau khi sửa nhãn biểu đồ, vì trước đó nhãn tràn xa hơn nên nó là thứ duy nhất đo được. Tràn khung là một chồng, gỡ lớp trên mới thấy lớp dưới. | Sau khi triển khai bản sửa T1, đo lại đúng trang ấy ở 1366×768 trên máy chủ thật: trang **vẫn cuộn ngang**, thủ phạm mới là `<table>` rộng 370 px chạy tới x = 1370. | Nhẹ | Giao diện | Đã sửa — ba bảng khai `scroll={{ x: 'max-content' }}` để cuộn trong khung của chính chúng, đúng cách những bảng rộng khác trong cùng trang đang làm |
+
 ### Đã kiểm trong đợt này và vẫn tốt
 
+- **Guard của T1 và T2 khác nhau, và phải nói rõ:** T1 có phép thử quét mã nguồn (`pieLabel.test.ts`).
+  T2 thì **không** — jsdom không có bộ dựng bố cục nên phép thử đơn vị không đo nổi bề rộng thật.
+  Thứ canh T2 là **chính phép quét trình duyệt** của đợt này, đã chép thành kịch bản RS.1–RS.2 trong
+  `docs/06` để chạy lại được ở mỗi đợt sau.
 - **58/58 đường dẫn quản trị** dựng ở 1366×768 không đẩy trang cuộn ngang, trừ đúng T1 — kể cả những
   màn hình nhiều cột nhất: quầy ghi mượn, trình soạn MARC, năm trình thiết kế mẫu, bảng tổng hợp đa
   chiều, nhật ký hệ thống.
@@ -1111,7 +1117,7 @@ dạng quét mã nguồn chặn cả lớp lỗi quay lại thay vì chỉ chặ
 
 Cộng cả ba đợt, đợt áp thiết kế, đợt triển khai và ba đợt rà hoàn thiện ngày 04/09/2026:
 **147 lỗi, đã sửa 145**; thêm **23 lỗi của đợt nghiệm thu thử, test sâu, ba đợt test kỹ thuật ngày
-05/09/2026 và ba đợt soi nghiệp vụ – giao thức – bảo mật ngày 06/09/2026 (mục K), đã sửa cả 23** — tổng **170 lỗi, đã sửa 170**; cộng **16 lỗi mục L**, **4 lỗi mục M**, **4 lỗi mục N**, **5 lỗi mục O**, **3 lỗi mục P**, **3 lỗi mục Q** của tám đợt rà sâu ngày 06–07/09/2026, **4 lỗi mục R** của đợt rà tầng tệp xuất và **6 lỗi mục S** của đợt rà ứng dụng di động và **1 lỗi mục T** của đợt rà khổ màn hình quản trị ngày 08/09/2026 — tổng **216 lỗi, đã sửa 216**. Hai mục H3 và H9 đã làm xong ngày 03/09/2026 và ghi ở cột cuối
+05/09/2026 và ba đợt soi nghiệp vụ – giao thức – bảo mật ngày 06/09/2026 (mục K), đã sửa cả 23** — tổng **170 lỗi, đã sửa 170**; cộng **16 lỗi mục L**, **4 lỗi mục M**, **4 lỗi mục N**, **5 lỗi mục O**, **3 lỗi mục P**, **3 lỗi mục Q** của tám đợt rà sâu ngày 06–07/09/2026, **4 lỗi mục R** của đợt rà tầng tệp xuất và **6 lỗi mục S** của đợt rà ứng dụng di động và **2 lỗi mục T** của đợt rà khổ màn hình quản trị ngày 08/09/2026 — tổng **217 lỗi, đã sửa 217**. Hai mục H3 và H9 đã làm xong ngày 03/09/2026 và ghi ở cột cuối
 của chính hai dòng ấy — con số 134 giữ nguyên cách đếm cũ để đối chiếu được với các bản trước.
 Mỗi lỗi đã sửa đều có phép thử chạy đỏ trước khi sửa và xanh sau khi sửa, kể cả H7: phép thử giả
 tiêu đề đỏ trước khi sửa `CurrentUser.Ip`.

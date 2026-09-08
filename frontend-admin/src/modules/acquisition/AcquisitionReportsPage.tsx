@@ -326,6 +326,11 @@ export function AcquisitionReportsPage() {
                           rowKey="label"
                           size="small"
                           pagination={false}
+                          // Ba cột cố định cộng lại 370px, mà mỗi ô của hàng ba cột chỉ rộng khoảng
+                          // 330px ở khổ 1366×768 mà mục 6.6 cam kết — bảng đẩy cả trang cuộn ngang.
+                          // Cho nó cuộn trong khung của chính nó, đúng cách những bảng rộng khác
+                          // trong trang này đang làm.
+                          scroll={{ x: 'max-content' }}
                           dataSource={block.rows}
                           columns={[
                             { title: 'Nhãn', dataIndex: 'label', width: 160, ellipsis: true },

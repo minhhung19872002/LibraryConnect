@@ -184,8 +184,9 @@ mà mọi ảnh chụp của mười chín đợt trước đều ở 1440×900.
 58 đường dẫn cộng 67 phép đo theo thẻ, **137 phép đo, 1 lỗi**: nhãn biểu đồ tròn của Báo cáo bổ sung
 chạy ra ngoài khung SVG (tên chỉ mục tiếng Việt dài) và **đẩy cả trang cuộn ngang 18 px**. Ở 1440
 trang không cuộn, nhãn chỉ bị cắt cụt thành ": 3621" — trông như số liệu, nên chín đợt đi qua. Cả
-bốn biểu đồ tròn nay vẽ tỉ lệ phần trăm **bên trong lát**, tên lát để ở chú giải. Tổng **216 lỗi,
-đã sửa 216**.
+bốn biểu đồ tròn nay vẽ tỉ lệ phần trăm **bên trong lát**, tên lát để ở chú giải. Sửa xong đo lại thì
+lộ **lỗi thứ hai nằm dưới**: ba bảng số liệu khai cột cố định cộng lại 370 px trong ô rộng 330 px —
+tràn khung là một chồng, gỡ lớp trên mới thấy lớp dưới. Tổng **217 lỗi, đã sửa 217**.
 Phụ lục cuối `docs/06` ghi kết quả từng kịch bản (hơn 700 dòng).
 
 Đọc thẳng hồ sơ gốc còn tìm ra thứ không phải lỗi mã: **bốn hồ sơ bàn giao** mà Chương V mục III và
@@ -714,7 +715,11 @@ docker compose run --rm -d --name lc-api-kiem -e LC_DB_NAME=lc_kiem -e LC_SEED_D
      ở 1440 chính nó chỉ cắt cụt nhãn thành ": 3621" — trông như số liệu, không trông như lỗi. Hễ hồ
      sơ nói một con số tối thiểu (khổ màn hình, cỡ chữ, phiên bản trình duyệt, số bản ghi) thì phép
      đo phải đứng đúng ở con số ấy, không ở chỗ thoải mái hơn.
-101. **Nhãn vẽ ra ngoài khung là nhãn đẩy cả trang.** Recharts đặt nhãn ngoài của biểu đồ tròn ở
+101. **Tràn khung là một chồng, không phải một chỗ.** Sửa xong nhãn biểu đồ rồi đo lại đúng trang ấy
+     thì trang **vẫn cuộn ngang** — thủ phạm mới là ba cái bảng bên dưới, trước đó bị nhãn che khuất
+     vì nhãn tràn xa hơn. Phép đo "phần tử nào chạy xa nhất" chỉ kể được một tên mỗi lượt: sửa xong
+     phải **đo lại**, không được suy ra là đã hết.
+102. **Nhãn vẽ ra ngoài khung là nhãn đẩy cả trang.** Recharts đặt nhãn ngoài của biểu đồ tròn ở
      toạ độ nằm ngoài SVG; tên tiếng Việt dài thì nó ra khỏi màn hình. Mà chú giải ngay dưới biểu đồ
      đã nói đúng những tên ấy — nhãn ngoài vừa thừa vừa phá. Trong lát chỉ nên có phần trăm.
 
