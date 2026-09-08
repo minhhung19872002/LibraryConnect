@@ -254,6 +254,10 @@ body {
   color: var(--lc-ink);
 }
 
+.lc-only-narrow {
+  display: none;
+}
+
 .lc-header__actions {
   display: flex;
   align-items: center;
@@ -902,6 +906,116 @@ body {
 
   .lc-holdings__row {
     grid-template-columns: 1fr 1fr;
+  }
+}
+
+/*
+ * Thanh đầu trang trên điện thoại.
+ *
+ * Mục 6.6 nói "OPAC hỗ trợ mobile", nhưng cả hai khối hai đầu thanh đều khai `flex: none` nên
+ * không khối nào chịu co: ở màn hình 375 px, tên thư viện chiếm 269 px và khối bên phải 213 px —
+ * cộng cả khoảng cách là 506 px trên 343 px dùng được. Đo trên máy chủ thật: **mọi trang** của
+ * trang tra cứu cuộn ngang 146–147 px, cả khi chưa đăng nhập.
+ *
+ * Cách chữa: tên thư viện nhận phần còn lại và cắt bằng dấu ba chấm; khối bên phải giữ nguyên chức
+ * năng nhưng nhãn ngắn lại và nút mang họ tên bạn đọc có trần bề ngang.
+ */
+@media (max-width: 600px) {
+  .lc-header__row {
+    gap: 12px;
+  }
+
+  .lc-header__brand {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  /* `min-width: 0` là chỗ dễ quên nhất: phần tử flex mặc định không co dưới bề rộng nội dung,
+     nên nếu thiếu dòng này thì ba dòng bên dưới không có tác dụng gì cả. */
+  .lc-header__name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Khối điều khiển giữ nguyên bề ngang: cho nó co thì nút bên trong tràn ra khỏi chính nó,
+     vì nút không co dưới bề rộng nội dung. Phần co là tên thư viện. */
+  .lc-header__actions {
+    flex: none;
+    gap: 10px;
+  }
+
+  .lc-only-wide {
+    display: none;
+  }
+
+  .lc-only-narrow {
+    display: inline;
+  }
+
+  /* Nút mang họ tên bạn đọc: tên dài thì cắt, đừng đẩy cả trang. */
+  .lc-header__login {
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+/*
+ * Trang chi tiết tài liệu trên điện thoại.
+ *
+ * `.lc-detail` là phần tử con của một khung flex, nên nó **không co dưới bề rộng nội dung tối
+ * thiểu của chính nó** — đo trên máy 375 px thì nó rộng 578, đẩy trang cuộn ngang 203. Đây là
+ * trang bạn đọc mở nhiều nhất sau khi tra cứu.
+ */
+@media (max-width: 600px) {
+  /* `margin: 0 auto` là thứ giữ khối này ở giữa trên màn hình rộng — nhưng lề tự động trên trục
+     ngang **huỷ việc kéo giãn** của một phần tử flex, nên ở màn hình hẹp nó tự co giãn theo nội
+     dung (thanh thẻ rộng 489 px) thay vì theo màn hình. Bỏ lề tự động là nó nhận đúng bề ngang
+     màn hình, và thanh thẻ tự cuộn trong khung của nó. */
+  .lc-detail {
+    margin: 0;
+    width: 100%;
+    min-width: 0;
+    padding: 20px 16px 44px;
+  }
+
+  /* Bìa nằm trên, phần chữ nằm dưới: xếp ngang thì phần chữ chỉ còn hơn trăm điểm ảnh. */
+  .lc-detail__head {
+    flex-direction: column;
+    gap: 16px;
+    padding: 18px;
+  }
+
+  .lc-detail__cover {
+    width: 120px;
+  }
+
+  /* Nhãn nằm trên giá trị thay vì một cột cố định 130px cạnh nó. */
+  .lc-detail__grid {
+    grid-template-columns: 1fr;
+    gap: 2px 0;
+  }
+
+  .lc-detail__label {
+    margin-top: 8px;
+  }
+
+  /* Dãy nút không xuống dòng thì cả hàng ép trang rộng ra. */
+  .lc-detail__actions {
+    flex-wrap: wrap;
+  }
+
+  .lc-holdings__row {
+    grid-template-columns: 1fr;
+  }
+
+  /* Ký hiệu xếp giá, mã ĐKCB và địa chỉ là những chuỗi không có chỗ ngắt tự nhiên. */
+  .lc-detail__grid,
+  .lc-holdings__row {
+    overflow-wrap: anywhere;
   }
 }
 

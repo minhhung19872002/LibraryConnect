@@ -1900,3 +1900,19 @@ trên **máy chủ thật**, dữ liệu thật, bằng trình duyệt đặt đ
 | RS.3 | Đối chiếu cùng trang ở 1440×900 | Trang **không** cuộn ngang, nhưng hai nhãn vẫn vượt khung tới x = 1489 và bị cắt cụt thành ": 3621", ":508" — lý do chín đợt trước không thấy | Đạt |
 | RS.4 | Tương phản chữ nhãn trong lát với mười hai màu của dải biểu đồ | Thấp nhất **7,44 : 1**, trên ngưỡng 4,5 của WCAG AA | Đạt |
 | RS.5 | Luật bàn phím mục 6.6 quét trên mã giao diện quản trị | **0** phần tử `div`/`span` gắn `onClick` — không chỗ nào chuột bấm được mà bàn phím không tới. Phép thử canh luật ấy nay có ở cả hai giao diện | Đạt |
+
+
+### Đợt hai mươi mốt — trang tra cứu ở khổ điện thoại 375×812 (08/09/2026)
+
+Vế thứ hai của cùng một câu ở mục 6.6: "OPAC hỗ trợ mobile". Câu ấy không nói ra con số nào, nên
+chọn **375×812** — khổ logic của iPhone và của phần lớn máy Android tầm trung — rồi đo đúng ở đó.
+
+| Mã | Kịch bản | Kết quả thực tế | Đạt |
+|---|---|---|---|
+| RT.1 | 17 đường dẫn công khai của trang tra cứu, đo `scrollWidth − clientWidth` | **17/17 cuộn ngang 146–147 px.** Phần tử chạy xa nhất luôn là `.lc-header__row`, rộng 506 px trên 343 px dùng được — hai khối hai đầu đều `flex: none`, khối giữa ẩn từ 768 px | Đạt sau sửa |
+| RT.2 | Đối chiếu cùng những trang ấy ở 768 và 1440 | Không trang nào cuộn — hai khối vẫn vừa, nên hai mươi đợt chụp ảnh đều sạch | Đạt |
+| RT.3 | Đo lại 17 đường dẫn sau khi sửa thanh đầu trang | 17/17 bằng 0. Nhãn nút rút gọn còn "Đăng nhập"; tên thư viện cắt bằng dấu ba chấm | Đạt |
+| RT.4 | Ba trang chi tiết tài liệu (`/tai-lieu/:id`) sau bản sửa RT.3 | **Cuộn ngang 203 px** — `.lc-detail` rộng 578 px vì `margin: 0 auto` huỷ việc kéo giãn của phần tử flex; lớp dưới lộ ra đúng sau khi gỡ lớp trên | Đạt sau sửa |
+| RT.5 | Quét lại toàn bộ sau bản sửa RT.4: 17 đường dẫn + 3 trang chi tiết tài liệu + 3 trang chi tiết tài liệu số | **23/23 bằng 0.** Thanh thẻ của trang chi tiết nay cuộn trong khung của nó (302 px trong khung 375) | Đạt |
+| RT.6 | Trạng thái **đã đăng nhập** (thẻ TV2026000361): trang tài khoản và cả 9 thẻ của nó, cộng 5 lối hay dùng | **15/15 bằng 0.** Nút đầu trang hiện đúng "Ngô Thanh Mai" và không đẩy trang; tên dài hơn thì cắt ở trần 150 px | Đạt |
+| RT.7 | Hoàn hai dòng CSS về trạng thái trước khi sửa rồi chạy `styles.phone.test.tsx` | Phép thử **đỏ** và gọi đúng tên: `lc-header__row → mọi phần tử con đều không co: lc-header__brand \| lc-header__actions`; phép thử thứ hai báo "nhãn ngắn bị ẩn ở 375 px". Khôi phục thì xanh | Đạt |

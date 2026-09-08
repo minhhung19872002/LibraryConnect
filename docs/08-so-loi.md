@@ -1010,6 +1010,43 @@ từng thẻ của những màn hình có thẻ. **137 phép đo, 2 lỗi** — 
   có phép thử ở `frontend-opac`; nay chép sang `frontend-admin` để chỗ đầu tiên trong tương lai không
   lọt (bài học 9), và đã thử hoàn một vi phạm để chắc nó bắt được.
 
+## U. Đợt rà thứ hai mươi mốt — trang tra cứu ở bề ngang điện thoại (08/09/2026)
+
+Đợt 20 đo giao diện quản trị ở đúng khổ đã cam kết và tìm ra hai lỗi. Mục 6.6 có **hai** vế, và vế
+thứ hai chưa ai đo bao giờ:
+
+> *"Responsive: admin tối thiểu 1366×768, **OPAC hỗ trợ mobile**"*
+
+Mười chín đợt trước chụp trang tra cứu ở 1440×900 — rộng gấp bốn lần một chiếc điện thoại. Luật đo
+giữ nguyên như đợt 20, chỉ đổi khổ: ở **375×812** (khổ logic của iPhone và của phần lớn máy Android
+tầm trung), **trang không được cuộn ngang**. Cách đo cũng giữ nguyên: dựng trang thật, đọc
+`document.scrollWidth − clientWidth`, rồi hỏi phần tử nào chạy xa nhất về bên phải.
+
+Ba lượt quét, **73 phép đo, 2 lỗi** — lỗi thứ hai lại nằm dưới lỗi thứ nhất, đúng như bài học 101.
+
+| # | Màn hình | Mô tả lỗi | Cách tái hiện | Mức độ | Loại | Trạng thái |
+|---|---|---|---|---|---|---|
+| U1 | **Mọi trang** của trang tra cứu | **Thanh đầu trang không có phần tử nào chịu co, nên nó rộng bằng tổng nội dung ở mọi màn hình.** Hàng đầu trang có ba khối: tên thư viện, thanh điều hướng, khối đăng nhập. Khối giữa `display: none` từ 768 px trở xuống — đúng, vì điện thoại dùng menu khác — còn **hai khối hai đầu đều khai `flex: none`**. Không còn ai co được, nên hàng ấy đòi 506 px trên 343 px dùng được, và đẩy **cả trang** cuộn ngang. Bạn đọc mở bất kỳ trang nào cũng kéo ngang được, và nút đăng nhập nằm ngoài mép phải. | Ở **375×812**: `scrollWidth − clientWidth` = **146–147** trên **17/17 đường dẫn**, cả khi chưa đăng nhập lẫn khi đã đăng nhập. Phần tử chạy xa nhất là `.lc-header__row` (rộng 506 px). Ở 1440 và ở 768 trang **không** cuộn — hai khối vẫn vừa, nên mọi ảnh chụp cũ đều sạch. | Nặng | Giao diện | Đã sửa — ở ≤600 px tên thư viện nhận phần còn lại (`flex: 1 1 auto` kèm `min-width: 0`) và cắt bằng dấu ba chấm; khối đăng nhập **giữ nguyên** `flex: none` (cho nó co thì nút bên trong tràn ra khỏi chính nó); nhãn nút rút gọn còn "Đăng nhập" và nút mang họ tên bạn đọc có trần 150 px |
+| U2 | Tra cứu → chi tiết tài liệu (`/tai-lieu/:id`) | **Lề tự động căn giữa làm khối nội dung tự đo theo nội dung thay vì theo màn hình.** `.lc-detail` khai `margin: 0 auto` để căn giữa trên màn hình rộng — nhưng lề tự động trên trục ngang **huỷ việc kéo giãn** của một phần tử flex, nên ở màn hình hẹp nó không nhận bề ngang của khung cha nữa mà tự lấy bề ngang nội dung tối thiểu của chính mình: **578 px**, do thanh thẻ bên trong rộng 489. Đây là trang bạn đọc mở nhiều nhất ngay sau khi tra cứu. | Sau khi triển khai bản sửa U1, đo lại ở 375×812: 16 lối kia sạch, riêng `/tai-lieu/:id` cuộn ngang **203 px**, thủ phạm `.lc-detail` rộng 578. | Vừa | Giao diện | Đã sửa — ở ≤600 px bỏ lề tự động, khai `width: 100%` và `min-width: 0`; kèm bố cục dọc cho phần đầu trang (bìa trên, chữ dưới), nhãn nằm trên giá trị thay vì cột cố định 130 px, dãy nút xuống dòng được, và `overflow-wrap: anywhere` cho ký hiệu xếp giá và mã ĐKCB — những chuỗi không có chỗ ngắt tự nhiên |
+
+### Đã kiểm trong đợt này và vẫn tốt
+
+- **Lượt quét cuối: 38 phép đo, 0 tràn.** 17 đường dẫn công khai + 3 trang chi tiết tài liệu +
+  3 trang chi tiết tài liệu số + 15 phép đo ở trạng thái **đã đăng nhập** (trang tài khoản và cả
+  9 thẻ của nó, cộng 5 lối hay dùng). Nút đầu trang hiện đúng "Ngô Thanh Mai" và không đẩy trang.
+- **Guard là một phép thử đơn vị thật, không phải chỉ là biên bản.** `styles.phone.test.tsx` dựng
+  đúng cây DOM của khung trang rồi đọc `styles.css` **như trình duyệt đọc ở 375 px** (áp các khối
+  `@media (max-width: N)` với N ≥ 375 theo thứ tự trong tệp) và hỏi từng hàng flex: có phần tử nào
+  co được không. Hoàn hai dòng CSS về trạng thái cũ thì nó đỏ và gọi đúng tên:
+  `lc-header__row → mọi phần tử con đều không co: lc-header__brand | lc-header__actions`.
+  Đây là chỗ khác đợt 20: T2 không có phép thử vì jsdom không dựng bố cục — nhưng **luật "ai được
+  phép co"** thì đọc được từ chính tệp kiểu, không cần bố cục.
+- **Nhãn ngắn và nhãn dài không cùng ẩn.** Lỗi này do chính lượt sửa U1 gây ra và bị bắt ngay khi đo
+  lại: rút gọn nhãn ở màn hình hẹp bằng một cặp `lc-only-wide` / `lc-only-narrow`, nhưng lớp thứ hai
+  chưa có luật hiện nên nút đăng nhập **rỗng ruột**. Phép thử thứ hai của tệp trên canh đúng chỗ ấy.
+- **Bảng và thanh thẻ rộng vẫn cuộn trong khung của chúng**, không đẩy trang — đúng cách sản phẩm đã
+  chọn từ lỗi B10 và T2.
+
 ## Đ. Những chỗ đã thử phá nhưng hệ thống chịu được
 
 Ghi lại để biết chỗ nào đã kiểm và không phải kiểm lại — kèm bằng chứng, không ghi suông.

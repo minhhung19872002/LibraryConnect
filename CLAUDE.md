@@ -186,7 +186,20 @@ chạy ra ngoài khung SVG (tên chỉ mục tiếng Việt dài) và **đẩy c
 trang không cuộn, nhãn chỉ bị cắt cụt thành ": 3621" — trông như số liệu, nên chín đợt đi qua. Cả
 bốn biểu đồ tròn nay vẽ tỉ lệ phần trăm **bên trong lát**, tên lát để ở chú giải. Sửa xong đo lại thì
 lộ **lỗi thứ hai nằm dưới**: ba bảng số liệu khai cột cố định cộng lại 370 px trong ô rộng 330 px —
-tràn khung là một chồng, gỡ lớp trên mới thấy lớp dưới. Tổng **217 lỗi, đã sửa 217**.
+tràn khung là một chồng, gỡ lớp trên mới thấy lớp dưới.
+
+Đợt thứ hai mươi mốt hỏi nốt **vế thứ hai của chính câu ấy**: mục 6.6 viết "admin tối thiểu
+1366×768, **OPAC hỗ trợ mobile**" — vế đầu vừa đo xong, vế sau chưa ai đo suốt hai mươi đợt vì nó
+không nói ra con số nào. Chọn 375×812 rồi đo: **73 phép đo, 2 lỗi**, và cả hai đều nặng hơn của đợt
+20 vì chúng nằm ở khung chung. Thanh đầu trang có ba khối, khối giữa ẩn ở khổ hẹp còn **hai khối hai
+đầu đều `flex: none`** — không ai co được nên hàng ấy đòi 506 px trên 343 px dùng được và **mọi
+trang** cuộn ngang 146 px. Sửa xong đo lại thì lớp dưới lộ ra đúng như bài học 101: trang chi tiết
+tài liệu — trang bạn đọc mở nhiều nhất sau khi tra cứu — rộng 578 px vì `margin: 0 auto` huỷ việc
+kéo giãn của một phần tử flex, khiến nó tự đo theo nội dung thay vì theo màn hình. Lượt quét cuối
+38 phép đo (gồm cả trạng thái đã đăng nhập và các trang chi tiết) không còn chỗ nào tràn. Lần này
+guard **là một phép thử đơn vị thật**, không chỉ là biên bản: `styles.phone.test.tsx` dựng cây DOM
+của khung trang rồi đọc `styles.css` như trình duyệt đọc ở 375 px và hỏi từng hàng flex có ai co
+được không. Tổng **219 lỗi, đã sửa 219**.
 Phụ lục cuối `docs/06` ghi kết quả từng kịch bản (hơn 700 dòng).
 
 Đọc thẳng hồ sơ gốc còn tìm ra thứ không phải lỗi mã: **bốn hồ sơ bàn giao** mà Chương V mục III và
@@ -195,7 +208,7 @@ mục 5 đòi — kế hoạch triển khai, kế hoạch đào tạo, cam kết
 
 | Tài liệu | Nội dung |
 |---|---|
-| `docs/08-so-loi.md` | Sổ lỗi chín đợt: 37 lỗi hai đợt đầu, 5 lỗi đợt rà thứ hai (mục E), 9 lỗi đợt áp bản thiết kế (mục G), 7 lỗi đợt rà thứ ba (mục H), 8 lỗi đợt triển khai (mục I), **88 lỗi năm đợt rà theo đặc tả ngày 04–05/09/2026 (mục J và các mục con)**, 23 lỗi nghiệm thu thử và soi số học (mục K), **14 lỗi ba đợt rà ngày 06–07/09/2026 (mục L)**, 19 lỗi năm đợt rà ngang ngày 07/09/2026 (mục M–Q), **4 lỗi đợt rà tầng tệp xuất ngày 08/09/2026 (mục R)** |
+| `docs/08-so-loi.md` | Sổ lỗi chín đợt: 37 lỗi hai đợt đầu, 5 lỗi đợt rà thứ hai (mục E), 9 lỗi đợt áp bản thiết kế (mục G), 7 lỗi đợt rà thứ ba (mục H), 8 lỗi đợt triển khai (mục I), **88 lỗi năm đợt rà theo đặc tả ngày 04–05/09/2026 (mục J và các mục con)**, 23 lỗi nghiệm thu thử và soi số học (mục K), **14 lỗi ba đợt rà ngày 06–07/09/2026 (mục L)**, 19 lỗi năm đợt rà ngang ngày 07/09/2026 (mục M–Q), **4 lỗi đợt rà tầng tệp xuất ngày 08/09/2026 (mục R)**, 6 lỗi đợt rà ứng dụng di động (mục S), 4 lỗi hai đợt đo khổ màn hình (mục T–U) |
 | `docs/09-nguon-du-lieu.md` | Khảo sát 16 nguồn dữ liệu thư mục, giấy phép từng nguồn, kết quả nạp |
 | `docs/10-ke-hoach-trien-khai.md` | Kế hoạch triển khai, chạy thử và chuyển đổi dữ liệu (Chương V mục III.1) |
 | `docs/11-ke-hoach-dao-tao.md` | Kế hoạch đào tạo 16 buổi cho 7 nhóm học viên (Chương V mục III.2) |
@@ -226,7 +239,7 @@ huống lỗi; phải tự tay dựng đúng bối cảnh ấy trong phép thử
 ```bash
 cd backend  && dotnet test                 # 655 unit + 544 integration
 cd frontend-admin && npx tsc -b && npx vitest run    # 350 test
-cd frontend-opac  && npx tsc -b && npx vitest run    # 104 test
+cd frontend-opac  && npx tsc -b && npx vitest run    # 106 test
 cd mobile   && flutter analyze && flutter test       # 143 test
 ```
 
@@ -273,6 +286,7 @@ vướng — mỗi cái sinh ra từ một lỗi đã xảy ra thật:
 | `frontend-admin/src/components/pieLabel.test.ts` | Mọi `<Pie>` phải dùng nhãn dùng chung `nhanTrongLat` (vẽ phần trăm **trong** lát) và phải có `<Legend />`. Nhãn ngoài của Recharts nằm ngoài khung SVG: tên chỉ mục tiếng Việt dài đẩy trang cuộn ngang ở 1366×768, và ở 1440 thì bị cắt cụt thành ": 3621" nên trông như số liệu |
 | `backend/.../Infrastructure/PdfTextLayerTests.cs` | Chữ rút lại từ tệp PDF phải bằng chữ ghi vào — đo bằng PdfPig, thư viện của người khác. Và sáu bộ dựng PDF phải khai phông qua `PdfTextStyles.Base()`, không bộ nào khai `FontFamily` thẳng: ghép chữ của Lato làm "thông tin" rút ra thành "thông ঞn" trong khi trang in nhìn vẫn đúng |
 | `backend/.../Infrastructure/StablePagingOrderTests.cs` | Mọi lượt `ToPagedResultAsync` phải kết thúc chuỗi sắp xếp bằng một khóa duy nhất — qua `ApplySort` (tự gắn) hoặc tự viết `ThenBy(x => x.Id)`. Sắp theo cột không duy nhất là trang sau lặp dòng của trang trước và đúng bấy nhiêu dòng khác không bao giờ hiện ra: 396 dòng tiền phạt chỉ có 316 dòng khác nhau |
+| `frontend-opac/src/styles.phone.test.tsx` | Ở bề ngang 375 px, mỗi hàng flex của khung trang phải có ít nhất một phần tử con chịu co, và cặp nhãn `lc-only-wide` / `lc-only-narrow` không được cùng ẩn. Hai khối hai đầu thanh đầu trang cùng `flex: none` từng làm **mọi trang** của trang tra cứu cuộn ngang 146 px, và lượt sửa nó để lại một nút đăng nhập rỗng ruột |
 
 > Một phép thử quét mã nguồn chỉ chặn đúng thư mục nó quét. Thêm luật mới thì hỏi ngay: gói kia có
 > vi phạm cùng luật ấy không? Lỗi D8 sửa cho `frontend-admin` rồi ghi là "cả sản phẩm", nhưng
@@ -722,6 +736,23 @@ docker compose run --rm -d --name lc-api-kiem -e LC_DB_NAME=lc_kiem -e LC_SEED_D
 102. **Nhãn vẽ ra ngoài khung là nhãn đẩy cả trang.** Recharts đặt nhãn ngoài của biểu đồ tròn ở
      toạ độ nằm ngoài SVG; tên tiếng Việt dài thì nó ra khỏi màn hình. Mà chú giải ngay dưới biểu đồ
      đã nói đúng những tên ấy — nhãn ngoài vừa thừa vừa phá. Trong lát chỉ nên có phần trăm.
+103. **Một hàng ngang phải có ít nhất một phần tử chịu co.** Thanh đầu trang tra cứu có ba khối:
+     khối giữa ẩn từ 768 px trở xuống (đúng, điện thoại dùng menu khác), hai khối hai đầu đều khai
+     `flex: none`. Không còn ai co được, nên hàng ấy rộng bằng **tổng nội dung của nó** ở mọi màn
+     hình — mọi trang của trang tra cứu cuộn ngang 146 px trên máy 375 px. Cách rà rẻ và làm được
+     bằng máy: với mỗi hàng flex, kể tên phần tử con được phép co ở bề ngang nhỏ nhất; không kể được
+     tên nào là hàng ấy sẽ tràn. Và `flex: 1 1 auto` chưa đủ — thiếu `min-width: 0` thì phần tử flex
+     vẫn không chịu co dưới bề ngang nội dung của nó, ba dòng cắt chữ bên dưới thành vô nghĩa.
+104. **Lề tự động trên trục ngang huỷ việc kéo giãn của phần tử flex.** `margin: 0 auto` là cách căn
+     giữa quen tay và nó đúng trên màn hình rộng; nhưng một phần tử flex có lề tự động thì mất
+     `stretch`, nên nó tự lấy bề ngang **nội dung tối thiểu** của mình thay vì bề ngang khung cha —
+     trang chi tiết tài liệu rộng 578 px trên màn hình 375 vì một thanh thẻ bên trong rộng 489. Ở
+     khổ hẹp thì bỏ lề tự động và khai `width: 100%`.
+105. **Cam kết "hỗ trợ mobile" cũng là một con số phải đo.** Bài học 100 áp cho vế "admin tối thiểu
+     1366×768" của mục 6.6; vế thứ hai của **chính câu ấy** — "OPAC hỗ trợ mobile" — vẫn chưa ai đo
+     suốt hai mươi đợt, vì nó không nói ra con số nào. Câu cam kết không có số thì tự chọn lấy một
+     con số bảo vệ được (375×812, khổ logic của phần lớn điện thoại) rồi đo ở đó, đừng coi nó là
+     điều không kiểm được.
 
 ### A.4. Cơ chế dùng chung — dùng lại, đừng viết chỗ mới
 

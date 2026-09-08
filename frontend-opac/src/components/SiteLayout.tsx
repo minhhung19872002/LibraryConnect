@@ -141,7 +141,13 @@ export function SiteLayout() {
               </Dropdown>
             ) : (
               <Link to="/dang-nhap">
-                <Button className="lc-header__login">Đăng nhập bạn đọc</Button>
+                {/* Nhãn dài "Đăng nhập bạn đọc" chiếm 137 px — quá rộng cho thanh đầu trang ở khổ
+                    điện thoại, nơi tên thư viện cũng cần chỗ. Trên màn hình hẹp rút còn "Đăng nhập";
+                    ngữ cảnh đã rõ vì đây là trang tra cứu của bạn đọc. */}
+                <Button className="lc-header__login">
+                  <span className="lc-only-wide">Đăng nhập bạn đọc</span>
+                  <span className="lc-only-narrow">Đăng nhập</span>
+                </Button>
               </Link>
             )}
           </div>
