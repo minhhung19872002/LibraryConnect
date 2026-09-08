@@ -918,6 +918,45 @@ tệp thật không" — kiểm chữ ký byte `PK` và `%PDF`; câu còn lại 
 - **Bản PDF và bản Excel của cùng một báo cáo chứa cùng các dòng**; bản PDF chỉ in ít cột hơn cho
   vừa khổ giấy, đó là chủ ý chứ không phải thiếu dòng.
 
+## S. Đợt rà thứ mười chín — ứng dụng di động, quét ngang từng màn hình (08/09/2026)
+
+Mười tám đợt trước quét ngang phía web sáu lần — danh sách, ô lọc, báo cáo, chiều ghi, tệp xuất,
+canh quyền. **Ứng dụng di động thì chưa lần nào**: nó mới được soi ở hai lớp gián tiếp — đợt J đọc
+đặc tả phân hệ XI, đợt P soi nhóm `/api/reader/*` ở phía máy chủ. Bản thân mã Flutter chưa ai đo.
+
+Đợt này lấy đúng một dòng của đặc tả làm luật, mục XI.3: *"Hỗ trợ sáng/tối, cỡ chữ điều chỉnh
+được"*, cộng một luật của mục 6.6 (*"contrast đạt WCAG AA"*). Ba câu hỏi cho từng màn hình:
+
+> 1. Dựng ở cỡ chữ 100%, 150%, 200% có tràn khung không?
+> 2. Ở chế độ tối, chữ có đọc được trên nền của chính nó không?
+> 3. Mọi danh sách có nói được cả ba trạng thái — đang tải, rỗng, lỗi?
+
+Cách đo: dựng thật từng màn hình trong phép thử widget, rồi **đi khắp cây widget đọc màu chữ đã
+phân giải và màu nền đục gần nhất phía trên nó, tính tỉ lệ tương phản WCAG** — không nhìn ảnh chụp
+(bài học 13). **116 phép đo, 3 lỗi** — 9 phép đo cỡ chữ, 4 lượt đo tương phản trên màn hình dựng
+thật (mỗi lượt đo mọi dòng chữ đang hiện), 71 cặp màu tính theo bảng ở cả hai chế độ, 19 chỗ đọc dữ
+liệu bất đồng bộ và 13 màn hình có danh sách.
+
+| # | Màn hình | Mô tả lỗi | Cách tái hiện | Mức độ | Loại | Trạng thái |
+|---|---|---|---|---|---|---|
+| S1 | Toàn ứng dụng — 16 tệp, 82 chỗ | **Chế độ tối đổi chủ đề nhưng màu ở màn hình thì không đổi theo.** `AppTheme.dark()` dựng đủ bảng màu tối, nhưng màn hình gọi thẳng hằng số của bảng màu **nền giấy** (`LcColors.muted`, `LcColors.greenSoft`…). Hằng số thì không đổi: chữ phụ giữ nguyên màu nâu nhạt trên nền tối, và tấm nền nhạt giữ nguyên màu sáng trong khi chữ trên nó lấy màu chữ của chế độ tối. Đây là bài học 17 của phía web (*"màu viết thẳng trong TSX không đi qua token nào"*) lặp lại nguyên hình ở di động, chỉ khác là tên hằng số trông như một token nên không ai nghi. | Dựng màn hình trong phép thử rồi đo bằng máy: chữ phụ của Sách của tôi `#7A6F5F` trên `#1E2418` = **3,23 : 1**; dòng nhắc của Thông báo trên nền tối = **3,62 : 1**; cả hai dưới ngưỡng 4,5 của WCAG AA. Nền nhạt thì tệ hơn: chữ sáng của chế độ tối trên `greenSoft` = **1,08 : 1**. | **Nặng** | Giao diện | Đã sửa — thêm `LcScheme` + `context.lc.<tên>` đổi theo `Theme.of(context).brightness`, 82 chỗ đi qua đó; 26 chỗ bỏ `const` vì màu nay tính lúc chạy. Phép thử quét mã nguồn `palette_scan_test.dart` cấm gọi thẳng hằng số chế độ sáng, ngoại lệ phải khai kèm lý do (đỏ ngay khi hoàn một chỗ về cũ) |
+| S2 | Thẻ thư viện điện tử (XI.2) | **Hình vẽ tấm thẻ ghim nền giấy trắng mà không ghim chữ.** Tấm thẻ cố ý sáng ở cả hai chế độ — nó vẽ lại tấm thẻ nhựa thật — nhưng chữ trên nó lấy `theme.textTheme`, tức màu chữ của chế độ đang bật. Bật chế độ tối là **họ tên và loại bạn đọc thành chữ sáng trên giấy trắng**. Ghim nền thì phải ghim cả chữ; nửa vời còn tệ hơn không ghim. | Phép thử dựng màn hình Thẻ thư viện ở chế độ tối: `"Ngô Thanh Mai"` `#EDE7DA` trên `#FFFDF8` = **1,21 : 1**, `"Sinh viên"` cũng vậy. Đây là mã vạch bạn đọc chìa ra ở quầy và ở cổng ra vào. | **Nặng** | Giao diện | Đã sửa — cả khối thẻ dựng bằng `AppTheme.light()` nên nền, kiểu chữ và màu chữ cùng một chế độ; khai vào danh sách ngoại lệ của phép thử quét kèm lý do |
+| S3 | Bảng màu nền giấy — chữ phụ, chữ mờ, vàng đồng | **Ba màu trượt ngưỡng tương phản ngay ở chế độ sáng.** Chọn màu trên nền trắng thì đủ, nhưng sản phẩm dùng nền giấy ngà nên mọi cặp tối đi một chút — đúng bài học 19 của phía web, lần này ở bảng màu của ứng dụng di động, vốn chưa từng có phép thử tương phản nào. | Tính cho 8 màu chữ × 7 tấm nền: **20 cặp dưới ngưỡng**. `muted` đạt 4,84 trên giấy trắng nhưng chỉ **4,13–4,37** trên sáu tấm nền còn lại; `mutedLight` **2,67–3,13**; `gold` **2,73–3,20**, mà nó còn dùng làm chữ (mã trường con trong khung MARC). | Vừa | Giao diện | Đã sửa — `muted` `#7A6F5F`→`#665C4E` (thấp nhất 5,50), `mutedLight` `#9A8F7C`→`#706654` (4,74), `gold` `#B9852F`→`#A87826` (3,28 cho biểu tượng) và thêm `goldInk` `#865D12` (4,91) cho chỗ vàng đồng làm chữ |
+
+### Đã kiểm trong đợt này và vẫn tốt
+
+- **9/9 phép đo cỡ chữ**: ba màn hình dựng ở 100%, 150% và **200%** đều không tràn khung một điểm
+  ảnh nào. Bản sửa của MB.27 (kệ sách cao theo `MediaQuery.textScalerOf`) còn nguyên tác dụng, và
+  chỗ duy nhất còn khai chiều cao cố định là ảnh bìa — thứ không chứa chữ.
+- **19/19 chỗ đọc dữ liệu bất đồng bộ** khai đủ cả nhánh `loading:` lẫn `error:`; **13/13 màn hình
+  có danh sách** đều canh danh sách rỗng trước khi dựng.
+- **Phông vẫn đóng gói trong ứng dụng**: `GoogleFonts.config.allowRuntimeFetching = false` còn
+  nguyên trong `main.dart` — bài học 27 không quay lại.
+- **Chỉ 3 mã màu viết tho** trong toàn bộ mã màn hình, cả ba nằm trên dải màu đầu trang chủ vốn tối
+  ở cả hai chế độ.
+- **Ba màn hình đo lại ở chế độ sáng sau khi sửa bảng màu**: không cặp nào tụt xuống dưới ngưỡng,
+  nghĩa là lượt sẫm màu không phá chỗ đang đúng.
+
 ## Đ. Những chỗ đã thử phá nhưng hệ thống chịu được
 
 Ghi lại để biết chỗ nào đã kiểm và không phải kiểm lại — kèm bằng chứng, không ghi suông.
@@ -1025,7 +1064,7 @@ dạng quét mã nguồn chặn cả lớp lỗi quay lại thay vì chỉ chặ
 
 Cộng cả ba đợt, đợt áp thiết kế, đợt triển khai và ba đợt rà hoàn thiện ngày 04/09/2026:
 **147 lỗi, đã sửa 145**; thêm **23 lỗi của đợt nghiệm thu thử, test sâu, ba đợt test kỹ thuật ngày
-05/09/2026 và ba đợt soi nghiệp vụ – giao thức – bảo mật ngày 06/09/2026 (mục K), đã sửa cả 23** — tổng **170 lỗi, đã sửa 170**; cộng **16 lỗi mục L**, **4 lỗi mục M**, **4 lỗi mục N**, **5 lỗi mục O**, **3 lỗi mục P**, **3 lỗi mục Q** của tám đợt rà sâu ngày 06–07/09/2026 và **4 lỗi mục R** của đợt rà tầng tệp xuất ngày 08/09/2026 — tổng **209 lỗi, đã sửa 209**. Hai mục H3 và H9 đã làm xong ngày 03/09/2026 và ghi ở cột cuối
+05/09/2026 và ba đợt soi nghiệp vụ – giao thức – bảo mật ngày 06/09/2026 (mục K), đã sửa cả 23** — tổng **170 lỗi, đã sửa 170**; cộng **16 lỗi mục L**, **4 lỗi mục M**, **4 lỗi mục N**, **5 lỗi mục O**, **3 lỗi mục P**, **3 lỗi mục Q** của tám đợt rà sâu ngày 06–07/09/2026, **4 lỗi mục R** của đợt rà tầng tệp xuất và **3 lỗi mục S** của đợt rà ứng dụng di động ngày 08/09/2026 — tổng **212 lỗi, đã sửa 212**. Hai mục H3 và H9 đã làm xong ngày 03/09/2026 và ghi ở cột cuối
 của chính hai dòng ấy — con số 134 giữ nguyên cách đếm cũ để đối chiếu được với các bản trước.
 Mỗi lỗi đã sửa đều có phép thử chạy đỏ trước khi sửa và xanh sau khi sửa, kể cả H7: phép thử giả
 tiêu đề đỏ trước khi sửa `CurrentUser.Ip`.

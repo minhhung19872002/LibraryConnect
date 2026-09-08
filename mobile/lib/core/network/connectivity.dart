@@ -27,21 +27,21 @@ class OfflineBanner extends ConsumerWidget {
     final l10n = L10n.of(context);
     return Material(
       key: const Key('offline-banner'),
-      color: LcColors.warnSoft,
+      color: context.lc.warnSoft,
       child: SafeArea(
         bottom: false,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           child: Row(
             children: [
-              const Icon(Icons.cloud_off, size: 18, color: LcColors.warn),
+              Icon(Icons.cloud_off, size: 18, color: context.lc.warn),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   '${l10n.offlineTitle} — ${l10n.offlineBody}',
                   style: Theme.of(
                     context,
-                  ).textTheme.bodySmall?.copyWith(color: LcColors.warn),
+                  ).textTheme.bodySmall?.copyWith(color: context.lc.warn),
                 ),
               ),
             ],

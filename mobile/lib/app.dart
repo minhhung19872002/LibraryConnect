@@ -165,7 +165,7 @@ class _UpdateRequired extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.system_update, size: 56, color: LcColors.gold),
+                Icon(Icons.system_update, size: 56, color: context.lc.gold),
                 const SizedBox(height: 16),
                 Text(
                   l10n.updateRequiredTitle,

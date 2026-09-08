@@ -155,9 +155,9 @@ class _CardScreenState extends ConsumerState<CardScreen> {
             children: [
               if (data.offline)
                 Card(
-                  color: LcColors.warnSoft,
+                  color: context.lc.warnSoft,
                   child: ListTile(
-                    leading: const Icon(Icons.cloud_off, color: LcColors.warn),
+                    leading: Icon(Icons.cloud_off, color: context.lc.warn),
                     title: Text(
                       l10n.cardOfflineNote(
                         DateFormat(
@@ -192,8 +192,8 @@ class _CardScreenState extends ConsumerState<CardScreen> {
                                       : Icons.info_outline,
                                   size: 18,
                                   color: w.blocking
-                                      ? LcColors.bad
-                                      : LcColors.warn,
+                                      ? context.lc.bad
+                                      : context.lc.warn,
                                 ),
                                 const SizedBox(width: 8),
                                 Expanded(child: Text(w.message)),
@@ -252,7 +252,9 @@ class _CardFace extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = L10n.of(context);
-    final theme = Theme.of(context);
+    // Tấm thẻ luôn là giấy sáng, nên kiểu chữ của nó cũng lấy từ chủ đề sáng — không phải từ chủ
+    // đề đang bật. Lấy `Theme.of(context)` ở đây là mang màu chữ của chế độ tối lên nền trắng.
+    final theme = AppTheme.light();
     final expire = DateTime.tryParse(card.cardExpireDate);
     final expireText = expire == null
         ? card.cardExpireDate
@@ -263,131 +265,144 @@ class _CardFace extends StatelessWidget {
       decimalDigits: 0,
     );
 
+    // Hình vẽ tấm thẻ giữ nền giấy sáng ở **cả hai** chế độ — nó vẽ lại tấm thẻ nhựa thật, đổi
+    // sang nền tối là không còn giống cái thẻ trong ví bạn đọc nữa. Nhưng nền đã ghim thì chữ
+    // cũng phải ghim: để chữ lấy màu của chủ đề thì ở chế độ tối là chữ sáng trên giấy trắng —
+    // đo được 1,21 : 1, tức là trống trơn.
     return Card(
       color: LcColors.paper,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const CircleAvatar(
-                  radius: 28,
-                  backgroundColor: LcColors.greenSoft,
-                  child: Icon(Icons.person, size: 32, color: LcColors.green),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(card.fullName, style: theme.textTheme.titleLarge),
-                      if (card.readerTypeName case final t? when t.isNotEmpty)
-                        Text(t, style: theme.textTheme.bodyMedium),
-                      if ([
-                            card.facultyName,
-                            card.className,
-                          ].where((s) => s != null && s.isNotEmpty).join(' · ')
-                          case final line when line.isNotEmpty)
-                        Text(
-                          line,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: LcColors.muted,
+      // Cả tấm thẻ dựng bằng chủ đề sáng, không chỉ riêng màu chữ mặc định: `theme.textTheme`
+      // mang sẵn màu chữ của chế độ đang bật, nên chỉ đặt DefaultTextStyle thì nhan đề và dòng
+      // loại bạn đọc vẫn là chữ sáng trên giấy trắng.
+      child: Theme(
+        data: AppTheme.light(),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  CircleAvatar(
+                    radius: 28,
+                    backgroundColor: LcColors.greenSoft,
+                    child: Icon(
+                      Icons.person,
+                      size: 32,
+                      color: context.lc.green,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(card.fullName, style: theme.textTheme.titleLarge),
+                        if (card.readerTypeName case final t? when t.isNotEmpty)
+                          Text(t, style: theme.textTheme.bodyMedium),
+                        if ([card.facultyName, card.className]
+                                .where((s) => s != null && s.isNotEmpty)
+                                .join(' · ')
+                            case final line when line.isNotEmpty)
+                          Text(
+                            line,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: LcColors.muted,
+                            ),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            Wrap(
-              spacing: 8,
-              runSpacing: 6,
-              children: [
-                StatusPill(
-                  card.isActive ? l10n.cardActive : card.status,
-                  tone: card.isActive ? PillTone.good : PillTone.bad,
-                ),
-                StatusPill('${l10n.cardExpiry}: $expireText'),
-                StatusPill(l10n.loanCountLabel(card.currentLoanCount)),
-                if (card.outstandingFines > 0)
+                ],
+              ),
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                children: [
                   StatusPill(
-                    l10n.finesOwed(money.format(card.outstandingFines)),
-                    tone: PillTone.warn,
+                    card.isActive ? l10n.cardActive : card.status,
+                    tone: card.isActive ? PillTone.good : PillTone.bad,
                   ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            if (card.isActive) ...[
-              // Trình đọc màn hình không đọc được vạch và ô vuông: hai mã đọc thành số thẻ.
-              Semantics(
-                label: l10n.a11yCardBarcode(card.cardNumber),
-                image: true,
-                excludeSemantics: true,
-                child: Center(
-                  child: BarcodeWidget(
-                    key: const Key('card-barcode'),
-                    barcode: Barcode.code128(),
-                    data: card.barcodeValue.isEmpty
-                        ? card.cardNumber
-                        : card.barcodeValue,
-                    width: double.infinity,
-                    height: 90,
-                    color: LcColors.ink,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      letterSpacing: 3,
-                      fontFamily: 'monospace',
+                  StatusPill('${l10n.cardExpiry}: $expireText'),
+                  StatusPill(l10n.loanCountLabel(card.currentLoanCount)),
+                  if (card.outstandingFines > 0)
+                    StatusPill(
+                      l10n.finesOwed(money.format(card.outstandingFines)),
+                      tone: PillTone.warn,
+                    ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              if (card.isActive) ...[
+                // Trình đọc màn hình không đọc được vạch và ô vuông: hai mã đọc thành số thẻ.
+                Semantics(
+                  label: l10n.a11yCardBarcode(card.cardNumber),
+                  image: true,
+                  excludeSemantics: true,
+                  child: Center(
+                    child: BarcodeWidget(
+                      key: const Key('card-barcode'),
+                      barcode: Barcode.code128(),
+                      data: card.barcodeValue.isEmpty
+                          ? card.cardNumber
+                          : card.barcodeValue,
+                      width: double.infinity,
+                      height: 90,
+                      color: LcColors.ink,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        letterSpacing: 3,
+                        fontFamily: 'monospace',
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              Semantics(
-                label: l10n.a11yCardQr(card.cardNumber),
-                image: true,
-                excludeSemantics: true,
-                child: Center(
-                  child: BarcodeWidget(
-                    key: const Key('card-qr'),
-                    barcode: Barcode.qrCode(),
-                    data: card.barcodeValue.isEmpty
-                        ? card.cardNumber
-                        : card.barcodeValue,
-                    width: 180,
-                    height: 180,
-                    color: LcColors.ink,
-                    drawText: false,
+                const SizedBox(height: 20),
+                Semantics(
+                  label: l10n.a11yCardQr(card.cardNumber),
+                  image: true,
+                  excludeSemantics: true,
+                  child: Center(
+                    child: BarcodeWidget(
+                      key: const Key('card-qr'),
+                      barcode: Barcode.qrCode(),
+                      data: card.barcodeValue.isEmpty
+                          ? card.cardNumber
+                          : card.barcodeValue,
+                      width: 180,
+                      height: 180,
+                      color: LcColors.ink,
+                      drawText: false,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                l10n.cardShowAtDesk,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: LcColors.muted,
+                const SizedBox(height: 12),
+                Text(
+                  l10n.cardShowAtDesk,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: LcColors.muted,
+                  ),
                 ),
-              ),
-            ] else
-              Container(
-                key: const Key('card-inactive'),
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: LcColors.badSoft,
-                  borderRadius: BorderRadius.circular(8),
+              ] else
+                Container(
+                  key: const Key('card-inactive'),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: LcColors.badSoft,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.block, color: LcColors.bad),
+                      const SizedBox(width: 10),
+                      Expanded(child: Text(l10n.cardInactiveNote)),
+                    ],
+                  ),
                 ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.block, color: LcColors.bad),
-                    const SizedBox(width: 10),
-                    Expanded(child: Text(l10n.cardInactiveNote)),
-                  ],
-                ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );

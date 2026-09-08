@@ -162,7 +162,18 @@ thành chữ Bengali. Ba lỗi còn lại: ô tìm kiếm của danh mục phân
 loại không tìm ra được); dòng "đã chạm trần" và phần tiêu chí lọc của O5 **chỉ tới được bản PDF**, còn bản
 Excel mất cả hai — nên lượt xuất nhật ký mang về 50.000 trên 196.612 dòng mà không nói gì; và loại phích lạ
 thì hệ thống đổ lỗi cho biểu ghi. Cả 4 đã sửa, tổng **209 lỗi, đã sửa 209**.
-Phụ lục cuối `docs/06` ghi kết quả từng kịch bản (hơn 680 dòng).
+Đợt thứ mười chín (08/09/2026) quét ngang **mã Flutter** — thứ mười tám đợt trước chưa lần nào đo,
+vì ứng dụng di động mới chỉ được soi ở đặc tả (đợt J) và ở hợp đồng API phía máy chủ (đợt P). Luật
+lấy từ mục XI.3 (*"hỗ trợ sáng/tối, cỡ chữ điều chỉnh được"*) và mục 6.6 (*contrast đạt WCAG AA*);
+cách đo là dựng thật từng màn hình trong phép thử widget rồi **đi khắp cây widget đọc màu chữ đã
+phân giải và màu nền đục gần nhất, tính tỉ lệ tương phản bằng máy**. **116 phép đo, 3 lỗi.** Chế độ
+tối đổi chủ đề nhưng 82 chỗ ở màn hình gọi thẳng hằng số của bảng màu nền giấy nên không đổi theo:
+chữ phụ còn **3,23 : 1** trên nền tối, tấm nền nhạt giữ màu sáng nên chữ trên nó xuống **1,08 : 1**.
+Thẻ thư viện điện tử ghim nền giấy trắng mà không ghim chữ, nên ở chế độ tối họ tên bạn đọc là chữ
+sáng trên giấy trắng — **1,21 : 1**, trên đúng tấm thẻ chìa ra ở quầy. Và bảng màu có **20 cặp trượt
+ngưỡng ngay ở chế độ sáng**, đúng bài học 19 của phía web lặp lại ở di động. Cỡ chữ thì đạt 9/9 tới
+200%. Cả 3 đã sửa, tổng **212 lỗi, đã sửa 212**.
+Phụ lục cuối `docs/06` ghi kết quả từng kịch bản (hơn 700 dòng).
 
 Đọc thẳng hồ sơ gốc còn tìm ra thứ không phải lỗi mã: **bốn hồ sơ bàn giao** mà Chương V mục III và
 mục 5 đòi — kế hoạch triển khai, kế hoạch đào tạo, cam kết bảo hành, hồ sơ nghiệm thu — nay là
@@ -202,7 +213,7 @@ huống lỗi; phải tự tay dựng đúng bối cảnh ấy trong phép thử
 cd backend  && dotnet test                 # 655 unit + 544 integration
 cd frontend-admin && npx tsc -b && npx vitest run    # 347 test
 cd frontend-opac  && npx tsc -b && npx vitest run    # 102 test
-cd mobile   && flutter analyze && flutter test       # 124 test
+cd mobile   && flutter analyze && flutter test       # 139 test
 ```
 
 > `npx tsc --noEmit` **không kiểm gì cả** ở hai thư mục frontend: `tsconfig.json` là tệp solution
@@ -231,6 +242,8 @@ vướng — mỗi cái sinh ra từ một lỗi đã xảy ra thật:
 | `frontend-opac/src/components/keyboard.test.ts` | `div`/`span` có `onClick` phải kèm `clickable(...)` hoặc đủ bộ ba `role` + `tabIndex` + `onKeyDown` — thanh menu chính của trang tra cứu từng không Tab tới được |
 | `mobile/test/core/push_background_test.dart` | Có đăng ký `onBackgroundMessage`, hàm xử lý là hàm cấp cao nhất mang `@pragma('vm:entry-point')`, và Gradle áp dụng trình cắm google-services khi có tệp cấu hình |
 | `mobile/test/features/camera_error_view_test.dart` | Mọi `errorBuilder` của khung quét phải dựng `CameraErrorView` (chỉ lỗi quyền mới được nói về quyền), và màn Mượn tự phục vụ chỉ được có **một** `MobileScannerController` — hai bộ là hai máy khách camera, bộ sau không giành được và bạn đọc bị bảo đi cấp một quyền đã bật |
+| `mobile/test/core/palette_scan_test.dart` | Màn hình không gọi thẳng hằng số màu của chế độ sáng (`LcColors.muted`…) — phải qua `context.lc.<tên>` để đổi theo chế độ. Chế độ tối từng đổi chủ đề mà 82 chỗ giữ nguyên màu nền giấy: chữ phụ 3,23 : 1, chữ sáng trên tấm nền nhạt 1,08 : 1. Nền cố định ở cả hai chế độ thì khai ngoại lệ kèm lý do |
+| `mobile/test/features/screens/text_scale_and_dark_test.dart` | Mỗi màn hình dựng ở cỡ chữ 100/150/200% không tràn khung, và ở **cả hai** chế độ không dòng chữ nào tụt dưới 4,5 : 1 — đo bằng cách đi khắp cây widget, không nhìn ảnh chụp |
 | `mobile/test/features/list_refresh_after_write_test.dart` | Màn hình gọi `checkout`/`renewLoan`/`createHold`/`cancelHold` phải `ref.invalidate` đúng provider tương ứng — hai màn hình từng ghi xong mà danh sách không đổi |
 | `backend/.../Security/NginxConfigParityTests.cs` (luật thứ hai) | Tệp Nginx nào có `limit_req` thì phải có `limit_req_status 429` và trang lỗi 429 dạng JSON — mặc định Nginx trả trang HTML 503, máy khách chỉ hiện được "máy chủ lỗi" |
 | `frontend-admin/src/modules/dashboard/DashboardPage.test.ts` | Trang Tổng quan không mang dòng giữ chỗ về tiến độ dự án và phải đọc báo cáo tổng quan — màn hình đầu tiên sau đăng nhập từng nói "đang bàn giao" suốt từ phase 1 tới bản chạy thật |
@@ -642,6 +655,20 @@ docker compose run --rm -d --name lc-api-kiem -e LC_DB_NAME=lc_kiem -e LC_SEED_D
     tiêu chí — mà Excel mới là định dạng cán bộ xuất danh sách. Sửa xong một thứ ở tầng tệp thì hỏi
     ngay: **định dạng kia có nhận được nó không?**
 
+92. **Một hằng số màu trông y như một token, nhưng nó không đổi theo chủ đề.** `LcColors.muted`
+    đọc lên như thể đã đi qua bảng màu, mà thật ra là một `static const` của bảng màu **nền giấy**:
+    bật chế độ tối thì chủ đề đổi, còn 82 chỗ ấy giữ nguyên. Bài học 17 của phía web nguyên hình,
+    chỉ khác là ở web màu viết thẳng trông đã sai sẵn (`'#1677ff'`) nên dễ nghi, còn ở đây tên hằng
+    số trông như đúng. Hỏi cho mọi bảng màu: **cái tên này đọc ra giá trị nào khi đổi chủ đề?**
+93. **Ghim nền thì phải ghim cả chữ.** Hình vẽ thẻ thư viện cố ý giữ giấy trắng ở cả hai chế độ —
+    đúng, vì nó vẽ lại tấm thẻ nhựa thật. Nhưng chữ trên nó vẫn lấy `theme.textTheme`, nên ở chế độ
+    tối là chữ sáng trên giấy trắng, 1,21 : 1. Và đặt `DefaultTextStyle` không cứu được: kiểu chữ
+    của chủ đề **đã mang sẵn màu**, nó đè lên. Cách đúng là dựng cả khối bằng `AppTheme.light()`.
+94. **Đo tương phản phải đi khắp cây widget, không đo bảng màu.** Bảng màu đúng vẫn hỏng khi một
+    tấm nền sáng gặp chữ của chế độ tối — cặp ấy không có trong bảng nào cả, nó chỉ sinh ra lúc
+    dựng. Phép đo đáng tin là: dựng màn hình thật, với mỗi `Text` lấy màu đã phân giải và màu nền
+    đục gần nhất phía trên nó, rồi tính. Ba lỗi của đợt 19 đều lộ ra theo đúng đường ấy.
+
 ### A.4. Cơ chế dùng chung — dùng lại, đừng viết chỗ mới
 
 Sáu thứ dưới đây sinh ra để chặn "chỗ thứ tám quên gọi". Thêm chức năng cùng loại thì cắm vào đây,
@@ -654,6 +681,7 @@ Sáu thứ dưới đây sinh ra để chặn "chỗ thứ tám quên gọi". Th
 | `IStaffNotifier` (`NotifyUsersAsync` / `NotifyGroupAsync` / `NotifyPermissionAsync`) | Việc cần cán bộ biết: chờ duyệt, quá hạn, việc nền hỏng | Người nhận là `Expression<Func<User,bool>>` đẩy xuống SQL; gửi thư hỏng thì ghi nhật ký, không ném |
 | `DateRangeBehaviour` (đường ống MediatR) | Mọi yêu cầu có cặp ô ngày | Soi bảy cặp tên (`FromDate`/`ToDate`, `From`/`To`, `CreatedFrom`/`CreatedTo`…) trên chính yêu cầu và trên `Filter` của nó; thêm cặp tên mới thì khai vào đây, đừng kiểm ở handler |
 | `ISessionValidator` (`OnTokenValidated` trong `Program.cs`) | Mọi câu hỏi "chủ thẻ đăng nhập này còn được vào không" | Khoá tài khoản / khoá thẻ / xoá hồ sơ phải gọi `ForgetUserAsync` hay `ForgetReaderAsync` ngay sau khi lưu, nếu không đệm 30 giây giữ trạng thái cũ |
+| `context.lc` / `LcScheme` (`mobile/lib/core/theme/app_theme.dart`) | Mọi màu ở màn hình của ứng dụng di động | Đổi theo `Theme.of(context).brightness`; gọi thẳng `LcColors.*` là màu đứng yên khi bật chế độ tối |
 | `PdfTextStyles.Base()` (`Reporting/Pdf`) | Mọi bộ dựng PDF — báo cáo, phích, thẻ, tem, nhãn, biểu mẫu | Khai phông và tắt ghép chữ ở một chỗ; khai `FontFamily` thẳng là lớp chữ của tệp ấy lại rút ra sai |
 | `ReportRowLimit` + tham số `criteria` của `IExcelService.Write` | Mọi lối xuất có trần số dòng hoặc có bộ lọc | Dòng "đã chạm trần" và phần tiêu chí phải tới **cả** bản PDF lẫn bản Excel |
 | `IBibRecordWriter.ApplyAsync` | Mọi lượt sửa dữ liệu rút từ MARC | Nhớ `.Include(Authors/Subjects/Keywords/Classifications)`, thiếu là bộ ghi thêm lại liên kết và đổ ở `ux_bib_classifications` |

@@ -302,9 +302,9 @@ class DigitalTile extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
-        leading: const Icon(
+        leading: Icon(
           Icons.picture_as_pdf_outlined,
-          color: LcColors.green,
+          color: context.lc.green,
         ),
         title: Text(item.title, maxLines: 2, overflow: TextOverflow.ellipsis),
         subtitle: Column(
@@ -476,7 +476,7 @@ class _DigitalDetailScreenState extends ConsumerState<DigitalDetailScreen> {
                         child: Text(
                           row.$1,
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: LcColors.muted,
+                            color: context.lc.muted,
                           ),
                         ),
                       ),
@@ -489,7 +489,7 @@ class _DigitalDetailScreenState extends ConsumerState<DigitalDetailScreen> {
                 perm.reason,
                 key: const Key('permission-reason'),
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: LcColors.muted,
+                  color: context.lc.muted,
                 ),
               ),
               const SizedBox(height: 16),
@@ -579,9 +579,9 @@ class _OfflineTab extends ConsumerWidget {
                   margin: const EdgeInsets.only(bottom: 8),
                   child: ListTile(
                     key: Key('offline-${e.documentId}'),
-                    leading: const Icon(
+                    leading: Icon(
                       Icons.offline_pin,
-                      color: LcColors.good,
+                      color: context.lc.good,
                     ),
                     title: Text(e.title),
                     subtitle: Text(
@@ -698,7 +698,7 @@ class _HistoryTab extends ConsumerWidget {
                     'Download' || 'OfflineDownload' => Icons.download_done,
                     'Print' => Icons.print_outlined,
                     _ => Icons.visibility_outlined,
-                  }, color: LcColors.green),
+                  }, color: context.lc.green),
                   title: Text(row.documentTitle),
                   subtitle: Text(
                     '${actionLabel(l10n, row.action)}$pages'

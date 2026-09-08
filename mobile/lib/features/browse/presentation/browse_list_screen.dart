@@ -430,9 +430,9 @@ class _SerialsListState extends ConsumerState<_SerialsList> {
                       if (s.warehouseName case final w? when w.isNotEmpty) w,
                     ].join(' · ');
                     return ListTile(
-                      leading: const Icon(
+                      leading: Icon(
                         Icons.newspaper_outlined,
-                        color: LcColors.green,
+                        color: context.lc.green,
                       ),
                       title: Text(s.title),
                       subtitle: Column(

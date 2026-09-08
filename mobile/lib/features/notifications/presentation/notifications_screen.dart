@@ -231,7 +231,7 @@ class _ListTabState extends ConsumerState<_ListTab> {
             child: Text(
               l10n.pushDisabledNote,
               key: const Key('push-note'),
-              style: theme.textTheme.bodySmall?.copyWith(color: LcColors.muted),
+              style: theme.textTheme.bodySmall?.copyWith(color: context.lc.muted),
             ),
           ),
         Expanded(
@@ -257,10 +257,10 @@ class _ListTabState extends ConsumerState<_ListTab> {
                       final item = pages.items[index];
                       return ListTile(
                         key: Key('notification-${item.id}'),
-                        tileColor: item.isRead ? null : LcColors.greenSoft,
+                        tileColor: item.isRead ? null : context.lc.greenSoft,
                         leading: Icon(
                           notificationIcon(item.type),
-                          color: item.isRead ? LcColors.muted : LcColors.green,
+                          color: item.isRead ? context.lc.muted : context.lc.green,
                         ),
                         title: Text(
                           item.title,
@@ -360,8 +360,8 @@ class _SettingsTabState extends ConsumerState<_SettingsTab> {
                   ? Icons.notifications_active_outlined
                   : Icons.notifications_off_outlined,
               color: push == PushStatus.registered
-                  ? LcColors.good
-                  : LcColors.muted,
+                  ? context.lc.good
+                  : context.lc.muted,
             ),
             title: Text(
               push == PushStatus.registered

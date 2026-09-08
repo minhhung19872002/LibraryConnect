@@ -403,7 +403,7 @@ class _DigitalReaderScreenState extends ConsumerState<DigitalReaderScreen> {
           if (source.note case final note?)
             Container(
               width: double.infinity,
-              color: LcColors.warnSoft,
+              color: context.lc.warnSoft,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               child: Text(
                 source.secure ? '$note ${l10n.secureNote}' : note,

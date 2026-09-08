@@ -196,7 +196,7 @@ class NewsDetailScreen extends ConsumerWidget {
               Text(
                 meta,
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: LcColors.muted,
+                  color: context.lc.muted,
                 ),
               ),
               if (item.summary case final s? when s.isNotEmpty) ...[

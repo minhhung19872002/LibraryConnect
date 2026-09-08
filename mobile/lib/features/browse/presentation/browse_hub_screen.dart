@@ -40,7 +40,7 @@ class BrowseHubScreen extends StatelessWidget {
         children: [
           for (final kind in BrowseKind.values)
             ListTile(
-              leading: Icon(browseIcon(kind), color: LcColors.green),
+              leading: Icon(browseIcon(kind), color: context.lc.green),
               title: Text(browseLabel(l10n, kind)),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => context.push(Routes.browseKind(kind)),

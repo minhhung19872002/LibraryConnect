@@ -290,7 +290,7 @@ class _SelfCheckoutScreenState extends ConsumerState<SelfCheckoutScreen> {
       SystemSound.play(SystemSoundType.alert);
     }
     _flashTimer?.cancel();
-    setState(() => _flash = ok ? LcColors.goodSoft : LcColors.badSoft);
+    setState(() => _flash = ok ? context.lc.goodSoft : context.lc.badSoft);
     _flashTimer = Timer(const Duration(milliseconds: 700), () {
       if (mounted) setState(() => _flash = null);
     });
@@ -377,12 +377,12 @@ class _SelfCheckoutScreenState extends ConsumerState<SelfCheckoutScreen> {
             margin: const EdgeInsets.only(bottom: 12),
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: LcColors.badSoft,
+              color: context.lc.badSoft,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
               children: [
-                const Icon(Icons.error_outline, color: LcColors.bad),
+                Icon(Icons.error_outline, color: context.lc.bad),
                 const SizedBox(width: 8),
                 Expanded(child: Text(message)),
               ],
@@ -459,7 +459,7 @@ class _SelfCheckoutScreenState extends ConsumerState<SelfCheckoutScreen> {
             padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
             child: Row(
               children: [
-                const Icon(Icons.verified_outlined, color: LcColors.good),
+                Icon(Icons.verified_outlined, color: context.lc.good),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -588,11 +588,11 @@ class _OutcomeTile extends StatelessWidget {
       child: MergeSemantics(
         child: Card(
           margin: const EdgeInsets.only(bottom: 8),
-          color: outcome.ok ? LcColors.goodSoft : LcColors.badSoft,
+          color: outcome.ok ? context.lc.goodSoft : context.lc.badSoft,
           child: ListTile(
             leading: Icon(
               outcome.ok ? Icons.check_circle : Icons.cancel,
-              color: outcome.ok ? LcColors.good : LcColors.bad,
+              color: outcome.ok ? context.lc.good : context.lc.bad,
             ),
             title: Text(loan?.title ?? outcome.barcode),
             subtitle: Text(

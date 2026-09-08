@@ -307,7 +307,7 @@ class _StatusPanel extends StatelessWidget {
     final child = switch (status) {
       _Idle() => Row(
         children: [
-          const Icon(Icons.qr_code_scanner, color: LcColors.muted),
+          Icon(Icons.qr_code_scanner, color: context.lc.muted),
           const SizedBox(width: 12),
           Expanded(child: Text(l10n.scanHint)),
         ],
@@ -325,7 +325,7 @@ class _StatusPanel extends StatelessWidget {
       ),
       _Station() => Row(
         children: [
-          const Icon(Icons.storefront_outlined, color: LcColors.warn),
+          Icon(Icons.storefront_outlined, color: context.lc.warn),
           const SizedBox(width: 12),
           Expanded(child: Text(l10n.scanStationCode)),
         ],
@@ -335,7 +335,7 @@ class _StatusPanel extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.search_off, color: LcColors.bad),
+              Icon(Icons.search_off, color: context.lc.bad),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
@@ -389,7 +389,7 @@ class _StatusPanel extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
           decoration: BoxDecoration(
             color: theme.colorScheme.surface,
-            border: const Border(top: BorderSide(color: LcColors.border)),
+            border: Border(top: BorderSide(color: context.lc.border)),
           ),
           child: child,
         ),

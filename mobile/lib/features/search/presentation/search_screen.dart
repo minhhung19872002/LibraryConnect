@@ -383,7 +383,7 @@ class _IdleView extends ConsumerWidget {
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
           child: Text(
             l10n.searchHintNoAccent,
-            style: theme.textTheme.bodyMedium?.copyWith(color: LcColors.muted),
+            style: theme.textTheme.bodyMedium?.copyWith(color: context.lc.muted),
           ),
         ),
         Padding(
@@ -476,9 +476,9 @@ class _ResultsView extends ConsumerWidget {
             key: const Key('search-offline-note'),
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
             child: Card(
-              color: LcColors.warnSoft,
+              color: context.lc.warnSoft,
               child: ListTile(
-                leading: const Icon(Icons.cloud_off, color: LcColors.warn),
+                leading: Icon(Icons.cloud_off, color: context.lc.warn),
                 title: Text(
                   l10n.cardOfflineNote(
                     DateFormat('HH:mm dd/MM').format(state.offlineSavedAt!),
@@ -540,10 +540,10 @@ class _ResultsView extends ConsumerWidget {
             padding: const EdgeInsets.all(32),
             child: Column(
               children: [
-                const Icon(
+                Icon(
                   Icons.search_off,
                   size: 48,
-                  color: LcColors.mutedLight,
+                  color: context.lc.mutedLight,
                 ),
                 const SizedBox(height: 12),
                 Text(
@@ -614,7 +614,7 @@ class _ErrorView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.cloud_off, size: 48, color: LcColors.mutedLight),
+            Icon(Icons.cloud_off, size: 48, color: context.lc.mutedLight),
             const SizedBox(height: 12),
             Text(message, textAlign: TextAlign.center),
             const SizedBox(height: 12),

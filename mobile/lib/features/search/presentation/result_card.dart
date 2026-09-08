@@ -61,16 +61,16 @@ class CoverImage extends ConsumerWidget {
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: LcColors.greenSoft,
+        color: context.lc.greenSoft,
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: LcColors.border),
+        border: Border.all(color: context.lc.border),
       ),
       alignment: Alignment.center,
       child: Text(
         title.isEmpty ? '?' : title.characters.first.toUpperCase(),
         style: TextStyle(
           fontSize: width / 2.5,
-          color: LcColors.green,
+          color: context.lc.green,
           fontWeight: FontWeight.w600,
         ),
       ),

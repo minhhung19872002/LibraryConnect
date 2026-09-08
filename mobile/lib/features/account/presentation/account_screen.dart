@@ -377,10 +377,10 @@ class _ProfileCard extends ConsumerWidget {
               children: [
                 Row(
                   children: [
-                    const CircleAvatar(
+                    CircleAvatar(
                       radius: 24,
-                      backgroundColor: LcColors.greenSoft,
-                      child: Icon(Icons.person, color: LcColors.green),
+                      backgroundColor: context.lc.greenSoft,
+                      child: Icon(Icons.person, color: context.lc.green),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -407,7 +407,7 @@ class _ProfileCard extends ConsumerWidget {
                           child: Text(
                             row.$1,
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: LcColors.muted,
+                              color: context.lc.muted,
                             ),
                           ),
                         ),

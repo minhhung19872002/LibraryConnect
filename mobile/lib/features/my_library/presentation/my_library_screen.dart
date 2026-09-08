@@ -198,12 +198,12 @@ class _CurrentLoansTabState extends ConsumerState<_CurrentLoansTab> {
                     if (stale && index == 0) {
                       return Card(
                         key: const Key('loans-offline-note'),
-                        color: LcColors.warnSoft,
+                        color: context.lc.warnSoft,
                         margin: const EdgeInsets.only(bottom: 10),
                         child: ListTile(
-                          leading: const Icon(
+                          leading: Icon(
                             Icons.cloud_off,
-                            color: LcColors.warn,
+                            color: context.lc.warn,
                           ),
                           title: Text(
                             l10n.cardOfflineNote(
@@ -262,7 +262,7 @@ class _LoanCard extends StatelessWidget {
               Text(
                 meta,
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: LcColors.muted,
+                  color: context.lc.muted,
                 ),
               ),
             const SizedBox(height: 8),
@@ -620,8 +620,8 @@ class _FinesTab extends ConsumerWidget {
                           _money.format(summary.totalOutstanding),
                           style: theme.textTheme.titleLarge?.copyWith(
                             color: summary.totalOutstanding > 0
-                                ? LcColors.bad
-                                : LcColors.good,
+                                ? context.lc.bad
+                                : context.lc.good,
                           ),
                         ),
                       ],
@@ -646,7 +646,7 @@ class _FinesTab extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(vertical: 10),
             child: Text(
               l10n.finePaymentGuide,
-              style: theme.textTheme.bodySmall?.copyWith(color: LcColors.muted),
+              style: theme.textTheme.bodySmall?.copyWith(color: context.lc.muted),
             ),
           ),
           if (summary.fines.isEmpty) _Empty(l10n.noFines),
@@ -672,7 +672,7 @@ class _FinesTab extends ConsumerWidget {
                     fine.outstanding > 0 ? fine.outstanding : fine.amount,
                   ),
                   style: theme.textTheme.titleMedium?.copyWith(
-                    color: fine.outstanding > 0 ? LcColors.bad : LcColors.muted,
+                    color: fine.outstanding > 0 ? context.lc.bad : context.lc.muted,
                   ),
                 ),
               ),

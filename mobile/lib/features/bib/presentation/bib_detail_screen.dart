@@ -416,7 +416,7 @@ class _InfoTab extends StatelessWidget {
                     child: Text(
                       row.$1,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: LcColors.muted,
+                        color: context.lc.muted,
                       ),
                     ),
                   ),
@@ -683,7 +683,7 @@ class _MarcTab extends StatelessWidget {
                           TextSpan(
                             text: '\$${sub.code} ',
                             style: TextStyle(
-                              color: LcColors.gold,
+                              color: context.lc.goldInk,
                               fontWeight: FontWeight.w600,
                               fontFamily: mono?.fontFamily,
                             ),
@@ -726,7 +726,7 @@ class _MarcRow extends StatelessWidget {
               tag,
               style: theme.textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.w700,
-                color: LcColors.green,
+                color: context.lc.green,
               ),
             ),
           ),
@@ -734,7 +734,7 @@ class _MarcRow extends StatelessWidget {
             width: 28,
             child: Text(
               indicators.replaceAll(' ', '#'),
-              style: theme.textTheme.bodySmall?.copyWith(color: LcColors.muted),
+              style: theme.textTheme.bodySmall?.copyWith(color: context.lc.muted),
             ),
           ),
           Expanded(
@@ -744,7 +744,7 @@ class _MarcRow extends StatelessWidget {
                 Text(
                   name,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: LcColors.muted,
+                    color: context.lc.muted,
                   ),
                 ),
                 content,
@@ -819,7 +819,7 @@ class _ReviewsTabState extends ConsumerState<_ReviewsTab> {
             padding: const EdgeInsets.only(bottom: 12),
             child: Row(
               children: [
-                const Icon(Icons.star, color: LcColors.gold),
+                Icon(Icons.star, color: context.lc.gold),
                 const SizedBox(width: 6),
                 Text(l10n.averageRating(avg.toStringAsFixed(1))),
               ],
@@ -837,7 +837,7 @@ class _ReviewsTabState extends ConsumerState<_ReviewsTab> {
                     Icon(
                       i < review.rating ? Icons.star : Icons.star_border,
                       size: 16,
-                      color: LcColors.gold,
+                      color: context.lc.gold,
                     ),
                 ],
               ),
@@ -871,7 +871,7 @@ class _ReviewsTabState extends ConsumerState<_ReviewsTab> {
                 IconButton(
                   icon: Icon(
                     i <= _rating ? Icons.star : Icons.star_border,
-                    color: LcColors.gold,
+                    color: context.lc.gold,
                   ),
                   onPressed: () => setState(() => _rating = i),
                 ),
@@ -975,7 +975,7 @@ class _CitationSheetState extends ConsumerState<_CitationSheet> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: LcColors.panel,
+                    color: context.lc.panel,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: SelectableText(value.content),

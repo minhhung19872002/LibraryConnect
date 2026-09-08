@@ -15,9 +15,15 @@ class LcColors {
   static const panel = Color(0xFFF6F1E5);
   static const border = Color(0xFFE3D9C7);
   static const ink = Color(0xFF2A2118);
-  static const muted = Color(0xFF7A6F5F);
-  static const mutedLight = Color(0xFF9A8F7C);
-  static const gold = Color(0xFFB9852F);
+  // Chữ phụ và chữ mờ đã sẫm lại ngày 08/09/2026: bảng cũ chỉ đạt 4,13–4,37 : 1 trên các tấm
+  // nền giấy (đo trên chính màn hình Thẻ thư viện), dưới ngưỡng 4,5 của WCAG AA cho chữ nhỏ.
+  static const muted = Color(0xFF665C4E);
+  static const mutedLight = Color(0xFF706654);
+  /// Vàng đồng cho biểu tượng và đường viền — đạt 3 : 1 của WCAG cho hình đồ hoạ.
+  static const gold = Color(0xFFA87826);
+
+  /// Vàng đồng đủ sẫm để làm **chữ** (mã trường con trong khung MARC), đạt 4,91 : 1.
+  static const goldInk = Color(0xFF865D12);
   static const good = Color(0xFF4D6A42);
   static const goodSoft = Color(0xFFEEF2E4);
   static const warn = Color(0xFF8A6114);
@@ -31,6 +37,59 @@ class LcColors {
   static const darkBorder = Color(0xFF34402C);
   static const darkInk = Color(0xFFEDE7DA);
   static const darkMuted = Color(0xFFB0A996);
+  static const darkMutedLight = Color(0xFF968F7E);
+  static const darkPanel = Color(0xFF26301F);
+  static const darkGreen = Color(0xFF9FBF9C);
+  static const darkGreenSoft = Color(0xFF26331F);
+  static const darkGold = Color(0xFFD9A94E);
+  static const darkGoldInk = Color(0xFFE6C071);
+  static const darkGood = Color(0xFF8FB07F);
+  static const darkGoodSoft = Color(0xFF24331F);
+  static const darkWarn = Color(0xFFE0B65C);
+  static const darkWarnSoft = Color(0xFF3A2E15);
+  static const darkBad = Color(0xFFE08A7A);
+  static const darkBadSoft = Color(0xFF3A1F1A);
+}
+
+/// Bảng màu **đổi theo chế độ sáng/tối** — dùng ở màn hình thay cho hằng số của [LcColors].
+///
+/// `LcColors` là hằng số của bảng màu nền giấy: gọi thẳng tên chúng trong màn hình nghĩa là màu ấy
+/// không bao giờ đổi, kể cả khi bạn đọc bật chế độ tối. Đo ngày 08/09/2026 trên chính màn hình đang
+/// chạy: chữ phụ `muted` (#7A6F5F) trên nền tối (#1E2418) chỉ đạt **3,23 : 1**, dưới ngưỡng 4,5 của
+/// WCAG AA; còn tấm nền nhạt như `greenSoft` giữ nguyên màu sáng trong khi chữ trên nó lấy màu chữ
+/// của chế độ tối, ra **1,08 : 1** — nhìn như trống trơn.
+///
+/// Chỗ nào nền vốn đã tối ở **cả hai** chế độ — khung ngắm máy quét, trình đọc tài liệu, dải đầu
+/// trang chủ, hình vẽ thẻ thư viện — thì vẫn dùng hằng số của `LcColors`, vì ở đấy màu không phải
+/// đổi theo chế độ.
+class LcScheme {
+  const LcScheme(this.toi);
+
+  final bool toi;
+
+  Color get ink => toi ? LcColors.darkInk : LcColors.ink;
+  Color get muted => toi ? LcColors.darkMuted : LcColors.muted;
+  Color get mutedLight => toi ? LcColors.darkMutedLight : LcColors.mutedLight;
+  Color get panel => toi ? LcColors.darkPanel : LcColors.panel;
+  Color get paper => toi ? LcColors.darkPaper : LcColors.paper;
+  Color get pageBg => toi ? LcColors.darkBg : LcColors.pageBg;
+  Color get border => toi ? LcColors.darkBorder : LcColors.border;
+  Color get green => toi ? LcColors.darkGreen : LcColors.green;
+  Color get greenSoft => toi ? LcColors.darkGreenSoft : LcColors.greenSoft;
+  Color get gold => toi ? LcColors.darkGold : LcColors.gold;
+  Color get goldInk => toi ? LcColors.darkGoldInk : LcColors.goldInk;
+  Color get good => toi ? LcColors.darkGood : LcColors.good;
+  Color get goodSoft => toi ? LcColors.darkGoodSoft : LcColors.goodSoft;
+  Color get warn => toi ? LcColors.darkWarn : LcColors.warn;
+  Color get warnSoft => toi ? LcColors.darkWarnSoft : LcColors.warnSoft;
+  Color get bad => toi ? LcColors.darkBad : LcColors.bad;
+  Color get badSoft => toi ? LcColors.darkBadSoft : LcColors.badSoft;
+}
+
+extension LcSchemeOf on BuildContext {
+  /// Bảng màu đúng theo chế độ đang bật.
+  LcScheme get lc =>
+      LcScheme(Theme.of(this).brightness == Brightness.dark);
 }
 
 class AppTheme {

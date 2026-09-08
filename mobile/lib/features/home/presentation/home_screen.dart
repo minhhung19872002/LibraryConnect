@@ -137,7 +137,7 @@ class HomeScreen extends ConsumerWidget {
                         l10n.poweredBy,
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: LcColors.mutedLight,
+                          color: context.lc.mutedLight,
                         ),
                       ),
                     ),
@@ -225,19 +225,19 @@ class _Hero extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Material(
-            color: LcColors.paper,
+            color: context.lc.paper,
             borderRadius: BorderRadius.circular(12),
             child: ListTile(
               key: const Key('home-search'),
-              leading: const Icon(Icons.search, color: LcColors.green),
+              leading: Icon(Icons.search, color: context.lc.green),
               title: Text(
                 l10n.searchFromHome,
-                style: const TextStyle(color: LcColors.muted),
+                style: TextStyle(color: context.lc.muted),
               ),
               trailing: IconButton(
                 key: const Key('home-scan'),
                 tooltip: l10n.scanFromHome,
-                icon: const Icon(Icons.qr_code_scanner, color: LcColors.green),
+                icon: Icon(Icons.qr_code_scanner, color: context.lc.green),
                 onPressed: () => context.go(Routes.scan),
               ),
               onTap: () => context.go(Routes.searchPath),
@@ -352,7 +352,7 @@ class _Shelf extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: LcColors.muted,
+                            color: context.lc.muted,
                           ),
                         ),
                     ],
@@ -384,7 +384,7 @@ class NewsTile extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
-        leading: const Icon(Icons.article_outlined, color: LcColors.green),
+        leading: Icon(Icons.article_outlined, color: context.lc.green),
         title: Text(item.title, maxLines: 2, overflow: TextOverflow.ellipsis),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -517,7 +517,7 @@ class _Statistics extends StatelessWidget {
                       number.format(cell.$1),
                       style: Theme.of(
                         context,
-                      ).textTheme.titleLarge?.copyWith(color: LcColors.green),
+                      ).textTheme.titleLarge?.copyWith(color: context.lc.green),
                     ),
                     Text(
                       cell.$2,
@@ -546,7 +546,7 @@ class _InfoRow extends StatelessWidget {
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 20, color: LcColors.muted),
+        Icon(icon, size: 20, color: context.lc.muted),
         const SizedBox(width: 12),
         Expanded(child: Text(text)),
       ],
@@ -567,10 +567,10 @@ class _ErrorCard extends StatelessWidget {
         ? (error! as ApiException).message
         : l10n.offlineBody;
     return Card(
-      color: LcColors.badSoft,
+      color: context.lc.badSoft,
       margin: const EdgeInsets.only(bottom: 12),
       child: ListTile(
-        leading: const Icon(Icons.cloud_off, color: LcColors.bad),
+        leading: Icon(Icons.cloud_off, color: context.lc.bad),
         title: Text(message),
         trailing: TextButton(onPressed: onRetry, child: Text(l10n.retry)),
       ),

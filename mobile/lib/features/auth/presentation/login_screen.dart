@@ -128,7 +128,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             height: 44,
                             alignment: Alignment.center,
                             decoration: BoxDecoration(
-                              color: LcColors.green,
+                              color: context.lc.green,
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
@@ -229,12 +229,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             key: const Key('login-error'),
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: LcColors.badSoft,
+                              color: context.lc.badSoft,
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
                               _error!,
-                              style: const TextStyle(color: LcColors.bad),
+                              style: TextStyle(color: context.lc.bad),
                             ),
                           ),
                         ),

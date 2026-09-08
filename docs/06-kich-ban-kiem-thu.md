@@ -1866,3 +1866,19 @@ so với số dòng màn hình, phần tiêu chí và dòng cắt bớt, và ch�
 | X9 | Lượt xuất nhật ký không lọc | **Trước sửa: màn hình 196.612 dòng, tệp 50.000 dòng, không một chữ nào nói ra.** Sau sửa: tệp mang dòng "Lưu ý: danh sách đã đạt trần 50.000 dòng…" ngay dưới nhan đề, kèm khoảng ngày đang lọc | Đạt |
 | X10 | Các ô tổng của màn hình có trong tệp Excel không | **Trước sửa: 4/5 ô tổng của "Báo cáo tổng quát kho" chỉ có trong bản PDF.** Sau sửa: 5/5, vì phần tiêu chí nay in cả ở bản Excel | Đạt |
 | X11 | In phích với loại phích không có thật | **Trước sửa: "Các biểu ghi đã chọn không có dữ liệu cho loại phích này" — đổ lỗi cho biểu ghi.** Sau sửa: "Không có loại phích Main. Các loại đang dùng được: MAIN (Phích chính (tác giả))…" | Đạt |
+
+### Đợt mười chín — ứng dụng di động: cỡ chữ, chế độ tối, ba trạng thái (08/09/2026)
+
+Quét ngang mã Flutter lần đầu. Cách đo: dựng thật từng màn hình trong phép thử widget rồi đi khắp
+cây widget đọc màu chữ đã phân giải và màu nền đục gần nhất, tính tỉ lệ tương phản WCAG bằng máy.
+
+| Mã | Kịch bản | Kết quả thực tế | Đạt |
+|---|---|---|---|
+| MB.41 | Ba màn hình (Sách của tôi, Thông báo, Thẻ thư viện) dựng ở cỡ chữ 100%, 150%, 200% | 9/9 không tràn khung một điểm ảnh nào; chiều cao kệ sách theo `MediaQuery.textScalerOf` của MB.27 còn nguyên tác dụng | Đạt |
+| MB.42 | Ba màn hình ở chế độ tối, đo tương phản từng dòng chữ | **Trước sửa: chữ phụ 3,23 : 1 và 3,62 : 1; nền nhạt giữ màu sáng nên chữ trên nó 1,08 : 1.** Sau sửa: không dòng nào dưới 4,5 : 1 | Đạt |
+| MB.43 | Thẻ thư viện điện tử ở chế độ tối | **Trước sửa: họ tên và loại bạn đọc là chữ sáng trên giấy trắng, 1,21 : 1** — chính tấm thẻ bạn đọc chìa ra ở quầy. Sau sửa: cả khối dựng bằng chủ đề sáng, nền và chữ cùng một chế độ | Đạt |
+| MB.44 | Bảng màu ở chế độ sáng: 8 màu chữ × 7 tấm nền giấy | **Trước sửa: 20 cặp dưới ngưỡng** (`muted` 4,13–4,37; `mutedLight` 2,67–3,13; `gold` 2,73–3,20). Sau sửa: `muted` thấp nhất 5,50, `mutedLight` 4,74, `gold` 3,28 cho biểu tượng, thêm `goldInk` 4,91 cho chỗ vàng đồng làm chữ | Đạt |
+| MB.45 | Mọi chỗ đọc dữ liệu bất đồng bộ có đủ nhánh chờ và lỗi | 19/19 có cả `loading:` lẫn `error:` | Đạt |
+| MB.46 | Mọi màn hình có danh sách canh danh sách rỗng | 13/13 | Đạt |
+| MB.47 | Phông vẫn đóng gói, không tải lúc chạy (bài học 27) | `GoogleFonts.config.allowRuntimeFetching = false` còn trong `main.dart` | Đạt |
+| MB.48 | Quét mã nguồn: màn hình không gọi thẳng hằng số màu của chế độ sáng | **Trước sửa: 82 chỗ ở 16 tệp.** Sau sửa: 0, ngoại lệ chỉ còn hai tệp có nền tối/sáng cố định, khai kèm lý do; hoàn một chỗ về cũ là phép thử đỏ ngay | Đạt |
