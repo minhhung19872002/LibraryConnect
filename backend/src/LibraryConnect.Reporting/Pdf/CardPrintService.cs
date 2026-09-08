@@ -51,7 +51,7 @@ public class CardPrintService : ICardPrintService
                 {
                     page.Size((float)template.WidthMm, (float)template.HeightMm, Unit.Millimetre);
                     page.Margin(0);
-                    page.DefaultTextStyle(style => style.FontFamily(Fonts.Lato));
+                    page.DefaultTextStyle(style => style.Base());
                     page.Content().Element(element => DrawCard(element, template, card));
                 });
             }
@@ -77,7 +77,7 @@ public class CardPrintService : ICardPrintService
                 {
                     pageDescriptor.Size(PageSizes.A4);
                     pageDescriptor.Margin(SheetMarginMm, Unit.Millimetre);
-                    pageDescriptor.DefaultTextStyle(style => style.FontFamily(Fonts.Lato));
+                    pageDescriptor.DefaultTextStyle(style => style.Base());
 
                     pageDescriptor.Content().Column(column =>
                     {

@@ -43,7 +43,17 @@ public interface IExcelService
     /// the first rows and the header moves down, so such a file is not meant to be read back with
     /// <see cref="Read"/>. Omit the title for files intended for data exchange.
     /// </summary>
-    byte[] Write<T>(string sheetName, IReadOnlyList<ExcelColumn<T>> columns, IEnumerable<T> rows, string? title = null);
+    /// <param name="criteria">
+    /// Các dòng in dưới nhan đề: bộ lọc đang áp dụng, và câu nói ra khi danh sách chạm trần số dòng.
+    /// Bản PDF nhận chúng qua <see cref="PdfReportHeader.Criteria"/>; bản Excel phải nhận ở đây,
+    /// nếu không thì cùng một báo cáo nói hai chuyện khác nhau ở hai định dạng.
+    /// </param>
+    byte[] Write<T>(
+        string sheetName,
+        IReadOnlyList<ExcelColumn<T>> columns,
+        IEnumerable<T> rows,
+        string? title = null,
+        IReadOnlyList<string>? criteria = null);
 
     /// <summary>
     /// Builds an import template: the header row plus a second sheet explaining each column, which

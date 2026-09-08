@@ -81,11 +81,24 @@ public class GetCatalogItemsQueryHandler : IRequestHandler<GetCatalogItemsQuery,
                 .WhereIf(_request.IsActive.HasValue, entity => entity.IsActive == _request.IsActive!.Value)
                 .WhereIf(_request.UpdatedSince is not null, entity => (entity.UpdatedAt ?? entity.CreatedAt) >= _request.UpdatedSince);
 
-            // A hierarchical catalogue can be browsed level by level; ParentId == null lists the roots.
+            // Danh mục phân cấp duyệt theo từng cấp: bỏ trống nhánh cha thì hiện các mục gốc.
+            //
+            // Nhưng gõ vào ô tìm kiếm không phải là duyệt. Ràng buộc cấp áp cả cho lượt tìm kiếm
+            // khiến 114 trong 124 chỉ số phân loại không bao giờ tìm ra được: gõ đúng "Thư viện học"
+            // — tên của chính chỉ số 020 — vẫn trả về 0 dòng, vì nó nằm ở cấp hai. Có từ khoá thì
+            // tìm khắp mọi cấp; cột "Cấp trên" của bảng cho biết mỗi dòng nằm ở nhánh nào.
             if (definition.IsHierarchical && !_request.AsTree)
             {
-                query = query.Where(entity =>
-                    ((HierarchicalCatalogEntity)(object)entity).ParentId == _request.ParentId);
+                if (_request.ParentId is { } nhanhCha)
+                {
+                    query = query.Where(entity =>
+                        ((HierarchicalCatalogEntity)(object)entity).ParentId == nhanhCha);
+                }
+                else if (!_request.HasKeyword())
+                {
+                    query = query.Where(entity =>
+                        ((HierarchicalCatalogEntity)(object)entity).ParentId == null);
+                }
             }
 
             var ordered = _request.SortBy switch

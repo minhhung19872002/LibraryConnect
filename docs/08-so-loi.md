@@ -873,6 +873,51 @@ Ba hình dạng ấy không đủ. Hai hình dạng nữa — **mảng khổng l
 - **Bộ lọc ký tự không lưu được (U+0000) vẫn chặn đúng** ở cả chuỗi truy vấn lẫn thân JSON — luật của
   đợt 11 còn nguyên tác dụng sau bảy đợt sửa.
 
+## R. Đợt rà thứ mười tám — tầng tệp xuất (08/09/2026)
+
+Bài học 78 viết sau đợt 15: *"sửa xong một lớp lỗi thì liệt kê **mọi tầng đọc dữ liệu** — danh sách,
+báo cáo, tệp xuất, giao thức — rồi đo lại từng tầng."* Danh sách đã đo ở đợt 13 và 14, báo cáo ở đợt
+15, giao thức ở mục K. **Tầng tệp xuất thì chưa bao giờ được mở ra đếm.** Đợt 15 chỉ hỏi "có phải
+tệp thật không" — kiểm chữ ký byte `PK` và `%PDF`; câu còn lại chưa ai hỏi là **trong tệp có gì**.
+
+Đợt này hỏi ba câu cho từng lối xuất và từng lối in:
+
+> 1. Tệp mang về có đúng bằng những dòng màn hình đang đếm không — cùng bộ lọc, cùng phạm vi dữ liệu,
+>    cùng cách xử lý dòng đã xoá?
+> 2. Tệp có nói ra nó lọc theo gì, và nói ra khi nó bị cắt bớt không?
+> 3. Chữ trong tệp đọc lại có ra đúng chữ đã ghi vào không?
+
+**110 phép đo, 4 lỗi.** Ba câu trả lời đáng mừng đứng trước: 20/22 danh mục, 9/9 danh sách lớn và
+9/11 báo cáo xuất ra đúng bằng con số màn hình; phạm vi dữ liệu theo kho giữ nguyên ở tầng tệp
+(4.483 = 4.483); và mọi bản in chọn N dòng đều ra đúng N mảnh.
+
+| # | Màn hình | Mô tả lỗi | Cách tái hiện | Mức độ | Loại | Trạng thái |
+|---|---|---|---|---|---|---|
+| R1 | Mọi tệp PDF của sản phẩm — báo cáo, thẻ bạn đọc, phích, tem, nhãn, biểu mẫu in | **Trang in nhìn đúng, nhưng lớp chữ bên dưới thì sai.** Lato có sẵn ghép chữ (ligature) của OpenType; HarfBuzz thay mỗi cặp chữ bằng **một glyph duy nhất**, còn bảng ToUnicode mà QuestPDF ghi vào tệp không tra ngược được glyph ấy về hai chữ cái gốc nên nó điền đại một mã khác. Hậu quả: Ctrl+F trong chính tệp báo cáo không tìm ra "thông tin"; chép một dòng ra ngoài thì dán được chữ Bengali; mọi công cụ đánh chỉ mục toàn văn đọc tệp ấy đều sai. Sản phẩm là phần mềm thư viện số, mà tệp do chính nó sinh ra thì không tra cứu được. | Rút chữ từ 10 tệp PDF xuất ra bằng một thư viện đọc PDF của người khác: **8 tệp có ký tự hỏng**, tổng **14.000 ký tự** — "thông tin" → "thông ঞn", "tình trạng" → "টnh trạng", "phân tích" → "phân ঠch", "office" → "oﬃce". Chụp lại đúng vùng chữ ấy ở 300 dpi thì mắt thường đọc ra "tình trạng" hoàn toàn bình thường. | **Nặng** | Giao diện | Đã sửa — một chỗ khai phông dùng chung (`PdfTextStyles.Base`) tắt cả năm nhóm ghép chữ, sáu bộ dựng PDF đều đi qua đó. `PdfTextLayerTests` đọc lại tệp bằng PdfPig (đỏ 5/7 trước khi sửa) cộng một phép thử quét mã nguồn cấm khai `FontFamily` thẳng ở bộ dựng thứ bảy |
+| R2 | Danh mục → Khung phân loại, Bộ sưu tập tài liệu số (mọi danh mục phân cấp) | **Ô tìm kiếm chỉ tìm ở cấp gốc.** Danh mục phân cấp duyệt theo từng cấp — đúng khi cán bộ đang đi từ gốc xuống — nhưng ràng buộc "chỉ hiện mục cấp gốc" áp **cả cho lượt gõ từ khoá**. Gõ đúng tên một mục cấp hai vẫn ra bảng trắng, và không có gì trên màn hình nói vì sao. Tìm ra bằng cách so tệp xuất với màn hình: tệp có 124 dòng, màn hình đếm 10. | Kho phát triển có 124 chỉ số phân loại, 10 trong đó ở cấp gốc. `GET /api/catalogs/classifications/items?keyword=Thư viện học` → **0 dòng**, trong khi 020 "Thư viện học" đang có trong bảng; `keyword=020` cũng 0; bộ sưu tập tài liệu số 6/12 mục không tìm ra được. | Vừa | Nghiệp vụ | Đã sửa — có từ khoá thì tìm khắp mọi cấp, bỏ trống thì vẫn duyệt theo cấp, chọn "Thuộc cấp trên" thì vẫn lọc đúng nhánh; cột "Cấp trên" của bảng cho biết dòng tìm được nằm ở đâu. `CatalogTests.O_tim_kiem_cua_danh_muc_phan_cap…` (đỏ trước khi sửa) |
+| R3 | Mọi tệp Excel xuất ra; riêng nhật ký hệ thống và danh sách bạn đọc còn bị cắt trong im lặng | **Dòng "danh sách đã chạm trần" và cả phần tiêu chí lọc chỉ tới được bản PDF.** Lỗi O5 sửa bằng cách ghép câu ghi chú vào `PdfReportHeader.Criteria` — nhưng lối Excel chỉ nhận `header.Title`, không có tham số nào cho phần tiêu chí, nên bản Excel **mất cả hai**. Mà Excel mới là định dạng cán bộ xuất danh sách. Cùng lúc, hai lối xuất mang trần riêng chưa ai nối vào `ReportRowLimit`: nhật ký hệ thống (50.000) và danh sách bạn đọc (50.000). Bài học 72 lặp lại: viết được bài học không có nghĩa là đã sửa xong lớp lỗi. | `GET /api/admin/audit-logs?page=1&pageSize=1` báo **196.612** dòng; `GET /api/admin/audit-logs/export?format=Excel` mang về **50.000** dòng, tệp không có chữ nào nói ra — kể cả khoảng ngày đang lọc. Bốn trong năm ô tổng của "Báo cáo tổng quát kho" (tổng biểu ghi, tổng số bản, tổng giá trị, số bản đang khoá) có trong bản PDF mà không có trong bản Excel, vì cùng đi qua phần tiêu chí ấy. | Vừa | Nghiệp vụ | Đã sửa — `IExcelService.Write` nhận thêm phần tiêu chí và in nó ngay dưới nhan đề, 20 lối xuất báo cáo truyền `header.Criteria` vào; nhật ký, danh sách bạn đọc, danh sách ĐKCB và báo cáo thẻ sắp hết hạn nối trần vào `ReportRowLimit`. `ExportFileContentTests.Tep_nhat_ky_xuat_ra_noi_ro_no_loc_theo_gi` (đỏ trước khi sửa) |
+| R4 | Biên mục → In phích | **Gửi lên một loại phích không có thật thì hệ thống đổ lỗi cho biểu ghi.** Loại phích lạ và biểu ghi thiếu dữ liệu cùng dẫn tới "không dựng được phích nào", và cả hai nhận đúng một câu: *"Các biểu ghi đã chọn không có dữ liệu cho loại phích này."* Cán bộ đi sửa biểu ghi trong khi chỗ sai nằm ở yêu cầu gửi lên — đúng bài học 52. | `POST /api/cataloging/cards/print` với `cardTypes: ["Main"]` (chữ thường, mã đúng là `MAIN`) trên một biểu ghi có đủ tác giả → 400 kèm câu nói biểu ghi thiếu dữ liệu. | Nhẹ | Giao diện | Đã sửa — loại phích lạ nhận câu gọi đúng tên nó và kể ra bốn loại đang dùng được; `CardPrintTests.Loai_phich_khong_co_that_duoc_noi_dung_ten_no` (đỏ trước khi sửa) |
+
+### Đã kiểm trong đợt này và vẫn tốt
+
+- **20/22 danh mục**: số dòng trong tệp xuất bằng đúng con số màn hình, từ 4 dòng tới 14.294 dòng
+  (tác giả) và 13.169 dòng (từ khoá). Hai chỗ lệch chính là R2.
+- **9/9 phép đo trên năm danh sách lớn**: bạn đọc không lọc (651 = 651), lọc trạng thái (645), lọc
+  từ khoá (36); ĐKCB không lọc (17.910), lọc tình trạng (6), **tick chọn 3 dòng ra đúng 3 dòng**;
+  biểu ghi tick chọn và lọc từ khoá (182) ra đúng số biểu ghi trong tệp MARCXML; nhật ký lọc theo
+  hành động (58).
+- **Phạm vi dữ liệu giữ nguyên ở tầng tệp**: cán bộ chỉ được cấp "Kho mở" xuất ĐKCB nhận đúng 4.483
+  dòng — bằng con số màn hình của chính họ và bằng con số quản trị viên đếm riêng cho kho ấy. Báo
+  cáo bổ sung cũng thu hẹp theo (17.910 → 4.483).
+- **9/11 báo cáo** có số dòng trong tệp bằng số dòng trên màn hình; hai chỗ còn lại là báo cáo nhiều
+  mảng (ra vào thư viện, tủ gửi đồ) mà phép đo tự nó không tách được mảng, kiểm tay thì đúng.
+- **Tầng bản in đếm đúng từng mảnh**: 5 ĐKCB ra 5 tem mã vạch và 5 nhãn gáy; đặt `copies=3` thì mỗi
+  mã xuất hiện đúng 3 lần; 4 bạn đọc ra 4 thẻ; 4 biểu ghi ra 4 phích.
+- **Cột số trong tệp Excel là số thật**, không phải chuỗi: 10 tệp của 10 lối xuất khác nhau, không
+  cột tiền hay cột đếm nào lưu dưới dạng chữ — `=SUM()` và sắp xếp trên tệp tải về đều đúng.
+- **Bản PDF và bản Excel của cùng một báo cáo chứa cùng các dòng**; bản PDF chỉ in ít cột hơn cho
+  vừa khổ giấy, đó là chủ ý chứ không phải thiếu dòng.
+
 ## Đ. Những chỗ đã thử phá nhưng hệ thống chịu được
 
 Ghi lại để biết chỗ nào đã kiểm và không phải kiểm lại — kèm bằng chứng, không ghi suông.
@@ -980,7 +1025,7 @@ dạng quét mã nguồn chặn cả lớp lỗi quay lại thay vì chỉ chặ
 
 Cộng cả ba đợt, đợt áp thiết kế, đợt triển khai và ba đợt rà hoàn thiện ngày 04/09/2026:
 **147 lỗi, đã sửa 145**; thêm **23 lỗi của đợt nghiệm thu thử, test sâu, ba đợt test kỹ thuật ngày
-05/09/2026 và ba đợt soi nghiệp vụ – giao thức – bảo mật ngày 06/09/2026 (mục K), đã sửa cả 23** — tổng **170 lỗi, đã sửa 170**; cộng **16 lỗi mục L**, **4 lỗi mục M**, **4 lỗi mục N**, **5 lỗi mục O**, **3 lỗi mục P** và **3 lỗi mục Q** của tám đợt rà sâu ngày 06–07/09/2026 — tổng **205 lỗi, đã sửa 205**. Hai mục H3 và H9 đã làm xong ngày 03/09/2026 và ghi ở cột cuối
+05/09/2026 và ba đợt soi nghiệp vụ – giao thức – bảo mật ngày 06/09/2026 (mục K), đã sửa cả 23** — tổng **170 lỗi, đã sửa 170**; cộng **16 lỗi mục L**, **4 lỗi mục M**, **4 lỗi mục N**, **5 lỗi mục O**, **3 lỗi mục P**, **3 lỗi mục Q** của tám đợt rà sâu ngày 06–07/09/2026 và **4 lỗi mục R** của đợt rà tầng tệp xuất ngày 08/09/2026 — tổng **209 lỗi, đã sửa 209**. Hai mục H3 và H9 đã làm xong ngày 03/09/2026 và ghi ở cột cuối
 của chính hai dòng ấy — con số 134 giữ nguyên cách đếm cũ để đối chiếu được với các bản trước.
 Mỗi lỗi đã sửa đều có phép thử chạy đỏ trước khi sửa và xanh sau khi sửa, kể cả H7: phép thử giả
 tiêu đề đỏ trước khi sửa `CurrentUser.Ip`.

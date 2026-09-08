@@ -214,7 +214,8 @@ public class ExportCourseReportQueryHandler
                     },
                     report.WithoutDocuments,
                     "Danh sách môn học chưa gắn tài liệu",
-                    "mon-chua-co-tai-lieu.xlsx")
+                    "mon-chua-co-tai-lieu.xlsx",
+                    criteria)
                 : await PdfAsync(
                     "Môn học chưa gắn tài liệu",
                     criteria,
@@ -243,7 +244,8 @@ public class ExportCourseReportQueryHandler
                     },
                     report.SharedDocuments,
                     "Tài liệu được gán cho nhiều môn học nhất",
-                    "tai-lieu-dung-chung.xlsx")
+                    "tai-lieu-dung-chung.xlsx",
+                    criteria)
                 : await PdfAsync(
                     "Tài liệu được gán cho nhiều môn học nhất",
                     criteria,
@@ -274,7 +276,8 @@ public class ExportCourseReportQueryHandler
                     },
                     report.Coverage,
                     "Báo cáo mức độ đáp ứng tài liệu theo ngành đào tạo",
-                    "bao-cao-tai-lieu-mon-hoc.xlsx")
+                    "bao-cao-tai-lieu-mon-hoc.xlsx",
+                    criteria)
                 : await PdfAsync(
                     "Mức độ đáp ứng tài liệu theo ngành đào tạo",
                     criteria,
@@ -295,8 +298,9 @@ public class ExportCourseReportQueryHandler
     }
 
     private ExportedFileDto Excel<T>(
-        string sheet, IReadOnlyList<ExcelColumn<T>> columns, IEnumerable<T> rows, string title, string fileName) =>
-        new(_excel.Write(sheet, columns, rows, title),
+        string sheet, IReadOnlyList<ExcelColumn<T>> columns, IEnumerable<T> rows, string title, string fileName,
+        IReadOnlyList<string>? criteria = null) =>
+        new(_excel.Write(sheet, columns, rows, title, criteria),
             fileName,
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 

@@ -1846,3 +1846,23 @@ triển** (dựng lại từ mã hiện tại) vì đợt này ghi dữ liệu.
 | M1 | 14 lệnh hàng loạt nhận mảng 50.000 phần tử | 12 lệnh chặn ngay trong 0,1 giây kèm câu nêu trần. **Trước sửa: ghi trả treo 90 giây rồi máy khách bỏ cuộc; 2.000 mã mất 8,9 giây.** Sau sửa: trần 100 mã một lượt cho cả ba lối của quầy | Đạt |
 | M2 | 8 màn hình nhận khoảng ngày ngược | **Trước sửa: cả tám trả 200 với 0 dòng, không một lời nào; riêng bảng Tổng quan tự đổi thầm hai mốc.** Sau sửa: cả sản phẩm trả 400 kèm "Khoảng thời gian không hợp lệ: ngày đầu 31/12/2026 đứng sau ngày cuối 01/01/2026" | Đạt |
 | NH.1 | Bấm "Gửi nhắc hàng loạt" ba lần liên tiếp | **Trước sửa: 1.083 thông báo cho 361 bạn đọc trong 18 giây — mỗi người ba lần.** Sau sửa: một người một thư mỗi ngày; thư không phải bản tổng hợp (sách đặt giữ đã sẵn sàng) vẫn gửi được nhiều lần trong ngày | Đạt |
+
+### Đợt mười tám — tầng tệp xuất: trong tệp có gì (08/09/2026)
+
+Đợt 15 đã kiểm "có phải tệp thật không" bằng chữ ký byte. Đợt này mở tệp ra đếm: số dòng trong tệp
+so với số dòng màn hình, phần tiêu chí và dòng cắt bớt, và chữ rút lại từ tệp PDF bằng một thư viện
+đọc PDF của người khác (PdfPig / PyMuPDF). Chạy trên **máy phát triển** dựng lại từ mã hiện tại.
+
+| Mã | Kịch bản | Kết quả thực tế | Đạt |
+|---|---|---|---|
+| X1 | 22 danh mục: số dòng trong tệp Excel xuất ra so với con số màn hình | 20/22 bằng nhau, từ 4 dòng tới 14.294 dòng (tác giả). Hai chỗ lệch là danh mục phân cấp — màn hình duyệt theo cấp, tệp xuất cả cây; chính chỗ lệch ấy làm lộ R2 | Đạt |
+| X2 | Bạn đọc, ĐKCB, biểu ghi, nhật ký: xuất không lọc / có lọc / tick chọn | 9/9 bằng nhau: bạn đọc 651 · 645 · 36; ĐKCB 17.910 · 6 · **tick 3 dòng ra đúng 3**; biểu ghi tick 3 và lọc từ khoá 182 (đếm `<record>` trong MARCXML); nhật ký lọc hành động 58 | Đạt |
+| X3 | 11 báo cáo: số dòng trong tệp so với số dòng màn hình | 9/9 báo cáo một mảng bằng nhau (lịch sử mượn 3.116, thẻ sắp hết hạn 165, top 20…); hai báo cáo nhiều mảng kiểm tay đúng | Đạt |
+| X4 | Phạm vi dữ liệu ở tầng tệp: cán bộ chỉ được cấp "Kho mở" | Tệp ĐKCB 4.483 dòng = con số màn hình của chính họ = con số quản trị viên đếm riêng cho kho ấy; báo cáo bổ sung thu hẹp theo (17.910 → 4.483) | Đạt |
+| X5 | Bản in: chọn N dòng thì tệp PDF có đúng N mảnh | 5 ĐKCB → 5 tem mã vạch, 5 nhãn gáy; `copies=3` → mỗi mã đúng 3 lần; 4 bạn đọc → 4 thẻ; 4 biểu ghi → 4 phích | Đạt |
+| X6 | Cột số trong 10 tệp Excel là số hay chuỗi | Không cột tiền hay cột đếm nào lưu dưới dạng chữ — `=SUM()` trên tệp tải về chạy đúng | Đạt |
+| X7 | Chữ rút lại từ 10 tệp PDF xuất ra | **Trước sửa: 8/10 tệp có ký tự hỏng, tổng 14.000 ký tự** — "thông tin" → "thông ঞn", "tình trạng" → "টnh trạng", "office" → "oﬃce"; ảnh chụp 300 dpi thì mắt thường đọc vẫn đúng. Sau sửa: 0 ký tự sinh ra do phông, chỉ còn 32 ký tự vốn có trong chính dữ liệu (nhan đề chuyển tự tiếng Nga, ký hiệu ∞ và ≥) | Đạt |
+| X8 | Ô tìm kiếm của danh mục phân cấp | **Trước sửa: `keyword=020` trả 0 dòng** trong khi chỉ số 020 "Thư viện học và khoa học thông tin" đang có trong bảng — 114/124 chỉ số phân loại không tìm ra được. Sau sửa: đúng 1 dòng kèm tên cấp trên; bỏ trống từ khoá vẫn duyệt theo cấp (10 mục gốc) | Đạt |
+| X9 | Lượt xuất nhật ký không lọc | **Trước sửa: màn hình 196.612 dòng, tệp 50.000 dòng, không một chữ nào nói ra.** Sau sửa: tệp mang dòng "Lưu ý: danh sách đã đạt trần 50.000 dòng…" ngay dưới nhan đề, kèm khoảng ngày đang lọc | Đạt |
+| X10 | Các ô tổng của màn hình có trong tệp Excel không | **Trước sửa: 4/5 ô tổng của "Báo cáo tổng quát kho" chỉ có trong bản PDF.** Sau sửa: 5/5, vì phần tiêu chí nay in cả ở bản Excel | Đạt |
+| X11 | In phích với loại phích không có thật | **Trước sửa: "Các biểu ghi đã chọn không có dữ liệu cho loại phích này" — đổ lỗi cho biểu ghi.** Sau sửa: "Không có loại phích Main. Các loại đang dùng được: MAIN (Phích chính (tác giả))…" | Đạt |

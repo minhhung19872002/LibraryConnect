@@ -149,9 +149,20 @@ thấy "còn nợ 0 đ", vì hàm đồng bộ chỉ được gọi khi thu và 
 5.000 ký tự và số âm khổng lồ — **258 phép đo, 258 đạt**, không lối nào đổ 500. Hai hình dạng nữa thì lộ
 **3 lỗi**: nút "Gửi nhắc hàng loạt" bấm ba lần sinh **1.083 thông báo cho 361 bạn đọc**; hai lối của quầy
 không có trần số mã vạch nên 2.000 mã mất 8,9 giây và 50.000 mã thì proxy cắt ngang; và khoảng ngày ngược
-trả bảng rỗng im lặng ở mười sáu bộ lọc trong khi bảng Tổng quan lại tự đổi thầm hai mốc. Cả 3 đã sửa, tổng
-**205 lỗi, đã sửa 205**.
-Phụ lục cuối `docs/06` ghi kết quả từng kịch bản (hơn 660 dòng).
+trả bảng rỗng im lặng ở mười sáu bộ lọc trong khi bảng Tổng quan lại tự đổi thầm hai mốc. Cả 3 đã sửa.
+
+Đợt thứ mười tám (08/09/2026) mở **tầng tệp xuất** ra đếm — tầng duy nhất mà bài học 78 kể tên nhưng chưa
+ai đo. Đợt 15 chỉ hỏi "có phải tệp thật không" (chữ ký byte `PK` / `%PDF`); đợt này hỏi **trong tệp có gì**:
+số dòng so với màn hình, tệp có nói ra nó lọc theo gì và có bị cắt bớt không, và chữ rút lại từ tệp có ra
+đúng chữ đã ghi vào không. **110 phép đo, 4 lỗi.** Nặng nhất: **mọi tệp PDF của sản phẩm có lớp chữ sai** —
+ghép chữ của phông Lato thay mỗi cặp chữ bằng một glyph mà bảng ToUnicode không tra ngược được, nên "thông
+tin" rút ra thành "thông ঞn", "tình trạng" thành "টnh trạng" (14.000 ký tự hỏng trên 10 tệp), trong khi ảnh
+chụp 300 dpi thì mắt thường đọc vẫn đúng: Ctrl+F trong chính tệp báo cáo không tìm ra chữ, chép ra ngoài dán
+thành chữ Bengali. Ba lỗi còn lại: ô tìm kiếm của danh mục phân cấp chỉ tìm ở cấp gốc (114/124 chỉ số phân
+loại không tìm ra được); dòng "đã chạm trần" và phần tiêu chí lọc của O5 **chỉ tới được bản PDF**, còn bản
+Excel mất cả hai — nên lượt xuất nhật ký mang về 50.000 trên 196.612 dòng mà không nói gì; và loại phích lạ
+thì hệ thống đổ lỗi cho biểu ghi. Cả 4 đã sửa, tổng **209 lỗi, đã sửa 209**.
+Phụ lục cuối `docs/06` ghi kết quả từng kịch bản (hơn 680 dòng).
 
 Đọc thẳng hồ sơ gốc còn tìm ra thứ không phải lỗi mã: **bốn hồ sơ bàn giao** mà Chương V mục III và
 mục 5 đòi — kế hoạch triển khai, kế hoạch đào tạo, cam kết bảo hành, hồ sơ nghiệm thu — nay là
@@ -159,7 +170,7 @@ mục 5 đòi — kế hoạch triển khai, kế hoạch đào tạo, cam kết
 
 | Tài liệu | Nội dung |
 |---|---|
-| `docs/08-so-loi.md` | Sổ lỗi chín đợt: 37 lỗi hai đợt đầu, 5 lỗi đợt rà thứ hai (mục E), 9 lỗi đợt áp bản thiết kế (mục G), 7 lỗi đợt rà thứ ba (mục H), 8 lỗi đợt triển khai (mục I), **88 lỗi năm đợt rà theo đặc tả ngày 04–05/09/2026 (mục J và các mục con)**, 23 lỗi nghiệm thu thử và soi số học (mục K), **14 lỗi ba đợt rà ngày 06–07/09/2026 (mục L)** |
+| `docs/08-so-loi.md` | Sổ lỗi chín đợt: 37 lỗi hai đợt đầu, 5 lỗi đợt rà thứ hai (mục E), 9 lỗi đợt áp bản thiết kế (mục G), 7 lỗi đợt rà thứ ba (mục H), 8 lỗi đợt triển khai (mục I), **88 lỗi năm đợt rà theo đặc tả ngày 04–05/09/2026 (mục J và các mục con)**, 23 lỗi nghiệm thu thử và soi số học (mục K), **14 lỗi ba đợt rà ngày 06–07/09/2026 (mục L)**, 19 lỗi năm đợt rà ngang ngày 07/09/2026 (mục M–Q), **4 lỗi đợt rà tầng tệp xuất ngày 08/09/2026 (mục R)** |
 | `docs/09-nguon-du-lieu.md` | Khảo sát 16 nguồn dữ liệu thư mục, giấy phép từng nguồn, kết quả nạp |
 | `docs/10-ke-hoach-trien-khai.md` | Kế hoạch triển khai, chạy thử và chuyển đổi dữ liệu (Chương V mục III.1) |
 | `docs/11-ke-hoach-dao-tao.md` | Kế hoạch đào tạo 16 buổi cho 7 nhóm học viên (Chương V mục III.2) |
@@ -188,7 +199,7 @@ huống lỗi; phải tự tay dựng đúng bối cảnh ấy trong phép thử
 **Lệnh chạy đúng:**
 
 ```bash
-cd backend  && dotnet test                 # 647 unit + 540 integration
+cd backend  && dotnet test                 # 655 unit + 544 integration
 cd frontend-admin && npx tsc -b && npx vitest run    # 347 test
 cd frontend-opac  && npx tsc -b && npx vitest run    # 102 test
 cd mobile   && flutter analyze && flutter test       # 124 test
@@ -232,6 +243,7 @@ vướng — mỗi cái sinh ra từ một lỗi đã xảy ra thật:
 | `backend/.../Infrastructure/VietnameseFontStackTests.cs` | Không nơi nào gọi tên Georgia trong danh sách phông — Georgia thiếu glyph dựng sẵn của ố, ề, ắ, ữ nên trình duyệt tách dấu ra đứng cạnh nguyên âm. Quét cả ảnh SVG của bộ dữ liệu trình diễn lẫn `styles.css`/`theme.ts` của hai giao diện |
 | `backend/.../Infrastructure/DeployScriptTests.cs` | `gh-deploy.sh` phải có bước `don_anh_cu` giữ bản mới và bản trước, xoá ảnh `libraryconnect-*` còn lại — 20 bộ ảnh cũ từng làm đầy ổ 96 GB và chặn mọi lượt triển khai |
 | `backend/.../Security/LocalTimeInMessagesTests.cs` (luật thứ hai) | Nhãn kỳ của biểu đồ (`…At.ToString("yyyy…")`) cũng phải qua `ToLocalTime()` — luật cũ chỉ dò chuỗi có `HH` nên nhãn `yyyy-MM` lọt lưới, và một lượt xem lúc 02:00 ngày 01/09 hiện ở cột tháng 8 |
+| `backend/.../Infrastructure/PdfTextLayerTests.cs` | Chữ rút lại từ tệp PDF phải bằng chữ ghi vào — đo bằng PdfPig, thư viện của người khác. Và sáu bộ dựng PDF phải khai phông qua `PdfTextStyles.Base()`, không bộ nào khai `FontFamily` thẳng: ghép chữ của Lato làm "thông tin" rút ra thành "thông ঞn" trong khi trang in nhìn vẫn đúng |
 | `backend/.../Infrastructure/StablePagingOrderTests.cs` | Mọi lượt `ToPagedResultAsync` phải kết thúc chuỗi sắp xếp bằng một khóa duy nhất — qua `ApplySort` (tự gắn) hoặc tự viết `ThenBy(x => x.Id)`. Sắp theo cột không duy nhất là trang sau lặp dòng của trang trước và đúng bấy nhiêu dòng khác không bao giờ hiện ra: 396 dòng tiền phạt chỉ có 316 dòng khác nhau |
 
 > Một phép thử quét mã nguồn chỉ chặn đúng thư mục nó quét. Thêm luật mới thì hỏi ngay: gói kia có
@@ -613,6 +625,23 @@ docker compose run --rm -d --name lc-api-kiem -e LC_DB_NAME=lc_kiem -e LC_SEED_D
     không nói cho người dùng biết họ vừa hỏi sai. Chọn một lối — nói ra — rồi đặt nó ở **đường
     ống**, không ở từng bộ lọc, vì mỗi bộ lọc thêm vào ngày mai là một cơ hội quên.
 
+89. **Trang in nhìn đúng không có nghĩa là lớp chữ đúng.** Ghép chữ (ligature) của phông thay mỗi
+    cặp chữ bằng **một glyph**, và bảng ToUnicode ghi vào tệp PDF không tra ngược được glyph ấy về
+    hai chữ cái gốc — nó điền đại một mã khác. Mắt đọc "tình trạng", máy đọc "টnh trạng": Ctrl+F
+    trong chính tệp báo cáo không tìm ra chữ, chép ra ngoài dán thành chữ Bengali, công cụ đánh chỉ
+    mục toàn văn đọc sai cả tệp. Ảnh chụp màn hình không bắt được (bài học 13 ở một chỗ khác). Cách
+    đo dứt điểm: rút chữ từ tệp bằng thư viện của người khác rồi tìm ký tự nằm ngoài bảng chữ Việt.
+90. **Ô tìm kiếm không phải là ô duyệt.** Danh mục phân cấp duyệt theo từng cấp là đúng — cho tới
+    khi người dùng gõ từ khoá. Ràng buộc "chỉ hiện mục cấp gốc" áp cả cho lượt tìm kiếm làm 114
+    trong 124 chỉ số phân loại không bao giờ tìm ra được, và màn hình trả bảng trắng không nói vì
+    sao. Mỗi khi một danh sách có hai chế độ — duyệt và tìm — hỏi xem bộ lọc của chế độ này có đang
+    bám theo chế độ kia không.
+91. **Tầng tệp xuất là một tầng riêng, và nó có hai định dạng.** Bài học 78 kể tên bốn tầng đọc dữ
+    liệu; tầng tệp xuất còn chia đôi nữa. Dòng "danh sách đã chạm trần" của O5 ghép vào
+    `PdfReportHeader.Criteria` nên tới được bản PDF, còn lối Excel không có tham số nào cho phần
+    tiêu chí — mà Excel mới là định dạng cán bộ xuất danh sách. Sửa xong một thứ ở tầng tệp thì hỏi
+    ngay: **định dạng kia có nhận được nó không?**
+
 ### A.4. Cơ chế dùng chung — dùng lại, đừng viết chỗ mới
 
 Sáu thứ dưới đây sinh ra để chặn "chỗ thứ tám quên gọi". Thêm chức năng cùng loại thì cắm vào đây,
@@ -625,6 +654,8 @@ Sáu thứ dưới đây sinh ra để chặn "chỗ thứ tám quên gọi". Th
 | `IStaffNotifier` (`NotifyUsersAsync` / `NotifyGroupAsync` / `NotifyPermissionAsync`) | Việc cần cán bộ biết: chờ duyệt, quá hạn, việc nền hỏng | Người nhận là `Expression<Func<User,bool>>` đẩy xuống SQL; gửi thư hỏng thì ghi nhật ký, không ném |
 | `DateRangeBehaviour` (đường ống MediatR) | Mọi yêu cầu có cặp ô ngày | Soi bảy cặp tên (`FromDate`/`ToDate`, `From`/`To`, `CreatedFrom`/`CreatedTo`…) trên chính yêu cầu và trên `Filter` của nó; thêm cặp tên mới thì khai vào đây, đừng kiểm ở handler |
 | `ISessionValidator` (`OnTokenValidated` trong `Program.cs`) | Mọi câu hỏi "chủ thẻ đăng nhập này còn được vào không" | Khoá tài khoản / khoá thẻ / xoá hồ sơ phải gọi `ForgetUserAsync` hay `ForgetReaderAsync` ngay sau khi lưu, nếu không đệm 30 giây giữ trạng thái cũ |
+| `PdfTextStyles.Base()` (`Reporting/Pdf`) | Mọi bộ dựng PDF — báo cáo, phích, thẻ, tem, nhãn, biểu mẫu | Khai phông và tắt ghép chữ ở một chỗ; khai `FontFamily` thẳng là lớp chữ của tệp ấy lại rút ra sai |
+| `ReportRowLimit` + tham số `criteria` của `IExcelService.Write` | Mọi lối xuất có trần số dòng hoặc có bộ lọc | Dòng "đã chạm trần" và phần tiêu chí phải tới **cả** bản PDF lẫn bản Excel |
 | `IBibRecordWriter.ApplyAsync` | Mọi lượt sửa dữ liệu rút từ MARC | Nhớ `.Include(Authors/Subjects/Keywords/Classifications)`, thiếu là bộ ghi thêm lại liên kết và đổ ở `ux_bib_classifications` |
 
 Lệnh sinh migration chạy đúng trong kho này (dự án hạ tầng vừa là dự án khởi động):

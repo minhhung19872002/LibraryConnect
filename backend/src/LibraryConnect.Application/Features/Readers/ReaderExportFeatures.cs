@@ -65,7 +65,8 @@ public class ExportReadersQueryHandler : IRequestHandler<ExportReadersQuery, Pri
             new("Còn nợ (đ)", row => row.DebtAmount, 13, "#,##0")
         };
 
-        var content = _excel.Write("Bạn đọc", columns, rows, "DANH SÁCH BẠN ĐỌC");
+        var content = _excel.Write("Bạn đọc", columns, rows, "DANH SÁCH BẠN ĐỌC",
+            Common.Models.ReportRowLimit.WithNote(Array.Empty<string>(), rows.Count, MaxRows));
 
         // Xuất dữ liệu cá nhân phải để lại dấu vết (6.2): ghi ai xuất, lúc nào, bao nhiêu hồ sơ.
         await _audit.LogAsync(AuditAction.Export, "Reader", null,
@@ -202,7 +203,7 @@ public class ExportReaderReportQueryHandler : IRequestHandler<ExportReaderReport
         };
 
         return Excel(_excel.Write("Thống kê bạn đọc", excelColumns, rows,
-            $"{header.Title} — {header.Subtitle}"), "thong-ke-ban-doc");
+            $"{header.Title} — {header.Subtitle}", header.Criteria), "thong-ke-ban-doc");
     }
 
     private async Task<PrintedFileDto> ExportRegistrationAsync(
@@ -232,7 +233,7 @@ public class ExportReaderReportQueryHandler : IRequestHandler<ExportReaderReport
             new("Cộng dồn", row => row.Cumulative, 14)
         };
 
-        return Excel(_excel.Write("Đăng ký mới", excelColumns, rows, header.Title), "ban-doc-dang-ky-moi");
+        return Excel(_excel.Write("Đăng ký mới", excelColumns, rows, header.Title, header.Criteria), "ban-doc-dang-ky-moi");
     }
 
     private async Task<PrintedFileDto> ExportExpiringAsync(
@@ -244,6 +245,8 @@ public class ExportReaderReportQueryHandler : IRequestHandler<ExportReaderReport
         header.Title = "THẺ SẮP HẾT HẠN VÀ ĐÃ HẾT HẠN";
         header.Subtitle = $"Trong vòng {query.WithinDays} ngày tới";
         header.Landscape = true;
+        header.Criteria = Common.Models.ReportRowLimit.WithNote(
+            header.Criteria, report.Rows.Count, Common.Models.ReportRowLimit.ExpiringCards);
 
         if (query.AsPdf)
         {
@@ -277,7 +280,7 @@ public class ExportReaderReportQueryHandler : IRequestHandler<ExportReaderReport
         };
 
         return Excel(_excel.Write("Thẻ sắp hết hạn", excelColumns, report.Rows,
-            $"{header.Title} — {header.Subtitle}"), "the-sap-het-han");
+            $"{header.Title} — {header.Subtitle}", header.Criteria), "the-sap-het-han");
     }
 
     private async Task<PrintedFileDto> ExportActivityAsync(
@@ -321,7 +324,7 @@ public class ExportReaderReportQueryHandler : IRequestHandler<ExportReaderReport
             new("Lần mượn gần nhất", row => row.LastLoanAt?.ToString("dd/MM/yyyy"), 18)
         };
 
-        return Excel(_excel.Write("Bạn đọc", excelColumns, rows, header.Title), "ban-doc-tich-cuc");
+        return Excel(_excel.Write("Bạn đọc", excelColumns, rows, header.Title, header.Criteria), "ban-doc-tich-cuc");
     }
 
     private PrintedFileDto Pdf(byte[] content, string name) =>

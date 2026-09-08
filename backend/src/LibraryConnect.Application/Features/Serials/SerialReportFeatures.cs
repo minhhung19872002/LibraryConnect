@@ -280,7 +280,7 @@ public class ExportSerialReportQueryHandler : IRequestHandler<ExportSerialReport
             };
 
             return new ExportedFile(
-                _excel.Write("Ấn phẩm định kỳ", columns, report.Rows, header.Title),
+                _excel.Write("Ấn phẩm định kỳ", columns, report.Rows, header.Title, header.Criteria),
                 $"{name}.xlsx",
                 ExportedFile.ExcelContentType);
         }

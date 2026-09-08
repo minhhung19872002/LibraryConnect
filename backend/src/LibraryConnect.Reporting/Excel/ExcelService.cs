@@ -96,7 +96,12 @@ public class ExcelService : IExcelService
         }
     }
 
-    public byte[] Write<T>(string sheetName, IReadOnlyList<ExcelColumn<T>> columns, IEnumerable<T> rows, string? title = null)
+    public byte[] Write<T>(
+        string sheetName,
+        IReadOnlyList<ExcelColumn<T>> columns,
+        IEnumerable<T> rows,
+        string? title = null,
+        IReadOnlyList<string>? criteria = null)
     {
         using var workbook = new XLWorkbook();
         var sheet = workbook.AddWorksheet(SafeSheetName(sheetName));
@@ -113,6 +118,27 @@ public class ExcelService : IExcelService
             sheet.Cell(2, 1).Value = $"Ngày xuất: {DateTimeOffset.Now:HH:mm dd/MM/yyyy}";
             sheet.Cell(2, 1).Style.Font.Italic = true;
             headerRow = 4;
+
+            // Tiêu chí lọc và dòng "danh sách đã chạm trần" của bản in đi qua PdfReportHeader.Criteria;
+            // bản Excel trước 08/09/2026 không có chỗ nào cho chúng, nên tệp mà cán bộ hay xuất nhất
+            // lại là tệp duy nhất không nói nó lọc theo gì và có bị cắt bớt hay không.
+            var dong = 3;
+
+            foreach (var muc in criteria ?? Array.Empty<string>())
+            {
+                if (string.IsNullOrWhiteSpace(muc))
+                {
+                    continue;
+                }
+
+                var cell = sheet.Cell(dong, 1);
+                cell.Value = muc;
+                cell.Style.Font.Italic = true;
+                sheet.Range(dong, 1, dong, Math.Max(columns.Count, 1)).Merge();
+                dong++;
+            }
+
+            headerRow = dong + 1;
         }
 
         for (var i = 0; i < columns.Count; i++)

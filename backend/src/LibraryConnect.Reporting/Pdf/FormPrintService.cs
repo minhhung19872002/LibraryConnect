@@ -39,7 +39,7 @@ public class FormPrintService : IFormPrintService
             {
                 ApplyPageSize(page, template);
                 page.Margin(15, Unit.Millimetre);
-                page.DefaultTextStyle(style => style.FontFamily(Fonts.Lato).FontSize(fontSize));
+                page.DefaultTextStyle(style => style.Base().FontSize(fontSize));
 
                 page.Content().Column(column =>
                 {

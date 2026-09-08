@@ -312,7 +312,7 @@ public class ExpiringCardRowDto
 public class GetExpiringCardsReportQueryHandler
     : IRequestHandler<GetExpiringCardsReportQuery, ExpiringCardsReportDto>
 {
-    private const int MaxRows = 2000;
+    private const int MaxRows = Common.Models.ReportRowLimit.ExpiringCards;
 
     private readonly IApplicationDbContext _db;
     private readonly IDateTimeProvider _clock;

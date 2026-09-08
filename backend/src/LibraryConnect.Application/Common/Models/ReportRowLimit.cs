@@ -23,6 +23,12 @@ public static class ReportRowLimit
     /// <summary>Danh sách bạn đọc xuất ra Excel.</summary>
     public const int Readers = 50_000;
 
+    /// <summary>Nhật ký hệ thống xuất ra tệp — bảng này giữ vĩnh viễn nên luôn lớn hơn trần.</summary>
+    public const int AuditLogs = 50_000;
+
+    /// <summary>Danh sách thẻ sắp hết hạn của báo cáo bạn đọc.</summary>
+    public const int ExpiringCards = 2_000;
+
     /// <summary>True khi số dòng lấy được đã chạm trần, nghĩa là danh sách bị cắt bớt.</summary>
     public static bool Reached(int rowCount, int limit) => rowCount >= limit;
 

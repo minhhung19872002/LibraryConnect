@@ -25,7 +25,7 @@ public record ExportAuditLogsQuery(AuditLogListRequest Filter, ExportFormat Form
 
 public class ExportAuditLogsQueryHandler : IRequestHandler<ExportAuditLogsQuery, ExportedFile>
 {
-    private const int MaxExportRows = 50_000;
+    private const int MaxExportRows = Common.Models.ReportRowLimit.AuditLogs;
 
     private readonly IApplicationDbContext _db;
     private readonly IExcelService _excel;
@@ -64,9 +64,15 @@ public class ExportAuditLogsQueryHandler : IRequestHandler<ExportAuditLogsQuery,
 
         var timestamp = DateTimeOffset.Now.ToString("yyyyMMdd-HHmm");
 
+        // Bảng nhật ký giữ vĩnh viễn (ràng buộc kỹ thuật số 6) nên lượt xuất không lọc gần như
+        // luôn chạm trần: màn hình nói 196.612 dòng, tệp mang về 50.000 và trước 08/09/2026 không
+        // có chữ nào nói ra. Tệp nhật ký là thứ đi kèm biên bản kiểm tra, không được im lặng.
+        var criteria = Common.Models.ReportRowLimit.WithNote(
+            DescribeFilter(request.Filter), rows.Count, MaxExportRows);
+
         var file = request.Format == ExportFormat.Excel
-            ? BuildExcel(rows, timestamp)
-            : await BuildPdfAsync(rows, request.Filter, timestamp, ct);
+            ? BuildExcel(rows, timestamp, criteria)
+            : await BuildPdfAsync(rows, criteria, timestamp, ct);
 
         // Exporting the audit trail is itself an auditable event (section 6.2).
         await _audit.LogAsync(AuditAction.Export, "AuditLog", null, file.FileName,
@@ -75,7 +81,8 @@ public class ExportAuditLogsQueryHandler : IRequestHandler<ExportAuditLogsQuery,
         return file;
     }
 
-    private ExportedFile BuildExcel(IReadOnlyList<AuditLogListItemDto> rows, string timestamp)
+    private ExportedFile BuildExcel(
+        IReadOnlyList<AuditLogListItemDto> rows, string timestamp, IReadOnlyList<string> criteria)
     {
         var columns = new List<ExcelColumn<AuditLogListItemDto>>
         {
@@ -89,19 +96,19 @@ public class ExportAuditLogsQueryHandler : IRequestHandler<ExportAuditLogsQuery,
             new("Địa chỉ IP", r => r.Ip ?? string.Empty, 16)
         };
 
-        var content = _excel.Write("Nhật ký hệ thống", columns, rows, "NHẬT KÝ HỆ THỐNG");
+        var content = _excel.Write("Nhật ký hệ thống", columns, rows, "NHẬT KÝ HỆ THỐNG", criteria);
         return new ExportedFile(content, $"nhat-ky-he-thong-{timestamp}.xlsx", ExportedFile.ExcelContentType);
     }
 
     private async Task<ExportedFile> BuildPdfAsync(
-        IReadOnlyList<AuditLogListItemDto> rows, AuditLogListRequest filter, string timestamp, CancellationToken ct)
+        IReadOnlyList<AuditLogListItemDto> rows, IReadOnlyList<string> criteria, string timestamp, CancellationToken ct)
     {
         var header = new PdfReportHeader
         {
             LibraryName = await _parameters.GetAsync("LIBRARY.NAME", "Thư viện", ct),
             LibraryAddress = await _parameters.GetAsync("LIBRARY.ADDRESS", string.Empty, ct),
             Title = "Nhật ký hệ thống",
-            Criteria = DescribeFilter(filter),
+            Criteria = criteria,
             PreparedBy = _currentUser.FullName ?? _currentUser.Username,
             Landscape = true
         };

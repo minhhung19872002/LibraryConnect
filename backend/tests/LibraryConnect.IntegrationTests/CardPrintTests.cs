@@ -145,6 +145,31 @@ public class CardPrintTests
     }
 
     [Fact]
+    public async Task Loai_phich_khong_co_that_duoc_noi_dung_ten_no()
+    {
+        // Loại phích lạ và biểu ghi thiếu dữ liệu cùng dẫn tới "không dựng được phích nào". Trả một
+        // câu chung cho cả hai đẩy cán bộ đi sửa biểu ghi trong khi chỗ sai nằm ở yêu cầu gửi lên —
+        // đúng cái bẫy "một lời báo lỗi sai còn tệ hơn không có lời nào".
+        var client = await ClientAsync();
+        var bibId = await CreateRecordAsync(client, $"Sách có đủ dữ liệu {Guid.NewGuid():N}", "Tin học");
+
+        var response = await client.PostAsJsonAsync("/api/cataloging/cards/print", new
+        {
+            bibIds = new[] { bibId },
+            cardTypes = new[] { "Main" }
+        }, LibraryConnectFactory.JsonOptions);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+        var payload = await response.Content.ReadFromJsonAsync<ApiResponse<object>>(LibraryConnectFactory.JsonOptions);
+
+        payload!.Errors.Should().Contain(error => error.Message.Contains("Không có loại phích Main"),
+            "chỗ sai là tên loại phích gửi lên, không phải dữ liệu của biểu ghi");
+        payload.Errors.Should().Contain(error => error.Message.Contains("MAIN"),
+            "câu báo lỗi phải kể ra các loại đang dùng được");
+    }
+
+    [Fact]
     public async Task A_designed_template_is_used_when_it_is_chosen()
     {
         var client = await ClientAsync();

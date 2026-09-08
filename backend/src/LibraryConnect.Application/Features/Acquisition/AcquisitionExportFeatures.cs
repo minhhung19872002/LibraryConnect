@@ -114,7 +114,7 @@ public class ExportAcquisitionReportQueryHandler
             columns.Add(new ExcelColumn<GroupedRow>("Giá trị (VNĐ)", row => row.Value, 18, "#,##0"));
 
             return new ExportedFile(
-                _excel.Write("Báo cáo", columns, rows, header.Title),
+                _excel.Write("Báo cáo", columns, rows, header.Title, header.Criteria),
                 $"{name}.xlsx",
                 ExportedFile.ExcelContentType);
         }
@@ -247,7 +247,7 @@ public class ExportAcquisitionReportQueryHandler
             };
 
             return new ExportedFile(
-                _excel.Write("Bổ sung", columns, rows, header.Title),
+                _excel.Write("Bổ sung", columns, rows, header.Title, header.Criteria),
                 $"{name}.xlsx",
                 ExportedFile.ExcelContentType);
         }
@@ -295,7 +295,7 @@ public class ExportAcquisitionReportQueryHandler
             };
 
             return new ExportedFile(
-                _excel.Write("Hủy bỏ", columns, rows, header.Title),
+                _excel.Write("Hủy bỏ", columns, rows, header.Title, header.Criteria),
                 $"{name}.xlsx",
                 ExportedFile.ExcelContentType);
         }
@@ -341,7 +341,7 @@ public class ExportAcquisitionReportQueryHandler
             };
 
             return new ExportedFile(
-                _excel.Write("Thống kê", columns, report.Rows, header.Title),
+                _excel.Write("Thống kê", columns, report.Rows, header.Title, header.Criteria),
                 $"{name}.xlsx",
                 ExportedFile.ExcelContentType);
         }
@@ -401,7 +401,7 @@ public class ExportAcquisitionReportQueryHandler
                 .ToList();
 
             return new ExportedFile(
-                _excel.Write("Tổng hợp", columns, rows, header.Title),
+                _excel.Write("Tổng hợp", columns, rows, header.Title, header.Criteria),
                 $"{name}.xlsx",
                 ExportedFile.ExcelContentType);
         }
@@ -473,7 +473,8 @@ public class ExportStockItemsQueryHandler : IRequestHandler<ExportStockItemsQuer
         };
 
         return new ExportedFile(
-            _excel.Write("ĐKCB", columns, rows, "DANH SÁCH ẤN PHẨM TRONG KHO"),
+            _excel.Write("ĐKCB", columns, rows, "DANH SÁCH ẤN PHẨM TRONG KHO",
+                Common.Models.ReportRowLimit.WithNote(Array.Empty<string>(), rows.Count, MaxRows)),
             $"dkcb-{_clock.Today:yyyyMMdd}.xlsx",
             ExportedFile.ExcelContentType);
     }

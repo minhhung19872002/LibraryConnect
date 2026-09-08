@@ -130,7 +130,7 @@ public class ExportCirculationReportQueryHandler
         };
 
         return Excel(_excel.Write("Ra vào thư viện", excelColumns, rows,
-            $"{header.Title} — {header.Subtitle}"), "bao-cao-ra-vao");
+            $"{header.Title} — {header.Subtitle}", header.Criteria), "bao-cao-ra-vao");
     }
 
     private async Task<PrintedFileDto> ExportLoansAsync(
@@ -158,7 +158,7 @@ public class ExportCirculationReportQueryHandler
         return query.AsPdf
             ? Pdf(_pdf.RenderTable(header, LoanPdfColumns(current), rows),
                 current ? "dang-muon" : "lich-su-muon-tra")
-            : Excel(_excel.Write("Mượn trả", LoanExcelColumns(current), rows, header.Title),
+            : Excel(_excel.Write("Mượn trả", LoanExcelColumns(current), rows, header.Title, header.Criteria),
                 current ? "dang-muon" : "lich-su-muon-tra");
     }
 
@@ -204,7 +204,7 @@ public class ExportCirculationReportQueryHandler
         };
 
         return Excel(_excel.Write("Quá hạn", excelColumns, report.Rows,
-            $"{header.Title} — {header.Subtitle}"), "qua-han");
+            $"{header.Title} — {header.Subtitle}", header.Criteria), "qua-han");
     }
 
     private async Task<PrintedFileDto> ExportLockersAsync(
@@ -241,7 +241,7 @@ public class ExportCirculationReportQueryHandler
         };
 
         return Excel(_excel.Write("Tủ gửi đồ", excelColumns, rows,
-            $"{header.Title} — {header.Subtitle}"), "tu-gui-do");
+            $"{header.Title} — {header.Subtitle}", header.Criteria), "tu-gui-do");
     }
 
     private async Task<PrintedFileDto> ExportTopReadersAsync(
@@ -280,7 +280,7 @@ public class ExportCirculationReportQueryHandler
             new("Lần mượn gần nhất", row => row.LastLoanAt?.ToString("dd/MM/yyyy"), 18)
         };
 
-        return Excel(_excel.Write("Bạn đọc tích cực", excelColumns, rows, header.Title),
+        return Excel(_excel.Write("Bạn đọc tích cực", excelColumns, rows, header.Title, header.Criteria),
             "ban-doc-muon-nhieu");
     }
 
@@ -318,7 +318,7 @@ public class ExportCirculationReportQueryHandler
             new("Lần mượn gần nhất", row => row.LastLoanAt?.ToString("dd/MM/yyyy"), 18)
         };
 
-        return Excel(_excel.Write("Ấn phẩm mượn nhiều", excelColumns, rows, header.Title),
+        return Excel(_excel.Write("Ấn phẩm mượn nhiều", excelColumns, rows, header.Title, header.Criteria),
             "an-pham-muon-nhieu");
     }
 

@@ -519,7 +519,7 @@ public class ExportDigitalReportQueryHandler : IRequestHandler<ExportDigitalRepo
         };
 
         return Excel(
-            _excel.Write("Tài liệu số", excelColumns, rows, $"{header.Title} — {header.Subtitle}"),
+            _excel.Write("Tài liệu số", excelColumns, rows, $"{header.Title} — {header.Subtitle}", header.Criteria),
             "bao-cao-tai-lieu-so");
     }
 
@@ -560,7 +560,7 @@ public class ExportDigitalReportQueryHandler : IRequestHandler<ExportDigitalRepo
         };
 
         return Excel(
-            _excel.Write("Lượt truy cập", excelColumns, rows, $"{header.Title} — {header.Subtitle}"),
+            _excel.Write("Lượt truy cập", excelColumns, rows, $"{header.Title} — {header.Subtitle}", header.Criteria),
             "bao-cao-luot-truy-cap");
     }
 
@@ -597,7 +597,7 @@ public class ExportDigitalReportQueryHandler : IRequestHandler<ExportDigitalRepo
         };
 
         return Excel(
-            _excel.Write("Dung lượng", excelColumns, rows, $"{header.Title} — {header.Subtitle}"),
+            _excel.Write("Dung lượng", excelColumns, rows, $"{header.Title} — {header.Subtitle}", header.Criteria),
             "bao-cao-dung-luong");
     }
 
@@ -635,7 +635,7 @@ public class ExportDigitalReportQueryHandler : IRequestHandler<ExportDigitalRepo
         };
 
         return Excel(
-            _excel.Write("Yêu cầu đọc", excelColumns, rows, $"{header.Title} — {header.Subtitle}"),
+            _excel.Write("Yêu cầu đọc", excelColumns, rows, $"{header.Title} — {header.Subtitle}", header.Criteria),
             "bao-cao-yeu-cau-doc");
     }
 

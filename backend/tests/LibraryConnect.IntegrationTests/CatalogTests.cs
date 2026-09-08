@@ -279,6 +279,61 @@ public class CatalogTests
     }
 
     [Fact]
+    public async Task O_tim_kiem_cua_danh_muc_phan_cap_tim_ca_nhung_muc_o_cap_duoi()
+    {
+        // Danh mục phân cấp duyệt theo từng cấp — đúng khi cán bộ đang đi từ gốc xuống. Nhưng gõ
+        // vào ô tìm kiếm không phải là duyệt: ràng buộc "chỉ cấp gốc" áp cả cho lượt tìm kiếm làm
+        // 114 trong 124 chỉ số phân loại của kho thật không bao giờ tìm ra được. Gõ đúng tên của
+        // một mục cấp hai vẫn ra bảng trắng, và không có gì trên màn hình nói vì sao.
+        var client = await ClientAsync();
+        var suffix = Guid.NewGuid().ToString("N")[..6].ToUpperInvariant();
+
+        var parentId = await ReadAsync<Guid>(await client.PostAsJsonAsync("/api/catalogs/subjects/items", new
+        {
+            code = $"KHUNG{suffix}",
+            name = $"Khung gốc {suffix}",
+            sortOrder = 0,
+            isActive = true,
+            extras = new Dictionary<string, string>()
+        }));
+
+        var childName = $"Thư viện học {suffix}";
+
+        await client.PostAsJsonAsync("/api/catalogs/subjects/items", new
+        {
+            code = $"CON{suffix}",
+            name = childName,
+            sortOrder = 0,
+            isActive = true,
+            parentId,
+            extras = new Dictionary<string, string>()
+        });
+
+        // Không có từ khoá thì vẫn duyệt theo cấp: mục con không được lẫn vào danh sách cấp gốc.
+        var roots = await client.GetFromJsonAsync<ApiResponse<PagedResult<CatalogItemDto>>>(
+            "/api/catalogs/subjects/items?page=1&pageSize=200", LibraryConnectFactory.JsonOptions);
+
+        roots!.Data!.Items.Should().NotContain(item => item.Name == childName,
+            "bỏ trống ô tìm kiếm là đang duyệt theo cấp, mục con thuộc nhánh của nó");
+
+        // Có từ khoá thì tìm khắp mọi cấp.
+        var found = await client.GetFromJsonAsync<ApiResponse<PagedResult<CatalogItemDto>>>(
+            $"/api/catalogs/subjects/items?page=1&pageSize=20&keyword={Uri.EscapeDataString(childName)}",
+            LibraryConnectFactory.JsonOptions);
+
+        found!.Data!.TotalCount.Should().Be(1,
+            "gõ đúng tên một mục cấp hai mà nhận về 0 dòng là ô tìm kiếm nói dối");
+        found.Data.Items.Single().Name.Should().Be(childName);
+
+        // Chọn nhánh cha trên ô "Thuộc cấp trên" thì vẫn lọc đúng nhánh ấy.
+        var underParent = await client.GetFromJsonAsync<ApiResponse<PagedResult<CatalogItemDto>>>(
+            $"/api/catalogs/subjects/items?page=1&pageSize=20&parentId={parentId}",
+            LibraryConnectFactory.JsonOptions);
+
+        underParent!.Data!.Items.Should().ContainSingle().Which.Name.Should().Be(childName);
+    }
+
+    [Fact]
     public async Task Duplicates_are_detected_across_spelling_variants_and_can_be_merged()
     {
         var client = await ClientAsync();

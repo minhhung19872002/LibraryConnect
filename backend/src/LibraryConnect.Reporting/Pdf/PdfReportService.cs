@@ -31,7 +31,7 @@ public class PdfReportService : IPdfReportService
             {
                 page.Size(header.Landscape ? PageSizes.A4.Landscape() : PageSizes.A4);
                 page.Margin(1.2f, Unit.Centimetre);
-                page.DefaultTextStyle(style => style.FontFamily(Fonts.Lato).FontSize(9));
+                page.DefaultTextStyle(style => style.Base().FontSize(9));
 
                 page.Header().Element(element => ComposeHeader(element, header));
                 page.Content().PaddingVertical(8).Element(element => ComposeTable(element, columns, rows));

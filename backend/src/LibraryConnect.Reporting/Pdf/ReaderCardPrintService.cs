@@ -116,7 +116,7 @@ public class ReaderCardPrintService : IReaderCardPrintService
         {
             page.Size((float)template.WidthMm, (float)template.HeightMm, Unit.Millimetre);
             page.Margin(0);
-            page.DefaultTextStyle(style => style.FontFamily(Fonts.Lato));
+            page.DefaultTextStyle(style => style.Base());
             page.Content().Element(element => DrawFace(element, face, card, library, barcodes, template));
         });
     }
@@ -167,7 +167,7 @@ public class ReaderCardPrintService : IReaderCardPrintService
         {
             page.Size(PageSizes.A4);
             page.Margin(SheetMarginMm, Unit.Millimetre);
-            page.DefaultTextStyle(style => style.FontFamily(Fonts.Lato));
+            page.DefaultTextStyle(style => style.Base());
 
             page.Content().Column(column =>
             {

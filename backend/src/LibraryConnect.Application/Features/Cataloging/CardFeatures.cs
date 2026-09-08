@@ -193,6 +193,20 @@ public class PrintCardsCommandHandler : IRequestHandler<PrintCardsCommand, MarcE
             throw new Common.Exceptions.ValidationException("CardTypes", "Chưa chọn loại phích cần in.");
         }
 
+        // Loại phích lạ và biểu ghi thiếu dữ liệu đều dẫn tới "không dựng được phích nào", nhưng đó
+        // là hai chuyện khác nhau: một cái là lỗi của yêu cầu gửi lên, một cái là lỗi của dữ liệu.
+        // Trả cùng một câu cho cả hai là chỉ người dùng đi tìm ở chỗ không có gì (bài học 52).
+        var loaiLa = request.CardTypes
+            .Where(loai => !CardTypes.Labels.ContainsKey(loai))
+            .ToList();
+
+        if (loaiLa.Count > 0)
+        {
+            throw new Common.Exceptions.ValidationException("CardTypes",
+                $"Không có loại phích {string.Join(", ", loaiLa)}. Các loại đang dùng được: "
+                + string.Join(", ", CardTypes.Labels.Select(muc => $"{muc.Key} ({muc.Value})")) + ".");
+        }
+
         var template = await FindTemplateAsync(request, ct);
 
         var query = request.BibIds.Count > 0

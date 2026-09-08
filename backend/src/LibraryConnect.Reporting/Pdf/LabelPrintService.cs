@@ -111,7 +111,7 @@ public class LabelPrintService : ILabelPrintService
                 {
                     page.Size(PageSizes.A4);
                     page.Margin(0);
-                    page.DefaultTextStyle(style => style.FontFamily(Fonts.Lato));
+                    page.DefaultTextStyle(style => style.Base());
 
                     page.Content()
                         .PaddingTop((float)marginTopMm, Unit.Millimetre)
