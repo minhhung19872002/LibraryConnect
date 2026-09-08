@@ -607,10 +607,20 @@ thiết bị của bạn"*. Cách đi tiếp:
 
 1. Trong hộp thoại ấy, bấm dòng chữ **"Tiếp tục cài đặt"** nằm **phía trên** nút màu xanh.
    Nút *"Tôi hiểu"* — nút to nhất — là nút **huỷ cài**, đây là chỗ người dùng hay bấm nhầm.
-2. Máy nào không hiện dòng ấy: mở **CH Play → ảnh đại diện → Play Protect → biểu tượng ⚙ → tắt
-   "Quét ứng dụng bằng Play Protect"**, cài xong thì bật lại.
-3. Máy Xiaomi/Oppo/Vivo có thể hỏi thêm quyền **"Cài đặt ứng dụng không rõ nguồn gốc"** cho trình
+2. **Máy Samsung (One UI 6.1 trở lên) có thêm một lớp chặn nữa**: *Cài đặt → Bảo mật và quyền
+   riêng tư → **Chặn tự động** (Auto Blocker)*. Lớp này chặn mọi lượt cài ngoài CH Play **kể cả khi
+   đã bấm "Tiếp tục cài đặt"**, nên phải tắt nó trước; cài xong bật lại.
+3. Nếu vẫn bị chặn: mở **CH Play → ảnh đại diện → Play Protect → biểu tượng ⚙ → tắt "Quét ứng dụng
+   bằng Play Protect"**, cài xong thì bật lại.
+4. Máy Xiaomi/Oppo/Vivo có thể hỏi thêm quyền **"Cài đặt ứng dụng không rõ nguồn gốc"** cho trình
    duyệt hoặc trình quản lý tệp — cấp quyền cho đúng ứng dụng đang mở tệp APK.
+5. Cách chắc ăn khi mọi cách trên đều vướng: bật *Tuỳ chọn nhà phát triển → Gỡ lỗi USB*, cắm máy vào
+   máy tính rồi chạy `adb install LibraryConnect.apk` — đường này không đi qua Play Protect.
+
+> **Ghi cho hồ sơ nghiệm thu:** tệp APK của sản phẩm **được ký hợp lệ** bằng khoá phát hành riêng —
+> kiểm bằng `apksigner verify --print-certs`: chữ ký sơ đồ v2, chứng thư `CN=LibraryConnect,
+> O=BlueStar Technology`, RSA 2048. Hộp thoại chặn của Android **không nói tệp hỏng hay tệp giả**,
+> nó chỉ nói Play Protect chưa từng thấy chữ ký này vì ứng dụng không phát hành qua Google Play.
 
 Muốn tránh hẳn bước này thì phát hành qua Google Play hoặc qua hệ quản lý thiết bị của trường; cả
 hai đều dùng đúng tệp AAB/APK mà quy trình dựng đang sinh ra.

@@ -85,9 +85,11 @@ export function MobileAppSection() {
           <strong>Khi cài trên Android:</strong> máy sẽ hiện hộp thoại “Đã chặn ứng dụng để bảo vệ
           thiết bị của bạn”. Đây là cảnh báo mặc định của Google Play Protect với mọi ứng dụng không
           tải từ CH Play, không phải lỗi của tệp. Hãy bấm dòng chữ <strong>“Tiếp tục cài đặt”</strong>{' '}
-          nằm phía trên nút xanh — nút “Tôi hiểu” sẽ huỷ việc cài. Máy nào không hiện dòng ấy thì mở
-          CH Play → ảnh đại diện → Play Protect → cài đặt (⚙) → tắt “Quét ứng dụng bằng Play
-          Protect”, cài xong bật lại.
+          nằm phía trên nút xanh — nút “Tôi hiểu” sẽ huỷ việc cài. Máy nào bấm dòng ấy vẫn bị chặn
+          thì tắt tạm hai thứ rồi cài lại, xong bật lên như cũ: <em>Cài đặt → Bảo mật và quyền riêng
+          tư → Chặn tự động</em> (máy Samsung), và <em>CH Play → ảnh đại diện → Play Protect → ⚙ →
+          Quét ứng dụng bằng Play Protect</em>. Máy Xiaomi/Oppo/Vivo có thể hỏi thêm quyền “Cài đặt
+          ứng dụng không xác định” cho trình duyệt hoặc trình quản lý tệp.
         </div>
       ) : null}
     </Section>

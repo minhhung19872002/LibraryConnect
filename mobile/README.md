@@ -44,8 +44,19 @@ không ai dẫn tới:
 
 **Play Protect chặn lần cài đầu.** Ứng dụng ký bằng khoá phát hành riêng, không qua Google Play, nên
 Android hiện *"Đã chặn ứng dụng để bảo vệ thiết bị của bạn"*. Phải bấm **"Tiếp tục cài đặt"** — dòng
-chữ nhỏ phía trên — chứ không phải nút xanh *"Tôi hiểu"*, vốn là nút huỷ. Khối trên trang chủ OPAC
-đã in sẵn hướng dẫn này cho bạn đọc; `docs/01-huong-dan-su-dung.md` mục 16.0 chép lại đầy đủ.
+chữ nhỏ phía trên — chứ không phải nút xanh *"Tôi hiểu"*, vốn là nút huỷ. **Máy Samsung One UI 6.1+
+còn một lớp nữa**: *Cài đặt → Bảo mật và quyền riêng tư → Chặn tự động (Auto Blocker)* chặn cài
+ngoài CH Play kể cả khi đã bấm "Tiếp tục cài đặt". Khối trên trang chủ OPAC đã in sẵn hướng dẫn này
+cho bạn đọc; `docs/01-huong-dan-su-dung.md` mục 16.0 chép lại đầy đủ, kèm lối cài bằng `adb install`
+khi mọi cách khác đều vướng.
+
+Tệp phát hành **được ký thật**, kiểm lại bất cứ lúc nào bằng:
+
+```
+apksigner verify --print-certs -v LibraryConnect.apk
+# Verified using v2 scheme: true
+# Signer #1 certificate DN: CN=LibraryConnect, OU=BlueStar, O=BlueStar Technology, L=Ho Chi Minh, C=VN
+```
 
 ## Cấu hình endpoint và môi trường
 
