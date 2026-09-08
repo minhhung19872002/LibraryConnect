@@ -227,10 +227,14 @@ public class UpdateParametersCommandHandler : IRequestHandler<UpdateParametersCo
                 message: $"Cập nhật {changed} tham số hệ thống", ct: ct);
         }
 
-        // Lịch sao lưu chỉ được đọc một lần lúc máy chủ khởi động, nên đổi tham số thôi thì việc
-        // định kỳ vẫn chạy theo giờ cũ. Đăng ký lại ngay để cái người quản trị nhìn thấy và cái
-        // thật sự chạy là một.
-        if (request.Parameters.Any(input => input.Key.StartsWith("BACKUP.", StringComparison.Ordinal)))
+        // Lịch của việc chạy nền chỉ được đọc một lần lúc máy chủ khởi động, nên đổi tham số thôi
+        // thì việc định kỳ vẫn chạy theo giờ cũ. Đăng ký lại ngay để cái người quản trị nhìn thấy và
+        // cái thật sự chạy là một.
+        //
+        // Không lọc theo tiền tố khoá: lượt lọc trước đây chỉ nhận "BACKUP." nên lịch thu hoạch
+        // OAI-PMH lặng lẽ giữ giờ cũ, và chỗ thứ ba thêm vào ngày mai sẽ lại quên. Đăng ký lại vài
+        // việc định kỳ là hai lượt ghi vào Hangfire, rẻ hơn nhiều một cấu hình không có tác dụng.
+        if (changed > 0)
         {
             await _backupSchedule.RefreshAsync(ct);
         }

@@ -39,13 +39,29 @@ public interface IPurchaseDuplicateFinder
 /// </summary>
 public class PurchaseDuplicateFinder : IPurchaseDuplicateFinder
 {
-    private readonly IApplicationDbContext _db;
+    /// <summary>Công tắc "Cảnh báo khi tài liệu đã có trong thư viện" trên màn hình Tham số.</summary>
+    public const string EnabledParameter = "ACQ.DUPLICATE_WARNING";
 
-    public PurchaseDuplicateFinder(IApplicationDbContext db) => _db = db;
+    private readonly IApplicationDbContext _db;
+    private readonly ISystemParameterService _parameters;
+
+    public PurchaseDuplicateFinder(IApplicationDbContext db, ISystemParameterService parameters)
+    {
+        _db = db;
+        _parameters = parameters;
+    }
 
     public async Task<PurchaseDuplicateDto?> FindAsync(
         string? isbn, string? title, CancellationToken ct = default)
     {
+        // Công tắc đặt ở đây chứ không ở từng bộ xử lý: hai lối cùng hỏi một câu — nút tra nhanh
+        // trên biểu mẫu và lượt tự tra khi lưu — nên tắt ở một chỗ mà quên chỗ kia là màn hình vẫn
+        // cảnh báo trong khi người quản trị tưởng đã tắt (bài học 42).
+        if (!await _parameters.GetAsync(EnabledParameter, true, ct))
+        {
+            return null;
+        }
+
         var normalisedIsbn = MarcProjection.NormaliseStandardNumber(isbn);
 
         if (!string.IsNullOrWhiteSpace(normalisedIsbn))

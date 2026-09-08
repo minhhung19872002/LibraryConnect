@@ -275,7 +275,9 @@ public partial class DatabaseSeeder
         new("BACKUP.NOTIFY_EMAIL", "BACKUP", "Cấu hình sao lưu", "Email nhận cảnh báo khi sao lưu lỗi", null, ParameterDataType.Text, ""),
 
         // ---- Mobile (chuẩn bị cho đợt sau) ----
-        new(ParameterKeys.MobileSelfCheckoutEnabled, "MOBILE", "Cấu hình ứng dụng di động", "Cho phép mượn tự phục vụ", null, ParameterDataType.Boolean, "false"),
+        // Công tắc bật/tắt mượn tự phục vụ chỉ có một: CIRCULATION.SELF_CHECKOUT_ENABLED. Ở đây
+        // từng có một bản sao "MOBILE.SELF_CHECKOUT_ENABLED" mà không nơi nào đọc — nó gieo giá trị
+        // "false" trong khi chức năng đang chạy, nên màn hình nói ngược với sự thật.
         new(ParameterKeys.MobileSelfCheckoutWifiSsid, "MOBILE", "Cấu hình ứng dụng di động", "Tên Wi-Fi xác thực vị trí",
             "App chỉ cho mượn tự phục vụ khi thiết bị đang kết nối Wi-Fi này.", ParameterDataType.Text, ""),
         new(ParameterKeys.MobileSelfCheckoutQrSecret, "MOBILE", "Cấu hình ứng dụng di động", "Khóa bí mật mã QR đặt tại kho",

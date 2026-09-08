@@ -199,7 +199,21 @@ kéo giãn của một phần tử flex, khiến nó tự đo theo nội dung th
 38 phép đo (gồm cả trạng thái đã đăng nhập và các trang chi tiết) không còn chỗ nào tràn. Lần này
 guard **là một phép thử đơn vị thật**, không chỉ là biên bản: `styles.phone.test.tsx` dựng cây DOM
 của khung trang rồi đọc `styles.css` như trình duyệt đọc ở 375 px và hỏi từng hàng flex có ai co
-được không. Tổng **219 lỗi, đã sửa 219**.
+được không.
+
+Đợt thứ hai mươi hai (08/09/2026) quay về một câu hỏi bài học 72 đã đặt ra rồi bỏ đó: bài học 30
+("công tắc được lưu không có nghĩa là có ai đọc nó") sinh ra từ **ba** chỗ gặp tình cờ, và suốt mười
+tám đợt không ai quét cả bảng tham số. Lần này quét: lấy **136** khoá từ chính máy chủ nghiệm thu —
+tệp bộ gieo chỉ khai 89, thiếu một phần ba — rồi hỏi từng khoá có chỗ đọc trong mã không. **136 phép
+đo, 4 công tắc chết**, nặng nhất là "Mở kho OAI-PMH của mình": tắt xong `/oai` vẫn trả
+`completeListSize="12950"` cho bất kỳ ai, mà đây là cổng duy nhất mở ra ngoài không cần mật khẩu.
+Một cái thì tệ hơn cả chết — bản sao của công tắc mượn tự phục vụ gieo `"false"` trong khi chức năng
+đang bật, tức màn hình **nói ngược**. Lỗi thứ năm là nửa còn lại của bài học 31: bộ đăng ký lại lịch
+chạy nền được gọi kèm `if (Key.StartsWith("BACKUP."))`, nên đổi "Lịch thu hoạch OAI-PMH" không có tác
+dụng tới lần khởi động lại. Đổi lại, luật khởi điểm của đợt — ràng buộc kỹ thuật số 6, *dữ liệu lưu
+vĩnh viễn, không xoá cứng* — **sạch hoàn toàn**: 62 lối xoá đều là xoá mềm, 69/70 chỉ mục duy nhất
+trên máy chủ có bộ lọc `deleted_at`, 341 biểu ghi đã xoá không rò ra tầng đọc nào, và OAI-PMH trả
+đúng `<header status="deleted">` cho nơi thu hoạch. Tổng **224 lỗi, đã sửa 224**.
 Phụ lục cuối `docs/06` ghi kết quả từng kịch bản (hơn 700 dòng).
 
 Đọc thẳng hồ sơ gốc còn tìm ra thứ không phải lỗi mã: **bốn hồ sơ bàn giao** mà Chương V mục III và
@@ -208,7 +222,7 @@ mục 5 đòi — kế hoạch triển khai, kế hoạch đào tạo, cam kết
 
 | Tài liệu | Nội dung |
 |---|---|
-| `docs/08-so-loi.md` | Sổ lỗi chín đợt: 37 lỗi hai đợt đầu, 5 lỗi đợt rà thứ hai (mục E), 9 lỗi đợt áp bản thiết kế (mục G), 7 lỗi đợt rà thứ ba (mục H), 8 lỗi đợt triển khai (mục I), **88 lỗi năm đợt rà theo đặc tả ngày 04–05/09/2026 (mục J và các mục con)**, 23 lỗi nghiệm thu thử và soi số học (mục K), **14 lỗi ba đợt rà ngày 06–07/09/2026 (mục L)**, 19 lỗi năm đợt rà ngang ngày 07/09/2026 (mục M–Q), **4 lỗi đợt rà tầng tệp xuất ngày 08/09/2026 (mục R)**, 6 lỗi đợt rà ứng dụng di động (mục S), 4 lỗi hai đợt đo khổ màn hình (mục T–U) |
+| `docs/08-so-loi.md` | Sổ lỗi chín đợt: 37 lỗi hai đợt đầu, 5 lỗi đợt rà thứ hai (mục E), 9 lỗi đợt áp bản thiết kế (mục G), 7 lỗi đợt rà thứ ba (mục H), 8 lỗi đợt triển khai (mục I), **88 lỗi năm đợt rà theo đặc tả ngày 04–05/09/2026 (mục J và các mục con)**, 23 lỗi nghiệm thu thử và soi số học (mục K), **14 lỗi ba đợt rà ngày 06–07/09/2026 (mục L)**, 19 lỗi năm đợt rà ngang ngày 07/09/2026 (mục M–Q), **4 lỗi đợt rà tầng tệp xuất ngày 08/09/2026 (mục R)**, 6 lỗi đợt rà ứng dụng di động (mục S), 4 lỗi hai đợt đo khổ màn hình (mục T–U), 5 lỗi đợt rà công tắc cấu hình (mục V) |
 | `docs/09-nguon-du-lieu.md` | Khảo sát 16 nguồn dữ liệu thư mục, giấy phép từng nguồn, kết quả nạp |
 | `docs/10-ke-hoach-trien-khai.md` | Kế hoạch triển khai, chạy thử và chuyển đổi dữ liệu (Chương V mục III.1) |
 | `docs/11-ke-hoach-dao-tao.md` | Kế hoạch đào tạo 16 buổi cho 7 nhóm học viên (Chương V mục III.2) |
@@ -237,7 +251,7 @@ huống lỗi; phải tự tay dựng đúng bối cảnh ấy trong phép thử
 **Lệnh chạy đúng:**
 
 ```bash
-cd backend  && dotnet test                 # 655 unit + 544 integration
+cd backend  && dotnet test                 # 656 unit + 548 integration
 cd frontend-admin && npx tsc -b && npx vitest run    # 350 test
 cd frontend-opac  && npx tsc -b && npx vitest run    # 106 test
 cd mobile   && flutter analyze && flutter test       # 143 test
@@ -287,6 +301,7 @@ vướng — mỗi cái sinh ra từ một lỗi đã xảy ra thật:
 | `backend/.../Infrastructure/PdfTextLayerTests.cs` | Chữ rút lại từ tệp PDF phải bằng chữ ghi vào — đo bằng PdfPig, thư viện của người khác. Và sáu bộ dựng PDF phải khai phông qua `PdfTextStyles.Base()`, không bộ nào khai `FontFamily` thẳng: ghép chữ của Lato làm "thông tin" rút ra thành "thông ঞn" trong khi trang in nhìn vẫn đúng |
 | `backend/.../Infrastructure/StablePagingOrderTests.cs` | Mọi lượt `ToPagedResultAsync` phải kết thúc chuỗi sắp xếp bằng một khóa duy nhất — qua `ApplySort` (tự gắn) hoặc tự viết `ThenBy(x => x.Id)`. Sắp theo cột không duy nhất là trang sau lặp dòng của trang trước và đúng bấy nhiêu dòng khác không bao giờ hiện ra: 396 dòng tiền phạt chỉ có 316 dòng khác nhau |
 | `frontend-opac/src/styles.phone.test.tsx` | Ở bề ngang 375 px, mỗi hàng flex của khung trang phải có ít nhất một phần tử con chịu co, và cặp nhãn `lc-only-wide` / `lc-only-narrow` không được cùng ẩn. Hai khối hai đầu thanh đầu trang cùng `flex: none` từng làm **mọi trang** của trang tra cứu cuộn ngang 146 px, và lượt sửa nó để lại một nút đăng nhập rỗng ruột |
+| `backend/.../Infrastructure/SystemParameterReadersTests.cs` | Mỗi khoá tham số khai trong bộ gieo phải xuất hiện ở đâu đó trong mã nguồn máy chủ ngoài chính chỗ khai nó — đọc thẳng hoặc qua tên hằng số `ParameterKeys.X`, khoá ghép động lúc chạy (`$"CODE.{tên}_PREFIX"`) được nhận theo khuôn. Bốn công tắc từng sống trên màn hình mà không nơi nào đọc, trong đó "Mở kho OAI-PMH của mình" tắt rồi vẫn cho thư viện khác thu hoạch cả kho |
 
 > Một phép thử quét mã nguồn chỉ chặn đúng thư mục nó quét. Thêm luật mới thì hỏi ngay: gói kia có
 > vi phạm cùng luật ấy không? Lỗi D8 sửa cho `frontend-admin` rồi ghi là "cả sản phẩm", nhưng
@@ -753,6 +768,31 @@ docker compose run --rm -d --name lc-api-kiem -e LC_DB_NAME=lc_kiem -e LC_SEED_D
      suốt hai mươi đợt, vì nó không nói ra con số nào. Câu cam kết không có số thì tự chọn lấy một
      con số bảo vệ được (375×812, khổ logic của phần lớn điện thoại) rồi đo ở đó, đừng coi nó là
      điều không kiểm được.
+
+106. **Danh sách để đo phải lấy từ nơi đang chạy, không lấy từ tệp mình nhớ.** Bộ gieo tham số khai
+     89 khoá; máy chủ thật có **136** — 47 khoá nữa nằm ở nguồn khác. Quét theo tệp là bỏ sót một
+     phần ba câu hỏi mà không biết. Bất cứ lượt rà nào bắt đầu bằng "liệt kê tất cả X" thì hỏi ngay:
+     con số này lấy ở đâu ra, và nó có bằng con số trên máy chủ không?
+107. **Bài học 30 chỉ mới chữa ba chỗ; quét hết thì còn bốn.** "Công tắc được lưu không có nghĩa là
+     có ai đọc nó" ra đời từ ba chỗ gặp tình cờ, rồi mười tám đợt không ai quét cả 136 khoá. Phép đo
+     rẻ đến mức khó tin: lấy danh sách khoá thật, tìm từng chuỗi trong mã nguồn ngoài chỗ khai nó,
+     một buổi là xong — và nó tìm ra "Mở kho OAI-PMH của mình", công tắc mà thư viện tắt đi chính vì
+     họ **không muốn** cho lấy dữ liệu nữa. Đây đúng là bài học 72 nói về bài học 30.
+108. **Một công tắc trùng còn tệ hơn một công tắc chết: nó nói ngược.** Chức năng mượn tự phục vụ có
+     hai tham số cùng tên việc; bản được đọc là `CIRCULATION.*`, bản trong nhóm "Cấu hình ứng dụng
+     di động" thì không ai đọc mà lại gieo `"false"` — người quản trị mở màn hình ấy đọc được đúng
+     câu ngược với sự thật. Hai tham số cùng nhóm bên cạnh nó thì sống, nên nhìn qua tưởng cả nhóm
+     đều sống (bài học 84 ở dạng khó thấy nhất). Thấy hai công tắc cùng mô tả một việc thì một trong
+     hai là rác — tìm xem bản nào được đọc rồi gỡ hẳn bản kia, đừng để cả hai.
+109. **Điều kiện lọc trong một bộ dùng chung là chỗ để quên.** Bộ đăng ký lại lịch chạy nền được gọi
+     kèm `if (Key.StartsWith("BACKUP."))`, nên lịch thu hoạch OAI-PMH — lịch duy nhất còn lại cũng
+     lấy giờ từ tham số — nằm ngoài điều kiện và giữ giờ cũ tới lần khởi động lại. Bộ dùng chung sinh
+     ra để "chỗ thứ tám không quên gọi", mà một điều kiện tiền tố đặt ở chỗ gọi thì đúng bằng việc
+     quên. Khi việc làm lại rẻ (hai lượt ghi Hangfire), cứ làm lại tất cả.
+110. **Chặn ở một hành động đã khai kiểu trả về thì câu chặn phải cùng kiểu ấy.** `/oai` khai
+     `[Produces("application/xml")]`; trả 404 kèm thân JSON thì ASP.NET không thương lượng được và
+     đổi thành **406 Not Acceptable** — máy khách nhận "kiểu nội dung không hợp" thay vì "ở đây không
+     có kho nào". Bài học 39 ở tầng khác: mỗi lớp chặn phải nói cùng thứ tiếng với tầng nó đứng trước.
 
 ### A.4. Cơ chế dùng chung — dùng lại, đừng viết chỗ mới
 

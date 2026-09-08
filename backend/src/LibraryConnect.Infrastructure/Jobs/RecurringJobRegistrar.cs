@@ -45,7 +45,7 @@ public class RecurringJobRegistrar : IHostedService
             var parameters = scope.ServiceProvider.GetRequiredService<ISystemParameterService>();
 
             // Cùng một đường với lượt đăng ký lại khi tham số đổi — hai chỗ tính lịch riêng là hai
-            // chỗ để lệch nhau.
+            // chỗ để lệch nhau. Cả lịch sao lưu lẫn lịch thu hoạch OAI-PMH đều đi qua đây.
             await scope.ServiceProvider.GetRequiredService<IBackupScheduleRefresher>()
                 .RefreshAsync(cancellationToken);
 
@@ -77,11 +77,6 @@ public class RecurringJobRegistrar : IHostedService
                 job => job.CleanUploadSessionsAsync(CancellationToken.None),
                 "45 3 * * *");
 
-            // Thu hoạch OAI-PMH chạy đêm: kéo dữ liệu từ nơi khác về là việc nặng và không gấp.
-            var harvestCron = await parameters.GetAsync("ILL.HARVEST_CRON", "0 2 * * *", cancellationToken);
-
-            jobs.AddOrUpdateRecurring<IOaiHarvester>(
-                OaiHarvestJobId, job => job.HarvestDueAsync(CancellationToken.None), harvestCron);
         }
         catch (Exception ex)
         {

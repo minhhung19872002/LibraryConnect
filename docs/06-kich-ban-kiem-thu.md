@@ -1916,3 +1916,24 @@ chọn **375×812** — khổ logic của iPhone và của phần lớn máy And
 | RT.5 | Quét lại toàn bộ sau bản sửa RT.4: 17 đường dẫn + 3 trang chi tiết tài liệu + 3 trang chi tiết tài liệu số | **23/23 bằng 0.** Thanh thẻ của trang chi tiết nay cuộn trong khung của nó (302 px trong khung 375) | Đạt |
 | RT.6 | Trạng thái **đã đăng nhập** (thẻ TV2026000361): trang tài khoản và cả 9 thẻ của nó, cộng 5 lối hay dùng | **15/15 bằng 0.** Nút đầu trang hiện đúng "Ngô Thanh Mai" và không đẩy trang; tên dài hơn thì cắt ở trần 150 px | Đạt |
 | RT.7 | Hoàn hai dòng CSS về trạng thái trước khi sửa rồi chạy `styles.phone.test.tsx` | Phép thử **đỏ** và gọi đúng tên: `lc-header__row → mọi phần tử con đều không co: lc-header__brand \| lc-header__actions`; phép thử thứ hai báo "nhãn ngắn bị ẩn ở 375 px". Khôi phục thì xanh | Đạt |
+### Đợt hai mươi hai — công tắc cấu hình có ai đọc không (08/09/2026)
+
+Ràng buộc kỹ thuật số 9 đòi mọi danh mục nghiệp vụ cấu hình được từ giao diện. Đọc ngược lại: cấu
+hình được thì phải có tác dụng. Danh sách tham số lấy từ **máy chủ nghiệm thu**, không lấy từ tệp bộ
+gieo — hai con số lệch nhau 136 so với 89.
+
+| Mã | Kịch bản | Kết quả thực tế | Đạt |
+|---|---|---|---|
+| RU.1 | Rút 136 khoá tham số từ `/api/admin/parameters` của máy chủ thật, tìm từng khoá trong mã nguồn máy chủ ngoài chỗ khai nó | **132/136 có chỗ đọc.** Bốn khoá không: `ILL.OAI_ENABLED`, `ACQ.DUPLICATE_WARNING`, `OPAC.MAX_HOLD_PER_READER`, `MOBILE.SELF_CHECKOUT_ENABLED` | Đạt sau sửa |
+| RU.2 | Tắt "Mở kho OAI-PMH của mình" rồi gọi `/oai?verb=ListIdentifiers&metadataPrefix=oai_dc` trên máy chủ thật | **Trước sửa: vẫn trả `completeListSize="12950"`** — thư viện khác thu hoạch được cả kho sau khi đã tắt. Sau sửa: 404 cho cả `GET` lẫn `POST`, bật lại thì phục vụ ngay không cần khởi động lại | Đạt sau sửa |
+| RU.3 | Tắt "Cảnh báo khi tài liệu đã có trong thư viện" rồi tra trùng theo ISBN, và lưu một yêu cầu đặt mua trùng | Trước sửa: cả hai lối đều vẫn báo trùng. Sau sửa: nút tra nhanh trả rỗng và dòng yêu cầu không còn cờ `isDuplicate` | Đạt sau sửa |
+| RU.4 | Đặt "Số đăng ký mượn đồng thời tối đa" = 1, đăng nhập thẻ bạn đọc, `POST /api/reader/holds` hai lần với hai biểu ghi | Trước sửa: cả hai thành công. Sau sửa: lượt thứ hai trả **409** kèm câu nói rõ đây là trần của lối tự phục vụ; cán bộ đặt hộ ở quầy vẫn làm được theo chính sách | Đạt sau sửa |
+| RU.5 | Đối chiếu `MOBILE.SELF_CHECKOUT_ENABLED` với `CIRCULATION.SELF_CHECKOUT_ENABLED` và với hành vi thật | Máy chủ thật: bản sao = `false`, bản thật = `true`, luồng tự mượn chạy được — màn hình nói ngược. Sau sửa: chỉ còn một công tắc; migration xoá mềm dòng thừa | Đạt sau sửa |
+| RU.6 | Lưu `ILL.HARVEST_CRON = "15 5 * * *"` rồi hỏi Hangfire lịch của việc `oai-harvest` | Trước sửa: vẫn `0 2 * * *`. Sau sửa: nhận lịch mới ngay trong cùng lượt lưu | Đạt sau sửa |
+| RU.7 | Đếm lối xoá cứng: `Remove`/`RemoveRange`/`ExecuteDelete` trên `DbSet`, câu SQL `DELETE`/`TRUNCATE`, lớp thực thể không kế thừa `BaseEntity` | **62 lối xoá, 0 lối xoá cứng**; 125/125 lớp thực thể có `BaseEntity`; 0 câu SQL xoá. Ràng buộc kỹ thuật số 6 giữ được | Đạt |
+| RU.8 | `pg_indexes` trên máy chủ thật: chỉ mục duy nhất nào thiếu bộ lọc `deleted_at IS NULL` | **69/70 có bộ lọc.** Cái còn lại là bảng khoá–giá trị một dòng một khoá, không có lối xoá — nên xoá xong tạo lại đúng mã cũ vẫn làm được | Đạt |
+| RU.9 | 341 biểu ghi đã xoá mềm: hỏi `/api/bib/{id}`, tra cứu, SRU theo số kiểm soát | Không tầng nào rò: 404, 0/330 kết quả, `numberOfRecords = 0` | Đạt |
+| RU.10 | OAI-PMH với biểu ghi đã xoá: `Identify`, `GetRecord`, và đi hết các trang `ListIdentifiers&from=2026-09-07` | `deletedRecord = persistent`; `GetRecord` trả `<header status="deleted">` không kèm metadata; 6 trang lấy đúng **275/275** mục khớp `completeListSize` | Đạt |
+| RU.11 | 14 khoá của `web.cms_settings` có nơi đọc ở ba máy khách không | 14/14 có | Đạt |
+| RU.12 | Cột cấu hình của năm thực thể dạng chính sách có ai đọc ngoài tệp khai chúng không | Đủ cả; chỉ `DigitalDocument.UploadBy` chỉ dùng để lưu vết, không phải công tắc | Đạt |
+| RU.13 | Hoàn từng bản sửa về mã cũ rồi chạy lại bốn phép thử hành vi và phép thử quét | Cả năm đều **đỏ**, mỗi cái gọi đúng tên chỗ hỏng; khôi phục thì xanh | Đạt |

@@ -396,6 +396,7 @@ Cập nhật lần cuối: 05/09/2026, sau ba đợt rà theo đặc tả và đ
 | 3.4 | resumptionToken phân trang | **Có** | Thẻ mang theo cả điều kiện lọc và có chữ ký, nên lượt sau không phải gửi lại tham số và thẻ bị sửa tay thì bị từ chối |
 | 3.4 | Lọc theo from / until | **Có** | Nhận cả dạng ngày lẫn dạng có giờ; không có biểu ghi nào khớp thì trả đúng mã `noRecordsMatch` chứ không phải danh sách rỗng |
 | 3.4 | Bộ (set) để lấy riêng từng phần kho | **Có** | Chia theo dạng tài liệu, mã bộ dạng `doctype:MÃ` |
+| 3.4 | Đóng kho khi thư viện không muốn cho thu hoạch nữa | **Có** | Tham số "Mở kho OAI-PMH của mình" tắt là `/oai` trả 404 cho cả `GET` lẫn `POST` — nơi thu hoạch biết dừng thay vì gọi lại mãi; bật lại thì phục vụ ngay, không cần khởi động lại |
 | 3.4 | Harvester: cấu hình nguồn, lịch chạy định kỳ | **Có** | Khai nguồn trên giao diện, có nút hỏi thử xem kho tự khai những gì; tác vụ nền chạy hằng đêm theo `ILL.HARVEST_CRON` |
 | 3.4 | Map Dublin Core sang MARC 21 | **Có** | Dựng biểu ghi MARC tối thiểu nhưng hợp lệ, đánh dấu mức mô tả chưa đầy đủ và đưa vào hàng đợi biên mục để cán bộ hiệu đính |
 | 3.4 | Chạy lại không tạo bản trùng | **Có** | Nhận ra biểu ghi đã thu về bằng mã định danh của kho gốc; chạy lại thì bỏ qua |

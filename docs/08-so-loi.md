@@ -1047,6 +1047,62 @@ Ba lượt quét, **73 phép đo, 2 lỗi** — lỗi thứ hai lại nằm dư�
 - **Bảng và thanh thẻ rộng vẫn cuộn trong khung của chúng**, không đẩy trang — đúng cách sản phẩm đã
   chọn từ lỗi B10 và T2.
 
+## V. Đợt rà thứ hai mươi hai — công tắc cấu hình có ai đọc không (08/09/2026)
+
+Bài học 30 ra đời ngày 04/09/2026 từ **ba** công tắc lưu được mà không nơi nào đọc, và bài học 72
+nói thẳng cái thiếu của nó: *"sửa một chỗ rồi ghi vào sổ là xong một chỗ; muốn xong cả lớp thì phải
+có một phép đo quét hết mọi chỗ cùng loại"*. Mười tám đợt sau, phép đo ấy vẫn chưa ai làm. Đợt này
+làm nó.
+
+Luật lấy từ ràng buộc kỹ thuật số 9 của hồ sơ — *"Không được hardcode danh mục nghiệp vụ — tất cả
+phải cấu hình được từ giao diện"* — đọc theo chiều ngược: **cấu hình được từ giao diện thì phải có
+tác dụng**. Cách đo: lấy danh sách tham số **thật trên máy chủ nghiệm thu** (không lấy từ tệp bộ
+gieo — đếm ra 136 tham số trong khi tệp ấy chỉ khai 89, còn 47 tham số nữa nằm ở nguồn khác), rồi
+hỏi từng khoá một câu: chuỗi này xuất hiện ở đâu trong mã nguồn máy chủ, ngoài chính chỗ khai nó?
+
+**136 phép đo, 4 công tắc chết.** Lỗi thứ năm là nửa còn lại của cùng một câu hỏi — bài học 31,
+*"cấu hình đọc một lần lúc khởi động là cấu hình không đổi được"* — cũng chỉ mới sửa ở một chỗ.
+
+| # | Màn hình | Mô tả lỗi | Cách tái hiện | Mức độ | Loại | Trạng thái |
+|---|---|---|---|---|---|---|
+| V1 | Tham số hệ thống → Cấu hình liên thư viện | **"Mở kho OAI-PMH của mình" tắt xong thư viện khác vẫn thu hoạch được cả kho.** Khoá `ILL.OAI_ENABLED` chỉ tồn tại trong bộ gieo; `/oai` không hỏi nó lần nào. Công tắc anh em ngay bên trên — "Bật máy chủ Z39.50" — thì có `Z3950ServerHost` đọc và thôi lắng nghe, nên nhìn màn hình không thấy chỗ lệch (bài học 84). Đây là cổng duy nhất của sản phẩm mở ra ngoài không cần mật khẩu, và thư viện tắt nó đi là vì họ **không muốn** cho lấy dữ liệu nữa. | `grep -rn "OAI_ENABLED"` trên cả kho trả về **đúng một dòng**, là dòng khai. Trên máy chủ thật: đặt tham số về `false`, gọi `/oai?verb=ListIdentifiers&metadataPrefix=oai_dc` vẫn trả `completeListSize="12950"`. | Nặng | Bảo mật – Liên thư viện | Đã sửa — `ProtocolController` đọc công tắc và trả **404** cho cả `GET` lẫn `POST` khi kho đóng, đúng cách máy chủ Z39.50 làm khi bị tắt (thôi phục vụ, chứ không trả 200 kèm lỗi để nơi thu hoạch cứ gọi lại mãi) |
+| V2 | Tham số hệ thống → Cấu hình bổ sung | **"Cảnh báo khi tài liệu đã có trong thư viện" tắt xong vẫn cảnh báo.** `ACQ.DUPLICATE_WARNING` không nơi nào đọc; lượt tra trùng chạy vô điều kiện ở **hai** lối — nút tra nhanh trên biểu mẫu và lượt tự tra khi lưu yêu cầu đặt mua. | Đặt tham số về `false`, gọi `/api/acquisition/requests/duplicate-check?isbn=…` vẫn trả về biểu ghi trùng; lưu một yêu cầu đặt mua vẫn được đánh dấu `isDuplicate = true`. | Nhẹ | Nghiệp vụ | Đã sửa — công tắc đặt **trong chính `PurchaseDuplicateFinder`**, không rải ra hai bộ xử lý: hai lối cùng hỏi một câu thì phải nhận cùng một câu trả lời (bài học 42) |
+| V3 | Tham số hệ thống → Cấu hình OPAC | **"Số đăng ký mượn đồng thời tối đa" không chặn gì cả.** `OPAC.MAX_HOLD_PER_READER` được khai hằng số, được gieo giá trị 3, và không chỗ nào gọi tới. Mục IX.3 đòi *"hệ thống kiểm tra hạn mức theo chính sách, giới hạn số lượng đăng ký đồng thời"* — vế đầu có (chính sách lưu thông), vế sau chỉ là một dòng trong cơ sở dữ liệu. | Đặt tham số về `1`, đăng nhập bằng thẻ bạn đọc rồi `POST /api/reader/holds` hai lần với hai biểu ghi khác nhau: cả hai đều thành công. | Vừa | Nghiệp vụ | Đã sửa — trần áp cho lượt bạn đọc **tự** đăng ký (`Channel != Desk`), chỉ siết thêm chứ không nới quá chính sách; quầy đặt hộ vẫn theo chính sách vì ở đó có cán bộ nhìn. Câu chặn nói rõ đây là trần của lối tự phục vụ |
+| V4 | Tham số hệ thống → Cấu hình ứng dụng di động | **Một công tắc trùng, lại nói ngược sự thật.** `MOBILE.SELF_CHECKOUT_ENABLED` là bản sao của `CIRCULATION.SELF_CHECKOUT_ENABLED` — bản sau mới là bản `SelfCheckoutCommandHandler` đọc. Bản sao được gieo `"false"`, nên người quản trị mở nhóm "Cấu hình ứng dụng di động" đọc được đúng câu **ngược** với trạng thái thật: màn hình nói "Cho phép mượn tự phục vụ: Tắt" trong khi bạn đọc vẫn tự mượn được. Hai tham số cùng nhóm bên cạnh nó (`_WIFI_SSID`, `_QR_SECRET`) thì có người đọc — nên nhìn qua tưởng cả nhóm đều sống. | Trên máy chủ thật: `MOBILE.SELF_CHECKOUT_ENABLED = false`, `CIRCULATION.SELF_CHECKOUT_ENABLED = true`, và luồng mượn tự phục vụ chạy được. | Vừa | Giao diện – Cấu hình | Đã sửa — gỡ bản sao khỏi bộ gieo và khỏi bảng hằng số; migration `20260908083053` **xoá mềm** dòng ấy trên các bản đã cài, đúng ràng buộc kỹ thuật số 6 (dữ liệu lưu vĩnh viễn, không xoá cứng) |
+| V5 | Tham số hệ thống → Cấu hình liên thư viện | **"Lịch thu hoạch OAI-PMH" đổi trên màn hình mà việc nền vẫn chạy giờ cũ.** Đúng bài học 31, ở chỗ thứ hai. Lượt sửa ngày 04/09/2026 đã dựng `IBackupScheduleRefresher` và gọi lại sau khi lưu tham số — nhưng gọi **có điều kiện**: `if (…Key.StartsWith("BACKUP."))`. `ILL.HARVEST_CRON` là lịch duy nhất còn lại lấy giờ từ tham số, và nó nằm ngoài điều kiện ấy. | Lưu `ILL.HARVEST_CRON = "15 5 * * *"` qua `PUT /api/admin/parameters`, rồi hỏi Hangfire lịch của việc `oai-harvest`: vẫn là `0 2 * * *` cho tới lần khởi động lại. | Vừa | Vận hành | Đã sửa — bộ đăng ký lại nhận **mọi** lịch lấy từ tham số (sao lưu và thu hoạch), và chỗ gọi bỏ hẳn điều kiện tiền tố: đăng ký lại sau *mọi* lượt đổi tham số. Hai lượt ghi vào Hangfire rẻ hơn nhiều một cấu hình không có tác dụng, và chỗ thứ ba thêm vào ngày mai không có cách nào quên |
+
+### Đã kiểm trong đợt này và vẫn tốt
+
+Đợt này bắt đầu từ một luật khác — ràng buộc kỹ thuật số 6, *"dữ liệu lưu trữ vĩnh viễn, không có
+cơ chế tự động xóa cứng"* — và luật ấy **giữ được sạch**, nên ghi lại đầy đủ để khỏi phải đo lại:
+
+- **62 lối xoá trong mã nguồn, 0 lối xoá cứng.** `AuditableEntityInterceptor` đổi mọi
+  `EntityState.Deleted` thành `Modified` kèm `DeletedAt`, và **125/125 lớp thực thể** trong tầng
+  Domain đều kế thừa `BaseEntity` (hai lớp không kế thừa là `CodeSequence` và `CustomIndexLink`,
+  không có lối xoá nào). Không câu SQL `DELETE`/`TRUNCATE` nào trong mã, không `ExecuteDelete` nào.
+  Kể cả việc nền "dọn nhật ký hết hạn" và "dọn thẻ làm mới hết hạn" cũng chỉ xoá mềm.
+- **70 chỉ mục duy nhất trên máy chủ thật, 69 có bộ lọc `deleted_at IS NULL`.** Cái còn lại là
+  `web.ux_cms_settings_key` — bảng khoá–giá trị một dòng một khoá, không có lối xoá nào. Nghĩa là
+  xoá một kho rồi lập lại đúng mã kho ấy là làm được: đây là chỗ lỗi hay nằm nhất khi có xoá mềm, và
+  nó không nằm ở đây.
+- **341 biểu ghi đã xoá mềm trên máy chủ nghiệm thu không rò ra bất kỳ tầng đọc nào.**
+  `/api/bib/{id}` trả "không tìm thấy"; tra cứu 330 kết quả không có id nào trong số ấy; SRU trả
+  `numberOfRecords = 0` cho chính số kiểm soát của một biểu ghi đã xoá.
+- **OAI-PMH làm đúng chuẩn ở chiều ngược lại** — điều dễ làm sai theo kiểu khác: `Identify` khai
+  `deletedRecord = persistent`, và `GetRecord` của một biểu ghi đã xoá trả `<header status="deleted">`
+  không kèm metadata, đúng như nơi thu hoạch cần để gỡ bản sao của họ. Đi hết 6 trang
+  `ListIdentifiers` với `from=2026-09-07` lấy đúng **275/275** mục, khớp `completeListSize` — bài học
+  70 không tái diễn ở tầng giao thức.
+- **14 khoá của bảng `web.cms_settings` đều có nơi đọc** ở ít nhất một trong ba máy khách (trang tra
+  cứu, giao diện quản trị, ứng dụng di động).
+- **Cột cấu hình của năm thực thể dạng "chính sách"** — chính sách lưu thông (22 thuộc tính), cài đặt
+  ghi nhật ký, tài liệu số, loại bạn đọc, tuỳ chọn thông báo — đều được đọc ngoài chính tệp khai
+  chúng.
+- **Guard:** `SystemParameterReadersTests` rút khoá từ bộ gieo theo **cả hai** lối khai (chuỗi thẳng
+  và qua `ParameterKeys.X`), nhận diện khoá ghép động lúc chạy (`$"CODE.{tên}_PREFIX"`), rồi đòi mỗi
+  khoá có chỗ đọc. Chạy trên mã trước khi sửa thì nó đỏ và gọi đúng bốn cái tên. Muốn khai một tham
+  số cố ý chưa có chỗ đọc thì phải ghi vào danh sách miễn kèm lý do — danh sách ấy hiện **rỗng**.
+
 ## Đ. Những chỗ đã thử phá nhưng hệ thống chịu được
 
 Ghi lại để biết chỗ nào đã kiểm và không phải kiểm lại — kèm bằng chứng, không ghi suông.

@@ -41,13 +41,21 @@ public class PlaceHoldCommandValidator : AbstractValidator<PlaceHoldCommand>
 
 public class PlaceHoldCommandHandler : IRequestHandler<PlaceHoldCommand, HoldRowDto>
 {
+    /// <summary>Trần "Số đăng ký mượn đồng thời tối đa" của màn hình Cấu hình OPAC (mục IX.3).</summary>
+    public const string OpacHoldLimitParameter = "OPAC.MAX_HOLD_PER_READER";
+
     private readonly IApplicationDbContext _db;
     private readonly ICirculationPolicyResolver _policies;
     private readonly IDateTimeProvider _clock;
+    private readonly ISystemParameterService _parameters;
 
     public PlaceHoldCommandHandler(
-        IApplicationDbContext db, ICirculationPolicyResolver policies, IDateTimeProvider clock)
+        IApplicationDbContext db,
+        ICirculationPolicyResolver policies,
+        IDateTimeProvider clock,
+        ISystemParameterService parameters)
     {
+        _parameters = parameters;
         _db = db;
         _policies = policies;
         _clock = clock;
@@ -125,6 +133,21 @@ public class PlaceHoldCommandHandler : IRequestHandler<PlaceHoldCommand, HoldRow
         {
             throw new ConflictException(
                 $"Bạn đọc đã đặt giữ đủ {policy.MaxHolds} tài liệu theo chính sách \"{policy.Name}\".");
+        }
+
+        // Mục IX.3 đòi giới hạn riêng cho lượt bạn đọc **tự** đăng ký từ trang tra cứu hoặc ứng
+        // dụng: quầy đặt hộ thì đã có cán bộ nhìn, còn lối tự phục vụ thì không. Trần này chỉ siết
+        // thêm, không nới ra — chính sách lưu thông vẫn là mức trên.
+        if (command.Channel != LoanChannel.Desk)
+        {
+            var tranOpac = await _parameters.GetAsync(OpacHoldLimitParameter, 0, ct);
+
+            if (tranOpac > 0 && active >= tranOpac)
+            {
+                throw new ConflictException(
+                    $"Bạn đọc chỉ được tự đăng ký mượn {tranOpac} tài liệu cùng lúc. "
+                    + "Hãy hủy bớt một đăng ký đang chờ hoặc tới quầy nhờ cán bộ hỗ trợ.");
+            }
         }
 
         var duplicated = await _db.Holds.AnyAsync(hold =>

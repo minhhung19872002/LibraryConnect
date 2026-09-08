@@ -1459,6 +1459,74 @@ public class CirculationTests
         (await client.DeleteAsync($"/api/reader/holds/{hold.Id}")).IsSuccessStatusCode.Should().BeTrue();
     }
 
+    /// <summary>
+    /// Mục IX.3 đòi giới hạn số lượng đăng ký đồng thời của bạn đọc trên trang tra cứu. Tham số
+    /// "Số đăng ký mượn đồng thời tối đa" có sẵn trên màn hình Cấu hình OPAC từ phase 12 và **không
+    /// nơi nào đọc** cho tới đợt rà thứ hai mươi hai: đặt bằng 1 vẫn đặt giữ được cái thứ hai.
+    ///
+    /// Trần này chỉ siết thêm cho lượt bạn đọc tự đăng ký; quầy đặt hộ vẫn theo chính sách lưu thông.
+    /// </summary>
+    [Fact]
+    public async Task Tran_dang_ky_dong_thoi_cua_trang_tra_cuu_chan_luot_thu_hai()
+    {
+        var staff = await ClientAsync();
+        var (client, readerId, _) = await ReaderClientAsync(staff, "Bạn đọc đặt giữ quá trần");
+
+        using var scope = _factory.Services.CreateScope();
+        var parameters = scope.ServiceProvider.GetRequiredService<ISystemParameterService>();
+        var cu = await parameters.GetAsync(PlaceHoldCommandHandler.OpacHoldLimitParameter);
+
+        await parameters.SetAsync(PlaceHoldCommandHandler.OpacHoldLimitParameter, "1");
+
+        try
+        {
+            var ids = new List<Guid>();
+
+            // Hai tài liệu khác nhau, cả hai đang có người mượn nên đặt giữ được.
+            foreach (var ten in new[] { "Sách chạm trần đặt giữ một", "Sách chạm trần đặt giữ hai" })
+            {
+                var nguoiKhac = await NewReaderAsync(staff, $"Người giữ {ten}");
+                var barcodes = await NewCirculatableItemsAsync(staff, ten);
+
+                await ReadAsync<CheckoutResultDto>(await staff.PostAsJsonAsync(
+                    "/api/circulation/desk/checkout", new { readerId = nguoiKhac, barcodes }));
+
+                ids.Add(await BibIdOfAsync(staff, barcodes[0]));
+            }
+
+            var dau = await ReadAsync<HoldRowDto>(await client.PostAsJsonAsync(
+                "/api/reader/holds", new { bibId = ids[0] }));
+
+            dau.ReaderId.Should().Be(readerId);
+
+            var thu2 = await client.PostAsJsonAsync("/api/reader/holds", new { bibId = ids[1] });
+
+            thu2.StatusCode.Should().Be(HttpStatusCode.Conflict,
+                "trần \"Số đăng ký mượn đồng thời tối đa\" đặt bằng 1 mà bạn đọc vẫn tự đăng ký "
+                + "được cái thứ hai thì tham số ấy chỉ là một dòng trong cơ sở dữ liệu");
+
+            var loi = await thu2.Content.ReadFromJsonAsync<ApiResponse<object>>(
+                LibraryConnectFactory.JsonOptions);
+
+            loi!.Message.Should().Contain("tự đăng ký",
+                "câu chặn phải nói rõ đây là trần của lối tự phục vụ, không phải chính sách lưu thông");
+
+            // Quầy vẫn đặt hộ được: trần này chỉ áp cho lối bạn đọc tự làm.
+            var quay = await staff.PostAsJsonAsync("/api/circulation/holds",
+                new { readerId, bibId = ids[1] });
+
+            quay.IsSuccessStatusCode.Should().BeTrue(
+                "chính sách lưu thông cho ba lượt đặt giữ, nên cán bộ đặt hộ phải làm được: {0}",
+                await quay.Content.ReadAsStringAsync());
+
+            await client.DeleteAsync($"/api/reader/holds/{dau.Id}");
+        }
+        finally
+        {
+            await parameters.SetAsync(PlaceHoldCommandHandler.OpacHoldLimitParameter, cu);
+        }
+    }
+
     [Fact]
     public async Task A_reader_cannot_renew_someone_elses_loan()
     {

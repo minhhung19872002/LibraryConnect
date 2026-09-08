@@ -1,3 +1,4 @@
+using LibraryConnect.Application.Common.Interfaces;
 using LibraryConnect.Application.Features.InterLibrary;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -16,9 +17,17 @@ namespace LibraryConnect.Api.Controllers;
 [Tags("Giao thức liên thư viện")]
 public class ProtocolController : ControllerBase
 {
-    private readonly MediatR.ISender _mediator;
+    /// <summary>Công tắc "Mở kho OAI-PMH của mình" trên màn hình Tham số hệ thống.</summary>
+    public const string OaiEnabledParameter = "ILL.OAI_ENABLED";
 
-    public ProtocolController(MediatR.ISender mediator) => _mediator = mediator;
+    private readonly MediatR.ISender _mediator;
+    private readonly ISystemParameterService _parameters;
+
+    public ProtocolController(MediatR.ISender mediator, ISystemParameterService parameters)
+    {
+        _mediator = mediator;
+        _parameters = parameters;
+    }
 
     /// <summary>
     /// SRU 1.2 — tra cứu qua HTTP (mục 3.3).
@@ -95,6 +104,22 @@ public class ProtocolController : ControllerBase
 
     private async Task<IActionResult> HandleOaiAsync(OaiRequest request, CancellationToken ct)
     {
+        // Thư viện tắt công tắc là không còn kho nào ở địa chỉ này — đúng cách máy chủ Z39.50 làm
+        // khi bị tắt: nó thôi lắng nghe. Nơi thu hoạch đọc mã 404 là biết dừng; trả 200 kèm lỗi
+        // OAI thì họ vẫn coi đây là một kho đang sống và cứ gọi lại mãi.
+        if (!await _parameters.GetAsync(OaiEnabledParameter, true, ct))
+        {
+            // Trả thân XML chứ không phải JSON: hành động này khai `Produces("application/xml")`,
+            // nên một đối tượng JSON không thương lượng được kiểu và ASP.NET đổi thành 406 —
+            // máy khách nhận "kiểu nội dung không hợp" thay vì "ở đây không có kho nào".
+            return new ContentResult
+            {
+                StatusCode = StatusCodes.Status404NotFound,
+                ContentType = "application/xml; charset=utf-8",
+                Content = "<error>Thư viện đã đóng kho OAI-PMH.</error>",
+            };
+        }
+
         var xml = await _mediator.Send(new HandleOaiRequestQuery(request, BaseUrl("/oai")), ct);
 
         return Content(xml, "application/xml; charset=utf-8");

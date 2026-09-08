@@ -228,7 +228,6 @@ public static class ParameterKeys
     public const string CirculationFinePerDay = "CIRCULATION.FINE_PER_DAY";
     public const string CirculationDueSoonDays = "CIRCULATION.DUE_SOON_DAYS";
 
-    public const string MobileSelfCheckoutEnabled = "MOBILE.SELF_CHECKOUT_ENABLED";
     public const string MobileSelfCheckoutWifiSsid = "MOBILE.SELF_CHECKOUT_WIFI_SSID";
     public const string MobileSelfCheckoutQrSecret = "MOBILE.SELF_CHECKOUT_QR_SECRET";
 }
