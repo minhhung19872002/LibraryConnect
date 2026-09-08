@@ -593,6 +593,28 @@ Kiểm tra trạng thái thẻ trong hồ sơ: hết hạn hoặc đang tạm kh
 dữ liệu với trang tra cứu. Cài từ tệp APK do thư viện phát (Android 8.0 trở lên); bản iOS dùng cùng
 mã nguồn, thư viện dựng khi có máy Mac. Ảnh minh hoạ: `docs/images/mobile/`.
 
+### 16.0. Tải và cài đặt trên Android
+
+**Lấy tệp ở đâu.** Trang chủ trang tra cứu có khối **"Ứng dụng di động"** với liên kết *Tải bản
+Android (.apk)*. Khối ấy chỉ hiện khi quản trị viên đã điền địa chỉ vào **Quản trị hệ thống → Tham
+số hệ thống → Cấu hình ứng dụng di động → Địa chỉ tải bản Android**. Kịch bản triển khai đặt sẵn tệp
+mới nhất tại `https://<tên miền thư viện>/downloads/LibraryConnect.apk` sau mỗi lần cập nhật, nên
+thường chỉ cần điền đúng địa chỉ ấy một lần.
+
+**Android sẽ chặn lần cài đầu — đây là việc bình thường.** Ứng dụng phát hành ngoài Google Play nên
+Play Protect chưa biết chữ ký của nhà phát triển và hiện hộp thoại *"Đã chặn ứng dụng để bảo vệ
+thiết bị của bạn"*. Cách đi tiếp:
+
+1. Trong hộp thoại ấy, bấm dòng chữ **"Tiếp tục cài đặt"** nằm **phía trên** nút màu xanh.
+   Nút *"Tôi hiểu"* — nút to nhất — là nút **huỷ cài**, đây là chỗ người dùng hay bấm nhầm.
+2. Máy nào không hiện dòng ấy: mở **CH Play → ảnh đại diện → Play Protect → biểu tượng ⚙ → tắt
+   "Quét ứng dụng bằng Play Protect"**, cài xong thì bật lại.
+3. Máy Xiaomi/Oppo/Vivo có thể hỏi thêm quyền **"Cài đặt ứng dụng không rõ nguồn gốc"** cho trình
+   duyệt hoặc trình quản lý tệp — cấp quyền cho đúng ứng dụng đang mở tệp APK.
+
+Muốn tránh hẳn bước này thì phát hành qua Google Play hoặc qua hệ quản lý thiết bị của trường; cả
+hai đều dùng đúng tệp AAB/APK mà quy trình dựng đang sinh ra.
+
 ### 16.1. Không cần đăng nhập
 
 - **Trang chủ**: tên thư viện, ô tìm kiếm, nút quét mã, sách mới bổ sung, sách được mượn nhiều, tin

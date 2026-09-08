@@ -36,6 +36,7 @@ import type {
   Suggestion,
   DigitalFilter,
   DigitalCollectionNode,
+  AppVersion,
 } from '@/types/api';
 
 /** Tham số của một lần tra cứu cơ bản. */
@@ -77,6 +78,8 @@ export const opacApi = {
   // ---- Thông tin trang ----
   settings: () => api.get<SiteSettings>('/public/settings'),
   home: () => api.get<HomePayload>('/public/home'),
+  appVersion: (platform: 'android' | 'ios') =>
+    api.get<AppVersion>('/public/app-version', { params: { platform } }),
   menus: () => api.get<MenuItem[]>('/public/menus'),
   galleries: () => api.get<Gallery[]>('/public/galleries'),
 

@@ -29,6 +29,24 @@ lib/
 └── shared/models/               # Model freezed + json_serializable
 ```
 
+## Phát cho bạn đọc: tải và cài trên Android
+
+Kịch bản triển khai (`deploy/scripts/gh-deploy.sh`) tải APK mới nhất từ release `mobile-latest` về
+`downloads/LibraryConnect.apk`, và OPAC phục vụ nó tại `https://<tên miền>/downloads/LibraryConnect.apk`.
+
+Hai việc phải làm **một lần** cho mỗi lần cài đặt sản phẩm, nếu không thì tệp nằm ở một địa chỉ
+không ai dẫn tới:
+
+1. Điền tham số **`MOBILE.APP_UPDATE_URL_ANDROID`** (Quản trị → Tham số hệ thống → Cấu hình ứng dụng
+   di động) bằng chính địa chỉ ấy. Trang chủ OPAC đọc tham số này để hiện khối "Ứng dụng di động",
+   và chính nút *Cập nhật* trong app cũng dùng nó — để rỗng thì cả hai chỗ đều không có đường đi.
+2. Nếu có bản iOS thì điền `MOBILE.APP_UPDATE_URL_IOS` (App Store hoặc TestFlight).
+
+**Play Protect chặn lần cài đầu.** Ứng dụng ký bằng khoá phát hành riêng, không qua Google Play, nên
+Android hiện *"Đã chặn ứng dụng để bảo vệ thiết bị của bạn"*. Phải bấm **"Tiếp tục cài đặt"** — dòng
+chữ nhỏ phía trên — chứ không phải nút xanh *"Tôi hiểu"*, vốn là nút huỷ. Khối trên trang chủ OPAC
+đã in sẵn hướng dẫn này cho bạn đọc; `docs/01-huong-dan-su-dung.md` mục 16.0 chép lại đầy đủ.
+
 ## Cấu hình endpoint và môi trường
 
 Mọi thứ đi qua `--dart-define`; không có `localhost` nào trong mã:

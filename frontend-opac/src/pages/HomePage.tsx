@@ -5,7 +5,7 @@ import { opacApi } from '@/api/opac';
 import { Hero } from '@/components/Hero';
 import { ResultShelf } from '@/components/ResultList';
 import { useSiteSettings } from '@/hooks/useSite';
-import type { HomePayload } from '@/types/api';
+import type { AppVersion, HomePayload } from '@/types/api';
 import { formatDate } from '@/lib/datetime';
 
 const { Paragraph } = Typography;
@@ -31,6 +31,66 @@ function Section({
       </div>
       <div className="lc-section__body">{children}</div>
     </section>
+  );
+}
+
+/**
+ * IX.1 và XI — Tải ứng dụng di động.
+ *
+ * Địa chỉ lấy từ tham số hệ thống (`MOBILE.APP_UPDATE_URL_*`), không viết cứng: thư viện nào chưa
+ * phát hành bản nào thì khối này không hiện, đúng như mọi khối khác của trang chủ.
+ *
+ * Dòng nhắc về Play Protect là bắt buộc, không phải trang trí: Android chặn mọi APK cài ngoài
+ * Google Play mà nó chưa từng thấy chữ ký, và hộp thoại chặn có nút to nhất là **"Tôi hiểu"** —
+ * bấm vào đó là huỷ cài. Không nói trước thì bạn đọc tưởng tệp hỏng.
+ */
+export function MobileAppSection() {
+  const android = useQuery<AppVersion>({
+    queryKey: ['app-version', 'android'],
+    queryFn: () => opacApi.appVersion('android'),
+    staleTime: 5 * 60 * 1000,
+  });
+  const ios = useQuery<AppVersion>({
+    queryKey: ['app-version', 'ios'],
+    queryFn: () => opacApi.appVersion('ios'),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const linkAndroid = android.data?.updateUrl?.trim();
+  const linkIos = ios.data?.updateUrl?.trim();
+
+  if (!linkAndroid && !linkIos) return null;
+
+  return (
+    <Section title="Ứng dụng di động">
+      <Paragraph style={{ marginBottom: 12 }}>
+        Tra cứu, quét mã sách, xem sách đang mượn và thẻ thư viện điện tử ngay trên điện thoại.
+      </Paragraph>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {linkAndroid ? (
+          <a href={linkAndroid} rel="noopener noreferrer">
+            Tải bản Android (.apk)
+          </a>
+        ) : null}
+        {linkIos ? (
+          <a href={linkIos} target="_blank" rel="noopener noreferrer">
+            Tải bản iOS
+          </a>
+        ) : null}
+      </div>
+
+      {linkAndroid ? (
+        <div className="lc-result__meta" style={{ fontSize: 12.5, marginTop: 12 }}>
+          <strong>Khi cài trên Android:</strong> máy sẽ hiện hộp thoại “Đã chặn ứng dụng để bảo vệ
+          thiết bị của bạn”. Đây là cảnh báo mặc định của Google Play Protect với mọi ứng dụng không
+          tải từ CH Play, không phải lỗi của tệp. Hãy bấm dòng chữ <strong>“Tiếp tục cài đặt”</strong>{' '}
+          nằm phía trên nút xanh — nút “Tôi hiểu” sẽ huỷ việc cài. Máy nào không hiện dòng ấy thì mở
+          CH Play → ảnh đại diện → Play Protect → cài đặt (⚙) → tắt “Quét ứng dụng bằng Play
+          Protect”, cài xong bật lại.
+        </div>
+      ) : null}
+    </Section>
   );
 }
 
@@ -154,6 +214,8 @@ export function HomePage() {
                   </div>
                 )}
               </Section>
+
+              <MobileAppSection />
 
               <Section title="Liên kết hữu ích">
                 {data.links.length > 0 ? (

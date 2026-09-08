@@ -643,3 +643,15 @@ export interface DigitalCollectionNode {
   documentCount: number;
   children: DigitalCollectionNode[];
 }
+
+/**
+ * Phiên bản ứng dụng di động và địa chỉ tải, lấy từ tham số hệ thống (nhóm "Cấu hình ứng dụng
+ * di động"). `updateUrl` rỗng nghĩa là thư viện chưa phát hành bản cho nền tảng ấy.
+ */
+export interface AppVersion {
+  minVersion: string;
+  latestVersion: string;
+  updateUrl: string | null;
+  forceUpdate: boolean;
+  serverTime: string;
+}
