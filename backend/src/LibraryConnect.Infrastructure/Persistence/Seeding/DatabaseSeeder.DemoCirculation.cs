@@ -459,32 +459,28 @@ public partial class DatabaseSeeder
 
         await BibItemCounter.RefreshAsync(_db, bibIds, ct);
 
-        // Số lượt mượn của từng bản in và của biểu ghi: trang tra cứu xếp "sách được mượn nhiều"
-        // theo con số ở biểu ghi, nên bỏ qua bước này thì khối ấy trống trơn dù bộ minh họa có sẵn
-        // một trăm lượt mượn.
-        foreach (var group in loans.GroupBy(loan => loan.ItemId))
+        // Số lượt mượn của từng bản in: trang tra cứu xếp "sách được mượn nhiều" theo con số ở biểu
+        // ghi (đã tính trong BibItemCounter ở trên), còn cột của bản in dùng cho báo cáo kho.
+        //
+        // Đếm lại từ cơ sở dữ liệu chứ **không** gán con số của riêng lô đang sinh: bộ gieo này chạy
+        // hai lần — một lần cho kho ban đầu, một lần nữa cho những biểu ghi mới thu hoạch về — và
+        // phép gán ở lượt sau xoá sổ lượt trước. Trên máy chủ nghiệm thu ngày 08/09/2026: 469 biểu
+        // ghi và 197 bản in mang con số nhỏ hơn lịch sử mượn của chính chúng, cộng lại thiếu 486
+        // lượt trên 3.119.
+        await BibItemCounter.RefreshItemLoanCountAsync(
+            _db, loans.Select(loan => loan.ItemId).Distinct().ToList(), ct);
+
+        foreach (var readerId in loans.Select(loan => loan.ReaderId).Distinct())
         {
-            var item = await _db.Items.FirstAsync(entity => entity.Id == group.Key, ct);
-            item.LoanCount = group.Count();
-        }
+            var reader = await _db.Readers.FirstAsync(entity => entity.Id == readerId, ct);
 
-        foreach (var group in loans.Where(loan => loan.BibId is not null).GroupBy(loan => loan.BibId!.Value))
-        {
-            var bib = await _db.BibRecords.FirstAsync(entity => entity.Id == group.Key, ct);
-            bib.LoanCount = group.Count();
-        }
+            reader.TotalLoanCount = await _db.Loans.CountAsync(loan => loan.ReaderId == readerId, ct);
+            reader.CurrentLoanCount = await _db.Loans.CountAsync(loan => loan.ReaderId == readerId
+                && (loan.Status == LoanStatus.Active || loan.Status == LoanStatus.Overdue), ct);
 
-        foreach (var group in loans.GroupBy(loan => loan.ReaderId))
-        {
-            var reader = await _db.Readers.FirstAsync(entity => entity.Id == group.Key, ct);
-
-            reader.TotalLoanCount = group.Count();
-            reader.CurrentLoanCount = group.Count(
-                loan => loan.Status is LoanStatus.Active or LoanStatus.Overdue);
-
-            reader.DebtAmount = fines
-                .Where(fine => fine.ReaderId == group.Key && !fine.Waived)
-                .Sum(fine => fine.Amount - fine.PaidAmount);
+            reader.DebtAmount = await _db.Fines
+                .Where(fine => fine.ReaderId == readerId && !fine.Waived)
+                .SumAsync(fine => fine.Amount - fine.PaidAmount, ct);
         }
 
         await _db.SaveChangesAsync(ct);
@@ -507,6 +503,8 @@ public partial class DatabaseSeeder
         var warehouse = await _db.Warehouses.OrderBy(entity => entity.Code).FirstOrDefaultAsync(ct);
         var now = _clock.Now;
 
+        var datGiu = new List<Hold>();
+
         for (var index = 0; index < onLoan.Count; index++)
         {
             var loan = onLoan[index];
@@ -517,7 +515,7 @@ public partial class DatabaseSeeder
                 .Concat(readers)
                 .First(entity => entity.Id != loan.ReaderId);
 
-            _db.Holds.Add(new Hold
+            datGiu.Add(new Hold
             {
                 ReaderId = reader.Id,
                 BibId = loan.BibId!.Value,
@@ -525,11 +523,24 @@ public partial class DatabaseSeeder
                 ExpireDate = now.AddDays(5 - index),
                 PickupWarehouseId = warehouse?.Id,
                 Status = HoldStatus.Waiting,
-                QueuePosition = 1,
+                QueuePosition = 0,
                 Channel = LoanChannel.Opac
             });
         }
 
+        // Hai bản khác nhau của cùng một biểu ghi đang cho mượn thì sinh ra hai phiếu đặt giữ trên
+        // **một** hàng đợi: gán cứng số 1 cho cả hai là hai người cùng được báo "bạn đứng đầu".
+        foreach (var hangDoi in datGiu.GroupBy(hold => hold.BibId))
+        {
+            var thuTu = 1;
+
+            foreach (var hold in hangDoi.OrderBy(hold => hold.HoldDate))
+            {
+                hold.QueuePosition = thuTu++;
+            }
+        }
+
+        _db.Holds.AddRange(datGiu);
         await _db.SaveChangesAsync(ct);
     }
 

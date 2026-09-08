@@ -213,7 +213,22 @@ chạy nền được gọi kèm `if (Key.StartsWith("BACKUP."))`, nên đổi "
 dụng tới lần khởi động lại. Đổi lại, luật khởi điểm của đợt — ràng buộc kỹ thuật số 6, *dữ liệu lưu
 vĩnh viễn, không xoá cứng* — **sạch hoàn toàn**: 62 lối xoá đều là xoá mềm, 69/70 chỉ mục duy nhất
 trên máy chủ có bộ lọc `deleted_at`, 341 biểu ghi đã xoá không rò ra tầng đọc nào, và OAI-PMH trả
-đúng `<header status="deleted">` cho nơi thu hoạch. Tổng **224 lỗi, đã sửa 224**.
+đúng `<header status="deleted">` cho nơi thu hoạch.
+
+Đợt thứ hai mươi ba (08/09/2026) làm với bài học 85 đúng việc mà đợt trước làm với bài học 30: nó
+sinh ra từ **một** cột chép sẵn (`debt_amount`), rồi không ai hỏi sản phẩm còn bao nhiêu cột cùng
+loại. Lần này liệt kê **13 cột** rồi đo từng cột bằng SQL độc lập trên kho máy chủ nghiệm thu:
+**19 phép đo, 4 lỗi**, ba trong bốn hiện ra ở đúng chỗ bạn đọc nhìn. Nặng nhất: **không lối lưu
+thông nào làm mới số bản rảnh của biểu ghi** — ghi mượn, ghi trả, giữ tại quầy đều không đụng tới
+`available_item_count`, mà đó là con số trang tra cứu in ra dòng "còn N bản rảnh" và là con số bộ
+lọc "chỉ hiện tài liệu còn bản rảnh" chạy trên; trên máy chủ nó gần đúng **chỉ vì** bộ gieo tính lại
+một lượt ở cuối. Kế đó, bộ gieo **gán** số lượt mượn của riêng lô nó đang sinh mà nó chạy hai lô, nên
+469 biểu ghi và 197 bản in mang con số nhỏ hơn lịch sử mượn của chính chúng (thiếu 486 trên 3.119) —
+dấu vết đọc được ngay từ dữ liệu: biểu ghi có 2 lượt sai 441/457, có 3 lượt sai 26/26. Phép đếm ấy
+tồn tại **bốn bản chép** ở bốn tệp mà vẫn không có bản nào ở tầng lưu thông. Và vị trí trong hàng đợi
+đặt giữ — thứ mục XI.2 hứa cho bạn đọc xem — được gieo bằng `1 + index % 3`, nên 37 hàng đợi sai.
+Đổi lại, tám cột còn lại sạch, kể cả `debt_amount` sau một ngày chạy thật. Tổng **228 lỗi, đã sửa
+228**.
 Phụ lục cuối `docs/06` ghi kết quả từng kịch bản (hơn 700 dòng).
 
 Đọc thẳng hồ sơ gốc còn tìm ra thứ không phải lỗi mã: **bốn hồ sơ bàn giao** mà Chương V mục III và
@@ -222,7 +237,7 @@ mục 5 đòi — kế hoạch triển khai, kế hoạch đào tạo, cam kết
 
 | Tài liệu | Nội dung |
 |---|---|
-| `docs/08-so-loi.md` | Sổ lỗi chín đợt: 37 lỗi hai đợt đầu, 5 lỗi đợt rà thứ hai (mục E), 9 lỗi đợt áp bản thiết kế (mục G), 7 lỗi đợt rà thứ ba (mục H), 8 lỗi đợt triển khai (mục I), **88 lỗi năm đợt rà theo đặc tả ngày 04–05/09/2026 (mục J và các mục con)**, 23 lỗi nghiệm thu thử và soi số học (mục K), **14 lỗi ba đợt rà ngày 06–07/09/2026 (mục L)**, 19 lỗi năm đợt rà ngang ngày 07/09/2026 (mục M–Q), **4 lỗi đợt rà tầng tệp xuất ngày 08/09/2026 (mục R)**, 6 lỗi đợt rà ứng dụng di động (mục S), 4 lỗi hai đợt đo khổ màn hình (mục T–U), 5 lỗi đợt rà công tắc cấu hình (mục V) |
+| `docs/08-so-loi.md` | Sổ lỗi chín đợt: 37 lỗi hai đợt đầu, 5 lỗi đợt rà thứ hai (mục E), 9 lỗi đợt áp bản thiết kế (mục G), 7 lỗi đợt rà thứ ba (mục H), 8 lỗi đợt triển khai (mục I), **88 lỗi năm đợt rà theo đặc tả ngày 04–05/09/2026 (mục J và các mục con)**, 23 lỗi nghiệm thu thử và soi số học (mục K), **14 lỗi ba đợt rà ngày 06–07/09/2026 (mục L)**, 19 lỗi năm đợt rà ngang ngày 07/09/2026 (mục M–Q), **4 lỗi đợt rà tầng tệp xuất ngày 08/09/2026 (mục R)**, 6 lỗi đợt rà ứng dụng di động (mục S), 4 lỗi hai đợt đo khổ màn hình (mục T–U), 5 lỗi đợt rà công tắc cấu hình (mục V), 4 lỗi đợt rà cột chép sẵn (mục X) |
 | `docs/09-nguon-du-lieu.md` | Khảo sát 16 nguồn dữ liệu thư mục, giấy phép từng nguồn, kết quả nạp |
 | `docs/10-ke-hoach-trien-khai.md` | Kế hoạch triển khai, chạy thử và chuyển đổi dữ liệu (Chương V mục III.1) |
 | `docs/11-ke-hoach-dao-tao.md` | Kế hoạch đào tạo 16 buổi cho 7 nhóm học viên (Chương V mục III.2) |
@@ -251,7 +266,7 @@ huống lỗi; phải tự tay dựng đúng bối cảnh ấy trong phép thử
 **Lệnh chạy đúng:**
 
 ```bash
-cd backend  && dotnet test                 # 656 unit + 548 integration
+cd backend  && dotnet test                 # 659 unit + 549 integration
 cd frontend-admin && npx tsc -b && npx vitest run    # 350 test
 cd frontend-opac  && npx tsc -b && npx vitest run    # 106 test
 cd mobile   && flutter analyze && flutter test       # 143 test
@@ -302,6 +317,8 @@ vướng — mỗi cái sinh ra từ một lỗi đã xảy ra thật:
 | `backend/.../Infrastructure/StablePagingOrderTests.cs` | Mọi lượt `ToPagedResultAsync` phải kết thúc chuỗi sắp xếp bằng một khóa duy nhất — qua `ApplySort` (tự gắn) hoặc tự viết `ThenBy(x => x.Id)`. Sắp theo cột không duy nhất là trang sau lặp dòng của trang trước và đúng bấy nhiêu dòng khác không bao giờ hiện ra: 396 dòng tiền phạt chỉ có 316 dòng khác nhau |
 | `frontend-opac/src/styles.phone.test.tsx` | Ở bề ngang 375 px, mỗi hàng flex của khung trang phải có ít nhất một phần tử con chịu co, và cặp nhãn `lc-only-wide` / `lc-only-narrow` không được cùng ẩn. Hai khối hai đầu thanh đầu trang cùng `flex: none` từng làm **mọi trang** của trang tra cứu cuộn ngang 146 px, và lượt sửa nó để lại một nút đăng nhập rỗng ruột |
 | `backend/.../Infrastructure/SystemParameterReadersTests.cs` | Mỗi khoá tham số khai trong bộ gieo phải xuất hiện ở đâu đó trong mã nguồn máy chủ ngoài chính chỗ khai nó — đọc thẳng hoặc qua tên hằng số `ParameterKeys.X`, khoá ghép động lúc chạy (`$"CODE.{tên}_PREFIX"`) được nhận theo khuôn. Bốn công tắc từng sống trên màn hình mà không nơi nào đọc, trong đó "Mở kho OAI-PMH của mình" tắt rồi vẫn cho thư viện khác thu hoạch cả kho |
+| `backend/.../Infrastructure/BibCounterRefreshTests.cs` | Tệp nào đổi `item.Status` thì tệp ấy phải gọi `BibItemCounter` đếm lại, và chỉ một chỗ được viết thẳng vào cột số bản rảnh. Cả tầng lưu thông từng không đếm lại lần nào — ghi mượn xong biểu ghi vẫn nói "còn N bản rảnh" — trong khi cùng phép đếm ấy có bốn bản chép ở bốn tệp khác |
+| `backend/.../Infrastructure/DemoHoldQueueTests.cs` | Bộ gieo không được gán một biểu thức của chỉ số vòng lặp vào `QueuePosition`; vị trí phải đánh lại theo thứ tự đặt sau khi dựng xong hàng đợi. `1 + index % 3` từng làm 37 hàng đợi trên máy chủ nghiệm thu mang số sai |
 
 > Một phép thử quét mã nguồn chỉ chặn đúng thư mục nó quét. Thêm luật mới thì hỏi ngay: gói kia có
 > vi phạm cùng luật ấy không? Lỗi D8 sửa cho `frontend-admin` rồi ghi là "cả sản phẩm", nhưng
@@ -793,6 +810,34 @@ docker compose run --rm -d --name lc-api-kiem -e LC_DB_NAME=lc_kiem -e LC_SEED_D
      `[Produces("application/xml")]`; trả 404 kèm thân JSON thì ASP.NET không thương lượng được và
      đổi thành **406 Not Acceptable** — máy khách nhận "kiểu nội dung không hợp" thay vì "ở đây không
      có kho nào". Bài học 39 ở tầng khác: mỗi lớp chặn phải nói cùng thứ tiếng với tầng nó đứng trước.
+
+111. **Cột chép sẵn phải được *tính lại*, đừng cộng dần.** Cộng dần thì mỗi lối quên cộng là một chỗ
+     lệch vĩnh viễn, và đường nào chạy hai lần là đếm đôi — không có gì kéo con số về. Tính lại từ
+     nguồn thì gọi bao nhiêu lần cũng ra một kết quả, nên chỗ gọi chỉ phải nhớ **có gọi**, không
+     phải nhớ cộng bao nhiêu. Bài học 85 chữa `debt_amount` bằng cách gọi hàm đồng bộ ở đủ năm lối;
+     ở đây làm ngược lại và rẻ hơn: để phép đếm tự hỏi cơ sở dữ liệu.
+112. **Bộ đếm nằm sau một điều kiện là bộ đếm sẽ sai.** `if (item.Bib is not null) item.Bib.LoanCount++`
+     — chỉ cần một lối nạp ấn phẩm quên `Include(Bib)` là con số đứng yên và không ai biết, vì không
+     có lỗi nào nổ ra. Hễ thấy một phép cộng vào cột chép sẵn nằm trong một `if`, hỏi ngay: nhánh
+     kia thì ai cộng?
+113. **Phép gán cho một con số tích luỹ là bom hẹn giờ của lần chạy thứ hai.** Bộ gieo dữ liệu trình
+     diễn viết `bib.LoanCount = group.Count()` — đúng ở lần chạy đầu, và ở lần thứ hai (sinh lượt
+     mượn cho biểu ghi mới thu hoạch về) nó xoá sổ con số của lần đầu. Dấu vết đọc được từ dữ liệu:
+     biểu ghi có 1 lượt mượn hầu như đúng hết, có 2 lượt sai 441/457, có 3 lượt sai 26/26.
+114. **Bốn bản chép của một câu truy vấn vẫn thiếu đúng chỗ cần nhất.** Phép đếm số bản rảnh có bốn
+     bản giống hệt nhau ở bốn tệp — mà tầng lưu thông, nơi trạng thái bản in đổi nhiều nhất trong
+     ngày, không gọi bản nào. Chép nhiều không có nghĩa là phủ đủ; đếm số bản chép chỉ đo được sự
+     lặp, muốn đo độ phủ thì phải liệt kê **mọi chỗ đổi thứ mà con số phụ thuộc vào** rồi soi từng
+     chỗ. Ở đây là mọi dòng `item.Status = …`, và một phép thử quét canh đúng danh sách ấy.
+115. **Con số cho đẹp trong dữ liệu mẫu vẫn là con số sản phẩm hứa.** `QueuePosition = 1 + index % 3`
+     trông vô hại trong bộ gieo, nhưng "bạn đang ở vị trí thứ N trong hàng đợi" là câu mục XI.2 hứa
+     với bạn đọc: trên máy chủ nghiệm thu có hàng đợi một người báo "vị trí 2" và hàng đợi hai người
+     cùng mang số 1. Bài học 6 ở dạng khó thấy hơn — không phải tên trùng hay danh mục rỗng, mà một
+     con số **trông hợp lý**.
+116. **Phép đo sai cũng phải ghi lại, đừng lặng lẽ bỏ đi.** Lượt đo `view_count` báo 6 dòng lệch, và
+     sản phẩm đúng: nó cố ý chỉ đếm lần **mở** tài liệu, không đếm từng trang lật, có chú thích ngay
+     tại chỗ. Ghi rõ "lỗi ở phép đo" vào sổ thì lần sau không ai đi lại đường ấy; im lặng bỏ đi thì
+     con số 6 kia sẽ được đo lại từ đầu ở đợt sau.
 
 ### A.4. Cơ chế dùng chung — dùng lại, đừng viết chỗ mới
 

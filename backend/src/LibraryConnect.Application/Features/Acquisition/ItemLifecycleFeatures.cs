@@ -757,23 +757,52 @@ public class DisposeItemsCommandHandler : IRequestHandler<DisposeItemsCommand, B
 /// </summary>
 public static class BibItemCounter
 {
+    /// <summary>
+    /// Tính lại ba con số chép sẵn của biểu ghi từ chính nguồn của chúng.
+    ///
+    /// Tính lại chứ không cộng dồn: cộng dồn thì mỗi lối quên cộng là một chỗ lệch vĩnh viễn, còn
+    /// đường nào chạy hai lần là đếm đôi. Ở đây gọi bao nhiêu lần cũng ra cùng một kết quả, nên chỗ
+    /// gọi chỉ cần nhớ **có gọi**, không phải nhớ cộng bao nhiêu.
+    ///
+    /// `LoanCount` vào đây từ 08/09/2026: trước đó nó được cộng tay ở quầy, có điều kiện
+    /// `if (item.Bib is not null)`, và bộ gieo dữ liệu trình diễn thì **gán** giá trị của riêng lô
+    /// nó đang sinh — chạy hai lô là lô sau xoá sổ lô trước. Trên máy chủ nghiệm thu: 469 biểu ghi
+    /// mang con số nhỏ hơn lịch sử mượn của chính chúng.
+    /// </summary>
     public static async Task RefreshAsync(
         IApplicationDbContext db, IReadOnlyCollection<Guid> bibIds, CancellationToken ct)
     {
-        foreach (var bibId in bibIds)
+        foreach (var bibId in bibIds.Distinct())
         {
             var total = await db.Items.CountAsync(item => item.BibId == bibId, ct);
 
             var available = await db.Items.CountAsync(
                 item => item.BibId == bibId && !item.IsLocked && item.Status == ItemStatus.InStock, ct);
 
+            var loans = await db.Loans.CountAsync(loan => loan.BibId == bibId, ct);
+
             await db.BibRecords
                 .Where(record => record.Id == bibId)
                 .ExecuteUpdateAsync(
                     setters => setters
                         .SetProperty(record => record.ItemCount, total)
-                        .SetProperty(record => record.AvailableItemCount, available),
+                        .SetProperty(record => record.AvailableItemCount, available)
+                        .SetProperty(record => record.LoanCount, loans),
                     ct);
+        }
+    }
+
+    /// <summary>Cùng phép tính ấy cho số lượt mượn của từng bản in.</summary>
+    public static async Task RefreshItemLoanCountAsync(
+        IApplicationDbContext db, IReadOnlyCollection<Guid> itemIds, CancellationToken ct)
+    {
+        foreach (var itemId in itemIds.Distinct())
+        {
+            var loans = await db.Loans.CountAsync(loan => loan.ItemId == itemId, ct);
+
+            await db.Items
+                .Where(item => item.Id == itemId)
+                .ExecuteUpdateAsync(setters => setters.SetProperty(item => item.LoanCount, loans), ct);
         }
     }
 }

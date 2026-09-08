@@ -331,7 +331,12 @@ public partial class DatabaseSeeder
                     : _clock.Now.AddDays(7),
                 PickupWarehouseId = pickup,
                 Status = status,
-                QueuePosition = 1 + index % 3,
+                // Vị trí thật trong hàng đợi được đánh lại ở dưới, sau khi biết cả hàng đợi gồm
+                // những ai: đặt một con số ở đây là bịa. Bản trước dùng `1 + index % 3` và trên máy
+                // chủ nghiệm thu có hàng đợi một người báo "vị trí 2", có hàng đợi hai người cùng
+                // mang số 1, và có hàng đợi hai người mang số ngược thứ tự ngày đặt — đúng cái con
+                // số mà mục XI.2 hứa cho bạn đọc xem.
+                QueuePosition = 0,
                 NotifiedAt = status is HoldStatus.Ready or HoldStatus.Fulfilled
                     ? _clock.Now.AddDays(-1)
                     : null,
@@ -340,6 +345,22 @@ public partial class DatabaseSeeder
         }
 
         _db.Holds.AddRange(holds);
+        await _db.SaveChangesAsync(ct);
+
+        // Đánh số theo đúng thứ tự đặt, trong từng hàng đợi một — cùng phép tính mà
+        // `HoldReader.ResequenceAsync` chạy khi có người hủy phiếu.
+        foreach (var hangDoi in holds
+                     .Where(hold => hold.Status == HoldStatus.Waiting)
+                     .GroupBy(hold => hold.BibId))
+        {
+            var thuTu = 1;
+
+            foreach (var hold in hangDoi.OrderBy(hold => hold.HoldDate).ThenBy(hold => hold.Id))
+            {
+                hold.QueuePosition = thuTu++;
+            }
+        }
+
         await _db.SaveChangesAsync(ct);
     }
 }

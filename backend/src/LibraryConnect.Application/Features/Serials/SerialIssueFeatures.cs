@@ -2,6 +2,7 @@ using FluentValidation;
 using LibraryConnect.Application.Common.Exceptions;
 using LibraryConnect.Application.Common.Extensions;
 using LibraryConnect.Application.Common.Interfaces;
+using LibraryConnect.Application.Features.Acquisition;
 using LibraryConnect.Application.Common.Models;
 using LibraryConnect.Domain.Entities.Acq;
 using LibraryConnect.Domain.Entities.Ser;
@@ -505,24 +506,9 @@ public class ReceiveSerialIssuesCommandHandler
     }
 
     /// <summary>Cập nhật lại số bản trên biểu ghi của đầu báo sau khi nhận thêm số.</summary>
-    private async Task RefreshBibCountsAsync(IReadOnlyList<Guid?> bibIds, CancellationToken ct)
-    {
-        foreach (var bibId in bibIds.Where(id => id is not null).Select(id => id!.Value).Distinct())
-        {
-            var total = await _db.Items.CountAsync(item => item.BibId == bibId, ct);
-
-            var available = await _db.Items.CountAsync(
-                item => item.BibId == bibId && !item.IsLocked && item.Status == ItemStatus.InStock, ct);
-
-            await _db.BibRecords
-                .Where(record => record.Id == bibId)
-                .ExecuteUpdateAsync(
-                    setters => setters
-                        .SetProperty(record => record.ItemCount, total)
-                        .SetProperty(record => record.AvailableItemCount, available),
-                    ct);
-        }
-    }
+    private Task RefreshBibCountsAsync(IReadOnlyList<Guid?> bibIds, CancellationToken ct) =>
+        BibItemCounter.RefreshAsync(
+            _db, bibIds.Where(id => id is not null).Select(id => id!.Value).ToList(), ct);
 }
 
 /// <summary>Đánh dấu các số quá hạn là thiếu, để chuyển sang bước khiếu nại (IV.3).</summary>

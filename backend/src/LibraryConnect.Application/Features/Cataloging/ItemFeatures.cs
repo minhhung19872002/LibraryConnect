@@ -2,6 +2,7 @@ using FluentValidation;
 using LibraryConnect.Application.Common.Exceptions;
 using LibraryConnect.Application.Common.Extensions;
 using LibraryConnect.Application.Common.Interfaces;
+using LibraryConnect.Application.Features.Acquisition;
 using LibraryConnect.Domain.Entities.Acq;
 using LibraryConnect.Domain.Enums;
 using MediatR;
@@ -242,21 +243,8 @@ public class CreateBibItemsCommandHandler : IRequestHandler<CreateBibItemsComman
     /// items themselves rather than incremented — a count that drifts is worse than one that costs a
     /// query, and the query runs only when copies change.
     /// </summary>
-    private async Task RefreshCountsAsync(Guid bibId, CancellationToken ct)
-    {
-        var total = await _db.Items.CountAsync(item => item.BibId == bibId, ct);
-
-        var available = await _db.Items.CountAsync(
-            item => item.BibId == bibId && !item.IsLocked && item.Status == ItemStatus.InStock, ct);
-
-        await _db.BibRecords
-            .Where(record => record.Id == bibId)
-            .ExecuteUpdateAsync(
-                setters => setters
-                    .SetProperty(record => record.ItemCount, total)
-                    .SetProperty(record => record.AvailableItemCount, available),
-                ct);
-    }
+    private Task RefreshCountsAsync(Guid bibId, CancellationToken ct) =>
+        BibItemCounter.RefreshAsync(_db, new[] { bibId }, ct);
 }
 
 /// <summary>Sửa thông tin một đăng ký cá biệt.</summary>
@@ -313,21 +301,8 @@ public class UpdateItemCommandHandler : IRequestHandler<UpdateItemCommand>
         await RefreshCountsAsync(_db, item.BibId, ct);
     }
 
-    internal static async Task RefreshCountsAsync(IApplicationDbContext db, Guid bibId, CancellationToken ct)
-    {
-        var total = await db.Items.CountAsync(item => item.BibId == bibId, ct);
-
-        var available = await db.Items.CountAsync(
-            item => item.BibId == bibId && !item.IsLocked && item.Status == ItemStatus.InStock, ct);
-
-        await db.BibRecords
-            .Where(record => record.Id == bibId)
-            .ExecuteUpdateAsync(
-                setters => setters
-                    .SetProperty(record => record.ItemCount, total)
-                    .SetProperty(record => record.AvailableItemCount, available),
-                ct);
-    }
+    internal static Task RefreshCountsAsync(IApplicationDbContext db, Guid bibId, CancellationToken ct) =>
+        BibItemCounter.RefreshAsync(db, new[] { bibId }, ct);
 }
 
 /// <summary>Xóa mềm một đăng ký cá biệt. Bản đang cho mượn thì không xóa được.</summary>

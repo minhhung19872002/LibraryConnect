@@ -1103,6 +1103,46 @@ cơ chế tự động xóa cứng"* — và luật ấy **giữ được sạch
   khoá có chỗ đọc. Chạy trên mã trước khi sửa thì nó đỏ và gọi đúng bốn cái tên. Muốn khai một tham
   số cố ý chưa có chỗ đọc thì phải ghi vào danh sách miễn kèm lý do — danh sách ấy hiện **rỗng**.
 
+## X. Đợt rà thứ hai mươi ba — cột chép sẵn có bằng nguồn của nó không (08/09/2026)
+
+Bài học 85 ra đời ngày 07/09/2026 từ **một** cột chép sẵn: `readers.debt_amount` được cập nhật ở hai
+lối làm giảm nợ mà không ở ba lối làm tăng. Sửa xong cột ấy rồi thôi — chưa ai hỏi sản phẩm còn bao
+nhiêu cột cùng loại. Đợt này hỏi, và đo bằng SQL độc lập trên chính kho của máy chủ nghiệm thu.
+
+Luật: **mỗi cột chép sẵn phải bằng con số tính lại từ nguồn thật của nó.** Cách đo giống mục kiểm
+thử 2.8 (số liệu báo cáo khớp truy vấn kiểm chứng độc lập), chỉ khác là đo thẳng vào cột chứ không
+qua báo cáo — vì cột mới là thứ mọi màn hình đọc.
+
+**13 cột, 19 phép đo, 4 lỗi.** Ba trong bốn lỗi hiện ra ở đúng chỗ bạn đọc nhìn.
+
+| # | Màn hình | Mô tả lỗi | Cách tái hiện | Mức độ | Loại | Trạng thái |
+|---|---|---|---|---|---|---|
+| X1 | Tra cứu → kết quả và bộ lọc "còn bản rảnh" | **Không lối lưu thông nào làm mới số bản rảnh của biểu ghi.** Ghi mượn đổi bản in sang "Đang mượn", ghi trả đổi về "Trong kho" hoặc "Giữ tại quầy" — `bib_records.available_item_count` đứng yên qua cả ba. Đó lại đúng là con số trang tra cứu in ra dòng "còn N bản rảnh" và là con số bộ lọc *"chỉ hiện tài liệu còn bản rảnh"* chạy trên. Trên máy chủ nghiệm thu con số này gần đúng **chỉ vì** bộ gieo tính lại một lượt ở cuối; mỗi lượt mượn thật sau đó là một lần lệch thêm, và không có gì kéo nó về. | Phép thử tích hợp: nhập 2 bản, kiểm nhận, ghi mượn 1 bản → biểu ghi vẫn nói **2 bản rảnh**. Trước sửa đỏ, sau sửa xanh. | Nặng | Nghiệp vụ | Đã sửa — quầy đếm lại ở cuối mỗi lượt mượn và lượt trả, và lối hủy phiếu đặt giữ đang giữ ở quầy cũng đếm lại; phép đếm chạy sau `SaveChangesAsync` vì nó hỏi thẳng cơ sở dữ liệu |
+| X2 | Tra cứu → "Sách được mượn nhiều", cột Lượt mượn | **Bộ gieo dữ liệu trình diễn gán số lượt mượn của riêng lô nó đang sinh, mà nó chạy hai lô.** `bib.LoanCount = group.Count()` — phép gán, không phải cộng. Lô thứ hai (sinh lượt mượn cho những biểu ghi mới thu hoạch về) xoá sổ con số của lô thứ nhất. Cột ở quầy thì cộng tay và nằm sau `if (item.Bib is not null)`, nên chỉ cần một lối nạp ấn phẩm quên `Include(Bib)` là con số đứng yên mà không ai biết. | SQL trên máy chủ thật: **469 biểu ghi** và **197 bản in** mang con số nhỏ hơn lịch sử mượn của chính chúng; cộng lại thiếu **486 lượt trên 3.119**. Chia theo số lượt thật thì rõ hình: biểu ghi có 1 lượt sai 1/2.090, có 2 lượt sai **441/457**, có 3 lượt sai **26/26** — đúng dấu vết của một lô ghi đè lô kia. | Vừa | Dữ liệu mẫu | Đã sửa — `LoanCount` nay được **tính lại** trong `BibItemCounter` cùng hai con số kia, nên gọi bao nhiêu lần cũng ra một kết quả và không lối nào cộng tay nữa; bộ gieo đếm lại từ cơ sở dữ liệu thay vì gán con số của lô; migration `20260908093205` tính lại bốn cột trên bản đã cài |
+| X3 | (toàn hệ thống) | **Cùng một câu truy vấn đếm tồn tại bốn bản chép ở bốn tệp** — hai bản ở Biên mục, một ở Ấn phẩm định kỳ, một ở Bổ sung. Bản nào cũng đúng, cho tới ngày một bản được sửa. Và không bản nào được tầng lưu thông gọi tới, tức là bốn bản chép mà vẫn thiếu chỗ cần nhất. | Quét mã: bốn thân hàm giống hệt nhau khai `SetProperty(record => record.AvailableItemCount, …)`. | Nhẹ | Kiến trúc | Đã sửa — còn **một** `BibItemCounter`; ba chỗ kia gọi nó. Phép thử quét cấm bản thứ năm và đòi mọi tệp đổi `item.Status` phải đếm lại |
+| X4 | Tài khoản bạn đọc → Đặt giữ của tôi (và ứng dụng di động) | **Vị trí trong hàng đợi là một con số bịa.** Bộ gieo đặt `QueuePosition = 1 + index % 3` ở một chỗ và hằng số `1` ở chỗ kia. "Xem vị trí trong hàng đợi" là câu mục XI.2 hứa với bạn đọc. | SQL trên máy chủ thật: **37 hàng đợi sai**. Có hàng đợi một người báo "vị trí 2"; có hàng đợi hai người **cùng** mang số 1; có hàng đợi hai người mang số **ngược** thứ tự ngày đặt (người đặt 25/08 mang số 2, người đặt 27/08 mang số 1). | Vừa | Dữ liệu mẫu | Đã sửa — cả hai bộ gieo đánh số lại theo thứ tự đặt sau khi dựng xong hàng đợi; migration `20260908094106` đánh lại trên bản đã cài. Phép thử quét cấm gán một biểu thức của chỉ số vòng lặp vào `QueuePosition` |
+
+### Đã kiểm trong đợt này và vẫn tốt
+
+- **`readers.debt_amount`: 0 lệch.** Bản sửa của bài học 85 giữ được sau một ngày chạy thật.
+- **`shelves.current_count`: 0 lệch** trên toàn bộ giá của máy chủ.
+- **`bib.digital_document_count`: 0 lệch.**
+- **`loans.renewed_count` khớp số dòng trong sổ gia hạn: 0 lệch.**
+- **`digital_documents.download_count`: 0 lệch**, và `view_count` cũng **0 lệch** khi đo đúng định
+  nghĩa của nó. Phép đo đầu tiên của tôi báo 6 dòng lệch vì nó đếm mọi dòng nhật ký `View`; sản phẩm
+  cố ý chỉ đếm **lần mở tài liệu** (`page_from IS NULL`), có chú thích ngay tại chỗ — nếu không thì
+  một cuốn 300 trang đọc một lượt đã thành 300 lượt xem. Lỗi ở phép đo, không ở sản phẩm.
+- **`inventory_periods.scanned_count`: 0 lệch.**
+- **`serial_bindings.issue_count`** có một dòng trông như lệch (`DT00003` khai 2 số, đếm ra 0): hai
+  số ấy **đã bị xoá mềm** sau khi đóng tập, trong lượt dọn dữ liệu thử của một đợt rà trước. Con số
+  ghi lại đúng cái đã đóng vào tập; không phải lỗi.
+- **Ba dòng "chép > thật"** (3 biểu ghi, 6 bản in) cũng là dấu vết dọn dữ liệu thử: lượt mượn bị xoá
+  mềm bằng SQL trong các đợt trước, còn bộ đếm thì chỉ tăng. Sau migration tính lại, chúng về đúng.
+- **`ExecuteUpdateAsync` — 23 lối ghi thẳng xuống SQL, không lối nào bỏ sót nhật ký cần ghi.** Lệnh
+  này bỏ qua `SaveChangesInterceptor`, tức không sinh dòng nhật ký và không cập nhật `updated_at`;
+  soi từng lối thì tất cả đều là bộ đếm tổng hợp hoặc cờ "mẫu mặc định", không phải thao tác nghiệp
+  vụ mà mục 6.2 đòi ghi lại.
+
 ## Đ. Những chỗ đã thử phá nhưng hệ thống chịu được
 
 Ghi lại để biết chỗ nào đã kiểm và không phải kiểm lại — kèm bằng chứng, không ghi suông.

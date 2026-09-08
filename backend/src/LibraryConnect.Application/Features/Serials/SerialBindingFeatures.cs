@@ -3,6 +3,7 @@ using FluentValidation;
 using LibraryConnect.Application.Common.Exceptions;
 using LibraryConnect.Application.Common.Extensions;
 using LibraryConnect.Application.Common.Interfaces;
+using LibraryConnect.Application.Features.Acquisition;
 using LibraryConnect.Domain.Entities.Acq;
 using LibraryConnect.Domain.Entities.Ser;
 using LibraryConnect.Domain.Enums;
@@ -282,21 +283,8 @@ public class BindSerialIssuesCommandHandler : IRequestHandler<BindSerialIssuesCo
         return ordered.GetRange(start, end - start + 1);
     }
 
-    private async Task RefreshBibCountsAsync(Guid bibId, CancellationToken ct)
-    {
-        var total = await _db.Items.CountAsync(item => item.BibId == bibId, ct);
-
-        var available = await _db.Items.CountAsync(
-            item => item.BibId == bibId && !item.IsLocked && item.Status == ItemStatus.InStock, ct);
-
-        await _db.BibRecords
-            .Where(record => record.Id == bibId)
-            .ExecuteUpdateAsync(
-                setters => setters
-                    .SetProperty(record => record.ItemCount, total)
-                    .SetProperty(record => record.AvailableItemCount, available),
-                ct);
-    }
+    private Task RefreshBibCountsAsync(Guid bibId, CancellationToken ct) =>
+        BibItemCounter.RefreshAsync(_db, new[] { bibId }, ct);
 }
 
 // ---------------------------------------------------------------------------------------------

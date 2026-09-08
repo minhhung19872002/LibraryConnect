@@ -1939,3 +1939,26 @@ gieo — hai con số lệch nhau 136 so với 89.
 | RU.13 | Hoàn từng bản sửa về mã cũ rồi chạy lại bốn phép thử hành vi và phép thử quét | Cả năm đều **đỏ**, mỗi cái gọi đúng tên chỗ hỏng; khôi phục thì xanh | Đạt |
 | RU.14 | Sau khi triển khai bản sửa, kiểm lại **chính năm thứ vừa sửa** trên máy chủ thật (bài học 55) | Migration chạy thật: **136 → 135** tham số, dòng thừa mang `deleted_at`. Tắt kho OAI: `Identify`, `ListIdentifiers`, `ListRecords` và `POST` đều **404**, `/sru` vẫn 200; bật lại thì `completeListSize="12950"` ngay. Tắt cảnh báo trùng: lượt tra trả rỗng, bật lại thì trả đúng biểu ghi. Đặt trần đăng ký = 1: lượt đặt giữ thứ hai **409** đúng câu "chỉ được tự đăng ký mượn 1 tài liệu cùng lúc". Đổi lịch thu hoạch: bảng `hangfire.hash` đổi từ `0 2 * * *` sang `15 5 * * *` **ngay trong lượt lưu**, `NextExecution` tính lại theo lịch mới | Đạt |
 | RU.15 | Dọn dấu vết của chính đợt rà trên máy chủ nghiệm thu (bài học 61) | Phiếu đặt giữ dựng để đo RU.14 đã hủy rồi xoá mềm (141 phiếu còn lại, đúng như trước đợt rà); năm tham số về đúng giá trị cũ, đối chiếu lại từng cái. Lượt đổi tham số có để lại vết trong lịch sử tham số — đó là nhật ký thật, giữ nguyên | Đạt |
+
+### Đợt hai mươi ba — cột chép sẵn có bằng nguồn của nó không (08/09/2026)
+
+Mục kiểm thử 2.8 đòi số liệu báo cáo khớp truy vấn kiểm chứng độc lập. Đợt này áp cùng cách ấy vào
+tầng thấp hơn: chính những **cột chép sẵn** mà mọi màn hình đọc. Đo bằng SQL tự viết trên kho của
+máy chủ nghiệm thu.
+
+| Mã | Kịch bản | Kết quả thực tế | Đạt |
+|---|---|---|---|
+| RV.1 | `bib.available_item_count` so với số bản thật đang ở trạng thái Trong kho và không khoá | 2/12.609 lệch trên máy chủ — nhưng chỉ vì bộ gieo tính lại một lượt ở cuối. Phép thử tích hợp: nhập 2 bản, kiểm nhận, ghi mượn 1 → **biểu ghi vẫn nói còn 2 bản rảnh** | Đạt sau sửa |
+| RV.2 | `bib.loan_count` so với số phiếu mượn của biểu ghi | **469 biểu ghi lệch**, cộng lại thiếu 486 lượt trên 3.119. Chia theo số lượt thật: có 1 lượt sai 1/2.090, có 2 lượt sai 441/457, có 3 lượt sai 26/26 | Đạt sau sửa |
+| RV.3 | `items.loan_count` so với số phiếu mượn của bản in | **197 bản lệch**, thiếu 198 lượt | Đạt sau sửa |
+| RV.4 | `readers.current_loan_count` và `total_loan_count` | 2 bạn đọc lệch, cả hai do lượt mượn bị xoá mềm trong lượt dọn dữ liệu thử của đợt trước | Đạt sau sửa |
+| RV.5 | `holds.queue_position` có liên tục từ 1 theo thứ tự đặt trong từng hàng đợi không | **37 hàng đợi sai**: hàng đợi một người báo "vị trí 2", hàng đợi hai người cùng mang số 1, hàng đợi hai người mang số ngược thứ tự ngày đặt | Đạt sau sửa |
+| RV.6 | `readers.debt_amount` so với tổng phạt chưa thu | **0 lệch** — bản sửa của bài học 85 giữ được | Đạt |
+| RV.7 | `shelves.current_count` so với số bản trên giá | 0 lệch | Đạt |
+| RV.8 | `bib.digital_document_count` so với số tài liệu số gắn vào biểu ghi | 0 lệch | Đạt |
+| RV.9 | `loans.renewed_count` so với số dòng trong sổ gia hạn | 0 lệch | Đạt |
+| RV.10 | `digital_documents.view_count` / `download_count` so với nhật ký truy cập | 0 lệch khi đo đúng định nghĩa (`view_count` chỉ đếm **lần mở tài liệu**, `page_from IS NULL`). Phép đo đầu tiên báo 6 dòng lệch là **lỗi của phép đo**, không phải của sản phẩm | Đạt |
+| RV.11 | `inventory_periods.scanned_count` so với số bản đã quét | 0 lệch | Đạt |
+| RV.12 | `serial_bindings.issue_count` so với số kỳ trong tập | Một dòng trông như lệch; hai số ấy đã bị xoá mềm trong lượt dọn của đợt trước, con số ghi lại đúng cái đã đóng vào tập | Đạt |
+| RV.13 | 23 lối `ExecuteUpdateAsync` — ghi thẳng xuống SQL, bỏ qua bộ ghi nhật ký và cột `updated_at` | Soi từng lối: tất cả là bộ đếm tổng hợp hoặc cờ "mẫu mặc định", không lối nào là thao tác nghiệp vụ mà mục 6.2 đòi ghi nhật ký | Đạt |
+| RV.14 | Hoàn từng bản sửa về mã cũ rồi chạy lại ba phép thử của đợt | Đều **đỏ** và gọi đúng tên: phép thử tích hợp báo "còn 2 bản rảnh", phép thử quét báo `CirculationDeskService.cs`, phép thử bộ gieo báo `QueuePosition = 1 + index % 3` | Đạt |

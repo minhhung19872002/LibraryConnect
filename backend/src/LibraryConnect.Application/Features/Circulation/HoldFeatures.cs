@@ -2,6 +2,7 @@ using FluentValidation;
 using LibraryConnect.Application.Common.Exceptions;
 using LibraryConnect.Application.Common.Extensions;
 using LibraryConnect.Application.Common.Interfaces;
+using LibraryConnect.Application.Features.Acquisition;
 using LibraryConnect.Application.Common.Models;
 using LibraryConnect.Domain.Entities.Cir;
 using LibraryConnect.Domain.Enums;
@@ -234,6 +235,14 @@ public class CancelHoldCommandHandler : IRequestHandler<CancelHoldCommand>
 
         await HoldReader.ResequenceAsync(_db, hold.BibId, ct);
         await _db.SaveChangesAsync(ct);
+
+        // Hủy một phiếu đang giữ ở quầy làm bản ấy hoặc lên giá (rảnh trở lại) hoặc sang tay người
+        // kế tiếp (vẫn không rảnh). Cả hai đều đổi số bản rảnh của biểu ghi, mà đó là con số trang
+        // tra cứu in ra.
+        if (wasReady)
+        {
+            await BibItemCounter.RefreshAsync(_db, new[] { hold.BibId }, ct);
+        }
     }
 }
 

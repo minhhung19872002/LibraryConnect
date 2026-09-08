@@ -1,5 +1,6 @@
 using LibraryConnect.Application.Common.Exceptions;
 using LibraryConnect.Application.Common.Interfaces;
+using LibraryConnect.Application.Features.Acquisition;
 using LibraryConnect.Domain.Entities.Acq;
 using LibraryConnect.Domain.Entities.Cir;
 using LibraryConnect.Domain.Entities.Rdr;
@@ -495,16 +496,10 @@ public class CirculationDeskService : ICirculationDeskService
             created.Add(loan);
 
             item.Status = ItemStatus.OnLoan;
-            item.LoanCount++;
 
-            // Đếm cả ở biểu ghi, không chỉ ở từng bản in: trang tra cứu xếp "sách được mượn nhiều"
-            // và tính độ liên quan theo con số của biểu ghi, nên chỉ tăng ở bản in thì khối ấy trống
-            // mãi dù thư viện cho mượn hàng nghìn lượt.
-            if (item.Bib is not null)
-            {
-                item.Bib.LoanCount++;
-            }
-
+            // Số lượt mượn của bản in và của biểu ghi được **tính lại** ở cuối lượt, không cộng tay
+            // ở đây: phép cộng cũ nằm sau `if (item.Bib is not null)`, nên chỉ cần một lối nạp ấn
+            // phẩm quên `Include(Bib)` là con số đứng yên mà không ai biết.
             reader.CurrentLoanCount++;
             reader.TotalLoanCount++;
             remaining--;
@@ -520,6 +515,7 @@ public class CirculationDeskService : ICirculationDeskService
         }
 
         await _db.SaveChangesAsync(ct);
+        await DemLaiAsync(created, ct);
 
         var ids = created.Select(loan => loan.Id).ToList();
 
@@ -586,6 +582,8 @@ public class CirculationDeskService : ICirculationDeskService
             throw new Common.Exceptions.ValidationException("barcodes", "Chưa quét mã vạch nào.");
         }
 
+        var daTra = new List<Loan>();
+
         foreach (var raw in scanned)
         {
             var item = await _db.Items
@@ -623,6 +621,7 @@ public class CirculationDeskService : ICirculationDeskService
 
             loan.ReturnDate = now;
             loan.Status = LoanStatus.Returned;
+            daTra.Add(loan);
             loan.ReturnBy = _currentUser.UserId;
             loan.ReturnByName = _currentUser.FullName;
             loan.FineAmount = fine;
@@ -734,10 +733,40 @@ public class CirculationDeskService : ICirculationDeskService
         }
 
         await _db.SaveChangesAsync(ct);
+        await DemLaiAsync(daTra, ct);
         await DongBoCongNoAsync(canDongBoNo, ct);
 
         result.SlipCode = result.Items[0].LoanCode;
         return result;
+    }
+
+    /// <summary>
+    /// Đếm lại số bản rảnh và số lượt mượn của những biểu ghi vừa động tới.
+    ///
+    /// `available_item_count` là con số trang tra cứu in ra dòng "còn N bản rảnh", và là con số bộ
+    /// lọc "chỉ hiện tài liệu còn bản rảnh" chạy trên. Trước 08/09/2026 không lối lưu thông nào làm
+    /// mới nó: mượn xong bản in sang trạng thái Đang mượn mà biểu ghi vẫn nói còn rảnh, nên bạn đọc
+    /// tra ra một cuốn "còn 2 bản" rồi tới nơi không thấy cuốn nào.
+    ///
+    /// Chạy sau `SaveChangesAsync` vì phép đếm hỏi thẳng cơ sở dữ liệu.
+    /// </summary>
+    private async Task DemLaiAsync(IReadOnlyCollection<Loan> loans, CancellationToken ct)
+    {
+        if (loans.Count == 0)
+        {
+            return;
+        }
+
+        var bibIds = loans.Where(loan => loan.BibId is not null)
+            .Select(loan => loan.BibId!.Value).Distinct().ToList();
+
+        if (bibIds.Count > 0)
+        {
+            await BibItemCounter.RefreshAsync(_db, bibIds, ct);
+        }
+
+        await BibItemCounter.RefreshItemLoanCountAsync(
+            _db, loans.Select(loan => loan.ItemId).Distinct().ToList(), ct);
     }
 
     private async Task<Hold?> NextWaitingHoldAsync(Item item, CancellationToken ct) =>
