@@ -276,7 +276,8 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                 ListTile(
                   leading: const Icon(Icons.language),
                   title: Text(l10n.language),
-                  trailing: DropdownButton<String>(
+                  // Cùng lý do với hàng "Giao diện": ở 200% nhãn còn 63 điểm ảnh và vỡ dòng.
+                  subtitle: DropdownButton<String>(
                     key: const Key('language-dropdown'),
                     value: display.locale?.languageCode ?? 'vi',
                     underline: const SizedBox.shrink(),

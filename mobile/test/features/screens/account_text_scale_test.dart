@@ -15,7 +15,7 @@ void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
   for (final scale in [1.0, 1.6, 2.0]) {
-    testWidgets('nhãn "Giao diện" không vỡ dòng ở cỡ chữ ${scale * 100}%', (
+    testWidgets('nhãn hàng cài đặt không vỡ dòng ở cỡ chữ ${scale * 100}%', (
       tester,
     ) async {
       dungManHinhDienThoai(tester);
@@ -28,20 +28,20 @@ void main() {
       );
       await settle(tester);
 
-      final nhan = find.text(l10nVi.theme);
-      expect(nhan, findsOneWidget);
-
-      // "Giao diện" là chữ ngắn: dựng đúng thì ô chữ rộng hơn cao ở mọi cỡ. Bị bóp thành cột hẹp
-      // rồi vỡ làm bốn dòng thì ô hoá ra cao hơn rộng — bất biến này không phụ thuộc cỡ chữ.
-      final o = tester.getSize(nhan);
-
-      expect(
-        o.width,
-        greaterThan(o.height),
-        reason:
-            'ở cỡ chữ ${scale * 100}% ô chữ rộng ${o.width.toStringAsFixed(0)} '
-            'cao ${o.height.toStringAsFixed(0)} — nhãn đang vỡ dòng giữa từ',
-      );
+      // Chữ ngắn dựng đúng thì ô chữ rộng hơn cao ở mọi cỡ; bị bóp thành cột hẹp rồi vỡ dòng
+      // thì ô hoá ra cao hơn rộng — bất biến này không phụ thuộc cỡ chữ.
+      for (final chu in [l10nVi.theme, l10nVi.language]) {
+        final nhan = find.text(chu);
+        expect(nhan, findsOneWidget, reason: 'không thấy nhãn "$chu"');
+        final o = tester.getSize(nhan);
+        expect(
+          o.width,
+          greaterThan(o.height),
+          reason:
+              'ở cỡ chữ ${scale * 100}% nhãn "$chu" rộng ${o.width.toStringAsFixed(0)} '
+              'cao ${o.height.toStringAsFixed(0)} — đang vỡ dòng giữa từ',
+        );
+      }
     });
   }
 }
