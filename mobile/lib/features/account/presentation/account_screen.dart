@@ -229,7 +229,12 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                 ListTile(
                   leading: const Icon(Icons.brightness_6_outlined),
                   title: Text(l10n.theme),
-                  trailing: DropdownButton<ThemeMode>(
+                  // Ô chọn nằm **dưới** nhãn chứ không ở cột `trailing`: ở cỡ chữ lớn, ô chọn
+                  // ("Tối" + mũi tên) ăn gần hết bề ngang, bóp nhãn còn vài chục điểm ảnh và
+                  // "Giao diện" xuống dòng giữa chữ thành "Gi / ao / diệ / n" — chụp được trên
+                  // iPhone Simulator ở 160%. Hàng "Cỡ chữ" ngay dưới vốn đã đặt thanh trượt ở
+                  // `subtitle`, nên cách này cũng là cách hàng bên cạnh đang làm.
+                  subtitle: DropdownButton<ThemeMode>(
                     key: const Key('theme-dropdown'),
                     value: display.theme,
                     underline: const SizedBox.shrink(),

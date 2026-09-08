@@ -274,3 +274,15 @@ List<String> doTuongPhan(WidgetTester tester, {double nguong = 4.5}) {
 
   return loi;
 }
+
+/// Đặt khung dựng bằng một màn hình điện thoại thật (iPhone 375×812 ở tỉ lệ 3).
+///
+/// Mặc định của `flutter_test` là 800×600 — rộng hơn mọi điện thoại, nên bố cục bị bóp ở máy thật
+/// vẫn "vừa" trong phép thử. Nhãn "Giao diện" vỡ thành "Gi / ao / diệ / n" ở cỡ chữ 160% trên
+/// iPhone Simulator mà phép thử ở 800×600 không thấy gì.
+void dungManHinhDienThoai(WidgetTester tester, {Size co = const Size(375, 812)}) {
+  tester.view.devicePixelRatio = 3.0;
+  tester.view.physicalSize = co * 3.0;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+}

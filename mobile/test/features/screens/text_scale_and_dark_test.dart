@@ -71,6 +71,7 @@ void main() {
     double scale = 1.0,
     bool dark = false,
   }) async {
+    dungManHinhDienThoai(tester);
     await tester.pumpWidget(
       testApp(
         home: const MyLibraryScreen(),
@@ -114,6 +115,7 @@ void main() {
     double scale = 1.0,
     bool dark = false,
   }) async {
+    dungManHinhDienThoai(tester);
     await tester.pumpWidget(
       testApp(
         home: const NotificationsScreen(),
@@ -155,6 +157,7 @@ void main() {
     double scale = 1.0,
     bool dark = false,
   }) async {
+    dungManHinhDienThoai(tester);
     await tester.pumpWidget(
       testApp(
         home: const CardScreen(),

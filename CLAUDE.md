@@ -176,7 +176,8 @@ ngưỡng ngay ở chế độ sáng**, đúng bài học 19 của phía web l�
 sáng, và nó sống sót vì `StatusPill` nằm trong `core/theme/` — đúng thư mục mà phép thử quét cố ý bỏ
 qua. Lỗi thứ năm thì do **phép thử iOS trên máy Mac của GitHub** bắt: máy chủ tách thông báo ra
 khối riêng từ 04/09/2026, ứng dụng không khai trường ấy nên trên máy chủ nghiệm thu — nơi cả hai bản
-tin đều là thông báo — trang chủ **không hiện tin nào**. Cả 5 đã sửa, tổng **214 lỗi, đã sửa 214**.
+tin đều là thông báo — trang chủ **không hiện tin nào**. Lỗi thứ sáu lộ ra từ chính **bộ ảnh iOS** ấy: ở cỡ chữ 160% nhãn "Giao diện" bị ô chọn bóp đến mức
+vỡ thành "Gi / ao / diệ / n". Cả 6 đã sửa, tổng **215 lỗi, đã sửa 215**.
 Phụ lục cuối `docs/06` ghi kết quả từng kịch bản (hơn 700 dòng).
 
 Đọc thẳng hồ sơ gốc còn tìm ra thứ không phải lỗi mã: **bốn hồ sơ bàn giao** mà Chương V mục III và
@@ -217,7 +218,7 @@ huống lỗi; phải tự tay dựng đúng bối cảnh ấy trong phép thử
 cd backend  && dotnet test                 # 655 unit + 544 integration
 cd frontend-admin && npx tsc -b && npx vitest run    # 347 test
 cd frontend-opac  && npx tsc -b && npx vitest run    # 102 test
-cd mobile   && flutter analyze && flutter test       # 140 test
+cd mobile   && flutter analyze && flutter test       # 143 test
 ```
 
 > `npx tsc --noEmit` **không kiểm gì cả** ở hai thư mục frontend: `tsconfig.json` là tệp solution
@@ -690,6 +691,14 @@ docker compose run --rm -d --name lc-api-kiem -e LC_DB_NAME=lc_kiem -e LC_SEED_D
     và nguy hơn: dữ liệu hai nơi khác nhau nên lỗi chỉ có ở máy chủ thật sẽ **không hiện ra**. Dấu
     hiệu rẻ nhất để biết mình đang xem máy nào: đối chiếu bốn con số ở khối thống kê trang chủ với
     `/api/public/home` của máy chủ định kiểm.
+
+98. **Phép thử widget mặc định dựng ở 800×600 — rộng hơn mọi điện thoại.** Bố cục bị bóp trên máy
+    thật vẫn "vừa" trong phép thử, nên cả bộ quét cỡ chữ của đợt 19 báo sạch trong khi ảnh iPhone
+    Simulator cho thấy nhãn vỡ giữa từ. Mọi phép thử về bố cục phải đặt `tester.view.physicalSize`
+    bằng một màn hình điện thoại thật (`dungManHinhDienThoai` trong khung dựng chung).
+99. **"Tràn khung" không phải dấu hiệu duy nhất của bố cục hỏng.** Một nhãn bị bóp còn 42 điểm ảnh
+    rồi xuống dòng giữa từ thì không ném ngoại lệ nào — nó vẫn vừa. Bất biến đo được ở đây là hình
+    dạng ô chữ: chữ ngắn dựng đúng thì **rộng hơn cao**; vỡ thành cột hẹp là cao hơn rộng.
 
 ### A.4. Cơ chế dùng chung — dùng lại, đừng viết chỗ mới
 

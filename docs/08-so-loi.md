@@ -933,7 +933,7 @@ canh quyền. **Ứng dụng di động thì chưa lần nào**: nó mới đư�
 
 Cách đo: dựng thật từng màn hình trong phép thử widget, rồi **đi khắp cây widget đọc màu chữ đã
 phân giải và màu nền đục gần nhất phía trên nó, tính tỉ lệ tương phản WCAG** — không nhìn ảnh chụp
-(bài học 13). **116 phép đo, 5 lỗi** — 9 phép đo cỡ chữ, 4 lượt đo tương phản trên màn hình dựng
+(bài học 13). **125 phép đo, 6 lỗi** — 9 phép đo cỡ chữ, 4 lượt đo tương phản trên màn hình dựng
 thật (mỗi lượt đo mọi dòng chữ đang hiện), 71 cặp màu tính theo bảng ở cả hai chế độ, 19 chỗ đọc dữ
 liệu bất đồng bộ và 13 màn hình có danh sách. Lỗi thứ tư lộ ra lúc **cài APK lên máy ảo và nhìn bằng mắt** — nó nằm ở đúng chỗ phép thử quét cố ý bỏ qua.
 
@@ -947,10 +947,13 @@ liệu bất đồng bộ và 13 màn hình có danh sách. Lỗi thứ tư lộ
 
 | S5 | Trang chủ ứng dụng — khối tin tức (XI.1) | **Máy chủ tách thông báo ra khối riêng, ứng dụng không đọc khối ấy nên mất sạch trong im lặng.** Ngày 04/09/2026 máy chủ thêm trường `announcements` vào `/api/public/home` (lịch nghỉ, giờ mở cửa — trang tra cứu dựng thành khối riêng). `HomePayload` của ứng dụng di động **không khai trường ấy**, nên mọi thông báo bị bỏ. Trên máy chủ nghiệm thu, nơi **cả hai** bản tin đã đăng đều thuộc chuyên mục Thông báo, trang chủ của ứng dụng vì thế **không hiện tin nào**. Cùng hình dạng với bài học 30, lật ngược: ở đấy là công tắc lưu mà không ai đọc, ở đây là dữ liệu máy chủ gửi mà không màn hình nào dựng. | `GET /api/public/home` trên máy chủ thật trả `news: []` và `announcements: [2]`; `HomePayload` của Flutter chỉ có `news`. Phép thử iOS trên Simulator đi tìm bản tin ấy ở trang chủ và **đỏ** — đó là cách lỗi lộ ra. | Vừa | Nghiệp vụ | Đã sửa — thêm `announcements` vào mô hình và một khối "Thông báo của thư viện" đứng **trước** khối tin tức; `home_announcements_test.dart` dựng trang chủ với payload chỉ có thông báo (đỏ trước khi sửa). Kiểm lại bằng APK trỏ vào máy chủ thật: khối hiện đúng hai bản tin |
 
+| S6 | Tài khoản → hàng "Giao diện" (XI.3) | **Nhãn bị ô chọn bóp đến mức vỡ dòng giữa từ.** Ô chọn giao diện đặt ở cột `trailing` của `ListTile`; ở cỡ chữ lớn nó ăn gần hết bề ngang màn hình điện thoại, nhãn còn hơn bốn chục điểm ảnh và "Giao diện" xuống dòng thành **"Gi / ao / diệ / n"**. Không ngoại lệ tràn khung nào được ném — hàng vẫn "vừa", chỉ là không đọc được nữa. Hàng "Cỡ chữ" ngay dưới vốn đã đặt thanh trượt ở `subtitle`, tức cách đúng đã có sẵn ngay cạnh. | Ảnh `ios-13-toi-tai-khoan.png` do máy Mac của GitHub chụp trên iPhone Simulator ở cỡ chữ 160%. Đo lại trong phép thử với khung dựng bằng màn hình điện thoại: ô chữ **rộng 42 cao 152** ở 160%, và **rộng 0 cao 384** ở 200%. | Vừa | Giao diện | Đã sửa — ô chọn xuống `subtitle`, cùng cách với hàng bên cạnh; `account_text_scale_test.dart` đo bất biến "chữ ngắn thì ô rộng hơn cao" ở ba cỡ (đỏ trước khi sửa) |
+
 ### Đã kiểm trong đợt này và vẫn tốt
 
 - **9/9 phép đo cỡ chữ**: ba màn hình dựng ở 100%, 150% và **200%** đều không tràn khung một điểm
-  ảnh nào. Bản sửa của MB.27 (kệ sách cao theo `MediaQuery.textScalerOf`) còn nguyên tác dụng, và
+  ảnh nào — đo lại sau khi phát hiện S6 với khung dựng bằng **màn hình điện thoại thật** (375×812)
+  chứ không phải 800×600 mặc định của `flutter_test`, kết quả vẫn 9/9. Bản sửa của MB.27 (kệ sách cao theo `MediaQuery.textScalerOf`) còn nguyên tác dụng, và
   chỗ duy nhất còn khai chiều cao cố định là ảnh bìa — thứ không chứa chữ.
 - **19/19 chỗ đọc dữ liệu bất đồng bộ** khai đủ cả nhánh `loading:` lẫn `error:`; **13/13 màn hình
   có danh sách** đều canh danh sách rỗng trước khi dựng.
@@ -1074,7 +1077,7 @@ dạng quét mã nguồn chặn cả lớp lỗi quay lại thay vì chỉ chặ
 
 Cộng cả ba đợt, đợt áp thiết kế, đợt triển khai và ba đợt rà hoàn thiện ngày 04/09/2026:
 **147 lỗi, đã sửa 145**; thêm **23 lỗi của đợt nghiệm thu thử, test sâu, ba đợt test kỹ thuật ngày
-05/09/2026 và ba đợt soi nghiệp vụ – giao thức – bảo mật ngày 06/09/2026 (mục K), đã sửa cả 23** — tổng **170 lỗi, đã sửa 170**; cộng **16 lỗi mục L**, **4 lỗi mục M**, **4 lỗi mục N**, **5 lỗi mục O**, **3 lỗi mục P**, **3 lỗi mục Q** của tám đợt rà sâu ngày 06–07/09/2026, **4 lỗi mục R** của đợt rà tầng tệp xuất và **5 lỗi mục S** của đợt rà ứng dụng di động ngày 08/09/2026 — tổng **214 lỗi, đã sửa 214**. Hai mục H3 và H9 đã làm xong ngày 03/09/2026 và ghi ở cột cuối
+05/09/2026 và ba đợt soi nghiệp vụ – giao thức – bảo mật ngày 06/09/2026 (mục K), đã sửa cả 23** — tổng **170 lỗi, đã sửa 170**; cộng **16 lỗi mục L**, **4 lỗi mục M**, **4 lỗi mục N**, **5 lỗi mục O**, **3 lỗi mục P**, **3 lỗi mục Q** của tám đợt rà sâu ngày 06–07/09/2026, **4 lỗi mục R** của đợt rà tầng tệp xuất và **6 lỗi mục S** của đợt rà ứng dụng di động ngày 08/09/2026 — tổng **215 lỗi, đã sửa 215**. Hai mục H3 và H9 đã làm xong ngày 03/09/2026 và ghi ở cột cuối
 của chính hai dòng ấy — con số 134 giữ nguyên cách đếm cũ để đối chiếu được với các bản trước.
 Mỗi lỗi đã sửa đều có phép thử chạy đỏ trước khi sửa và xanh sau khi sửa, kể cả H7: phép thử giả
 tiêu đề đỏ trước khi sửa `CurrentUser.Ip`.
