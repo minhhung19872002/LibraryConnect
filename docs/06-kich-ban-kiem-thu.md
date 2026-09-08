@@ -1887,3 +1887,16 @@ cây widget đọc màu chữ đã phân giải và màu nền đục gần nh�
 | MB.51 | Cài APK **trỏ vào máy chủ thật** (`--dart-define=LC_API_BASE_URL=https://thuvien.bluestar.com.vn/api`), mở trang chủ | **Trước sửa: không khối tin tức nào** — máy chủ trả `news: []` và `announcements: [2]`, ứng dụng không khai trường `announcements`. Sau sửa: khối "Thông báo của thư viện" hiện đúng hai bản tin; các con số 11.672 biểu ghi / 17.900 bản in / 653 bạn đọc khớp `/api/public/home` của máy chủ thật | Đạt |
 | MB.52 | Ảnh iOS do máy Mac của GitHub chụp trên iPhone Simulator, chế độ tối + cỡ chữ 160% | Trang chủ, tài khoản, kết quả tra cứu, chi tiết tài liệu đều dựng đúng ở chế độ tối. **Hai điều lộ ra từ chính bộ ảnh này**: viên nhãn "3 bản sẵn sàng" còn là nền sáng (S4, đã sửa ở lượt sau), và nhãn "Giao diện" vỡ thành "Gi / ao / diệ / n" (S6) | Đạt |
 | MB.53 | Đo lại toàn bộ phép thử cỡ chữ với khung dựng bằng **màn hình điện thoại** (375×812) thay cho 800×600 mặc định | 9/9 vẫn không tràn khung. Riêng hàng "Giao diện" chỉ vỡ ở khung điện thoại — 800×600 rộng hơn mọi điện thoại nên bố cục bị bóp ở máy thật vẫn "vừa" trong phép thử | Đạt |
+
+### Đợt hai mươi — giao diện quản trị ở khổ 1366×768 (08/09/2026)
+
+Mục 6.6 cam kết admin chạy được từ 1366×768; mọi ảnh của mười chín đợt trước chụp ở 1440×900. Đo
+trên **máy chủ thật**, dữ liệu thật, bằng trình duyệt đặt đúng khung nhìn 1366×768.
+
+| Mã | Kịch bản | Kết quả thực tế | Đạt |
+|---|---|---|---|
+| RS.1 | 58 đường dẫn của giao diện quản trị, đo `scrollWidth − clientWidth` của trang | 57/58 bằng 0. Riêng **Bổ sung → Báo cáo bổ sung** = **18** — nhãn biểu đồ tròn chạy tới x = 1427 | Đạt sau sửa |
+| RS.2 | Bấm qua từng thẻ của 41 màn hình có thẻ (67 phép đo) | Chỉ thẻ "Tổng quát" của báo cáo bổ sung vỡ; 66 thẻ còn lại sạch | Đạt sau sửa |
+| RS.3 | Đối chiếu cùng trang ở 1440×900 | Trang **không** cuộn ngang, nhưng hai nhãn vẫn vượt khung tới x = 1489 và bị cắt cụt thành ": 3621", ":508" — lý do chín đợt trước không thấy | Đạt |
+| RS.4 | Tương phản chữ nhãn trong lát với mười hai màu của dải biểu đồ | Thấp nhất **7,44 : 1**, trên ngưỡng 4,5 của WCAG AA | Đạt |
+| RS.5 | Luật bàn phím mục 6.6 quét trên mã giao diện quản trị | **0** phần tử `div`/`span` gắn `onClick` — không chỗ nào chuột bấm được mà bàn phím không tới. Phép thử canh luật ấy nay có ở cả hai giao diện | Đạt |

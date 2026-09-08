@@ -177,7 +177,15 @@ sáng, và nó sống sót vì `StatusPill` nằm trong `core/theme/` — đúng
 qua. Lỗi thứ năm thì do **phép thử iOS trên máy Mac của GitHub** bắt: máy chủ tách thông báo ra
 khối riêng từ 04/09/2026, ứng dụng không khai trường ấy nên trên máy chủ nghiệm thu — nơi cả hai bản
 tin đều là thông báo — trang chủ **không hiện tin nào**. Lỗi thứ sáu lộ ra từ chính **bộ ảnh iOS** ấy: ở cỡ chữ 160% nhãn "Giao diện" bị ô chọn bóp đến mức
-vỡ thành "Gi / ao / diệ / n". Cả 6 đã sửa, tổng **215 lỗi, đã sửa 215**.
+vỡ thành "Gi / ao / diệ / n". Cả 6 đã sửa.
+
+Đợt thứ hai mươi mang đúng bài học ấy sang phía web: mục 6.6 cam kết **admin tối thiểu 1366×768**,
+mà mọi ảnh chụp của mười chín đợt trước đều ở 1440×900. Đo trên máy chủ thật ở đúng khổ tối thiểu —
+58 đường dẫn cộng 67 phép đo theo thẻ, **137 phép đo, 1 lỗi**: nhãn biểu đồ tròn của Báo cáo bổ sung
+chạy ra ngoài khung SVG (tên chỉ mục tiếng Việt dài) và **đẩy cả trang cuộn ngang 18 px**. Ở 1440
+trang không cuộn, nhãn chỉ bị cắt cụt thành ": 3621" — trông như số liệu, nên chín đợt đi qua. Cả
+bốn biểu đồ tròn nay vẽ tỉ lệ phần trăm **bên trong lát**, tên lát để ở chú giải. Tổng **216 lỗi,
+đã sửa 216**.
 Phụ lục cuối `docs/06` ghi kết quả từng kịch bản (hơn 700 dòng).
 
 Đọc thẳng hồ sơ gốc còn tìm ra thứ không phải lỗi mã: **bốn hồ sơ bàn giao** mà Chương V mục III và
@@ -216,8 +224,8 @@ huống lỗi; phải tự tay dựng đúng bối cảnh ấy trong phép thử
 
 ```bash
 cd backend  && dotnet test                 # 655 unit + 544 integration
-cd frontend-admin && npx tsc -b && npx vitest run    # 347 test
-cd frontend-opac  && npx tsc -b && npx vitest run    # 102 test
+cd frontend-admin && npx tsc -b && npx vitest run    # 350 test
+cd frontend-opac  && npx tsc -b && npx vitest run    # 104 test
 cd mobile   && flutter analyze && flutter test       # 143 test
 ```
 
@@ -244,7 +252,7 @@ vướng — mỗi cái sinh ra từ một lỗi đã xảy ra thật:
 | `frontend-*/src/lib/palette.test.ts` (luật thứ hai) | Không chuỗi nháy đơn nào chứa `${MAU.…}` — đợt thay 130 màu để lại 11 chỗ `'1px solid ${MAU.vien}'` trong dấu nháy đơn, trình duyệt bỏ qua cả dòng CSS mà phép thử cấm mã màu vẫn xanh vì không còn mã màu để bắt |
 | `backend/.../Infrastructure/RequestLoggingOrderTests.cs` | Bộ ghi nhật ký yêu cầu đứng trước bộ xử lý ngoại lệ trong `Program.cs`; đứng sau là mọi lỗi 400/401/404 bị ghi thành ERR 500 kèm vết ngăn xếp |
 | `backend/.../Security/NginxConfigParityTests.cs` | **Ba** tệp cấu hình Nginx phải cùng mang sáu luật: bốn tiêu đề bảo mật, nhánh rẽ cho máy thu thập, và `resolver` thay cho `upstream`. Thêm luật vào hai tệp mà quên tệp thứ ba đã xảy ra hai lần trong một ngày, cả hai lần đều mất đúng ở bản chạy thật |
-| `frontend-opac/src/components/keyboard.test.ts` | `div`/`span` có `onClick` phải kèm `clickable(...)` hoặc đủ bộ ba `role` + `tabIndex` + `onKeyDown` — thanh menu chính của trang tra cứu từng không Tab tới được |
+| `frontend-*/src/components/keyboard.test.ts` | `div`/`span` có `onClick` phải kèm `clickable(...)` hoặc đủ bộ ba `role` + `tabIndex` + `onKeyDown` — thanh menu chính của trang tra cứu từng không Tab tới được |
 | `mobile/test/core/push_background_test.dart` | Có đăng ký `onBackgroundMessage`, hàm xử lý là hàm cấp cao nhất mang `@pragma('vm:entry-point')`, và Gradle áp dụng trình cắm google-services khi có tệp cấu hình |
 | `mobile/test/features/camera_error_view_test.dart` | Mọi `errorBuilder` của khung quét phải dựng `CameraErrorView` (chỉ lỗi quyền mới được nói về quyền), và màn Mượn tự phục vụ chỉ được có **một** `MobileScannerController` — hai bộ là hai máy khách camera, bộ sau không giành được và bạn đọc bị bảo đi cấp một quyền đã bật |
 | `mobile/test/core/palette_scan_test.dart` | Màn hình không gọi thẳng hằng số màu của chế độ sáng (`LcColors.muted`…) — phải qua `context.lc.<tên>` để đổi theo chế độ. Chế độ tối từng đổi chủ đề mà 82 chỗ giữ nguyên màu nền giấy: chữ phụ 3,23 : 1, chữ sáng trên tấm nền nhạt 1,08 : 1. Nền cố định ở cả hai chế độ thì khai ngoại lệ kèm lý do |
@@ -261,6 +269,7 @@ vướng — mỗi cái sinh ra từ một lỗi đã xảy ra thật:
 | `backend/.../Infrastructure/VietnameseFontStackTests.cs` | Không nơi nào gọi tên Georgia trong danh sách phông — Georgia thiếu glyph dựng sẵn của ố, ề, ắ, ữ nên trình duyệt tách dấu ra đứng cạnh nguyên âm. Quét cả ảnh SVG của bộ dữ liệu trình diễn lẫn `styles.css`/`theme.ts` của hai giao diện |
 | `backend/.../Infrastructure/DeployScriptTests.cs` | `gh-deploy.sh` phải có bước `don_anh_cu` giữ bản mới và bản trước, xoá ảnh `libraryconnect-*` còn lại — 20 bộ ảnh cũ từng làm đầy ổ 96 GB và chặn mọi lượt triển khai |
 | `backend/.../Security/LocalTimeInMessagesTests.cs` (luật thứ hai) | Nhãn kỳ của biểu đồ (`…At.ToString("yyyy…")`) cũng phải qua `ToLocalTime()` — luật cũ chỉ dò chuỗi có `HH` nên nhãn `yyyy-MM` lọt lưới, và một lượt xem lúc 02:00 ngày 01/09 hiện ở cột tháng 8 |
+| `frontend-admin/src/components/pieLabel.test.ts` | Mọi `<Pie>` phải dùng nhãn dùng chung `nhanTrongLat` (vẽ phần trăm **trong** lát) và phải có `<Legend />`. Nhãn ngoài của Recharts nằm ngoài khung SVG: tên chỉ mục tiếng Việt dài đẩy trang cuộn ngang ở 1366×768, và ở 1440 thì bị cắt cụt thành ": 3621" nên trông như số liệu |
 | `backend/.../Infrastructure/PdfTextLayerTests.cs` | Chữ rút lại từ tệp PDF phải bằng chữ ghi vào — đo bằng PdfPig, thư viện của người khác. Và sáu bộ dựng PDF phải khai phông qua `PdfTextStyles.Base()`, không bộ nào khai `FontFamily` thẳng: ghép chữ của Lato làm "thông tin" rút ra thành "thông ঞn" trong khi trang in nhìn vẫn đúng |
 | `backend/.../Infrastructure/StablePagingOrderTests.cs` | Mọi lượt `ToPagedResultAsync` phải kết thúc chuỗi sắp xếp bằng một khóa duy nhất — qua `ApplySort` (tự gắn) hoặc tự viết `ThenBy(x => x.Id)`. Sắp theo cột không duy nhất là trang sau lặp dòng của trang trước và đúng bấy nhiêu dòng khác không bao giờ hiện ra: 396 dòng tiền phạt chỉ có 316 dòng khác nhau |
 
@@ -699,6 +708,15 @@ docker compose run --rm -d --name lc-api-kiem -e LC_DB_NAME=lc_kiem -e LC_SEED_D
 99. **"Tràn khung" không phải dấu hiệu duy nhất của bố cục hỏng.** Một nhãn bị bóp còn 42 điểm ảnh
     rồi xuống dòng giữa từ thì không ném ngoại lệ nào — nó vẫn vừa. Bất biến đo được ở đây là hình
     dạng ô chữ: chữ ngắn dựng đúng thì **rộng hơn cao**; vỡ thành cột hẹp là cao hơn rộng.
+
+100. **Đo ở đúng khổ đã cam kết, không ở khổ mình đang dùng.** Mục 6.6 hứa admin chạy từ
+     1366×768; mười chín đợt chụp ảnh ở 1440×900 và không thấy gì. Ở 1366 có một trang cuộn ngang;
+     ở 1440 chính nó chỉ cắt cụt nhãn thành ": 3621" — trông như số liệu, không trông như lỗi. Hễ hồ
+     sơ nói một con số tối thiểu (khổ màn hình, cỡ chữ, phiên bản trình duyệt, số bản ghi) thì phép
+     đo phải đứng đúng ở con số ấy, không ở chỗ thoải mái hơn.
+101. **Nhãn vẽ ra ngoài khung là nhãn đẩy cả trang.** Recharts đặt nhãn ngoài của biểu đồ tròn ở
+     toạ độ nằm ngoài SVG; tên tiếng Việt dài thì nó ra khỏi màn hình. Mà chú giải ngay dưới biểu đồ
+     đã nói đúng những tên ấy — nhãn ngoài vừa thừa vừa phá. Trong lát chỉ nên có phần trăm.
 
 ### A.4. Cơ chế dùng chung — dùng lại, đừng viết chỗ mới
 
